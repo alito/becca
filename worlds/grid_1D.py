@@ -4,10 +4,10 @@ Created on Jan 11, 2012
 @author: brandon_rohrer
 '''
 import stub_world
-import becca.agent
+import agent_stub as ag
 import pickle
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 class World(stub_world.StubWorld):
     ''' grid_1D.World
@@ -70,14 +70,14 @@ class World(stub_world.StubWorld):
             self.reward_history = np.array([]);
             
             self.display_features_flag = False;
-            
+            """
             plt.figure(1) 
             plt.clf
             plt.xlabel('block (' + str(self.REPORTING_PERIOD) +  ' time steps per block)');
             plt.ylabel('reward per block');
             plt.ion()
-            
-            agent = becca.agent.Agent(self.num_sensors, self.num_primitives, self.num_actions)
+            """
+            agent = ag.Agent(self.num_sensors, self.num_primitives, self.num_actions)
         
         self.set_agent_parameters(agent)
         return(self, agent)
@@ -105,7 +105,7 @@ class World(stub_world.StubWorld):
         if (np.mod(self.timestep, self.REPORTING_PERIOD) == 0):
             self.reward_history = np.append(self.reward_history, self.cumulative_reward)
             self.cumulative_reward = 0;
-            plt.plot(self.reward_history)
+            #plt.plot(self.reward_history)
 
 
     def log(self, agent):
@@ -190,8 +190,8 @@ class World(stub_world.StubWorld):
         '''
         if (self.timestep > self.LIFESPAN):
             performance = np.mean(self.reward_history[-3:]) / self.REPORTING_PERIOD
-            plt.ioff()
-            plt.show()
+            #plt.ioff()
+            #plt.show()
             
             assert(performance >= -1.)
             return(performance)

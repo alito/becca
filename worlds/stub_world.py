@@ -22,10 +22,10 @@ A number of methods for internal use have been found to be convenient as well:
         agent to disk
 '''
 
-import becca.agent
+import agent
 import pickle
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 class StubWorld(object):
     '''
