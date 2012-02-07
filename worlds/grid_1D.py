@@ -35,8 +35,8 @@ class World(stub_world.StubWorld):
         can't return objects
         '''
         self.filename_prefix = "grid_1D"
-        self.agent_filename = self.filename_prefix + "_agent.pickle";
-        self.world_filename = self.filename_prefix + "_world.pickle";
+        self.agent_filename = self.filename_prefix + "_agent.pickle"
+        self.world_filename = self.filename_prefix + "_world.pickle"
 
         # if there is a stored version of the world and agent, loads it
         try:
@@ -55,10 +55,9 @@ class World(stub_world.StubWorld):
             self.num_primitives = 9
             self.num_actions = 9
 
-            self.timestep = 0
-            self.REPORTING_PERIOD = pow(10, 3)
-            self.BACKUP_PERIOD = pow(10, 3)
-            self.LIFESPAN = pow(10, 4)
+            self.REPORTING_PERIOD = 10 ** 3
+            self.BACKUP_PERIOD = 10 ** 3
+            self.LIFESPAN = 10 ** 4
             
             self.sensors = np.zeros(self.num_sensors)
             self.primitives = np.zeros(self.num_primitives)
@@ -67,9 +66,9 @@ class World(stub_world.StubWorld):
             
             self.world_state = 0            
             self.cumulative_reward = 0
-            self.reward_history = np.array([]);
+            self.reward_history = np.array([])
             
-            self.display_features_flag = False;
+            self.display_features_flag = False
             """
             plt.figure(1) 
             plt.clf
@@ -104,7 +103,7 @@ class World(stub_world.StubWorld):
             
         if (np.mod(self.timestep, self.REPORTING_PERIOD) == 0):
             self.reward_history = np.append(self.reward_history, self.cumulative_reward)
-            self.cumulative_reward = 0;
+            self.cumulative_reward = 0
             #plt.plot(self.reward_history)
 
 
@@ -112,7 +111,7 @@ class World(stub_world.StubWorld):
         ''' logs the state of the world into a history that can be used to
         evaluate and understand BECCA's behavior
         '''
-        self.cumulative_reward += self.reward;
+        self.cumulative_reward += self.reward
         
         if (np.mod(self.timestep, self.BACKUP_PERIOD) == 0):
             # stores the world and the agent
@@ -134,7 +133,7 @@ class World(stub_world.StubWorld):
         Accepts agent as an argument only so that it can occasionally backup
         the agent's state to disk.
         '''
-        self.timestep = self.timestep + 1 
+        self.timestep += 1 
         self.action = action.copy()
 
         step_size = (self.action[0] + 
@@ -170,18 +169,16 @@ class World(stub_world.StubWorld):
         self.primitives[self.simple_state] = 1
         
         # Assigns reward based on the current state
-        self.reward = 0
-        self.reward = self.reward + self.primitives[8] * (-0.5)
-        self.reward = self.reward + self.primitives[3] * ( 0.5)
+        self.reward = self.primitives[8] * (-0.5)
+        self.reward += self.primitives[3] * ( 0.5)
         
         # Punishes actions just a little.
-        self.reward = self.reward - energy / 100
+        self.reward -= energy / 100
         self.reward = np.max( self.reward, -1)
         
         self.log(agent)
         self.display()
         
-        return()
         
         
     def final_performance(self):
@@ -194,6 +191,6 @@ class World(stub_world.StubWorld):
             #plt.show()
             
             assert(performance >= -1.)
-            return(performance)
+            return performance
         
-        return(-2)
+        return -2

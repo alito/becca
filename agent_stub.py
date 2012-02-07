@@ -22,7 +22,7 @@ class Agent(object):
         self.num_primitives = num_primitives
         self.num_actions = num_actions
 
-        self.actions = np.zeros([self.num_actions, 1])
+        self.actions = np.zeros(self.num_actions)
         
         self.timestep = 0
         

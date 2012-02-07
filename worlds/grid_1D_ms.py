@@ -12,21 +12,20 @@ import numpy as np
 #import matplotlib.pyplot as plt
 
 class World(stub_world.StubWorld):
-    ''' grid_1D.World
-    One-dimensional grid task
+    ''' grid_1D_ms.World
+
+    One-dimensional grid task, multi-step
 
     In this task, the agent steps forward and backward along a
-    line. The fourth position is rewarded (+1/2) and the ninth
-    position is punished (-1/2). There is also a slight punishment
-    for effort expended in trying to move, i.e. taking actions.
-    
-    This is intended to be a simple-as-possible task for
-    troubleshooting BECCA.
-    
-    The theoretically optimal performance without exploration is 0.5 
-    reward per time step.
-    In practice, the best performance the algorithm can achieve with the 
-    exploration levels given is around 0.35 to 0.37 reward per time step.
+    line. The fourth position is rewarded (1/2) and the ninth
+    position is punished (-1/2).
+
+    This is intended to be as similar as possible to the 
+    one-dimensional grid task, but require multi-step planning for optimal 
+    behavior.
+
+    Optimal performance is between 0.25 and 0.3 reward per time step.
+
     '''
 
     def __init__(self):
@@ -57,9 +56,9 @@ class World(stub_world.StubWorld):
             self.num_primitives = 9
             self.num_actions = 3
 
-            self.REPORTING_PERIOD = pow(10, 3)
-            self.BACKUP_PERIOD = pow(10, 3)
-            self.LIFESPAN = pow(10, 4)
+            self.REPORTING_PERIOD = 10 ** 3
+            self.BACKUP_PERIOD = 10 ** 3
+            self.LIFESPAN = 10 ** 4
             
             self.sensors = np.zeros(self.num_sensors)
             self.primitives = np.zeros(self.num_primitives)
@@ -136,10 +135,10 @@ class World(stub_world.StubWorld):
         the agent's state to disk.
         '''
         self.timestep += 1 
-        action = action.copy()
+        action = np.round(action)
 
         if random.random() < 0.1:
-            action += round(random.random() * 6) * np.round(np.random.random((3,)))
+            action += round(random.random() * 6) * np.round(np.random.random_sample((3,)))
 
         energy = action[0] + action[1]
         
@@ -147,7 +146,7 @@ class World(stub_world.StubWorld):
         
         # ensures that the world state falls between 0 and 9
         self.world_state -= 9 * np.floor_divide(self.world_state, self.num_primitives)
-        self.simple_state = int(np.floor(self.world_state))
+        self.simple_state = int(self.world_state)
         
         # Assigns basic_feature_input elements as binary. Represents the presence
         # or absence of the current position in the bin.
@@ -156,7 +155,6 @@ class World(stub_world.StubWorld):
         self.primitives[self.simple_state] = 1
         
         # Assigns reward based on the current state
-        self.reward = 0
         self.reward = self.primitives[8] * (-0.5)
         self.reward += self.primitives[3] * ( 0.5)
         

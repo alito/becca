@@ -53,9 +53,9 @@ class World(stub_world.StubWorld):
             self.num_actions = 3
             self.num_primitives = self.noise_inputs + self.num_real_features
             
-            self.REPORTING_PERIOD = pow(10, 3)
-            self.BACKUP_PERIOD = pow(10, 3)
-            self.LIFESPAN = pow(10, 4)
+            self.REPORTING_PERIOD = 10 ** 3
+            self.BACKUP_PERIOD = 10 ** 3
+            self.LIFESPAN = 10 ** 4
             self.ENERGY_PENALTY = 0.1
             
             self.sensors = np.zeros(self.num_sensors)

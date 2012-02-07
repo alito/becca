@@ -64,8 +64,8 @@ class World(stub_world.StubWorld):
             self.world_state = np.array([1, 1])
             self.simple_state = self.world_state.copy()
 
-            self.target = (4,4)
-            self.obstacle = (2,2)
+            self.target = (3,3)
+            self.obstacle = (1,1)
             
             self.sensors = np.zeros(self.num_sensors)
             self.primitives = np.zeros(self.num_primitives)
@@ -160,7 +160,7 @@ class World(stub_world.StubWorld):
 
         self.simple_state = np.round(self.world_state)
 
-        self.basic_feature_input = np.zeros((self.world_size ** 2,))
+        self.basic_feature_input = np.zeros((self.num_primitives,))
         self.basic_feature_input[self.simple_state[1] + self.simple_state[0] * self.world_size] = 1
 
         self.reward = 0
