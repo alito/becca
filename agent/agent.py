@@ -4,7 +4,11 @@ Created on Jan 11, 2012
 @author: brandon_rohrer
 '''
 
+import pickle
+
 import numpy as np
+
+from .feature_map import FeatureMap
 
 class Agent(object):
     '''A general reinforcement learning agent, modeled on human neurophysiology 
@@ -18,15 +22,79 @@ class Agent(object):
         '''
         Constructor
         '''
+
+        self.logger = logging.getLogger(self.__class__.__name__)
+
+
+        self.timestep = 0
+        
         self.num_sensors = num_sensors
         self.num_primitives = num_primitives
         self.num_actions = num_actions
 
         self.actions = np.zeros([self.num_actions, 1])
+
+        self.GOAL_DECAY_RATE = 0.05   # real, 0 < x <= 1
+        self.STEP_DISCOUNT = 0.5      # real, 0 < x <= 1
+
+        # Rates at which the feature activity and working memory decay.
+        # Setting these equal to 1 is the equivalent of making the Markovian 
+        # assumption about the task--that all relevant information is captured 
+        # adequately in the current state.
+        self.WORKING_MEMORY_DECAY_RATE = 0.4      # real, 0 < x <= 1
+        # also check out self.grouper.INPUT_DECAY_RATE, set in grouper_initialize
+
+
+        self.feature_map = FeatureMap(num_sensors, num_primitives, num_actions)
         
-        self.timestep = 0
         
+
+        
+
+    def load(self, pickle_filename):
+        loaded = False
+        try:
+            with open(pickle_filename, 'rb') as agent_data:
+                self = pickle.load(agent_data)
+
+            self.logger = logging.getLogger(self.__class__.__name__)
+            print('Agent restored at timestep ' + str(self.timestep))
+
+        # otherwise initializes from scratch     
+        except IOError:
+            # world not found
+            self.logger.warn("Couldn't open %s for loading" % pickle_filename)
+        except pickle.PickleError, e:
+            self.logger.error("Error unpickling world: %s" % e)
+        else:
+            loaded = True
+
+        return loaded
+
     
+    def save(self, pickle_filename):        
+        success = False
+        try:
+            with open(pickle_filename, 'wb') as agent_data:
+                # unset the logger before pickling and restore afterwards since it can't be pickled                
+                logger = self.logger
+                del self.logger
+     
+                pickle.dump(self, agent_data)
+
+                self.logger = logger
+            self.logger.info('agent data saved at ' + str(self.timestep) + ' time steps')
+
+        except IOError as err:
+            self.logger.error('File error: ' + str(err) + ' encountered while saving agent data')
+        except pickle.PickleError as perr: 
+            self.logger.error('Pickling error: ' + str(perr) + ' encountered while saving agent data')        
+        else:
+            success = True
+            
+        return success
+
+		
     def step(self, sensors, primitives, reward):
         self.sensors = sensors.copy()
         self.primitives = primitives.copy()
