@@ -3,13 +3,12 @@ Created on Jan 11, 2012
 
 @author: brandon_rohrer
 '''
-import stub_world
-import agent_stub as ag
-import pickle
 import numpy as np
 #import matplotlib.pyplot as plt
 
-class World(stub_world.StubWorld):
+from .world import World
+
+class Grid_2D_dc(World):
     ''' grid_2D_dc.World
     Two-dimensional grid task
 
@@ -34,81 +33,36 @@ class World(stub_world.StubWorld):
     def __init__(self):
         ''' default constructor
         '''
-    def initialize(self):
-        ''' performs initialization, but gets around the fact that __init__()
-        can't return objects
-        '''
-        self.filename_prefix = "grid_2D_dc"
-        self.agent_filename = self.filename_prefix + "_agent.pickle"
-        self.world_filename = self.filename_prefix + "_world.pickle"
 
-        # if there is a stored version of the world and agent, loads it
-        try:
-            with open(self.world_filename, 'rb') as world_data:
-                self = pickle.load(world_data)       
-            with open(self.agent_filename, 'rb') as agent_data:
-                agent = pickle.load(agent_data)  
-            print('World restored at timestep ' + str(self.timestep))
-                
-        # otherwise initializes from scratch     
-        except:     
-            print('Initializing world and agent...')
-
-
-            self.REPORTING_PERIOD = 10 ** 3
-            self.BACKUP_PERIOD = 10 ** 3
-            self.LIFESPAN = 10 ** 4
-            self.ENERGY_PENALTY = 0.05
-
-            self.timestep = 0
-            self.num_sensors = 1
-            self.num_actions = 9            
-            self.world_size = 5
-            self.num_primitives = self.world_size * 2
-            self.world_state = np.array([1, 1])
-            self.simple_state = self.world_state.copy()
-
-            self.target = (3,3)
-            self.obstacle = (1,1)
-            
-            self.sensors = np.zeros(self.num_sensors)
-            self.primitives = np.zeros(self.num_primitives)
-            self.actions = np.zeros(self.num_actions)
-            self.reward = 0
-            
-            self.cumulative_reward = 0
-            self.reward_history = np.array([])
-            self.motor_output_history = np.array([])            
-            
-            self.display_features_flag = False
-            """
-            plt.figure(1) 
-            plt.clf
-            plt.xlabel('block (' + str(self.REPORTING_PERIOD) +  ' time steps per block)');
-            plt.ylabel('reward per block');
-            plt.ion()
-            """
-            agent = ag.Agent(self.num_sensors, self.num_primitives, self.num_actions)
+        super(Grid_2D_dc,self).__init__()
         
-        self.set_agent_parameters(agent)
-        return(self, agent)
+        self.REPORTING_PERIOD = 10 ** 3
+        self.LIFESPAN = 10 ** 4
+        self.ENERGY_PENALTY = 0.05
+
+        self.num_sensors = 1
+        self.num_actions = 9            
+        self.world_size = 5
+        self.num_primitives = self.world_size * 2
+        self.world_state = np.array([1, 1])
+        self.simple_state = self.world_state.copy()
+
+        self.target = (3,3)
+        self.obstacle = (1,1)
+
+        self.sensors = np.zeros(self.num_sensors)
+        self.primitives = np.zeros(self.num_primitives)
+        self.actions = np.zeros(self.num_actions)
 
 
-    def set_agent_parameters(self, agent):
-        ''' sets parameters in the BECCA agent that are specific to a particular world.
-        Strictly speaking, this method violates the minimal interface between the 
-        agent and the world (observations, action, and reward). Ideally, it will 
-        eventually become obselete. As BECCA matures it will be able to handle 
-        more tasks without changing its parameters.
-        '''
-        pass
+        self.motor_output_history = np.array([])            
 
     
     def display(self):
         ''' provides an intuitive display of the current state of the World 
         to the user
         '''
-        if (self.display_features_flag):
+        if (self.display_features):
             state_img = ['.'] * self.num_primitives
             state_img[self.world_state] = 'O'
             print('world timestep ' + str(self.timestep) + '  ' + ''.join(state_img))
@@ -118,32 +72,10 @@ class World(stub_world.StubWorld):
             self.cumulative_reward = 0
             #plt.plot(self.reward_history)
 
-
-    def log(self, agent):
-        ''' logs the state of the world into a history that can be used to
-        evaluate and understand BECCA's behavior
-        '''
-        self.cumulative_reward += self.reward
-        
-        if (np.mod(self.timestep, self.BACKUP_PERIOD) == 0):
-            # stores the world and the agent
-            try:
-                with open(self.world_filename, 'wb') as world_data:
-                    pickle.dump(self, world_data)       
-                with open(self.agent_filename, 'wb') as agent_data:
-                    pickle.dump(agent, agent_data)  
-                print('agent data saved at ' + str(self.timestep) + ' time steps')
-                    
-            except IOError as err:
-                print('File error: ' + str(err) + ' encountered while saving data')
-            except pickle.PickleError as perr: 
-                print('Pickling error: ' + str(perr) + ' encountered while saving data')
         
         
-    def step(self, action, agent): 
+    def step(self, action): 
         ''' advances the World by one timestep.
-        Accepts agent as an argument only so that it can occasionally backup
-        the agent's state to disk.
         '''
         self.timestep += 1
         
@@ -177,7 +109,7 @@ class World(stub_world.StubWorld):
         self.reward -= self.ENERGY_PENALTY * energy
 
         
-        self.log(agent)
+        self.log()
         self.display()
         
 
