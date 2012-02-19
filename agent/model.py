@@ -59,9 +59,9 @@ class Model(object):
         add_feature to the model
         """
         
-        self.history[nth_group] = np.vstack((self.history[nth_group],  np.zeros((1, np.size(self.history[nth_group], 2)))))
-        self.cause[nth_group]   = np.vstack((self.cause[nth_group],  np.zeros((1, np.size(self.cause[nth_group],  2)))))
-        self.effect[nth_group]  = np.vstack((self.effect[nth_group], np.zeros((1, np.size(self.effect[nth_group], 2)))))
+        self.history[nth_group] = np.vstack((self.history[nth_group],  np.zeros(self.history[nth_group].shape[1])))
+        self.cause[nth_group]   = np.vstack((self.cause[nth_group],  np.zeros(self.cause[nth_group].shape[1])))
+        self.effect[nth_group]  = np.vstack((self.effect[nth_group], np.zeros(self.effect[nth_group].shape[1])))
         
         # if dummy feature is still in place, removes it
         if has_dummy:
