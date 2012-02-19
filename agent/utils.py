@@ -100,7 +100,7 @@ def similarity(point, set_of_points, indices):
     
     result = None
 
-    if not indices or not set_of_points or not point:
+    if not indices or not np.size(set_of_points) or not np.size(point):
         return None
 
     eps = np.finfo(np.double).eps    
@@ -110,7 +110,7 @@ def similarity(point, set_of_points, indices):
     # the features within a group
     if point.dtype.name != 'object':
         
-        point_mat = np.tile(point, (1, num_points))
+        point_mat = np.tile(point, (num_points, 1))
         set_mat = set_of_points[:,indices]
         inner_product = np.sum(( point_mat * set_mat), axis=0)
         mag_point = np.sqrt(np.sum( point_mat ** 2, axis=0)) + eps
