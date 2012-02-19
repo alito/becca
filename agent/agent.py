@@ -38,7 +38,7 @@ class Agent(object):
         self.num_primitives = num_primitives
         self.num_actions = num_actions
 
-        self.actions = np.zeros([self.num_actions, 1])
+        self.actions = np.zeros(self.num_actions)
 
         self.GOAL_DECAY_RATE = 0.05   # real, 0 < x <= 1
         self.STEP_DISCOUNT = 0.5      # real, 0 < x <= 1
@@ -119,13 +119,15 @@ class Agent(object):
         success = False
         try:
             with open(pickle_filename, 'wb') as agent_data:
-                # unset the logger before pickling and restore afterwards since it can't be pickled                
+                # HACK: unset the logger before pickling and restore afterwards since it can't be pickled                
                 logger = self.logger
                 del self.logger
-     
+                model_logger = self.model.logger
+                del self.model.logger
                 pickle.dump(self, agent_data)
 
                 self.logger = logger
+                self.moddel.logger = model_logger
             self.logger.info('agent data saved at ' + str(self.timestep) + ' time steps')
 
         except IOError as err:
@@ -216,18 +218,21 @@ class Agent(object):
             count = len( self.feature_activity[index])
             self.attended_feature[index] = np.zeros(count)
 
-            salience[index] = self.SALIENCE_NOISE * np.random.random_sample(count)
-            salience[index] += self.feature_activity[index] * (1 + self.goal[index])
+            if count > 0:
+                # no point in doing this if the feature is empty
+                
+                salience[index] = self.SALIENCE_NOISE * np.random.random_sample(count)                
+                salience[index] += self.feature_activity[index] * (1 + self.goal[index])
 
-            # Picks the feature with the greatest salience.
-            max_value = np.max(salience[index])
-            max_index = np.argmax(salience[index])
+                # Picks the feature with the greatest salience.
+                max_value = np.max(salience[index])
+                max_index = np.argmax(salience[index])
 
 
-            if max_value >= max_salience_value:
-                max_salience_value = max_value
-                max_salience_group = index
-                max_salience_index = max_index
+                if max_value >= max_salience_value:
+                    max_salience_value = max_value
+                    max_salience_group = index
+                    max_salience_index = max_index
 
 
             if self.planner.act:
