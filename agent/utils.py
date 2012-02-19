@@ -3,8 +3,26 @@ Utility functions
 """
 
 import logging
+import copy
 
 import numpy as np
+
+class AutomaticList(list):
+    """
+    A list-like class that behaves like Matlab's arrays in automatically extending when an index beyond
+    its length is set
+    """
+    def __setitem__(self, key, value):
+        missing = key - len(self)
+        if missing < 0:
+            list.__setitem__(self, key, value)
+        else:
+            # set missing items to a null array
+            for i in range(missing):
+                self.append(empty_array())
+            self.append(value)
+                
+            
 
 def bounded_sum(a, b):
     """
@@ -143,3 +161,30 @@ def similarity(point, set_of_points, indices):
 
 def sigmoid(a):
     return (2 / (1 + np.exp(-2 * a))) - 1
+
+
+def empty_array():
+    return np.zeros((0,0))
+
+def winner_takes_all(feature_input):
+    
+    # performs winner-take-all on primed_vote to get feature_output
+    #
+    # no WTA is performed on group 1, the raw sensory group, group 2, the 
+    # hard-wired feature group, or group 3, motor group.  
+    # All motor commands pass through to become feature outputs.
+    num_groups = len(feature_input)
+
+    feature_output = []
+    feature_output.append(empty_array())
+    
+    feature_output.append(copy.deepcopy(feature_input[1]))
+    feature_output.append(copy.deepcopy(feature_input[2]))
+    
+    for index in range(3, num_groups):
+        max_index = np.argmax( np.abs(feature_input[index]))
+        feature_output[index] = np.zeros( feature_input[index].shape[0])
+        feature_output[index][max_index] = feature_input[index][max_index]
+
+    return feature_output
+
