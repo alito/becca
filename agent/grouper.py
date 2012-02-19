@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 
 from . import utils
@@ -18,46 +20,47 @@ class Grouper(object):
         self.features_full = 0
         self.filename_postfix = '_self.mat'
 
-        self.correlation = np.zeros( self.MAX_NUM_FEATURES)
-        self.combination = np.ones( self.MAX_NUM_FEATURES) - np.eye( self.MAX_NUM_FEATURES)
-        self.propensity = np.zeros( self.MAX_NUM_FEATURES)
+        self.correlation = np.zeros((self.MAX_NUM_FEATURES, self.MAX_NUM_FEATURES))
+        self.combination = np.ones( (self.MAX_NUM_FEATURES, self.MAX_NUM_FEATURES)) - np.eye( self.MAX_NUM_FEATURES)
+        self.propensity = np.zeros((self.MAX_NUM_FEATURES, self.MAX_NUM_FEATURES))
         self.groups_per_feature = np.zeros( self.MAX_NUM_FEATURES)
         self.feature_vector = np.zeros(self.MAX_NUM_FEATURES)
-        self.index_map_inv = np.zeros( self.MAX_NUM_FEATURES, 2)
+        self.index_map_inverse = np.zeros((self.MAX_NUM_FEATURES, 2))
 
         #self.input_map   #maps input groups to feature groups
         #self.index_map    #maps input groups to correlation indices
-        #self.index_map_inv#maps correlation indices to input groups
+        #self.index_map_inverse#maps correlation indices to input groups
 
         self.previous_input = []
         self.input_map = []
         self.index_map = []
         
-        #initializes group 1
-        self.previous_input.append(np.zeros( num_sensors, 1))
-        self.input_map.append(np.hstack((np.cumsum(np.ones(num_sensors)), 
-                                         np.ones(num_sensors))))
-        self.index_map.append(np.cumsum(np.ones(num_sensors)))
-        self.index_map_inv[ :num_sensors, :] = np.hstack(( np.cumsum( np.ones( num_sensors)), np.ones(num_sensors)))
+        #initializes group 0
+        self.previous_input.append(np.zeros( num_sensors))
+        self.input_map.append(np.vstack((np.cumsum(np.ones(num_sensors, np.int)) - 1, 
+                                         np.zeros(num_sensors, np.int))).transpose())
+        self.index_map.append(np.cumsum(np.ones(num_sensors, np.int)) - 1)
+        self.index_map_inverse[ :num_sensors, :] = np.hstack(( np.cumsum( np.ones( num_sensors)) - 1, np.zeros(num_sensors)))
         self.last_entry = num_sensors
 
-        #initializes group 2
+        #initializes group 1
         self.previous_input.append(np.zeros(num_primitives))
-        self.input_map.append(np.hstack((np.cumsum(np.ones( num_primitives)), 
-                                         2 * np.ones( num_primitives))))
-        self.index_map.append(np.cumsum(np.ones( num_primitives)) + self.last_entry)
-        self.index_map_inv[self.last_entry + 1: self.last_entry + num_primitives, :] = \
-            np.hstack((np.cumsum(np.ones( num_primitives)), 
-                      2 * np.ones( num_primitives)))
-        self.last_entry = num_primitives + self.last_entry
+        self.input_map.append(np.vstack((np.cumsum(np.ones( num_primitives, np.int)) - 1, 
+                                         np.ones( num_primitives, np.int))).transpose())
+        self.index_map.append(np.cumsum(np.ones( num_primitives, np.int)) - 1 + self.last_entry)
 
-        #initializes group 3
+        self.index_map_inverse[self.last_entry: self.last_entry + num_primitives, :] = \
+            np.vstack((np.cumsum(np.ones( num_primitives)) - 1, np.ones( num_primitives))).transpose()
+        self.last_entry += num_primitives
+
+        #initializes group 2
         self.previous_input.append(np.zeros( num_actions))
-        self.input_map.append(np.hstack(( np.cumsum(np.ones( num_actions)), 3 * np.ones( num_actions) )))
-        self.index_map.append(np.cumsum( np.ones( num_actions)) + self.last_entry)
-        self.index_map_inv[self.last_entry + 1: self.last_entry + num_actions, :] = \
-            np.hstack(( np.cumsum( np.ones( num_actions)), 3 * np.ones( num_actions)))
-        self.last_entry = num_actions + self.last_entry
+        self.input_map.append(np.vstack(( np.cumsum(np.ones( num_actions, np.int)) - 1,
+                                          2 * np.ones( num_actions, np.int) )).transpose())
+        self.index_map.append(np.cumsum( np.ones( num_actions, np.int)) - 1 + self.last_entry)
+        self.index_map_inverse[self.last_entry: self.last_entry + num_actions, :] = \
+            np.vstack(( np.cumsum( np.ones( num_actions)) - 1, 2 * np.ones( num_actions))).transpose()
+        self.last_entry += num_actions
 
 
     def add_group(self):
@@ -78,33 +81,33 @@ class Grouper(object):
         else:
             self.last_entry += 1
             self.index_map[nth_group] = np.vstack((self.index_map[nth_group], self.last_entry))
-            self.index_map_inv[self.last_entry,:] = np.hstack((self.index_map[nth_group].shape[1], nth_group))
+            self.index_map_inverse[self.last_entry,:] = np.hstack((self.index_map[nth_group].shape[1], nth_group))
 
 
-        lmnt_index_correlation = np.array([])
+        element_index_correlation = np.array([])
         for subindex in range(nth_group - 1):
             indices = ( self.input_map[nth_group][:,1] == subindex)
-            lmnt_index = self.index_map[subindex][self.input_map[nth_group]][indices]
-            lmnt_index_correlation = np.vstack((lmnt_index_correlation, lmnt_index.ravel()))
+            element_index = self.index_map[subindex][self.input_map[nth_group]][indices]
+            element_index_correlation = np.vstack((element_index_correlation, element_index.ravel()))
 
-        lmnt_index_correlation = lmnt_index_correlation.ravel()
+        element_index_correlation = element_index_correlation.ravel()
 
         #propogate unallowable combinations with inputs 
-        self.combination[self.last_entry, lmnt_index_correlation] = 0
-        self.combination[lmnt_index_correlation, self.last_entry] = 0
+        self.combination[self.last_entry, element_index_correlation] = 0
+        self.combination[element_index_correlation, self.last_entry] = 0
 
 
 
-    def step(self, sensors, primitives, action, previous_primitives):
+    def step(self, sensors, primitives, action, previous_feature_activity):
 
         # incrementally estimates correlation between inputs and forms groups
         # when appropriate
-        num_groups = len(previous_primitives)
+        num_groups = len(previous_feature_activity)
 
         # builds the feature vector
         # combines sensors and primitives with 
-        # previous_primitives to create the full input set
-        input = previous_primitives.copy()
+        # previous_feature_activity to create the full input set
+        input = copy.deepcopy(previous_feature_activity)
         
         input[0] = sensors
         input[1] = primitives
@@ -135,8 +138,8 @@ class Grouper(object):
             # finds the upper bound on propensity based on how many groups
             # each feature is associated with
             # updates the propensity of each input to form new associations
-            self.propensity[:self.last_entry, :self.last_entry] = \
-                self.propensity[:self.last_entry, :self.last_entry] + \
+
+            self.propensity[:self.last_entry, :self.last_entry] += \
                 self.PROPENSITY_UPDATE_RATE * \
                 (self.MAX_PROPENSITY - self.propensity[:self.last_entry, :self.last_entry])
 
@@ -144,10 +147,11 @@ class Grouper(object):
             # adapts correlation toward average activity correlation
 
             weighted_feature_vector = \
-                np.exp( - self.groups_per_feature [:self.last_entry] * self.GROUP_DISCOUNT ) * \
-                    self.feature_vector[:self.last_entry]
-            delta_correlation =   np.tile( weighted_feature_vector, (1, self.last_entry)) * \
-                (np.dot(weighted_feature_vector, np.transpose(weighted_feature_vector)) - \
+                (np.exp( - self.groups_per_feature [:self.last_entry] * self.GROUP_DISCOUNT ) * \
+                    self.feature_vector[:self.last_entry])[np.newaxis]  # newaxis needed for it to be treated as 2D
+            
+            delta_correlation =   np.tile( weighted_feature_vector, (self.last_entry, 1)) * \
+                (np.dot(weighted_feature_vector.transpose(), weighted_feature_vector) - \
                     self.correlation[:self.last_entry, :self.last_entry])
             self.correlation[:self.last_entry, :self.last_entry] += \
                 self.propensity[:self.last_entry, :self.last_entry] * delta_correlation
@@ -170,53 +174,54 @@ class Grouper(object):
                 which_index = int( np.random.random_sample() * len(index1))
                 index1 = index1[which_index]
                 index2 = index2[which_index]
-                lmnt = np.array([index1, index2])
-                self.correlation[lmnt, lmnt] = 0
-                self.combination[lmnt, lmnt] = 0
+                element = np.array([index1, index2])
+                self.correlation[element, element] = 0
+                self.combination[element, element] = 0
 
                 # Z tracks the available elements to add and the correlation 
                 # with each
                 Z = np.zeros( self.combination.shape)
-                Z[:,lmnt] = 1
-                Z[lmnt,:] = 1
+                Z[:,element] = 1
+                Z[element,:] = 1
 
                 while True:
                     T = np.abs( self.correlation * Z)
                     Tc = np.sum(T, axis=0)
                     Tr = np.sum(T, axis=1)
                     Tl = Tc + Tr.transpose()
-                    Tl = Tl / (2 * len(lmnt))
-                    Tl[lmnt] = 0
-                    if ( np.max(Tl) < self.MIN_SIG_CORR) or (len(lmnt) >= self.MAX_GROUP_SIZE):
+                    Tl = Tl / (2 * len(element))
+                    Tl[element] = 0
+                    if ( np.max(Tl) < self.MIN_SIG_CORR) or (len(element) >= self.MAX_GROUP_SIZE):
                         break
 
                     index = np.argmax(Tl)
                     index = index[int(np.random.random_sample() * len(index))]
-                    lmnt = np.hstack((lmnt,index))
-                    self.correlation [lmnt, lmnt] = 0
-                    self.combination[lmnt, lmnt] = 0
-                    Z[:,lmnt] = 1
-                    Z[lmnt,:] = 1
+                    element = np.hstack((element,index))
+                    self.correlation [element, element] = 0
+                    self.combination[element, element] = 0
+                    Z[:,element] = 1
+                    Z[element,:] = 1
 
-                lmnt = np.sort(lmnt)
-                self.groups_per_feature[lmnt] += 1
+                element = np.sort(element)
+                self.groups_per_feature[element] += 1
 
 
                 num_groups += 1
 
                 self.input_map[num_groups].append(np.array([]))
-                for lmnt_element in lmnt:
-                    self.input_map[num_groups] = np.vstack((self.input_map[num_groups], self.index_map_inv[lmnt_element, :]))
+                for element_element in element:
+                    self.input_map[num_groups] = np.vstack((self.input_map[num_groups], self.index_map_inverse[element_element, :]))
 
 
                 #initializes a new group
                 self.last_entry += 1
                 self.index_map[ num_groups] = self.last_entry
-                self.index_map_inv[self.last_entry, :] = np.array([0, num_groups])
+                self.index_map_inverse[self.last_entry, :] = np.array([0, num_groups])
 
 
-        input_group = np.zeros((num_groups, self.input_map[0].shape[0]))
+        input_group = [utils.empty_array()]
         for index in range(1,num_groups):
+            input_group.append(np.zeros(self.input_map[index].shape[0]))
             # sorts inputs into their groups
             for input_counter in range(self.input_map[index].shape[0]):
                 input_group[index][input_counter] =  input[ self.input_map[index][input_counter, 1]][self.input_map[index][input_counter, 0]]
