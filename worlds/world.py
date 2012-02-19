@@ -33,6 +33,8 @@ class World(object):
     the base class for creating a new world
     '''
 
+    MAX_NUM_FEATURES = 700
+    
     def __init__(self):
         ''' default constructor
         '''
