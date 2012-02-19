@@ -13,7 +13,7 @@ class FeatureMap(object):
 
 
     def add_group(self, group_length):
-        self.map.append(np.zeros((1, group_length)))
+        self.map.append(np.zeros((group_length)))
 
 
     def add_feature(self, group, has_dummy, feature):
