@@ -18,7 +18,7 @@ class Agent(object):
     '''
 
     
-    def __init__(self, num_sensors, num_primitives, num_actions):
+    def __init__(self, num_sensors, num_primitives, num_actions, max_num_features=None):
         '''
         Constructor
         '''

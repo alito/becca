@@ -26,7 +26,8 @@ class Experiment(object):
         self.world = world_class()
         pickled = self.world.load(self.world_pickle)
 
-        self.agent = agent_class(self.world.num_sensors, self.world.num_primitives, self.world.num_actions)
+        self.agent = agent_class(self.world.num_sensors, self.world.num_primitives, self.world.num_actions,
+                                 self.world.MAX_NUM_FEATURES)
         if pickled:
             agent_pickled = self.agent.load(self.agent_pickle)
             if not agent_pickled:
