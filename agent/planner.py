@@ -11,7 +11,7 @@ class Planner(object):
         self.OBSERVATION_FRACTION = 0.5    # real, 0 < x < 1
 
         self.act = False
-        self.action = np.zeros((num_actions, 1))
+        self.action = np.zeros(num_actions)
 
 
     def add_group(self):
