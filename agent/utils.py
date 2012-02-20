@@ -47,7 +47,19 @@ def bounded_sum(a, b):
 
 
     """
+    scalars = np.isscalar(a)
+    if scalars:
+        if not np.isscalar(b):
+            raise ValueError("both parameters have to be of the same type")
 
+        a = np.array([a])
+        b = np.array([b])
+    else:
+        if a.shape != b.shape:
+            raise ValueError("Both parameters have to have the same shape. Got %s and %s" % (a.shape, b.shape))
+    
+
+    
     eps = np.finfo(np.double).eps
     
     result = np.zeros(np.shape(a))
@@ -57,25 +69,29 @@ def bounded_sum(a, b):
     # different functions for when a and b are same or opposite signs
     same_sign_indices = (np.sign(a) == np.sign(b)).ravel().nonzero()
     
-    a_ss = a[same_sign_indices]
-    b_ss = b[same_sign_indices]
-    a_t = np.sign(a_ss) / (1 - np.abs(a_ss) + eps) - np.sign(a_ss)
-    b_t = np.sign(b_ss) / (1 - np.abs(b_ss) + eps) - np.sign(b_ss)
+    a_same_sign = a[same_sign_indices]
+    b_same_sign = b[same_sign_indices]
+    a_t = np.sign(a_same_sign) / (1 - np.abs(a_same_sign) + eps) - np.sign(a_same_sign)
+    b_t = np.sign(b_same_sign) / (1 - np.abs(b_same_sign) + eps) - np.sign(b_same_sign)
     
     c_t = a_t + b_t 
     
-    c_ss = np.sign(c_t) * (1 - 1 / (np.abs(c_t) + 1))
-    c_ss[ c_t == 0] = 0
+    c_same_sign = np.sign(c_t) * (1 - 1 / (np.abs(c_t) + 1))
+    c_same_sign[ c_t == 0] = 0
     
     opposite_sign_indices = (np.sign(a) != np.sign(b)).ravel().nonzero()
-    a_os = a[opposite_sign_indices]
-    b_os = b[opposite_sign_indices]
-    c_os = a_os + b_os
+    a_opposite_sign = a[opposite_sign_indices]
+    b_opposite_sign = b[opposite_sign_indices]
+    c_opposite_sign = a_opposite_sign + b_opposite_sign
     
-    result[same_sign_indices] = c_ss
-    result[opposite_sign_indices] = c_os
+    result[same_sign_indices] = c_same_sign
+    result[opposite_sign_indices] = c_opposite_sign
 
-    return result
+    if scalars:
+        # return same type that we got
+        return result[0]
+    else:
+        return result
 
 
 
@@ -108,7 +124,7 @@ def similarity(point, set_of_points, indices):
 
     # first handles the non-cell case, e.g. comparing inputs to 
     # the features within a group
-    if point.dtype.name != 'object':
+    if not isinstance(point, list):
         
         point_mat = np.tile(point, (num_points, 1))
         set_mat = set_of_points[:,indices]
@@ -131,14 +147,14 @@ def similarity(point, set_of_points, indices):
         sum_sq_set = np.zeros(num_points)
 
         for index in range(0,num_groups):
-            if point[index]:
+            if np.size(point[index]):
 
                 # this weighting factor weights matches more heavily in groups
                 # with more features. In a group with one feature, a match
                 # means less than in a group with 10 features.
                 # TODO: consider whether to continue using the weighting
                 weight = len(point[index])
-                point_mat = np.tile(point[index], (1, num_points))
+                point_mat = np.tile(point[index][np.newaxis].transpose(), (1, num_points))
                 set_mat = set_of_points[index][:,indices]
                 inner_product += weight * np.sum((point_mat * set_mat), axis=0)
                 sum_sq_point += weight * np.sum(point_mat ** 2, axis=0)

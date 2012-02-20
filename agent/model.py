@@ -10,7 +10,7 @@ class Model(object):
 
     def __init__(self, num_primitives, num_actions):
 
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.create_logger()
         
         self.SIMILARITY_THRESHOLD = 0.9       # real, 0 < x < 1
         self.MAX_ENTRIES = 10 ** 4               # integer, somewhat large
@@ -41,14 +41,17 @@ class Model(object):
         self.trace_reward = np.zeros(self.TRACE_LENGTH)
 
         # Initializes dummy transitions
-        self.last_entry = 0
+        self.last_entry = 1
         self.cause[1][0,0] = 1
         self.effect[1][0,0] = 1
         #self.countp[0]= eps
 
 
+    def create_logger(self):
+        self.logger = logging.getLogger(self.__class__.__name__)
+
     def add_group(self):
-        size = (1, np.size(self.cause[-1], 2))
+        size = (1, np.size(self.cause[-1], 1))
         self.history.append(np.zeros(size))
         self.cause.append(np.zeros(size))
         self.effect.append(np.zeros(size))
@@ -71,48 +74,50 @@ class Model(object):
 
 
 
-    def train(self, effect, history, cause, reward):
+    def train(self, new_effect, new_history, new_cause, reward):
         """
-        Takes in 'cause' and 'effect' 
+        Takes in 'new_cause' and 'new_effect' 
         to train the model of the environment.
         """
 
         # TODO: udpate comments to reflect new representation
 
         eps = np.finfo(np.double).eps            
-        num_groups = len(cause)
+        num_groups = len(new_cause)
 
         # Checks to see whether the new entry is already in the library 
         # TODO: make the similarity threshold a function of the count? This would
         # allow often-observed transitions to require a closer fit, and populate
         # the model space more densely in areas where it accumulates more
         # observations.
-        transition_similarity = similarity(history, self.history, range(0,self.last_entry))
+        transition_similarity = similarity(new_history, self.history, range(self.last_entry))
 
         # If the cause doesn't match, the transition doesn't match
         cause_group = None
         cause_feature = None
-        for group in cause[1:]:
-            feature = group.ravel().nonzero()
-            if feature:
-                cause_group = group
+        for group_index in range(1, num_groups):
+            group = new_cause[group_index]
+            feature = group.ravel().nonzero()[0]
+            if np.size(feature):
+                cause_group = group_index
                 cause_feature = feature
                  
         match_indices = []
-        if cause_group:
-            transition_similarity = transition_similarity * cause_group[cause_feature, 0:self.last_entry]
-            match_indices = ( transition_similarity > self.SIMILARITY_THRESHOLD).ravel().nonzero()
+        
+        if cause_group is not None:            
+            transition_similarity *= self.cause[cause_group][cause_feature, :self.last_entry][0]
+            match_indices = ( transition_similarity > self.SIMILARITY_THRESHOLD).ravel().nonzero()[0]
 
 
         #if context and cause are sufficiently different, 
         #adds a new entry to the model library
-        if not match_indices: 
+        if np.size(match_indices) == 0: 
             self.last_entry += 1
             matching_transition_index = self.last_entry
             for index in range(1,num_groups):
-                self.history[index][:, self.last_entry] = history[index]
-                self.cause[index][:, self.last_entry] = cause[index]
-                self.effect[index][:, self.last_entry] = effect[index]
+                self.history[index][:, self.last_entry] = new_history[index]
+                self.cause[index][:, self.last_entry] = new_cause[index]
+                self.effect[index][:, self.last_entry] = new_effect[index]
 
             self.count[matching_transition_index] =  1
             current_update_rate = 1
@@ -126,22 +131,24 @@ class Model(object):
             # modifies cause and effect
             # making the update rate a function of count allows updates to occur
             # more rapidly when there is little past experience to contradict them
-            current_update_rate = (1 - self.UPDATE_RATE) / self.count(matching_transition_index) + self.UPDATE_RATE
+            current_update_rate = (1 - self.UPDATE_RATE) / self.count[matching_transition_index] + self.UPDATE_RATE
             current_update_rate = min(1, current_update_rate)
 
             for index in range(1,num_groups):
                 self.effect[index][:, matching_transition_index] = self.effect[index][:, matching_transition_index] * \
-                    (1 - current_update_rate) + effect[index] * current_update_rate
+                    (1 - current_update_rate) + new_effect[index] * current_update_rate
                 # TODO: update cause as well?
                 #         self.cause[k][:, matching_transition_index] = 
 
                 
         #Performs credit assignment on the trace
         # updates the transition trace
-        self.trace_index = np.array([self.trace_index[1:], matching_transition_index])
+        self.trace_index = np.hstack((self.trace_index, matching_transition_index))
+        self.trace_index = self.trace_index[1:]
 
         # updates the reward trace
-        self.trace_reward = np.array([self.trace_reward[1:], reward])
+        self.trace_reward = np.hstack((self.trace_reward, reward))
+        self.trace_reward = self.trace_reward[1:]
 
         credit = self.trace_reward[0]
         for i in range(1, self.TRACE_LENGTH):

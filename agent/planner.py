@@ -30,7 +30,7 @@ class Planner(object):
 
         num_actions = np.size(self.action)
         #handles motor commands as all-or-none
-        self.action = np.zeros(np.size(num_actions))
+        self.action = np.zeros(num_actions)
 
         # old code: only one action element active
         self.action[int(np.random.random_sample() * num_actions)] = 1
@@ -117,15 +117,17 @@ class Planner(object):
         # is currently active. Experiencing a goal feature causes the goal to be
         # achieved, and the passage of time allows the goal value to fade.
         for index in range(agent.num_groups):
-            agent.goal[index] *= (1 - agent.feature_activity[index])
-            agent.goal[index] *= (1 - agent.GOAL_DECAY_RATE)
+            if np.size(agent.goal[index]):
+                agent.goal[index] *= (1 - agent.feature_activity[index])
+                agent.goal[index] *= (1 - agent.GOAL_DECAY_RATE)
 
 
         # Calculates the value associated with each effect
         goal_value = np.zeros(model.last_entry)
         for index in range (1, agent.num_groups):
-            goal_value += np.sum(agent.model.effect[index][:, :model.last_entry] * \
-                                     (np.dot(agent.goal[index], np.ones(model.last_entry))), 0)
+            # [newaxis] needed to make it 2D
+            splashed = np.dot(agent.goal[index][np.newaxis].transpose(), np.ones((1, model.last_entry)))
+            goal_value += np.sum(model.effect[index][:, :model.last_entry] * splashed, 0)
 
 
         # Sets maximum goal value to 1.
@@ -140,7 +142,7 @@ class Planner(object):
         # factor in to its vote
         count_weight = utils.sigmoid(np.log(model.count[:model.last_entry] + 1) / 3)
 
-        similarity = utils.similarity(agent.working_memory, model.hist, range(model.last_entry))
+        similarity = utils.similarity(agent.working_memory, model.history, range(model.last_entry))
 
         # TODO: Raise similarity by some power to focus on more similar transitions?
 
@@ -157,11 +159,12 @@ class Planner(object):
         # time. 
 
         # Scales the vote by the distance between the cause and any current goals
-        goal_dist = np.zeros(model.last_entry)
-        for index in range(1,agent.num_groups):
-            goal_dist_group = np.max (model.cause[index][:,:model.last_entry] - \
-                np.dot(agent.goal[index], np.ones(model.last_entry)))
-            goal_dist = np.maximum(goal_dist, goal_dist_group)
+        goal_distance = np.zeros(model.last_entry)
+        for index in range(1,agent.num_groups):            
+            goal_distance_group = np.max (model.cause[index][:,:model.last_entry] - \
+                                              np.dot(agent.goal[index][np.newaxis].transpose(),
+                                                     np.ones((1, model.last_entry))))
+            goal_distance = np.maximum(goal_distance, goal_distance_group)
 
 
         # ### DEBUG
@@ -178,17 +181,16 @@ class Planner(object):
         # ###
 
         # DEBUG
-        transition_vote = value * similarity * goal_dist ** 4
-        # transition_vote = count_weight * value * similarity * goal_dist ** 4
-        # transition_vote = count_weight * value * similarity .* goal_dist ** 4 * feature_dist ** 4
+        transition_vote = value * similarity * goal_distance ** 4
+        # transition_vote = count_weight * value * similarity * goal_distance ** 4
+        # transition_vote = count_weight * value * similarity .* goal_distance ** 4 * feature_dist ** 4
         
-        max_transition_indices = np.argmax(transition_vote)
-        max_transition_index = max_transition_indices[0]
+        max_transition_index = np.argmax(transition_vote)
 
         if transition_vote[max_transition_index] > 0:
             for index in range(1,agent.num_groups):
-                if agent.model.cause[index][:, max_transition_index].nonzero():
-                    max_goal_feature = agent.model.cause[index][:, max_transition_index].ravel().nonzero()
+                if model.cause[index][:, max_transition_index].nonzero():
+                    max_goal_feature = model.cause[index][:, max_transition_index].ravel().nonzero()
                     max_goal_group = index
                     agent.goal[max_goal_group][max_goal_feature] = \
                         utils.bounded_sum(agent.goal[max_goal_group][max_goal_feature],
@@ -204,7 +206,7 @@ class Planner(object):
                     
         # primitive action goals can be fulfilled immediately
         self.action = np.zeros(np.size(self.action))
-        if agent.goal[2] > 0:
+        if np.size((agent.goal[2] > 0).nonzero()):
             self.act = 1
 
             self.action[agent.goal[2] > 0] = 1
