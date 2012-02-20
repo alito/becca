@@ -63,9 +63,8 @@ class Agent(object):
         self.model = Model( num_primitives, num_actions)
         self.planner = Planner(num_actions)
 
-        self.step_counter = 0
         self.num_groups = 3
-        self.feature_added = None
+        self.feature_added = False
         self.debug = False
 
 
@@ -172,7 +171,7 @@ class Agent(object):
     def add_feature(self, new_feature, nth_group, feature_vote):
         
         has_dummy = np.max(self.feature_map.map[nth_group] [0,:]) == 0
-        self.feature_added = 1
+        self.feature_added = True
 
         feature_vote[nth_group] = np.vstack((feature_vote[nth_group], 0))
         self.feature_stimulation[nth_group] = np.vstack((self.feature_stimulation[nth_group], 0))
@@ -238,7 +237,7 @@ class Agent(object):
 
             if self.planner.act:
                 if np.count_nonzero(self.planner.action):
-                    deliberate_action_index = self.planner.action.nonzero()
+                    deliberate_action_index = self.planner.action.nonzero()[0]
 
                     #ensures that exploratory actions will be attended
                     max_salience_value = 10
@@ -257,12 +256,11 @@ class Agent(object):
 
 
     def update_feature_map(self, grouped_input):
-        self.feature_added = 0
+        self.feature_added = False
 
         feature_vote = utils.AutomaticList()
         num_groups = len(grouped_input)
         for index in range(1,num_groups):
-
             if np.max(self.feature_map.map[index][0,:]) == 0:
                 margin = 1
             else:
@@ -288,7 +286,6 @@ class Agent(object):
             # Calculates the feature votes for all feature in group 'index'.
             if index > 2:
                 if self.feature_map.map[index].shape[0] > 0:
-
                     # This formulation of voting was chosen to have the
                     # property that if the group's contributing inputs are are 1,
                     # it will result in a feature vote of 1.
@@ -350,6 +347,7 @@ class Agent(object):
                 # downward projections.
                 for parent_group_index in range(group_index-1, -1, -1):
                     relevant_input_map_elements = (self.grouper.input_map[group_index][:,1] == parent_group_index).nonzero()
+                    print 'relevant_input', relevant_input_map_elements
                     relevant_inputs = self.grouper.input_map[group_index][relevant_input_map_elements,0]
 
                     # Checks whether there are any relevant inputs to project back
@@ -369,26 +367,26 @@ class Agent(object):
                                 # Translates the feature element to its separate
                                 # lower level input elements one by one.
 
-                                # 'propogation_strength' is the amount that
+                                # 'propagation_strength' is the amount that
                                 # each element in the feature map contributes
                                 # to the feature being expanded. The square
                                 # root is included to offset the squaring that
                                 # occurs during the upward voting process. (See
                                 # agent_update_feature_map.m) 
-                                propogation_strength = np.sqrt( self.feature_map.map[group_index][feature_index, relevant_input_map_elements].transpose())
+                                propagation_strength = np.sqrt( self.feature_map.map[group_index][feature_index, relevant_input_map_elements].transpose())
 
-                                # 'propogated_activation' is the propogation
+                                # 'propagated_activation' is the propagation
                                 # strength scaled by the activity of the
                                 # high-level feature being expanded.
-                                propogated_activation = propogation_strength * feature[group_index][feature_index]
+                                propagated_activation = propagation_strength * feature[group_index][feature_index]
 
                                 # The lower-level feature is incremented 
-                                # according to the 'propogated_activation'. The
+                                # according to the 'propagated_activation'. The
                                 # incrementing is done nonlinearly to ensure
                                 # that the activity of the lower level features
                                 # never exceeds 1.
                                 feature[parent_group_index][relevant_inputs] = \
-                                    utils.bounded_sum(feature[parent_group_index] [relevant_inputs], propogated_activation)
+                                    utils.bounded_sum(feature[parent_group_index] [relevant_inputs], propagated_activation)
 
                 #eliminates the original representation of the feature,
                 #now that it is expressed in terms of lower level features
@@ -406,9 +404,10 @@ class Agent(object):
         New features are created as necessary to adequately represent the data.
         """
 
-        self.step_counter += 1
-        logging.debug("Step: %s" % self.step_counter)
+        self.timestep += 1
 
+        #print self.timestep, self.num_groups
+        
         self.sensors = sensors.copy()
         self.primitives = primitives.copy()
 
@@ -489,3 +488,5 @@ class Agent(object):
         # print(self.action.transpose())
 
         
+        return self.action
+    
