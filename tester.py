@@ -14,18 +14,19 @@ import logging
 selects the World that the Agent will be placed in 
 """
 
-#from worlds.grid_1D import Grid_1D as worldcreator
+from worlds.grid_1D import Grid_1D as worldcreator
 #from worlds.grid_1D_ms import Grid_1D_ms as worldcreator
 #from worlds.grid_1D_noise import Grid_1D_noise as worldcreator
 #from worlds.grid_2D import Grid_2D as worldcreator
-from worlds.grid_2D_dc import Grid_2D_dc as worldcreator
+#from worlds.grid_2D_dc import Grid_2D_dc as worldcreator
 #from worlds.image_1D import Image_1D as worldcreator
 #
 #    import worlds.listen
 
 #    import worlds.morris  # under development
 
-from agent.agent_stub import Agent
+#from agent.agent_stub import Agent
+from agent.agent import Agent
 
 from experiment.experiment import Experiment
 
