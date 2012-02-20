@@ -33,7 +33,7 @@ class Planner(object):
         self.action = np.zeros(num_actions)
 
         # old code: only one action element active
-        self.action[int(np.random.random_sample() * num_actions)] = 1
+        self.action[np.random.random_integers(0, num_actions-1)] = 1
 
         #     % new code
         #     N = 1; %adjust this<97>typical number of ones per exploratory action
@@ -76,7 +76,7 @@ class Planner(object):
         # debug
         # Picks closest weight only.
         max_indices = np.argmax(weights)
-        max_index = max_indices[int(np.random.random_sample() * len(max_indices))]
+        max_index = max_indices[np.random.random_integers(0, len(max_indices)-1)]
 
         weights = np.zeros(np.size(weights))
         weights[max_index] = 1
@@ -120,7 +120,6 @@ class Planner(object):
             if np.size(agent.goal[index]):
                 agent.goal[index] *= (1 - agent.feature_activity[index])
                 agent.goal[index] *= (1 - agent.GOAL_DECAY_RATE)
-
 
         # Calculates the value associated with each effect
         goal_value = np.zeros(model.last_entry)
@@ -189,8 +188,9 @@ class Planner(object):
 
         if transition_vote[max_transition_index] > 0:
             for index in range(1,agent.num_groups):
-                if model.cause[index][:, max_transition_index].nonzero():
-                    max_goal_feature = model.cause[index][:, max_transition_index].ravel().nonzero()
+                nonzeros = model.cause[index][:, max_transition_index].ravel().nonzero()[0]
+                if np.size(nonzeros):
+                    max_goal_feature = nonzeros[0]
                     max_goal_group = index
                     agent.goal[max_goal_group][max_goal_feature] = \
                         utils.bounded_sum(agent.goal[max_goal_group][max_goal_feature],
@@ -198,16 +198,14 @@ class Planner(object):
 
                     if agent.debug:
                         pass
-        #                 max_goal_group
-        #                 max_goal_feature
-        #                 agent.goal[max_goal_group]'
-        #                 keyboard
-
+                        # print max_goal_group
+                        # print max_goal_feature
+                        # print agent.goal[max_goal_group].transpose()
                     
         # primitive action goals can be fulfilled immediately
         self.action = np.zeros(np.size(self.action))
         if np.size((agent.goal[2] > 0).nonzero()):
-            self.act = 1
+            self.act = True
 
             self.action[agent.goal[2] > 0] = 1
             agent.goal[2] = np.zeros(np.size( agent.goal[2]))
