@@ -4,7 +4,7 @@ Created on Jan 11, 2012
 @author: brandon_rohrer
 '''
 
-import pickle
+import cPickle as pickle
 import copy
 import logging
 
@@ -101,6 +101,7 @@ class Agent(object):
                 self = pickle.load(agent_data)
 
             self.logger = logging.getLogger(self.__class__.__name__)
+            self.model.create_logger()
             print('Agent restored at timestep ' + str(self.timestep))
 
         # otherwise initializes from scratch     
@@ -127,7 +128,7 @@ class Agent(object):
                 pickle.dump(self, agent_data)
 
                 self.logger = logger
-                self.moddel.logger = model_logger
+                self.model.logger = model_logger
             self.logger.info('agent data saved at ' + str(self.timestep) + ' time steps')
 
         except IOError as err:
@@ -142,7 +143,7 @@ class Agent(object):
 
     def integrate_state(self, previous_state, new_state, decay_rate):
         num_groups = len(new_state)
-        integrated_state = np.zeros(previous_state.shape)
+        integrated_state = utils.AutomaticList()
         for index in range(1, num_groups):
             integrated_state[index] = utils.bounded_sum(previous_state[index] * (1 - decay_rate), new_state[index])
 
@@ -406,6 +407,7 @@ class Agent(object):
         """
 
         self.step_counter += 1
+        logging.debug("Step: %s" % self.step_counter)
 
         self.sensors = sensors.copy()
         self.primitives = primitives.copy()
