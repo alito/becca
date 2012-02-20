@@ -120,7 +120,7 @@ class Model(object):
                 self.effect[index][:, self.last_entry] = new_effect[index]
 
             self.count[matching_transition_index] =  1
-            current_update_rate = 1
+            current_update_rate = 1.0
 
         #otherwise increments a nearby entry
         else:
@@ -132,7 +132,7 @@ class Model(object):
             # making the update rate a function of count allows updates to occur
             # more rapidly when there is little past experience to contradict them
             current_update_rate = (1 - self.UPDATE_RATE) / self.count[matching_transition_index] + self.UPDATE_RATE
-            current_update_rate = min(1, current_update_rate)
+            current_update_rate = min(1.0, current_update_rate)
 
             for index in range(1,num_groups):
                 self.effect[index][:, matching_transition_index] = self.effect[index][:, matching_transition_index] * \
@@ -174,9 +174,10 @@ class Model(object):
             self.clean_count = self.CLEANING_PERIOD + 1
 
         if self.clean_count > self.CLEANING_PERIOD:
-
+            self.logger.info("Cleaning up model")
+            
             self.count[:self.last_entry] -=  1 / self.count[:self.last_entry]
-            forget_indices = (self.count[:self.last_entry] < eps).ravel().nonzero()
+            forget_indices = (self.count[:self.last_entry] < eps).ravel().nonzero()[0]
 
             for index in range(1,num_groups):
                 self.history[index] = np.delete(self.history[index], forget_indices, 1)
