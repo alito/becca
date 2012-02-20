@@ -14,6 +14,8 @@ import logging
 selects the World that the Agent will be placed in 
 """
 
+Default_Save_Period = 20000
+
 from worlds.grid_1D import Grid_1D as worldcreator
 #from worlds.grid_1D_ms import Grid_1D_ms as worldcreator
 #from worlds.grid_1D_noise import Grid_1D_noise as worldcreator
@@ -32,7 +34,7 @@ from experiment.experiment import Experiment
 
 def main(args):
     parser = argparse.ArgumentParser(description='tester')
-    parser.add_argument('-s', '--save-period', dest="save_period", type=int, default=1000,
+    parser.add_argument('-s', '--save-period', dest="save_period", type=int, default=Default_Save_Period,
                         help="How often to take snapshots (default: %(default)s)")
     parser.add_argument('-p', '--pickle-prefix', dest="pickle_prefix", default=None,
                         help="Use pickle prefix specified")
@@ -50,7 +52,7 @@ def main(args):
     elif parameters.verbosity == 3:
         logging_level = logging.DEBUG
 
-    logging.basicConfig(level=logging_level)
+    logging.basicConfig(level=logging_level, format="%(asctime)s %(levelname)-8s %(message)s")
     
     experiment = Experiment(worldcreator, Agent, pickle_prefix=parameters.pickle_prefix,
                             backup_period=parameters.save_period)
