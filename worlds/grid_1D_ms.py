@@ -4,6 +4,8 @@ Created on Jan 11, 2012
 @author: brandon_rohrer
 '''
 import random
+import logging
+
 import numpy as np
 
 from .world import World
@@ -37,10 +39,6 @@ class Grid_1D_ms(World):
         self.num_primitives = 9
         self.num_actions = 3
 
-        self.sensors = np.zeros(self.num_sensors)
-        self.primitives = np.zeros(self.num_primitives)
-        self.actions = np.zeros(self.num_actions)
-
         self.world_state = 0            
 
         self.REPORTING_PERIOD = 10 ** 3
@@ -52,27 +50,26 @@ class Grid_1D_ms(World):
         to the user
         '''
         if (self.display_features):
-            state_img = ['.'] * self.num_primitives
-            state_img[self.world_state] = 'O'
-            print('world timestep ' + str(self.timestep) + '  ' + ''.join(state_img))
+            state_image = ['.'] * self.num_primitives
+            state_image[self.world_state] = 'O'
+            logging.info('world timestep %s    %s' % (self.timestep, ''.join(state_image)))
             
-        if (np.mod(self.timestep, self.REPORTING_PERIOD) == 0):
-            self.reward_history = np.append(self.reward_history, self.cumulative_reward)
+        if (self.timestep % self.REPORTING_PERIOD) == 0:
+            logging.info("%s timesteps done" % self.timestep)
+            self.record_reward_history()
             self.cumulative_reward = 0
-            #plt.plot(self.reward_history)
+            self.show_reward_history()
 
 
         
     def step(self, action): 
         ''' advances the World by one timestep.
-        Accepts agent as an argument only so that it can occasionally backup
-        the agent's state to disk.
         '''
         self.timestep += 1 
         action = np.round(action)
 
         if random.random() < 0.1:
-            action += round(random.random() * 6) * np.round(np.random.random_sample((3,)))
+            action += round(random.random() * 6) * np.round(np.random.random_sample(3))
 
         energy = action[0] + action[1]
         
@@ -84,21 +81,22 @@ class Grid_1D_ms(World):
         
         # Assigns basic_feature_input elements as binary. Represents the presence
         # or absence of the current position in the bin.
-        self.sensors = np.zeros(self.num_sensors)
-        self.primitives = np.zeros(self.num_primitives)
-        self.primitives[simple_state] = 1
+        sensors = np.zeros(self.num_sensors)
+        primitives = np.zeros(self.num_primitives)
+        primitives[simple_state] = 1
         
         # Assigns reward based on the current state
-        self.reward = self.primitives[8] * (-0.5)
-        self.reward += self.primitives[3] * ( 0.5)
+        reward = primitives[8] * (-0.5)
+        reward += primitives[3] * ( 0.5)
         
         # Punishes actions just a little.
-        self.reward -= energy / 100
-        self.reward = np.max( self.reward, -1)
+        reward -= energy / 100
+        reward = np.max(reward, -1)
         
-        self.log()
+        self.log(sensors, primitives, reward)
         self.display()
-        
+
+        return sensors, primitives, reward
         
         
     def final_performance(self):

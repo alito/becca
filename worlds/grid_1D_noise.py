@@ -3,6 +3,8 @@ Created on Jan 11, 2012
 
 @author: brandon_rohrer
 '''
+import logging
+
 import numpy as np
 
 from .world import World
@@ -33,11 +35,8 @@ class Grid_1D_noise(World):
         self.num_actions = 3
         self.num_primitives = self.noise_inputs + self.num_real_features
 
-
         self.sensors = np.zeros(self.num_sensors)
-        self.primitives = np.zeros(self.num_primitives)
-        self.actions = np.zeros(self.num_actions)
-
+        
         self.world_state = 0            
 
         self.REPORTING_PERIOD = 10 ** 3
@@ -50,14 +49,15 @@ class Grid_1D_noise(World):
         to the user
         '''
         if (self.display_features):
-            state_img = ['.'] * self.num_primitives
-            state_img[self.world_state] = 'O'
-            print('world timestep ' + str(self.timestep) + '  ' + ''.join(state_img))
+            state_image = ['.'] * self.num_primitives
+            state_image[self.world_state] = 'O'
+            logging.info('world timestep %s    %s' % (self.timestep, ''.join(state_image)))
             
-        if (np.mod(self.timestep, self.REPORTING_PERIOD) == 0):
-            self.reward_history = np.append(self.reward_history, self.cumulative_reward)
+        if (self.timestep % self.REPORTING_PERIOD) == 0:
+            logging.info("%s timesteps done" % self.timestep)
+            self.record_reward_history()
             self.cumulative_reward = 0
-            #plt.plot(self.reward_history)
+            self.show_reward_history()
 
         
         
@@ -75,22 +75,24 @@ class Grid_1D_noise(World):
         self.world_state = min(self.world_state, 2)
         self.world_state = max(self.world_state, 0)
 
-        real_features = np.zeros((self.num_real_features,))
+        real_features = np.zeros(self.num_real_features)
         real_features[int(self.world_state)] = 1
 
-        noise = np.round(np.random.random_sample((self.num_real_features,)))
-        self.basic_feature_input = np.hstack((real_features, noise))
+        noise = np.round(np.random.random_sample(self.noise_inputs))
+        primitives = np.hstack((real_features, noise))
 
-        self.reward = -0.5
+        reward = -0.5
         if int(self.world_state) == 2:
-            self.reward = 0.5
+            reward = 0.5
 
-        self.reward -= energy * self.ENERGY_PENALTY
+        reward -= energy * self.ENERGY_PENALTY
         
-        self.log()
+        self.log(self.sensors, primitives, reward)
         self.display()
-        
-        
+
+        return self.sensors, primitives, reward
+
+    
     def final_performance(self):
         ''' When the world terminates, this returns the average performance 
         of the agent on the last 3 blocks.

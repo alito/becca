@@ -35,7 +35,9 @@ class Experiment(object):
 
              
     def run(self):
-        actions = None
+        import numpy
+        # give an initial null action to kick things off
+        actions = numpy.zeros(self.world.num_actions)
         while self.world.final_performance() < -1:
             sensors, primitives, reward = self.world.step(actions)
             actions = self.agent.step(sensors, primitives, reward)

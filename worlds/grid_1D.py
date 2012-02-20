@@ -51,16 +51,14 @@ class Grid_1D(World):
         to the user
         '''
         if (self.display_features):
-            state_img = ['.'] * self.num_primitives
-            state_img[self.world_state] = 'O'
-            logging.info('world timestep %s    %s' % (self.timestep, ''.join(state_img)))
+            state_image = ['.'] * self.num_primitives
+            state_image[self.world_state] = 'O'
+            logging.info('world timestep %s    %s' % (self.timestep, ''.join(state_image)))
             
-        if (np.mod(self.timestep, self.REPORTING_PERIOD) == 0):
+        if (self.timestep % self.REPORTING_PERIOD) == 0:
             logging.info("%s timesteps done" % self.timestep)
             self.record_reward_history()
             self.cumulative_reward = 0
-            print self.reward_history
-
             self.show_reward_history()
 
         
@@ -131,8 +129,6 @@ class Grid_1D(World):
         '''
         if (self.timestep > self.LIFESPAN):
             performance = np.mean(self.reward_history[-3:]) / self.REPORTING_PERIOD
-            #plt.ioff()
-            #plt.show()
             
             assert(performance >= -1.)
             return performance

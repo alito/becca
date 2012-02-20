@@ -3,6 +3,8 @@ Created on Jan 11, 2012
 
 @author: brandon_rohrer
 '''
+import logging
+
 import numpy as np
 #import matplotlib.pyplot as plt
 
@@ -47,24 +49,18 @@ class Grid_2D(World):
         self.obstacle = (1,1)
 
         self.sensors = np.zeros(self.num_sensors)
-        self.primitives = np.zeros(self.num_primitives)
-        self.actions = np.zeros(self.num_actions)
 
 		
     
     def display(self):
         ''' provides an intuitive display of the current state of the World 
         to the user
-        '''
-        if (self.display_features):
-            state_img = ['.'] * self.num_primitives
-            state_img[self.world_state] = 'O'
-            print('world timestep ' + str(self.timestep) + '  ' + ''.join(state_img))
-            
-        if (np.mod(self.timestep, self.REPORTING_PERIOD) == 0):
-            self.reward_history = np.append(self.reward_history, self.cumulative_reward)
+        '''            
+        if (self.timestep % self.REPORTING_PERIOD) == 0:
+            logging.info("%s timesteps done" % self.timestep)
+            self.record_reward_history()
             self.cumulative_reward = 0
-            #plt.plot(self.reward_history)
+            self.show_reward_history()
 
 
         
@@ -90,21 +86,22 @@ class Grid_2D(World):
 
         self.simple_state = np.round(self.world_state)
 
-        self.basic_feature_input = np.zeros((self.num_primitives,))
-        self.basic_feature_input[self.simple_state[1] + self.simple_state[0] * self.world_size] = 1
+        primitives = np.zeros((self.num_primitives,))
+        primitives[self.simple_state[1] + self.simple_state[0] * self.world_size] = 1
 
-        self.reward = 0
+        reward = 0
         if tuple(self.simple_state.flatten()) == self.obstacle:
-            self.reward = -0.5
+            reward = -0.5
         elif tuple(self.simple_state.flatten()) == self.target:
-            self.reward = 0.5
+            reward = 0.5
 
-        self.reward -= self.ENERGY_PENALTY * energy
+        reward -= self.ENERGY_PENALTY * energy
 
         
-        self.log()
+        self.log(self.sensors, primitives, reward)
         self.display()
-        
+
+        return self.sensors, primitives, reward
 
         
     def final_performance(self):
