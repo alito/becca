@@ -1,4 +1,5 @@
 import copy
+import itertools
 
 import numpy as np
 
@@ -17,15 +18,14 @@ class Grouper(object):
         self.MAX_GROUP_SIZE = 100
         self.MAX_NUM_FEATURES = max_num_features
 
-        self.features_full = 0
-        self.filename_postfix = '_self.mat'
+        self.features_full = False
 
         self.correlation = np.zeros((self.MAX_NUM_FEATURES, self.MAX_NUM_FEATURES))
         self.combination = np.ones( (self.MAX_NUM_FEATURES, self.MAX_NUM_FEATURES)) - np.eye( self.MAX_NUM_FEATURES)
         self.propensity = np.zeros((self.MAX_NUM_FEATURES, self.MAX_NUM_FEATURES))
         self.groups_per_feature = np.zeros( self.MAX_NUM_FEATURES)
         self.feature_vector = np.zeros(self.MAX_NUM_FEATURES)
-        self.index_map_inverse = np.zeros((self.MAX_NUM_FEATURES, 2))
+        self.index_map_inverse = np.zeros((self.MAX_NUM_FEATURES, 2), np.int)
 
         #self.input_map   #maps input groups to feature groups
         #self.index_map    #maps input groups to correlation indices
@@ -40,7 +40,8 @@ class Grouper(object):
         self.input_map.append(np.vstack((np.cumsum(np.ones(num_sensors, np.int)) - 1, 
                                          np.zeros(num_sensors, np.int))).transpose())
         self.index_map.append(np.cumsum(np.ones(num_sensors, np.int)) - 1)
-        self.index_map_inverse[ :num_sensors, :] = np.hstack(( np.cumsum( np.ones( num_sensors)) - 1, np.zeros(num_sensors)))
+        self.index_map_inverse[ :num_sensors, :] = np.hstack(( np.cumsum( np.ones( num_sensors, np.int)) - 1,
+                                                               np.zeros(num_sensors, np.int)))
         self.last_entry = num_sensors
 
         #initializes group 1
@@ -50,7 +51,7 @@ class Grouper(object):
         self.index_map.append(np.cumsum(np.ones( num_primitives, np.int)) - 1 + self.last_entry)
 
         self.index_map_inverse[self.last_entry: self.last_entry + num_primitives, :] = \
-            np.vstack((np.cumsum(np.ones( num_primitives)) - 1, np.ones( num_primitives))).transpose()
+            np.vstack((np.cumsum(np.ones( num_primitives, np.int)) - 1, np.ones( num_primitives, np.int))).transpose()
         self.last_entry += num_primitives
 
         #initializes group 2
@@ -59,7 +60,7 @@ class Grouper(object):
                                           2 * np.ones( num_actions, np.int) )).transpose())
         self.index_map.append(np.cumsum( np.ones( num_actions, np.int)) - 1 + self.last_entry)
         self.index_map_inverse[self.last_entry: self.last_entry + num_actions, :] = \
-            np.vstack(( np.cumsum( np.ones( num_actions)) - 1, 2 * np.ones( num_actions))).transpose()
+            np.vstack(( np.cumsum( np.ones( num_actions, np.int)) - 1, 2 * np.ones( num_actions, np.int))).transpose()
         self.last_entry += num_actions
 
 
@@ -131,7 +132,7 @@ class Grouper(object):
             self.feature_vector[self.index_map[index]] = input[index]
 
 
-        group_added = 0
+        group_added = False
 
         if not self.features_full:
 
@@ -165,59 +166,69 @@ class Grouper(object):
 
             if self.last_entry > self.MAX_NUM_FEATURES * 0.95:
                 self.features_full = True
-                print('==Max number of features almost reached (%s)==' % self.last_entry)
+                self.logger.warn('==Max number of features almost reached (%s)==' % self.last_entry)
 
-            if np.max(self.correlation) > self.NEW_GROUP_THRESHOLD:
+            max_correlation = np.max(self.correlation)
+            if max_correlation > self.NEW_GROUP_THRESHOLD:
 
-                group_added = 1
-                index1, index2 = np.unravel_index(np.argmax(self.correlation), self.correlation.shape)
-                which_index = int( np.random.random_sample() * len(index1))
-                index1 = index1[which_index]
-                index2 = index2[which_index]
-                element = np.array([index1, index2])
-                self.correlation[element, element] = 0
-                self.combination[element, element] = 0
+                group_added = True
+                indices1, indices2 = (self.correlation == max_correlation).nonzero()
+                which_index = np.random.random_integers(0, len(indices1)-1)
+                index1 = indices1[which_index]
+                index2 = indices2[which_index]
+                relevant_indices = [index1, index2]
+
+                for element in itertools.product(relevant_indices, relevant_indices):
+                    self.correlation[element] = 0
+                    self.combination[element] = 0
+                
 
                 # Z tracks the available elements to add and the correlation 
                 # with each
                 Z = np.zeros( self.combination.shape)
-                Z[:,element] = 1
-                Z[element,:] = 1
 
+                Z[:,relevant_indices] = 1
+                Z[relevant_indices,:] = 1
                 while True:
                     T = np.abs( self.correlation * Z)
                     Tc = np.sum(T, axis=0)
                     Tr = np.sum(T, axis=1)
                     Tl = Tc + Tr.transpose()
-                    Tl = Tl / (2 * len(element))
-                    Tl[element] = 0
-                    if ( np.max(Tl) < self.MIN_SIG_CORR) or (len(element) >= self.MAX_GROUP_SIZE):
+                    Tl = Tl / (2 * len(relevant_indices))
+
+                    Tl[relevant_indices] = 0
+                    if ( np.max(Tl) < self.MIN_SIG_CORR) or (len(relevant_indices) >= self.MAX_GROUP_SIZE):
                         break
 
-                    index = np.argmax(Tl)
-                    index = index[int(np.random.random_sample() * len(index))]
-                    element = np.hstack((element,index))
-                    self.correlation [element, element] = 0
-                    self.combination[element, element] = 0
-                    Z[:,element] = 1
-                    Z[element,:] = 1
+                    max_tl = np.max(Tl)
+                    max_tl_indices = (Tl == max_tl).nonzero()[0]
+                    index = max_tl_indices[np.random.random_integers(0, len(max_tl_indices)-1)]
+                    relevant_indices.append(index)
+
+                    for element in itertools.product(relevant_indices, relevant_indices):
+                        self.correlation [element] = 0
+                        self.combination[element] = 0
+                    Z[:,relevant_indices] = 1
+                    Z[relevant_indices,:] = 1
 
                 element = np.sort(element)
                 self.groups_per_feature[element] += 1
 
-
-                num_groups += 1
-
-                self.input_map[num_groups].append(np.array([]))
-                for element_element in element:
-                    self.input_map[num_groups] = np.vstack((self.input_map[num_groups], self.index_map_inverse[element_element, :]))
+                self.input_map.append(None)
+                for index in relevant_indices:
+                    if self.input_map[-1] is None:
+                        self.input_map[-1] = self.index_map_inverse[index, :]
+                    else:
+                        self.input_map[-1] = np.vstack((self.input_map[-1], self.index_map_inverse[index, :]))
 
 
                 #initializes a new group
                 self.last_entry += 1
-                self.index_map[ num_groups] = self.last_entry
-                self.index_map_inverse[self.last_entry, :] = np.array([0, num_groups])
+                self.index_map.append(self.last_entry)
+                self.index_map_inverse[self.last_entry, :] = np.array([0, num_groups], np.int)
 
+                num_groups += 1
+                
 
         input_group = [utils.empty_array()]
         for index in range(1,num_groups):
