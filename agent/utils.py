@@ -199,7 +199,7 @@ def winner_takes_all(feature_input):
     
     for index in range(3, num_groups):
         max_index = np.argmax( np.abs(feature_input[index]))
-        feature_output[index] = np.zeros( feature_input[index].shape[0])
+        feature_output.append(np.zeros( feature_input[index].shape[0]))
         feature_output[index][max_index] = feature_input[index][max_index]
 
     return feature_output
