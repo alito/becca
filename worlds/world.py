@@ -26,7 +26,13 @@ import logging
 import pickle
 
 import numpy as np
-#import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+    graphs = True
+except ImportError:
+    print >> sys.stderr, "No matplotlib available. Turning off graphs"
+    graphs = False
+
 
 class World(object):
     '''
@@ -45,18 +51,21 @@ class World(object):
 
         self.timestep = 0
 
-
-        self.timestep = 0
         self.REPORTING_PERIOD = pow(10, 3)
         self.LIFESPAN = pow(10, 4)
 
-        self.reward = 0
-
         self.cumulative_reward = 0
-        self.reward_history = np.array([])
+        self.reward_history = []
+        self.reward_steps = []
 
         self.display_features = False
 
+        
+        self.graphing = graphs    
+        if self.graphing:
+            plt.ion()
+
+        self.record_reward_history()
 
         # initialise num_sensors, num_primitives and num_actions in subclass
         #self.num_sensors = 1
@@ -120,30 +129,45 @@ class World(object):
         ''' provides an intuitive display of the current state of the World 
         to the user
         '''
-        if (self.display_features):
-            print('Display the world state: world timestep ' + str(self.timestep))
+        if self.display_features:
+            print('Display the world state: world timestep %s' %self.timestep)
             
-        if (np.mod(self.timestep, self.REPORTING_PERIOD) == 0):
-            self.reward_history = np.append(self.reward_history, self.cumulative_reward)
-            self.cumulative_reward = 0
-            #plt.plot(self.reward_history)
+        if (self.timestep % self.REPORTING_PERIOD) == 0:
+            self.record_reward_history()
+            self.cumulative_reward = 0            
+            self.show_reward_history()
 
 
-    def log(self):
+    def record_reward_history(self):
+        self.reward_history.append(self.cumulative_reward)
+        self.reward_steps.append(self.timestep)
+        
+            
+    def show_reward_history(self):
+        if self.graphing:
+            plt.plot(self.reward_steps, self.reward_history)
+            plt.draw()
+
+        
+    def log(self, sensors, primitives, reward):
         ''' logs the state of the world into a history that can be used to
         evaluate and understand BECCA's behavior
         '''
-        self.cumulative_reward += self.reward
+        self.cumulative_reward += reward
                 
     
     def step(self, action):
-        ''' advances the World by one timestep.
+        '''
+        advances the World by one timestep.
+        Returns a 3-tuple: sensors, primitives and reward
         '''
         self.timestep += 1
 
         self.log()
         self.display()
- 
+
+        return None, None, None
+    
         
     def final_performance(self):
         '''
@@ -155,8 +179,9 @@ class World(object):
         '''
         if (self.timestep > self.LIFESPAN):
             performance = np.mean(self.reward_history[-3:]) / self.REPORTING_PERIOD
-            #plt.ioff()
-            #plt.show()
+            if self.graphing:
+                plt.ioff()
+                plt.show()
             
             assert(performance >= -1.)
             return performance

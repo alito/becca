@@ -35,9 +35,10 @@ class Experiment(object):
 
              
     def run(self):
+        actions = None
         while self.world.final_performance() < -1:
-            self.world.step(self.agent.actions)
-            self.agent.step(self.world.sensors, self.world.primitives, self.world.reward)
+            sensors, primitives, reward = self.world.step(actions)
+            actions = self.agent.step(sensors, primitives, reward)
 
             if (self.world.timestep % self.backup_period) == 0:
                 self.world.save(self.world_pickle)
