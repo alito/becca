@@ -29,11 +29,14 @@ from worlds.grid_1D import Grid_1D as worldcreator
 
 #from agent.agent_stub import Agent
 from agent.agent import Agent
+from agent.agent_stub import Agent as RandomAgent
 
 from experiment.experiment import Experiment
 
 def main(args):
     parser = argparse.ArgumentParser(description='tester')
+    parser.add_argument('--dummy-agent', dest="dummy_agent", default=False, action="store_true",
+                        help="Use an agent that just returns random actions. Good for testing worlds")    
     parser.add_argument('-s', '--save-period', dest="save_period", type=int, default=Default_Save_Period,
                         help="How often to take snapshots (default: %(default)s)")
     parser.add_argument('-p', '--pickle-prefix', dest="pickle_prefix", default=None,
@@ -53,8 +56,13 @@ def main(args):
         logging_level = logging.DEBUG
 
     logging.basicConfig(level=logging_level, format="%(asctime)s %(levelname)-8s %(message)s")
+
+    if parameters.dummy_agent:
+        agent_class = RandomAgent
+    else:
+        agent_class = Agent
     
-    experiment = Experiment(worldcreator, Agent, pickle_prefix=parameters.pickle_prefix,
+    experiment = Experiment(worldcreator, agent_class, pickle_prefix=parameters.pickle_prefix,
                             backup_period=parameters.save_period)
     experiment.run()
 
