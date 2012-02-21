@@ -99,3 +99,4 @@ class Agent(object):
         self.action.display()
         """
    
+        return self.actions
