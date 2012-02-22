@@ -8,7 +8,7 @@ from . import utils
 class Grouper(object):
 
     def __init__(self, num_sensors, num_actions, num_primitives, max_num_features):
-        
+
         self.INPUT_DECAY_RATE = 1.0
         self.PROPENSITY_UPDATE_RATE = 10 ** (-3) # real, 0 < x < 1
         self.MAX_PROPENSITY = 0.1
@@ -40,8 +40,8 @@ class Grouper(object):
         self.input_map.append(np.vstack((np.cumsum(np.ones(num_sensors, np.int)) - 1, 
                                          np.zeros(num_sensors, np.int))).transpose())
         self.index_map.append(np.cumsum(np.ones(num_sensors, np.int)) - 1)
-        self.index_map_inverse[ :num_sensors, :] = np.hstack(( np.cumsum( np.ones( num_sensors, np.int)) - 1,
-                                                               np.zeros(num_sensors, np.int)))
+        self.index_map_inverse[ :num_sensors, :] = np.vstack(( np.cumsum( np.ones( num_sensors, np.int)) - 1,
+                                                               np.zeros(num_sensors, np.int))).transpose()
         self.last_entry = num_sensors
 
         #initializes group 1
