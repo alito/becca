@@ -3,12 +3,16 @@ import logging
 import copy
 
 import numpy as np
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    pass
 
 from .utils import bounded_sum, similarity
 
 class Model(object):
 
-    def __init__(self, num_primitives, num_actions):
+    def __init__(self, num_primitives, num_actions, graphs=True):
 
         self.create_logger()
         
@@ -45,6 +49,8 @@ class Model(object):
         self.cause[1][0,0] = 1
         self.effect[1][0,0] = 1
         #self.countp[0]= eps
+
+        self.graphing = graphs
 
 
     def create_logger(self):

@@ -36,7 +36,7 @@ class Agent(object):
         '''
 
         self.logger = logging.getLogger(self.__class__.__name__)
-
+        self.graphing = can_do_graphs and graphs
 
         self.timestep = 0
         
@@ -64,9 +64,9 @@ class Agent(object):
         self.WORKING_MEMORY_DECAY_RATE = 0.4      # real, 0 < x <= 1
         # also check out self.grouper.INPUT_DECAY_RATE, set in grouper_initialize
 
-        self.grouper = Grouper( num_sensors, num_actions, num_primitives, max_number_features)
+        self.grouper = Grouper( num_sensors, num_actions, num_primitives, max_number_features, graphs=self.graphing)
         self.feature_map = FeatureMap(num_sensors, num_primitives, num_actions)        
-        self.model = Model( num_primitives, num_actions)
+        self.model = Model( num_primitives, num_actions, graphs=self.graphing)
         self.planner = Planner(num_actions)
 
         self.num_groups = 3
@@ -95,8 +95,8 @@ class Agent(object):
         
         self.action = np.zeros( self.num_actions)
 
-        self.graphing = can_do_graphs and graphs
 
+        
         
     @classmethod
     def FromWorld(cls, world, graphs=True):

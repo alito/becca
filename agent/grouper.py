@@ -7,7 +7,7 @@ from . import utils
 
 class Grouper(object):
 
-    def __init__(self, num_sensors, num_actions, num_primitives, max_num_features):
+    def __init__(self, num_sensors, num_actions, num_primitives, max_num_features, graphs=True):
 
         self.INPUT_DECAY_RATE = 1.0
         self.PROPENSITY_UPDATE_RATE = 10 ** (-3) # real, 0 < x < 1
@@ -63,6 +63,7 @@ class Grouper(object):
             np.vstack(( np.cumsum( np.ones( num_actions, np.int)) - 1, 2 * np.ones( num_actions, np.int))).transpose()
         self.last_entry += num_actions
 
+        self.graphing = graphs
 
     def add_group(self):
         self.previous_input.append(np.zeros(1))
