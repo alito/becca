@@ -1,8 +1,15 @@
 import sys
 import logging
+from collections import defaultdict
 
 import PIL.Image as Image
 import numpy as np
+
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    #no matplotlib, no graphs
+    pass
 
 
 from .world import World
@@ -37,6 +44,7 @@ class Image_1D(World):
         self.REPORTING_PERIOD = 10 ** 2        
         self.BACKUP_PERIOD = 10 ** 3
         self.LIFESPAN = 10 ** 4
+        self.AnimatePeriod = 10
         
         self.fov_span = 10
 
@@ -47,7 +55,7 @@ class Image_1D(World):
 
         self.step_counter = 0
 
-        self.animate = False
+        self.animate = True
         self.column_history = []
 
         # initializes the image to be used as the environment
@@ -61,8 +69,7 @@ class Image_1D(World):
             grayscale = image
 
         #load it into a numpy array as doubles
-        self.data = np.array(grayscale.getdata()).reshape(grayscale.size[0], grayscale.size[1]).astype('double').transpose()
- 
+        self.data = np.array(grayscale.getdata()).reshape(grayscale.size[1], grayscale.size[0]).astype('double')
         
         self.MAX_STEP_SIZE = self.data.shape[1] / 2
         self.TARGET_COLUMN = self.MAX_STEP_SIZE
@@ -78,26 +85,10 @@ class Image_1D(World):
         self.sensors = np.zeros(self.num_sensors)
         self.primitives = np.zeros(self.num_primitives)
 
-        """
-        
-        #initializes figures for display
-        close all
-        long_gray_colormap = [[0:255]' [0:255]' [0:255].transpose()]./255
-        figure(1)
-        colormap(long_gray_colormap)
-        figure(4)
-        colormap(long_gray_colormap)
-        if self.animate:
-            figure(6)
-            colormap(long_gray_colormap)
-            figure(7)
-            colormap(long_gray_colormap)
-        end
-        figure(8)
-        figure(10)
-        """
-      
-
+        if self.graphing:
+            if self.animate:
+                plt.figure("Image sensed")
+                plt.gray() # set to grayscale
 
 
     def calculate_reward(self):
@@ -115,24 +106,25 @@ class Image_1D(World):
         ''' provides an intuitive display of the current state of the World 
         to the user
         '''
-
-        """
-        figure(10)
-        clf
-        plot( self.column_history, 'k.')    
-        xlabel('time step')
-        ylabel('position (pixels)')
-        
-        task_show_features(task)
-        drawnow
-        """
-        
             
         if (self.timestep % self.REPORTING_PERIOD) == 0:
+            
             logging.info("%s timesteps done" % self.timestep)
+            
             self.record_reward_history()
             self.cumulative_reward = 0
             self.show_reward_history()
+
+            if self.graphing:
+                plt.figure("Column history")
+                plt.clf()
+                plt.plot( self.column_history, 'k.')    
+                plt.xlabel('time step')
+                plt.ylabel('position (pixels)')
+                # pause is needed for events to be processed
+                # Qt backend needs two event rounds to process screen. Any number > 0.01 and <=0.02 would do
+                self._force_draw()
+                
 
             
     def log(self, sensors, primitives, reward):
@@ -140,19 +132,15 @@ class Image_1D(World):
         
         self.column_history.append(self.column_position)
 
-        if self.animate:
-            pass
-        
-            """
-            figure(6)
-            sensed_image = reshape( self.sensory_input, ...
-                self.fov_span, self.fov_span)
-            #remaps [-1, 1] to [0, 4/5] for display
-            sensed_image = (sensed_image+1)/2.5
+        if self.animate and (self.timestep % self.AnimatePeriod) == 0:
+            plt.figure("Image sensed")
+            sensed_image = np.reshape( sensors[:len(sensors)/2], (self.fov_span, self.fov_span))
             #remaps [0, 1] to [0, 4/5] for display
-            sensed_image = (sensed_image)/1.25
-            image(sensed_image * 256)
+            #sensed_image = sensed_image / 1.25
+            plt.imshow(sensed_image)
+            self._force_draw()
 
+            """
             figure(7)
             column_vals = 1:size(self.data,1)
             row_vals1 = ones(size(column_vals)) * ...
@@ -305,6 +293,7 @@ class Image_1D(World):
 
         # creates sensory input vector
         fov = self.data[:, self.column_position - self.fov_width / 2: self.column_position + self.fov_width / 2]
+
         sensors = np.zeros(self.num_sensors / 2)
 
         for row in range(self.fov_span):
@@ -316,8 +305,9 @@ class Image_1D(World):
 
         sensors = sensors.ravel()
         sensors = np.concatenate((sensors, 1 - sensors))
-        reward = self.calculate_reward()
 
+        reward = self.calculate_reward()               
+        
         self.log(sensors, self.primitives, reward)
         self.display()
         
