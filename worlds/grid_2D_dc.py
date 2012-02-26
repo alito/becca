@@ -32,11 +32,11 @@ class Grid_2D_dc(World):
 
     '''
 
-    def __init__(self):
+    def __init__(self, graphs=True):
         ''' default constructor
         '''
 
-        super(Grid_2D_dc,self).__init__()
+        super(Grid_2D_dc,self).__init__(graphs=graphs)
         
         self.REPORTING_PERIOD = 10 ** 3
         self.LIFESPAN = 10 ** 4

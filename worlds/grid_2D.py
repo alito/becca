@@ -28,11 +28,11 @@ class Grid_2D(World):
     Optimal performance is between 0.3 and 0.35 reward per time step.
     '''
 
-    def __init__(self):
+    def __init__(self, graphs=True):
         ''' default constructor
         '''
 
-        super(Grid_2D,self).__init__()
+        super(Grid_2D,self).__init__(graphs=graphs)
         
         self.REPORTING_PERIOD = 10 ** 3
         self.LIFESPAN = 10 ** 4

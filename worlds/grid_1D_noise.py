@@ -23,11 +23,11 @@ class Grid_1D_noise(World):
     Optimal performance is between 0.3 and 0.35 reward per time step.
     '''
     
-    def __init__(self):
+    def __init__(self, graphs=True):
         ''' default constructor
         '''
 
-        super(Grid_1D_noise, self).__init__()        
+        super(Grid_1D_noise, self).__init__(graphs=graphs)
         
         self.noise_inputs = 7
         self.num_sensors = 1

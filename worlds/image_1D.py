@@ -37,8 +37,8 @@ class Image_1D(World):
     MAX_NUM_FEATURES = 500
     Image_Filename = './images/bar_test.jpg' 
     
-    def __init__(self):
-        super(Image_1D, self).__init__()
+    def __init__(self, graphs=True):
+        super(Image_1D, self).__init__(graphs=graphs)
 
         self.REPORTING_BLOCK_SIZE = 10 ** 2
         self.REPORTING_PERIOD = 10 ** 2        

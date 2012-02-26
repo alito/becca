@@ -196,11 +196,11 @@ class Planner(object):
                         utils.bounded_sum(agent.goal[max_goal_group][max_goal_feature],
                         value[max_transition_index] * agent.STEP_DISCOUNT)
 
-                    if agent.debug:
-                        pass
-                        # print max_goal_group
-                        # print max_goal_feature
-                        # print agent.goal[max_goal_group].transpose()
+
+
+                    # print max_goal_group
+                    # print max_goal_feature
+                    # print agent.goal[max_goal_group].transpose()
                     
         # primitive action goals can be fulfilled immediately
         self.action = np.zeros(np.size(self.action))

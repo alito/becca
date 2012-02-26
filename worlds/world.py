@@ -28,10 +28,10 @@ import pickle
 import numpy as np
 try:
     import matplotlib.pyplot as plt
-    graphs = True
+    can_do_graphs = True
 except ImportError:
     print >> sys.stderr, "No matplotlib available. Turning off graphs"
-    graphs = False
+    can_do_graphs = False
 
 
 class World(object):
@@ -41,7 +41,7 @@ class World(object):
 
     MAX_NUM_FEATURES = 700
     
-    def __init__(self):
+    def __init__(self, graphs=True):
         ''' default constructor
         '''
 
@@ -60,8 +60,9 @@ class World(object):
 
         self.display_features = False
 
+        self.max_number_features = self.MAX_NUM_FEATURES
         
-        self.graphing = graphs    
+        self.graphing = graphs and can_do_graphs   
         if self.graphing:
             plt.ioff()
 

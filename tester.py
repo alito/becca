@@ -28,6 +28,8 @@ def main(args):
     parser = argparse.ArgumentParser(description='tester')
     parser.add_argument('world_creator', nargs="?", default=Default_World_Class,
                         help="Class to create world (default: %(default)s)")
+    parser.add_argument('--no-graphs', dest="graphs", default=True, action="store_false",
+                        help="Don't draw tracking graphs")        
     parser.add_argument('--dummy-agent', dest="dummy_agent", default=False, action="store_true",
                         help="Use an agent that just returns random actions. Good for testing worlds")    
     parser.add_argument('-s', '--save-period', dest="save_period", type=int, default=Default_Save_Period,
@@ -58,9 +60,11 @@ def main(args):
     world_creator = get_world_class(parameters.world_creator)
     if world_creator is None:
         parser.error("Couldn't find world creator %s" % parameters.world_creator)
+
+    world = world_creator(graphs=parameters.graphs)
+    agent = agent_class.FromWorld(world, graphs=parameters.graphs)
         
-    experiment = Experiment(world_creator, agent_class, pickle_prefix=parameters.pickle_prefix,
-                            backup_period=parameters.save_period)
+    experiment = Experiment(world, agent, pickle_prefix=parameters.pickle_prefix, backup_period=parameters.save_period)
     experiment.run()
 
     return 0

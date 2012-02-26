@@ -30,11 +30,11 @@ class Grid_1D(World):
     exploration levels given is around 0.35 to 0.37 reward per time step.
     '''
 
-    def __init__(self):
+    def __init__(self, graphs=True):
         ''' default constructor
         '''
 
-        super(Grid_1D, self).__init__()
+        super(Grid_1D, self).__init__(graphs=graphs)
         
         self.num_sensors = 1
         self.num_primitives = 9

@@ -9,6 +9,12 @@ import copy
 import logging
 
 import numpy as np
+try:
+    import matplotlib.pyplot as plt
+    can_do_graphs = True
+except ImportError:
+    print >> sys.stderr, "No matplotlib available. Turning off graphs"
+    can_do_graphs = False
 
 from .feature_map import FeatureMap
 from .planner import Planner
@@ -24,7 +30,7 @@ class Agent(object):
     New features are created as necessary to adequately represent the data.
     '''
 
-    def __init__(self, num_sensors, num_primitives, num_actions, max_number_features):
+    def __init__(self, num_sensors, num_primitives, num_actions, max_number_features=None, graphs=True):
         '''
         Constructor
         '''
@@ -65,7 +71,6 @@ class Agent(object):
 
         self.num_groups = 3
         self.feature_added = False
-        self.debug = False
 
 
         # The first group is dedicated to raw sensor information. None of it is
@@ -90,7 +95,13 @@ class Agent(object):
         
         self.action = np.zeros( self.num_actions)
 
+        self.graphing = can_do_graphs and graphs
 
+        
+    @classmethod
+    def FromWorld(cls, world, graphs=True):
+        self = cls(world.num_sensors, world.num_primitives, world.num_actions, world.max_number_features, graphs=graphs)
+        return self
         
 
     def load(self, pickle_filename):
@@ -246,9 +257,8 @@ class Agent(object):
 
                 #self.planner.explore = False  # this doesn't seem to be used anywhere on becca_m
 
-        # debug
-        if self.debug:
-            print('attended--group: %s, feature: %s, value: %s' % \
+
+        logging.debug('attended--group: %s, feature: %s, value: %s' % \
                       (max_salience_group, max_salience_index, max_salience_value))
 
 

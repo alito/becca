@@ -29,11 +29,11 @@ class Grid_1D_ms(World):
 
     '''
 
-    def __init__(self):
+    def __init__(self, graphs=True):
         ''' default constructor
         '''
 
-        super(Grid_1D_ms, self).__init__()
+        super(Grid_1D_ms, self).__init__(graphs=graphs)
         
         self.num_sensors = 1
         self.num_primitives = 9
