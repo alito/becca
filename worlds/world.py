@@ -63,7 +63,7 @@ class World(object):
         
         self.graphing = graphs    
         if self.graphing:
-            plt.ion()
+            plt.ioff()
 
         self.record_reward_history()
 
@@ -139,14 +139,25 @@ class World(object):
 
 
     def record_reward_history(self):
-        self.reward_history.append(self.cumulative_reward)
+        self.reward_history.append(float(self.cumulative_reward) / self.REPORTING_PERIOD)
         self.reward_steps.append(self.timestep)
-        
+        print self.reward_history
             
     def show_reward_history(self):
         if self.graphing:
+            plt.figure("Reward history")
             plt.plot(self.reward_steps, self.reward_history)
-            plt.draw()
+            plt.xlabel("time step")
+            plt.ylabel("Average reward")
+            self._force_draw()
+            
+    def _force_draw(self):
+        """
+        Force matplotlib to draw things on the screen
+        """
+        # pause is needed for events to be processed
+        # Qt backend needs two event rounds to process screen. Any number > 0.01 and <=0.02 would do
+        plt.pause(0.015)
 
         
     def log(self, sensors, primitives, reward):
