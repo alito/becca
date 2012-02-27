@@ -484,19 +484,9 @@ class Agent(object):
         # self.action = utils.bounded_sum( reactive_action, self.planner.action)
         self.action = self.planner.action
 
-        # #debug
-        # print('========================')
-        # print('wm:')
-        # print(self.working_memory[1].transpose())
-        # print('fa:')
-        # print(self.feature_activity[1].transpose())
-        # print('ra:')
-        # print(reactive_action.transpose())
-        # print('da:')
-        # print(self.planner.action.transpose())
-        # print('aa:')
-        # print(self.action.transpose())
-
-        
         return self.action
     
+
+
+    def display(self):
+        self.model.display_n_best(1)
