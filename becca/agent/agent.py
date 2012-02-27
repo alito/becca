@@ -46,6 +46,7 @@ class Agent(object):
 
         self.actions = np.zeros(self.num_actions)
 
+        self.SALIENCE_NOISE = 0.1        
         self.GOAL_DECAY_RATE = 0.05   # real, 0 < x <= 1
         self.STEP_DISCOUNT = 0.5      # real, 0 < x <= 1
 
@@ -183,13 +184,13 @@ class Agent(object):
     def add_feature(self, new_feature, nth_group, feature_vote):
         has_dummy = np.max(self.feature_map.map[nth_group] [0,:]) == 0
         self.feature_added = True
-
-        feature_vote[nth_group] = np.vstack((feature_vote[nth_group], 0))
-        self.feature_activity[nth_group] = np.vstack((self.feature_activity[nth_group], 0))
-        self.working_memory[nth_group] = np.vstack((self.working_memory[nth_group], 0))
-        self.previous_working_memory[nth_group] = np.vstack((self.previous_working_memory[nth_group], 0))
-        self.attended_feature[nth_group] = np.vstack((self.attended_feature[nth_group], 0))
-        self.goal[nth_group] = np.vstack((self.goal[nth_group], 0))
+        
+        feature_vote[nth_group] = np.hstack((feature_vote[nth_group], 0))
+        self.feature_activity[nth_group] = np.hstack((self.feature_activity[nth_group], 0))
+        self.working_memory[nth_group] = np.hstack((self.working_memory[nth_group], 0))
+        self.previous_working_memory[nth_group] = np.hstack((self.previous_working_memory[nth_group], 0))
+        self.attended_feature[nth_group] = np.hstack((self.attended_feature[nth_group], 0))
+        self.goal[nth_group] = np.hstack((self.goal[nth_group], 0))
 
         # if dummy feature is still in place, removes it
         if has_dummy:
@@ -213,8 +214,6 @@ class Agent(object):
         Selects a feature from feature_activity to attend to.
         """
 
-        self.SALIENCE_NOISE = 0.1
-
         max_salience_value = 0
         max_salience_group = 0
         max_salience_index = 0
@@ -223,24 +222,23 @@ class Agent(object):
         # and a small amount of noise
 
         salience = utils.AutomaticList()
-        for index in range(len(self.feature_activity)):
-            count = len( self.feature_activity[index])
-            self.attended_feature[index] = np.zeros(count)
+        for group_index in range(len(self.feature_activity)):
+            count = len( self.feature_activity[group_index])
+            self.attended_feature[group_index] = np.zeros(count)
 
             if count > 0:
                 # no point in doing this if the feature is empty
-                
-                salience[index] = self.SALIENCE_NOISE * np.random.random_sample(count)                
-                salience[index] += self.feature_activity[index] * (1 + self.goal[index])
+                salience[group_index] = self.SALIENCE_NOISE * np.random.random_sample(count)                
+                salience[group_index] += self.feature_activity[group_index] * (1 + self.goal[group_index])
 
                 # Picks the feature with the greatest salience.
-                max_value = np.max(salience[index])
-                max_index = np.argmax(salience[index])
+                max_value = np.max(salience[group_index])
+                max_index = np.argmax(salience[group_index])
 
 
                 if max_value >= max_salience_value:
                     max_salience_value = max_value
-                    max_salience_group = index
+                    max_salience_group = group_index
                     max_salience_index = max_index
 
 
