@@ -90,7 +90,9 @@ class Image_1D(World):
             if self.animate:
                 plt.figure("Image sensed")
                 plt.gray() # set to grayscale
-
+        else:
+            self.animate = False
+                
 
     def calculate_reward(self):
         DISTANCE_FACTOR = self.MAX_STEP_SIZE / 16
