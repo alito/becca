@@ -8,7 +8,7 @@ try:
 except ImportError:
     pass
 
-from ..utils import bounded_sum, similarity
+from ..utils import bounded_sum, similarity, force_redraw
 
 class Model(object):
 
@@ -23,9 +23,6 @@ class Model(object):
         self.STEP_DISCOUNT = 0.5              # real, 0 < x < 1
         self.TRACE_LENGTH = 10                 # integer, small
         self.TRACE_DECAY_RATE = 0.2           # real, 0 < x < 1
-
-        self.debug = False
-        self.filename_postfix = '_model.mat'
 
         self.clean_count = 0
 
@@ -224,32 +221,38 @@ class Model(object):
         """
 
 
-        sorted_indices = np.argsort(self.count[0:self.last_entry+1])
+        sorted_indices = np.argsort(self.count[:self.last_entry+1])[::-1]
+        relevant_sorted_indices = sorted_indices[:N]
 
-        sort_index = sorted_indices[:N]
+        print relevant_sorted_indices
+        for order, index in enumerate(relevant_sorted_indices):
+            self.display_pair(index, "%sth top causes and effects" % (order + 1))
 
-        for index in sorted_indices:
-            self.display_pair(index)
 
-
-    def display_pair(self, N):
+    def display_pair(self, N, figure_name):
         """
         provides a visual representation of the Nth cause-effect pair
         """
 
+        import time
+
         if self.graphing:
-            num_groups = len(self.cause)
+            # TODO: this can be sped up by keeping the axes returned from subplots and drawing directly there
+            # see: http://stackoverflow.com/questions/8798040/optimizing-matplotlib-pyplot-plotting-for-many-small-plots
             
-            plt.figure("causes and effects")
             
-            for index in range(1, len(self.cause)):
-                plt.subplot(num_groups-1, 2, (index-1)*2-1)
+            start = time.time()
+            plt.figure(figure_name)
+            plt.clf()  # if we don't clear, the bars overlap. 
+            
+            for index in range(1, num_groups):
+                plt.subplot(num_groups-1, 2, index*2-1)
                 heights = self.cause[index][:,N]
                 plt.bar(np.arange(len(heights)), heights)
-                #self.logger.info('self.cause[%s][%s]' % (index, N))
+                #self.logger.info('model.cause[%s][%s]' % (index, N))
                 #self.logger.info(self.cause[index][:,N]
                 plt.axis([0, self.cause[index].shape[0]+1, 0, 1])
-                plt.ylabel("%s" % index)
+                plt.ylabel("Group %s" % index)
                 #    xlabel(['max of ' num2str(max(self.cause[index](:,N))) ])
                 if index == 1:
                     plt.title('model.cause for N = %s' % N)
@@ -258,19 +261,22 @@ class Model(object):
                     plt.xlabel('count = %s' % self.count[index])
 
 
-            for index, group in enumerate(self.cause[1:]):
-                #subplot(num_groups-2, 2, index*2)
-                #bar(self.effect[index](:,N))
-                #     disp(['self.effect[' num2str(index) '](' num2str(N) ')'])
-                #     self.effect[index](:,N)
-                #axis ([0 size(self.effect[index],1)+1 0 1])
-                #ylabel(['g' num2str(index) ])
-                #    xlabel(['max of ' num2str(max(self.effect[index](:,N))) ])
+            for index in range(1, num_groups):
+                plt.subplot(num_groups-1, 2, index*2)
+                heights = self.effect[index][:,N]
+                plt.bar(np.arange(len(heights)), heights)
+                #self.logger.info('model.effect[%s][%s]' % (index, N))
+                #self.logger.info(self.effect[index][:,N])
+                plt.axis ([0, self.effect[index].shape[0]+1, 0, 1])
+                plt.ylabel("Group %s" % index)
+                plt.xlabel('max of %s' % np.max(self.effect[index][:,N]))
                 if index == 1:
-                    #title('model.effect for N = %s' % N)
-                    pass
+                    plt.title('model.effect for N = %s' % N)
+
+            force_redraw() # if no redraw is forced, only the first pair created will be redrawn
 
 
+            
     def display(self, N):
         """
         provides a visual representation of the Nth cause-effect pair
