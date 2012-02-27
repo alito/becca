@@ -20,7 +20,7 @@ from .feature_map import FeatureMap
 from .planner import Planner
 from .model import Model
 from .grouper import Grouper
-from . import utils
+from .. import utils
 
 class Agent(object):
     '''A general reinforcement learning agent, modeled on human neurophysiology 

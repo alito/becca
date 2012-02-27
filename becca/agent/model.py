@@ -8,7 +8,7 @@ try:
 except ImportError:
     pass
 
-from .utils import bounded_sum, similarity
+from ..utils import bounded_sum, similarity
 
 class Model(object):
 
