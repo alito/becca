@@ -124,9 +124,7 @@ def get_world_class(world_name):
 
     if module is not None:
         if class_name is not None:
-            print class_name
             klass = getattr(module, class_name, None)
-            print klass
             if not is_suitable_world_creator(klass):
                 # Maybe this is a module, then we have to search for the class.
                 # Try reimporting
