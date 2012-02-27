@@ -13,6 +13,7 @@ except ImportError:
 
 
 from .world import World
+from ..utils import force_redraw
 
 class Image_1D(World):
     ''' Image_1D
@@ -123,7 +124,7 @@ class Image_1D(World):
                 plt.ylabel('position (pixels)')
                 # pause is needed for events to be processed
                 # Qt backend needs two event rounds to process screen. Any number > 0.01 and <=0.02 would do
-                self._force_draw()
+                force_redraw()
                 
 
             
@@ -138,7 +139,7 @@ class Image_1D(World):
             #remaps [0, 1] to [0, 4/5] for display
             #sensed_image = sensed_image / 1.25
             plt.imshow(sensed_image)
-            self._force_draw()
+            force_redraw()
 
         
     def step(self, action): 

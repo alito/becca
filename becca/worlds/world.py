@@ -34,6 +34,8 @@ except ImportError:
     can_do_graphs = False
 
 
+from ..utils import force_redraw
+	
 class World(object):
     '''
     the base class for creating a new world
@@ -150,16 +152,8 @@ class World(object):
             plt.plot(self.reward_steps, self.reward_history)
             plt.xlabel("time step")
             plt.ylabel("Average reward")
-            self._force_draw()
+            force_redraw()
             
-    def _force_draw(self):
-        """
-        Force matplotlib to draw things on the screen
-        """
-        # pause is needed for events to be processed
-        # Qt backend needs two event rounds to process screen. Any number > 0.01 and <=0.02 would do
-        plt.pause(0.015)
-
         
     def log(self, sensors, primitives, reward):
         ''' logs the state of the world into a history that can be used to

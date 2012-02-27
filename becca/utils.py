@@ -6,6 +6,10 @@ import logging
 import copy
 
 import numpy as np
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    pass
 
 class AutomaticList(list):
     """
@@ -204,3 +208,13 @@ def winner_takes_all(feature_input):
 
     return feature_output
 
+
+
+def force_redraw():
+    """
+    Force matplotlib to draw things on the screen
+    """
+    
+    # pause is needed for events to be processed
+    # Qt backend needs two event rounds to process screen. Any number > 0.01 and <=0.02 would do
+    plt.pause(0.015)
