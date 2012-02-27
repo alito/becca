@@ -63,7 +63,7 @@ class Grouper(object):
         self.index_map_inverse[self.last_entry: self.last_entry + num_actions, :] = \
             np.vstack(( np.cumsum( np.ones( num_actions, np.int)) - 1, 2 * np.ones( num_actions, np.int))).transpose()
         self.last_entry += num_actions
-       
+        
         self.graphing = graphs
 
         
@@ -82,13 +82,12 @@ class Grouper(object):
             self.propensity[self.index_map[nth_group], :] = 0
             self.propensity[:, self.index_map[nth_group]] = 0
         else:
+            self.index_map[nth_group] = np.hstack((self.index_map[nth_group], self.last_entry))
+            self.index_map_inverse[self.last_entry,:] = np.hstack((len(self.index_map[nth_group]) - 1, nth_group))
             self.last_entry += 1
-            self.index_map[nth_group] = np.vstack((self.index_map[nth_group], self.last_entry - 1))
-            self.index_map_inverse[self.last_entry - 1,:] = np.hstack((self.index_map[nth_group].shape[1], nth_group))
-
-
+            
         element_index_correlations = None
-        for subindex in range(nth_group):
+        for subindex in range(nth_group):            
             indices = ( self.input_map[nth_group][:,1] == subindex).nonzero()[0]
             element_index = self.index_map[subindex][self.input_map[nth_group][indices]]
             if element_index_correlations is None:
@@ -227,10 +226,9 @@ class Grouper(object):
 
 
                 #initializes a new group
-                self.last_entry += 1
-                self.index_map.append(self.last_entry)
+                self.index_map.append(np.array([self.last_entry]))
                 self.index_map_inverse[self.last_entry, :] = np.array([0, num_groups], np.int)
-
+                self.last_entry += 1
                 num_groups += 1
                 
 
