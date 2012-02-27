@@ -16,12 +16,12 @@ selects the World that the Agent will be placed in
 
 Default_Save_Period = 20000
 
-Default_World_Class = 'worlds.grid_1D.Grid_1D'
+Default_World_Class = 'becca.worlds.grid_1D.Grid_1D'
 
-from agent.agent import Agent
-from agent.agent_stub import Agent as RandomAgent
+from becca.agent.agent import Agent
+from becca.agent.agent_stub import Agent as RandomAgent
 
-from experiment.experiment import Experiment
+from becca.experiment.experiment import Experiment
                     
 
 def main(args):
@@ -79,7 +79,7 @@ def get_world_class(world_name):
         """
         Return whether the given klass would do as a world creator
         """
-        from worlds.world import World
+        from becca.worlds.world import World
 
         # do some basic checking to see if the loaded klass looks right.
         # If it's a subclass of World, then that's enough, but maybe they didn't
@@ -111,8 +111,8 @@ def get_world_class(world_name):
         module = import_module(path)
     except ImportError:
         # nah, that didn't work. Maybe they forgot to prefix with 'worlds' and that's what they meant
-        if not path.startswith('worlds.'):
-            path = 'worlds.' + path
+        if not path.startswith('becca.worlds.'):
+            path = 'becca.worlds.' + path
             try:
                 module = import_module(path)
             except ImportError:
