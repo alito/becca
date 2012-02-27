@@ -49,6 +49,9 @@ class Agent(object):
         self.GOAL_DECAY_RATE = 0.05   # real, 0 < x <= 1
         self.STEP_DISCOUNT = 0.5      # real, 0 < x <= 1
 
+
+        self.REPORT_PERIOD = 100
+        
         # Rates at which the feature activity and working memory decay.
         # Setting these equal to 1 is the equivalent of making the Markovian 
         # assumption about the task--that all relevant information is captured 
@@ -90,8 +93,6 @@ class Agent(object):
         self.working_memory = copy.deepcopy(self.feature_activity)
         self.previous_working_memory = copy.deepcopy(self.feature_activity)
         self.goal = copy.deepcopy(self.feature_activity)
-
-        self.feature_stimulation = []
         
         self.action = np.zeros( self.num_actions)
 
@@ -112,7 +113,7 @@ class Agent(object):
 
             self.logger = logging.getLogger(self.__class__.__name__)
             self.model.create_logger()
-            print('Agent restored at timestep ' + str(self.timestep))
+            self.logger.info('Agent restored at timestep ' + str(self.timestep))
 
         # otherwise initializes from scratch     
         except IOError:
@@ -166,7 +167,7 @@ class Agent(object):
         """
         
         self.num_groups += 1
-        self.feature_stimulation.append(np.zeros(1))
+        
         self.feature_activity.append(np.zeros(1))
         self.working_memory.append(np.zeros(1))
         self.previous_working_memory.append(np.zeros(1))
@@ -180,12 +181,10 @@ class Agent(object):
 
 
     def add_feature(self, new_feature, nth_group, feature_vote):
-        
         has_dummy = np.max(self.feature_map.map[nth_group] [0,:]) == 0
         self.feature_added = True
 
         feature_vote[nth_group] = np.vstack((feature_vote[nth_group], 0))
-        self.feature_stimulation[nth_group] = np.vstack((self.feature_stimulation[nth_group], 0))
         self.feature_activity[nth_group] = np.vstack((self.feature_activity[nth_group], 0))
         self.working_memory[nth_group] = np.vstack((self.working_memory[nth_group], 0))
         self.previous_working_memory[nth_group] = np.vstack((self.previous_working_memory[nth_group], 0))
@@ -195,7 +194,6 @@ class Agent(object):
         # if dummy feature is still in place, removes it
         if has_dummy:
             feature_vote[nth_group] = feature_vote[ nth_group][1:]
-            self.feature_stimulation[nth_group] = self.feature_stimulation[ nth_group][1:]
             self.feature_activity[nth_group] = self.feature_activity[ nth_group][1:]
             self.working_memory[nth_group] = self.working_memory[ nth_group][1:]
             self.previous_working_memory[nth_group] = self.previous_working_memory[ nth_group][1:]
@@ -301,8 +299,8 @@ class Agent(object):
                     # it will result in a feature vote of 1.
                     feature_vote[index] = np.sqrt( np.dot(self.feature_map.map[index] ** 2, grouped_input[index]))
 
-            if (( margin > self.feature_map.NEW_FEATURE_MARGIN) and
-                (np.max( grouped_input[index]) > self.feature_map.NEW_FEATURE_MIN_SIZE) and self.grouper.features_full):
+            if  margin > self.feature_map.NEW_FEATURE_MARGIN and \
+                np.max( grouped_input[index]) > self.feature_map.NEW_FEATURE_MIN_SIZE and not self.grouper.features_full:
 
                 # This formulation of feature creation was chosen to have 
                 # the property that all feature magnitudes are 1. In other words, 
@@ -489,4 +487,9 @@ class Agent(object):
 
 
     def display(self):
-        self.model.display_n_best(1)
+        #print self.timestep
+        if (self.timestep % self.REPORT_PERIOD) == 0:
+            print 'step', self.timestep
+            print 'grouper.last', self.grouper.last_entry
+            self.model.display_n_best(1)
+            utils.force_redraw()
