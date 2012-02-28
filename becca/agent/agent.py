@@ -9,12 +9,18 @@ import copy
 import logging
 
 import numpy as np
+try:
+    import matplotlib.pyplot as plt
+    can_do_graphs = True
+except ImportError:
+    print >> sys.stderr, "No matplotlib available. Turning off graphs"
+    can_do_graphs = False
 
 from .feature_map import FeatureMap
 from .planner import Planner
 from .model import Model
 from .grouper import Grouper
-from . import utils
+from .. import utils
 
 class Agent(object):
     '''A general reinforcement learning agent, modeled on human neurophysiology 
@@ -24,13 +30,13 @@ class Agent(object):
     New features are created as necessary to adequately represent the data.
     '''
 
-    def __init__(self, num_sensors, num_primitives, num_actions, max_number_features):
+    def __init__(self, num_sensors, num_primitives, num_actions, max_number_features=None, graphs=True):
         '''
         Constructor
         '''
 
         self.logger = logging.getLogger(self.__class__.__name__)
-
+        self.graphing = can_do_graphs and graphs
 
         self.timestep = 0
         
@@ -40,9 +46,13 @@ class Agent(object):
 
         self.actions = np.zeros(self.num_actions)
 
+        self.SALIENCE_NOISE = 0.1        
         self.GOAL_DECAY_RATE = 0.05   # real, 0 < x <= 1
         self.STEP_DISCOUNT = 0.5      # real, 0 < x <= 1
 
+
+        self.REPORT_PERIOD = 100
+        
         # Rates at which the feature activity and working memory decay.
         # Setting these equal to 1 is the equivalent of making the Markovian 
         # assumption about the task--that all relevant information is captured 
@@ -58,14 +68,13 @@ class Agent(object):
         self.WORKING_MEMORY_DECAY_RATE = 0.4      # real, 0 < x <= 1
         # also check out self.grouper.INPUT_DECAY_RATE, set in grouper_initialize
 
-        self.grouper = Grouper( num_sensors, num_actions, num_primitives, max_number_features)
+        self.grouper = Grouper( num_sensors, num_actions, num_primitives, max_number_features, graphs=self.graphing)
         self.feature_map = FeatureMap(num_sensors, num_primitives, num_actions)        
-        self.model = Model( num_primitives, num_actions)
+        self.model = Model( num_primitives, num_actions, graphs=self.graphing)
         self.planner = Planner(num_actions)
 
         self.num_groups = 3
         self.feature_added = False
-        self.debug = False
 
 
         # The first group is dedicated to raw sensor information. None of it is
@@ -85,12 +94,16 @@ class Agent(object):
         self.working_memory = copy.deepcopy(self.feature_activity)
         self.previous_working_memory = copy.deepcopy(self.feature_activity)
         self.goal = copy.deepcopy(self.feature_activity)
-
-        self.feature_stimulation = []
         
         self.action = np.zeros( self.num_actions)
 
 
+        
+        
+    @classmethod
+    def FromWorld(cls, world, graphs=True):
+        self = cls(world.num_sensors, world.num_primitives, world.num_actions, world.max_number_features, graphs=graphs)
+        return self
         
 
     def load(self, pickle_filename):
@@ -101,7 +114,7 @@ class Agent(object):
 
             self.logger = logging.getLogger(self.__class__.__name__)
             self.model.create_logger()
-            print('Agent restored at timestep ' + str(self.timestep))
+            self.logger.info('Agent restored at timestep ' + str(self.timestep))
 
         # otherwise initializes from scratch     
         except IOError:
@@ -155,7 +168,7 @@ class Agent(object):
         """
         
         self.num_groups += 1
-        self.feature_stimulation.append(np.zeros(1))
+        
         self.feature_activity.append(np.zeros(1))
         self.working_memory.append(np.zeros(1))
         self.previous_working_memory.append(np.zeros(1))
@@ -169,22 +182,19 @@ class Agent(object):
 
 
     def add_feature(self, new_feature, nth_group, feature_vote):
-        
         has_dummy = np.max(self.feature_map.map[nth_group] [0,:]) == 0
         self.feature_added = True
-
-        feature_vote[nth_group] = np.vstack((feature_vote[nth_group], 0))
-        self.feature_stimulation[nth_group] = np.vstack((self.feature_stimulation[nth_group], 0))
-        self.feature_activity[nth_group] = np.vstack((self.feature_activity[nth_group], 0))
-        self.working_memory[nth_group] = np.vstack((self.working_memory[nth_group], 0))
-        self.previous_working_memory[nth_group] = np.vstack((self.previous_working_memory[nth_group], 0))
-        self.attended_feature[nth_group] = np.vstack((self.attended_feature[nth_group], 0))
-        self.goal[nth_group] = np.vstack((self.goal[nth_group], 0))
+        
+        feature_vote[nth_group] = np.hstack((feature_vote[nth_group], 0))
+        self.feature_activity[nth_group] = np.hstack((self.feature_activity[nth_group], 0))
+        self.working_memory[nth_group] = np.hstack((self.working_memory[nth_group], 0))
+        self.previous_working_memory[nth_group] = np.hstack((self.previous_working_memory[nth_group], 0))
+        self.attended_feature[nth_group] = np.hstack((self.attended_feature[nth_group], 0))
+        self.goal[nth_group] = np.hstack((self.goal[nth_group], 0))
 
         # if dummy feature is still in place, removes it
         if has_dummy:
             feature_vote[nth_group] = feature_vote[ nth_group][1:]
-            self.feature_stimulation[nth_group] = self.feature_stimulation[ nth_group][1:]
             self.feature_activity[nth_group] = self.feature_activity[ nth_group][1:]
             self.working_memory[nth_group] = self.working_memory[ nth_group][1:]
             self.previous_working_memory[nth_group] = self.previous_working_memory[ nth_group][1:]
@@ -204,8 +214,6 @@ class Agent(object):
         Selects a feature from feature_activity to attend to.
         """
 
-        self.SALIENCE_NOISE = 0.1
-
         max_salience_value = 0
         max_salience_group = 0
         max_salience_index = 0
@@ -214,24 +222,23 @@ class Agent(object):
         # and a small amount of noise
 
         salience = utils.AutomaticList()
-        for index in range(len(self.feature_activity)):
-            count = len( self.feature_activity[index])
-            self.attended_feature[index] = np.zeros(count)
+        for group_index in range(len(self.feature_activity)):
+            count = len( self.feature_activity[group_index])
+            self.attended_feature[group_index] = np.zeros(count)
 
             if count > 0:
                 # no point in doing this if the feature is empty
-                
-                salience[index] = self.SALIENCE_NOISE * np.random.random_sample(count)                
-                salience[index] += self.feature_activity[index] * (1 + self.goal[index])
+                salience[group_index] = self.SALIENCE_NOISE * np.random.random_sample(count)                
+                salience[group_index] += self.feature_activity[group_index] * (1 + self.goal[group_index])
 
                 # Picks the feature with the greatest salience.
-                max_value = np.max(salience[index])
-                max_index = np.argmax(salience[index])
+                max_value = np.max(salience[group_index])
+                max_index = np.argmax(salience[group_index])
 
 
                 if max_value >= max_salience_value:
                     max_salience_value = max_value
-                    max_salience_group = index
+                    max_salience_group = group_index
                     max_salience_index = max_index
 
 
@@ -246,9 +253,8 @@ class Agent(object):
 
                 #self.planner.explore = False  # this doesn't seem to be used anywhere on becca_m
 
-        # debug
-        if self.debug:
-            print('attended--group: %s, feature: %s, value: %s' % \
+
+        logging.debug('attended--group: %s, feature: %s, value: %s' % \
                       (max_salience_group, max_salience_index, max_salience_value))
 
 
@@ -291,8 +297,8 @@ class Agent(object):
                     # it will result in a feature vote of 1.
                     feature_vote[index] = np.sqrt( np.dot(self.feature_map.map[index] ** 2, grouped_input[index]))
 
-            if (( margin > self.feature_map.NEW_FEATURE_MARGIN) and
-                (np.max( grouped_input[index]) > self.feature_map.NEW_FEATURE_MIN_SIZE) and self.grouper.features_full):
+            if  margin > self.feature_map.NEW_FEATURE_MARGIN and \
+                np.max( grouped_input[index]) > self.feature_map.NEW_FEATURE_MIN_SIZE and not self.grouper.features_full:
 
                 # This formulation of feature creation was chosen to have 
                 # the property that all feature magnitudes are 1. In other words, 
@@ -474,19 +480,14 @@ class Agent(object):
         # self.action = utils.bounded_sum( reactive_action, self.planner.action)
         self.action = self.planner.action
 
-        # #debug
-        # print('========================')
-        # print('wm:')
-        # print(self.working_memory[1].transpose())
-        # print('fa:')
-        # print(self.feature_activity[1].transpose())
-        # print('ra:')
-        # print(reactive_action.transpose())
-        # print('da:')
-        # print(self.planner.action.transpose())
-        # print('aa:')
-        # print(self.action.transpose())
-
-        
         return self.action
     
+
+
+    def display(self):
+        #print self.timestep
+        if (self.timestep % self.REPORT_PERIOD) == 0:
+            print 'step', self.timestep
+            print 'grouper.last', self.grouper.last_entry
+            self.model.display_n_best(1)
+            utils.force_redraw()

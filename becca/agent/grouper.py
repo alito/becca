@@ -1,14 +1,15 @@
 import copy
 import itertools
+import logging
 
 import numpy as np
 
-from . import utils
+from .. import utils
 
 class Grouper(object):
 
-    def __init__(self, num_sensors, num_actions, num_primitives, max_num_features):
-        
+    def __init__(self, num_sensors, num_actions, num_primitives, max_num_features, graphs=True):
+
         self.INPUT_DECAY_RATE = 1.0
         self.PROPENSITY_UPDATE_RATE = 10 ** (-3) # real, 0 < x < 1
         self.MAX_PROPENSITY = 0.1
@@ -40,8 +41,8 @@ class Grouper(object):
         self.input_map.append(np.vstack((np.cumsum(np.ones(num_sensors, np.int)) - 1, 
                                          np.zeros(num_sensors, np.int))).transpose())
         self.index_map.append(np.cumsum(np.ones(num_sensors, np.int)) - 1)
-        self.index_map_inverse[ :num_sensors, :] = np.hstack(( np.cumsum( np.ones( num_sensors, np.int)) - 1,
-                                                               np.zeros(num_sensors, np.int)))
+        self.index_map_inverse[ :num_sensors, :] = np.vstack(( np.cumsum( np.ones( num_sensors, np.int)) - 1,
+                                                               np.zeros(num_sensors, np.int))).transpose()
         self.last_entry = num_sensors
 
         #initializes group 1
@@ -53,7 +54,7 @@ class Grouper(object):
         self.index_map_inverse[self.last_entry: self.last_entry + num_primitives, :] = \
             np.vstack((np.cumsum(np.ones( num_primitives, np.int)) - 1, np.ones( num_primitives, np.int))).transpose()
         self.last_entry += num_primitives
-
+        
         #initializes group 2
         self.previous_input.append(np.zeros( num_actions))
         self.input_map.append(np.vstack(( np.cumsum(np.ones( num_actions, np.int)) - 1,
@@ -62,40 +63,42 @@ class Grouper(object):
         self.index_map_inverse[self.last_entry: self.last_entry + num_actions, :] = \
             np.vstack(( np.cumsum( np.ones( num_actions, np.int)) - 1, 2 * np.ones( num_actions, np.int))).transpose()
         self.last_entry += num_actions
+        
+        self.graphing = graphs
 
-
+        
     def add_group(self):
         self.previous_input.append(np.zeros(1))
 
 
     def add_feature(self, nth_group, has_dummy):
         
-        self.previous_input[nth_group] = np.vstack((self.previous_input[nth_group], [0]))
+        self.previous_input[nth_group] = np.hstack((self.previous_input[nth_group], [0]))
 
         if has_dummy:
             self.previous_input[nth_group] = self.previous_input[ nth_group][1:]
-
             self.correlation[self.index_map[nth_group], :] = 0
             self.correlation[:, self.index_map[nth_group]] = 0
             self.propensity[self.index_map[nth_group], :] = 0
             self.propensity[:, self.index_map[nth_group]] = 0
         else:
+            self.index_map[nth_group] = np.hstack((self.index_map[nth_group], self.last_entry))
+            self.index_map_inverse[self.last_entry,:] = np.hstack((len(self.index_map[nth_group]) - 1, nth_group))
             self.last_entry += 1
-            self.index_map[nth_group] = np.vstack((self.index_map[nth_group], self.last_entry))
-            self.index_map_inverse[self.last_entry,:] = np.hstack((self.index_map[nth_group].shape[1], nth_group))
+            
+        element_index_correlations = None
+        for subindex in range(nth_group):            
+            indices = ( self.input_map[nth_group][:,1] == subindex).nonzero()[0]
+            element_index = self.index_map[subindex][self.input_map[nth_group][indices]]
+            if element_index_correlations is None:
+                element_index_correlations = element_index.ravel()
+            else:
+                element_index_correlations = np.hstack((element_index_correlations, element_index.ravel()))
 
-
-        element_index_correlation = np.array([])
-        for subindex in range(nth_group - 1):
-            indices = ( self.input_map[nth_group][:,1] == subindex)
-            element_index = self.index_map[subindex][self.input_map[nth_group]][indices]
-            element_index_correlation = np.vstack((element_index_correlation, element_index.ravel()))
-
-        element_index_correlation = element_index_correlation.ravel()
 
         #propogate unallowable combinations with inputs 
-        self.combination[self.last_entry, element_index_correlation] = 0
-        self.combination[element_index_correlation, self.last_entry] = 0
+        self.combination[self.last_entry - 1, element_index_correlations] = 0
+        self.combination[element_index_correlations, self.last_entry - 1] = 0
 
 
 
@@ -166,7 +169,7 @@ class Grouper(object):
 
             if self.last_entry > self.MAX_NUM_FEATURES * 0.95:
                 self.features_full = True
-                self.logger.warn('==Max number of features almost reached (%s)==' % self.last_entry)
+                logging.warn('==Max number of features almost reached (%s)==' % self.last_entry)
 
             max_correlation = np.max(self.correlation)
             if max_correlation > self.NEW_GROUP_THRESHOLD:
@@ -223,10 +226,9 @@ class Grouper(object):
 
 
                 #initializes a new group
-                self.last_entry += 1
-                self.index_map.append(self.last_entry)
+                self.index_map.append(np.array([self.last_entry]))
                 self.index_map_inverse[self.last_entry, :] = np.array([0, num_groups], np.int)
-
+                self.last_entry += 1
                 num_groups += 1
                 
 

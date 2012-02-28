@@ -28,12 +28,14 @@ import pickle
 import numpy as np
 try:
     import matplotlib.pyplot as plt
-    graphs = True
+    can_do_graphs = True
 except ImportError:
     print >> sys.stderr, "No matplotlib available. Turning off graphs"
-    graphs = False
+    can_do_graphs = False
 
 
+from ..utils import force_redraw
+	
 class World(object):
     '''
     the base class for creating a new world
@@ -41,7 +43,7 @@ class World(object):
 
     MAX_NUM_FEATURES = 700
     
-    def __init__(self):
+    def __init__(self, graphs=True):
         ''' default constructor
         '''
 
@@ -60,10 +62,11 @@ class World(object):
 
         self.display_features = False
 
+        self.max_number_features = self.MAX_NUM_FEATURES
         
-        self.graphing = graphs    
+        self.graphing = graphs and can_do_graphs   
         if self.graphing:
-            plt.ion()
+            plt.ioff()
 
         self.record_reward_history()
 
@@ -139,15 +142,18 @@ class World(object):
 
 
     def record_reward_history(self):
-        self.reward_history.append(self.cumulative_reward)
+        self.reward_history.append(float(self.cumulative_reward) / self.REPORTING_PERIOD)
         self.reward_steps.append(self.timestep)
-        
+        print self.reward_history
             
     def show_reward_history(self):
         if self.graphing:
+            plt.figure("Reward history")
             plt.plot(self.reward_steps, self.reward_history)
-            plt.draw()
-
+            plt.xlabel("time step")
+            plt.ylabel("Average reward")
+            force_redraw()
+            
         
     def log(self, sensors, primitives, reward):
         ''' logs the state of the world into a history that can be used to

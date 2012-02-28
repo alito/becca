@@ -3,12 +3,16 @@ import logging
 import copy
 
 import numpy as np
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    pass
 
-from .utils import bounded_sum, similarity
+from ..utils import bounded_sum, similarity, force_redraw
 
 class Model(object):
 
-    def __init__(self, num_primitives, num_actions):
+    def __init__(self, num_primitives, num_actions, graphs=True):
 
         self.create_logger()
         
@@ -19,9 +23,6 @@ class Model(object):
         self.STEP_DISCOUNT = 0.5              # real, 0 < x < 1
         self.TRACE_LENGTH = 10                 # integer, small
         self.TRACE_DECAY_RATE = 0.2           # real, 0 < x < 1
-
-        self.debug = False
-        self.filename_postfix = '_model.mat'
 
         self.clean_count = 0
 
@@ -45,6 +46,8 @@ class Model(object):
         self.cause[1][0,0] = 1
         self.effect[1][0,0] = 1
         #self.countp[0]= eps
+
+        self.graphing = graphs
 
 
     def create_logger(self):
@@ -218,100 +221,108 @@ class Model(object):
         """
 
 
-        sorted_indices = np.argsort(self.count[0:self.last_entry+1])
+        sorted_indices = np.argsort(self.count[:self.last_entry+1])[::-1]
+        relevant_sorted_indices = sorted_indices[:N]
 
-        sort_index = sorted_indices[0:N]
+        print relevant_sorted_indices
+        for order, index in enumerate(relevant_sorted_indices):
+            self.display_pair(index, "%sth top causes and effects" % (order + 1))
 
-        for index in sorted_indices:
-            self.display_pair(index)
 
-
-    def display_pair(self, N):
+    def display_pair(self, N, figure_name):
         """
         provides a visual representation of the Nth cause-effect pair
         """
 
-        num_groups = len(self.cause)
+        import time
 
-        for index, group in enumerate(self.cause):
-            #subplot(num_groups-1, 2, (k-1)*2-1)
-            #bar(self.cause{k}(:,N))
-            #     disp(['self.cause{' num2str(k) '}(' num2str(N) ')'])
-            #     self.cause{k}(:,N)
-            #axis ([0 size(self.cause{k},1)+1 0 1])
-            #ylabel(['g' num2str(k) ])
-            #    xlabel(['max of ' num2str(max(self.cause{k}(:,N))) ])
-            if index == 1:
-                #title('model.cause for N = %s' % N)
-                pass
+        if self.graphing:
+            # TODO: this can be sped up by keeping the axes returned from subplots and drawing directly there
+            # see: http://stackoverflow.com/questions/8798040/optimizing-matplotlib-pyplot-plotting-for-many-small-plots
             
-            if index == num_groups - 1:
-                #xlabel('count = %s' % self.count[index])
-                pass
+            
+            start = time.time()
+            plt.figure(figure_name)
+            plt.clf()  # if we don't clear, the bars overlap. 
+            
+            for index in range(1, num_groups):
+                plt.subplot(num_groups-1, 2, index*2-1)
+                heights = self.cause[index][:,N]
+                plt.bar(np.arange(len(heights)), heights)
+                #self.logger.info('model.cause[%s][%s]' % (index, N))
+                #self.logger.info(self.cause[index][:,N]
+                plt.axis([0, self.cause[index].shape[0]+1, 0, 1])
+                plt.ylabel("Group %s" % index)
+                #    xlabel(['max of ' num2str(max(self.cause[index](:,N))) ])
+                if index == 1:
+                    plt.title('model.cause for N = %s' % N)
+
+                if index == num_groups - 1:
+                    plt.xlabel('count = %s' % self.count[index])
+
+
+            for index in range(1, num_groups):
+                plt.subplot(num_groups-1, 2, index*2)
+                heights = self.effect[index][:,N]
+                plt.bar(np.arange(len(heights)), heights)
+                #self.logger.info('model.effect[%s][%s]' % (index, N))
+                #self.logger.info(self.effect[index][:,N])
+                plt.axis ([0, self.effect[index].shape[0]+1, 0, 1])
+                plt.ylabel("Group %s" % index)
+                plt.xlabel('max of %s' % np.max(self.effect[index][:,N]))
+                if index == 1:
+                    plt.title('model.effect for N = %s' % N)
+
+            force_redraw() # if no redraw is forced, only the first pair created will be redrawn
+
 
             
-        for index, group in enumerate(self.cause[1:]):
-            #subplot(num_groups-2, 2, index*2)
-            #bar(self.effect{k}(:,N))
-            #     disp(['self.effect{' num2str(k) '}(' num2str(N) ')'])
-            #     self.effect{k}(:,N)
-            #axis ([0 size(self.effect{k},1)+1 0 1])
-            #ylabel(['g' num2str(k) ])
-            #    xlabel(['max of ' num2str(max(self.effect{k}(:,N))) ])
-            if index == 1:
-                #title('model.effect for N = %s' % N)
-                pass
-
-
     def display(self, N):
         """
         provides a visual representation of the Nth cause-effect pair
         """
 
-        num_groups = len(self.cause)
-        # 
-        # figure(177)
-        # for k = 2:num_groups,
-        #     subplot(num_groups-1, 2, (k-1)*2-1)
-        #     bar(self.cause{k}(:,N))
-        #     axis ([0 size(self.cause{k},1)+1 0 1])
-        #     ylabel(['grp ' num2str(k) ])
-        #     if (k == 2)
-        #         title(['self.cause for N = ' num2str(N) ])
-        #     end
-        #     if (k == num_groups)
-        #         xlabel(['count = ' num2str(self.count(N)) ])
-        #     end
-        # end
-        # 
-        # for k = 2:num_groups,
-        #     subplot(num_groups-1, 2, (k-1)*2)
-        #     bar(self.effect{k}(:,N))
-        #     axis ([0 size(self.effect{k},1)+1 0 1])
-        #     ylabel(['grp ' num2str(k) ])
-        #     if (k == 2)
-        #         title(['self.effect for N = ' num2str(N) ])
-        #     end
-        # end
+        if self.graphing:
+            num_groups = len(self.cause)
+            # 
+            plt.figure("causes and effects")
+            for index in range(1, num_groups):
+                plt.subplot(num_groups - 1, 2, (index-1)*2-1)
+                plt.bar(np.arange(len(self.cause[index][:,N])), self.cause[index][:,N])
+                plt.axis (0, self.cause[index].shape[0] + 1, 0, 1)
+                plt.ylabel('group %s' % index)
+                if index == 1:
+                    plt.title('cause for N = %s' % N)
+
+                if index == num_groups - 1:
+                    plt.xlabel('count = %s' % self.count[N])
+            # 
+            # for index = 2:num_groups,
+            #     subplot(num_groups-1, 2, (index-1)*2)
+            #     bar(self.effect[index](:,N))
+            #     axis ([0 size(self.effect[index],1)+1 0 1])
+            #     ylabel(['grp ' num2str(index) ])
+            #     if (index == 2)
+            #         title(['self.effect for N = ' num2str(N) ])
+            #     end
+            # end
 
         # Text display
-        #disp(['================Transition pair ' num2str(N) ' ================='])
+        self.logger.info('================Transition pair %s =================' % N)
         for index in range(1, num_groups):
-
-            nonz_cause = len(self.cause[index][:,N].ravel().nonzero())
-            nonz_effect = len(self.effect[index][:,N].ravel().nonzero())
-            if ( (nonz_cause > 0) or (nonz_effect > 0)):
+            nonz_cause = self.cause[index][:,N].ravel().count_nonzero()
+            nonz_effect = self.effect[index][:,N].ravel().count_nonzero()
+            if (nonz_cause > 0) or (nonz_effect > 0):
 
             #     # debug
             #     if ( (nonz_cause < 4) && (nonz_effect < 4))
             #         
-            #    disp(['================Transition pair ' num2str(N) ' ================='])
 
-                print('  -----Group %s -----' % index)
-                for subindex in range(0,len(self.effect[index][:,N])):
-                    if (self.cause[index][subindex,N].nonzero()) or (self.effect[index][subindex,N].nonzero()):
-                        print('    Feature             %s: %s %s' % (subindex, self.cause[index][subindex,N],
-                                                                     self.effect[index][subindex,N]))
+                self.logger.info('  -----Group %s -----' % index)
+                for subindex in range(self.effect[index][:,N].shape[0]):
+                    if self.cause[index][subindex,N].count_nonzero() or self.effect[index][subindex,N].count_nonzero():
+                        self.logger.info('    Feature             %s: %s %s' % (subindex, self.cause[index][subindex,N],
+                                                                                self.effect[index][subindex,N]))
 
 
     
