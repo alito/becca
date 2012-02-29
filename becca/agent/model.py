@@ -54,7 +54,7 @@ class Model(object):
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def add_group(self):
-        size = (1, np.size(self.cause[-1], 1))
+        size = (1, self.cause[-1].shape[1])
         self.history.append(np.zeros(size))
         self.cause.append(np.zeros(size))
         self.effect.append(np.zeros(size))
@@ -68,13 +68,13 @@ class Model(object):
         self.history[nth_group] = np.vstack((self.history[nth_group],  np.zeros(self.history[nth_group].shape[1])))
         self.cause[nth_group]   = np.vstack((self.cause[nth_group],  np.zeros(self.cause[nth_group].shape[1])))
         self.effect[nth_group]  = np.vstack((self.effect[nth_group], np.zeros(self.effect[nth_group].shape[1])))
+
         
         # if dummy feature is still in place, removes it
         if has_dummy:
-            self.history[nth_group]   = self.history[nth_group][1:]
+            self.history[nth_group] = self.history[nth_group][1:]
             self.cause[nth_group]  = self.cause[nth_group][1:]
             self.effect[nth_group] = self.effect[nth_group][1:]
-
 
 
     def train(self, new_effect, new_history, new_cause, reward):
@@ -94,6 +94,7 @@ class Model(object):
         # the model space more densely in areas where it accumulates more
         # observations.
         transition_similarity = similarity(new_history, self.history, range(self.last_entry))
+        #print "transition similarity", transition_similarity
 
         # If the cause doesn't match, the transition doesn't match
         cause_group = None
@@ -107,7 +108,7 @@ class Model(object):
                  
         match_indices = []
         
-        if cause_group is not None:            
+        if cause_group is not None:
             transition_similarity *= self.cause[cause_group][cause_feature, :self.last_entry][0]
             match_indices = ( transition_similarity > self.SIMILARITY_THRESHOLD).ravel().nonzero()[0]
 
@@ -115,15 +116,15 @@ class Model(object):
         #if context and cause are sufficiently different, 
         #adds a new entry to the model library
         if np.size(match_indices) == 0: 
-            self.last_entry += 1
             matching_transition_index = self.last_entry
             for index in range(1,num_groups):
                 self.history[index][:, self.last_entry] = new_history[index]
                 self.cause[index][:, self.last_entry] = new_cause[index]
                 self.effect[index][:, self.last_entry] = new_effect[index]
-
+                
             self.count[matching_transition_index] =  1
             current_update_rate = 1.0
+            self.last_entry += 1            
 
         #otherwise increments a nearby entry
         else:
@@ -201,7 +202,7 @@ class Model(object):
 
 
         # pads the library if it has shrunk too far
-        if np.size(self.effect[1], 1) < self.MAX_ENTRIES * 1.1:
+        if self.effect[1].shape[1] < self.MAX_ENTRIES * 1.1:
             
             for index in range(1,num_groups):
                 size = (self.effect[index].shape[0], self.MAX_ENTRIES)
@@ -224,7 +225,6 @@ class Model(object):
         sorted_indices = np.argsort(self.count[:self.last_entry+1])[::-1]
         relevant_sorted_indices = sorted_indices[:N]
 
-        print relevant_sorted_indices
         for order, index in enumerate(relevant_sorted_indices):
             self.display_pair(index, "%sth top causes and effects" % (order + 1))
 
@@ -331,3 +331,13 @@ class Model(object):
 
 
      
+    def show(self):
+        
+        self.logger.info("cause: %s" % self.cause)
+        self.logger.info("effect: %s" % self.effect)
+        self.logger.info("clean_count: %s" % self.clean_count)
+        self.logger.info("reward_map: %s" % self.reward_map)
+        self.logger.info("goal_map: %s" % self.goal_map)
+        self.logger.info("trace_index: %s" % self.trace_index)
+        self.logger.info("trace_reward: %s" % self.trace_reward)
+        self.logger.info("last_entry: %s" % self.last_entry)

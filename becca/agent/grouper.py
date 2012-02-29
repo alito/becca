@@ -89,7 +89,7 @@ class Grouper(object):
         element_index_correlations = None
         for subindex in range(nth_group):            
             indices = ( self.input_map[nth_group][:,1] == subindex).nonzero()[0]
-            element_index = self.index_map[subindex][self.input_map[nth_group][indices]]
+            element_index = self.index_map[subindex][self.input_map[nth_group][indices, 0]]
             if element_index_correlations is None:
                 element_index_correlations = element_index.ravel()
             else:
@@ -214,16 +214,10 @@ class Grouper(object):
                     Z[:,relevant_indices] = 1
                     Z[relevant_indices,:] = 1
 
-                element = np.sort(element)
-                self.groups_per_feature[element] += 1
+                relevant_indices = np.sort(relevant_indices)
+                self.groups_per_feature[relevant_indices] += 1
 
-                self.input_map.append(None)
-                for index in relevant_indices:
-                    if self.input_map[-1] is None:
-                        self.input_map[-1] = self.index_map_inverse[index, :]
-                    else:
-                        self.input_map[-1] = np.vstack((self.input_map[-1], self.index_map_inverse[index, :]))
-
+                self.input_map.append(np.vstack((self.index_map_inverse[index,:] for index in relevant_indices)))
 
                 #initializes a new group
                 self.index_map.append(np.array([self.last_entry]))

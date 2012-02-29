@@ -166,7 +166,8 @@ class Agent(object):
         """
         adds a new group to the agent
         """
-        
+
+        logging.info("Adding group")
         self.num_groups += 1
         
         self.feature_activity.append(np.zeros(1))
@@ -182,6 +183,7 @@ class Agent(object):
 
 
     def add_feature(self, new_feature, nth_group, feature_vote):
+        logging.info("Adding feature to group %s" % nth_group)        
         has_dummy = np.max(self.feature_map.map[nth_group] [0,:]) == 0
         self.feature_added = True
         
