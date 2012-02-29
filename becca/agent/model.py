@@ -54,7 +54,6 @@ class Model(object):
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def add_group(self):
-        print "adding group"
         size = (1, self.cause[-1].shape[1])
         self.history.append(np.zeros(size))
         self.cause.append(np.zeros(size))

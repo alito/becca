@@ -166,7 +166,8 @@ class Agent(object):
         """
         adds a new group to the agent
         """
-        
+
+		logging.debug("Adding group")
         self.num_groups += 1
         
         self.feature_activity.append(np.zeros(1))
