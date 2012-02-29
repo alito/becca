@@ -89,7 +89,7 @@ class Grouper(object):
         element_index_correlations = None
         for subindex in range(nth_group):            
             indices = ( self.input_map[nth_group][:,1] == subindex).nonzero()[0]
-            element_index = self.index_map[subindex][self.input_map[nth_group][indices]]
+            element_index = self.index_map[subindex][self.input_map[nth_group][indices, 0]]
             if element_index_correlations is None:
                 element_index_correlations = element_index.ravel()
             else:
