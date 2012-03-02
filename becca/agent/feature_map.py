@@ -21,7 +21,7 @@ class FeatureMap(object):
         Add a feature to group
         """
 
-        self.map[group] = np.vstack((self.map[group], np.transpose(feature)))                
+        self.map[group] = np.vstack((self.map[group], feature)) 
         if has_dummy:
             self.map[group] = self.map[group][1:, :]
 
