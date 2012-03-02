@@ -63,7 +63,7 @@ class Planner(object):
         model_actions = model.cause[2][:, :model.last_entry]
         count_weight = np.log(model.count[:model.last_entry] + 1)
         value = effect_values
-        similarity = utils.similarity(current_state, model.cause, range(model.last_entry))
+        similarity = utils.similarity(current_state, model.cause, model.last_entry)
 
         # The reactive action is a weighted average of all actions. Actions 
         # that are expected to result in a high value state and actions that are
@@ -139,7 +139,7 @@ class Planner(object):
         # factor in to its vote
         #count_weight = utils.sigmoid(np.log(model.count[:model.last_entry] + 1) / 3)
 
-        similarity = utils.similarity(agent.working_memory, model.history, range(model.last_entry))
+        similarity = utils.similarity(agent.working_memory, model.history, model.last_entry)
 
         # TODO: Raise similarity by some power to focus on more similar transitions?
 
