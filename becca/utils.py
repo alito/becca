@@ -71,9 +71,10 @@ def bounded_sum(a, b):
     # maps [-1,1] onto (-Inf,Inf)
     
     # different functions for when a and b are same or opposite signs
-    same_sign_indices = (np.sign(a) == np.sign(b)).ravel().nonzero()
+    same_sign_indices = (np.sign(a) == np.sign(b)).nonzero()
     
     a_same_sign = a[same_sign_indices]
+
     b_same_sign = b[same_sign_indices]
     a_t = np.sign(a_same_sign) / (1 - np.abs(a_same_sign) + eps) - np.sign(a_same_sign)
     b_t = np.sign(b_same_sign) / (1 - np.abs(b_same_sign) + eps) - np.sign(b_same_sign)
@@ -83,7 +84,7 @@ def bounded_sum(a, b):
     c_same_sign = np.sign(c_t) * (1 - 1 / (np.abs(c_t) + 1))
     c_same_sign[ c_t == 0] = 0
     
-    opposite_sign_indices = (np.sign(a) != np.sign(b)).ravel().nonzero()
+    opposite_sign_indices = (np.sign(a) != np.sign(b)).nonzero()
     a_opposite_sign = a[opposite_sign_indices]
     b_opposite_sign = b[opposite_sign_indices]
     c_opposite_sign = a_opposite_sign + b_opposite_sign
