@@ -4,6 +4,7 @@ Created on Jan 11, 2012
 @author: brandon_rohrer
 '''
 
+import sys
 import cPickle as pickle
 import copy
 import logging
@@ -76,7 +77,9 @@ class Agent(object):
         self.num_groups = 3
         self.feature_added = False
 
-
+        self.NEW_FEATURE_MARGIN = 0.3
+        self.NEW_FEATURE_MIN_SIZE = 0.2
+        
         # The first group is dedicated to raw sensor information. None of it is
         # passed on directly as features. It must be correlated and combined before
         # it can emerge as part of a feature. As a result, most of the variables
@@ -299,8 +302,8 @@ class Agent(object):
                     # it will result in a feature vote of 1.
                     feature_vote[index] = np.sqrt( np.dot(self.feature_map.map[index] ** 2, grouped_input[index]))
 
-            if  margin > self.feature_map.NEW_FEATURE_MARGIN and \
-                np.max( grouped_input[index]) > self.feature_map.NEW_FEATURE_MIN_SIZE and not self.grouper.features_full:
+            if  margin > self.NEW_FEATURE_MARGIN and \
+                np.max( grouped_input[index]) > self.NEW_FEATURE_MIN_SIZE and not self.grouper.features_full:
 
                 # This formulation of feature creation was chosen to have 
                 # the property that all feature magnitudes are 1. In other words, 
