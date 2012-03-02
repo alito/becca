@@ -99,10 +99,10 @@ def bounded_sum(a, b):
 
 
 
-def similarity(point, set_of_points, indices):
+def similarity(point, set_of_points, max_index=None):
     """
     Calculates the similarity between a point and a set of points.
-    Returns a vector with the similarity between each point in set_of_points[indices]
+    Returns a vector with the similarity between each point in set_of_points[:max_index]
     from the initial POINT.
 
     The angle between the vectors was chosen as the basis
@@ -120,18 +120,23 @@ def similarity(point, set_of_points, indices):
     
     result = None
 
-    if not indices or not np.size(set_of_points) or not np.size(point):
+    if not np.size(set_of_points) or not np.size(point):
         return None
 
-    eps = np.finfo(np.double).eps    
-    num_points = len(indices)
+    eps = np.finfo(np.double).eps
+
+    if max_index is None:
+        # if there is no maximum index, set it to the length of the set
+        max_index = set_of_points.shape[1]
 
     # first handles the non-cell case, e.g. comparing inputs to 
     # the features within a group
     if not isinstance(point, list):
-        
-        point_mat = np.tile(point, (num_points, 1))
-        set_mat = set_of_points[:,indices]
+
+        # make a point matrix of the same size as the set matrix
+        # need to convert the point vector to a matrix
+        point_mat = np.tile(point[np.newaxis].transpose(), (1, max_index))
+        set_mat = set_of_points[:,:max_index]
         inner_product = np.sum(( point_mat * set_mat), axis=0)
         mag_point = np.sqrt(np.sum( point_mat ** 2, axis=0)) + eps
         mag_set = np.sqrt(np.sum(set_mat ** 2, axis=0)) + eps
@@ -146,20 +151,19 @@ def similarity(point, set_of_points, indices):
     # against causes in the model
     else:
         num_groups = len(point)
-        inner_product = np.zeros(num_points)
-        sum_sq_point = np.zeros(num_points)
-        sum_sq_set = np.zeros(num_points)
+        inner_product = np.zeros(max_index)
+        sum_sq_point = np.zeros(max_index)
+        sum_sq_set = np.zeros(max_index)
 
-        for index in range(0,num_groups):
+        for index in range(num_groups):
             if np.size(point[index]):
-
                 # this weighting factor weights matches more heavily in groups
                 # with more features. In a group with one feature, a match
                 # means less than in a group with 10 features.
                 # TODO: consider whether to continue using the weighting
                 weight = len(point[index])
-                point_mat = np.tile(point[index][np.newaxis].transpose(), (1, num_points))
-                set_mat = set_of_points[index][:,indices]
+                point_mat = np.tile(point[index][np.newaxis].transpose(), (1, max_index))
+                set_mat = set_of_points[index][:,:max_index]
                 inner_product += weight * np.sum((point_mat * set_mat), axis=0)
                 sum_sq_point += weight * np.sum(point_mat ** 2, axis=0)
                 sum_sq_set += weight * np.sum(set_mat ** 2, axis=0)

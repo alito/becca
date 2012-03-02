@@ -273,9 +273,7 @@ class Agent(object):
             if np.max(self.feature_map.map[index][0,:]) == 0:
                 margin = 1
             else:
-
-                similarity_values = utils.similarity( grouped_input[index], self.feature_map.map[index].transpose(), 
-                    range(len(self.feature_map.map[index])) )
+                similarity_values = utils.similarity( grouped_input[index], self.feature_map.map[index].transpose())
                 margin = 1 - np.max(similarity_values)
 
 
