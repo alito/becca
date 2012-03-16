@@ -1,0 +1,52 @@
+\documentclass[12pt,oneside]{book}
+
+\usepackage{times}
+\normalfont
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+
+\begin{document}
+\title{Becca User's Manual}
+\author{Brandon Rohrer}
+
+\maketitle
+\tableofcontents
+\newpage
+
+% Skip an extra line between paragraphs
+\addtolength{\parskip}{\baselineskip}
+
+% List only chapters in the table of contents
+\setcounter{tocdepth}{0}
+
+\include{download}
+
+\chapter{Write and run your first world}
+world code overview
+
+\chapter{Share your world with other Becca users}
+%contrib vs. core: parallel distribution
+%find worlds that others have written-link to contributions page
+%becca's online presence
+
+\chapter{Modify your agent code}
+%agent code overview
+%benchmarking
+
+\chapter{Share your agent with other Becca users}
+%core vs. branch
+%style guide
+
+\chapter{Understand how Becca learns}
+%technical overview
+
+\appendix
+\chapter{Related work}
+
+\chapter{Revision history}
+%contributions
+
+\bibliographystyle{plain}
+\bibliography{RohrerBECCA}
+
+\end{document}
