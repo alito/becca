@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 
 from .. import utils
@@ -12,10 +14,6 @@ class Planner(object):
 
         self.act = False
         self.action = np.zeros(num_actions)
-
-
-    def add_group(self):
-        self.plan.append(0)
 
 
     def explore(self):
@@ -65,7 +63,7 @@ class Planner(object):
         model_actions = model.cause[2][:, :model.last_entry]
         count_weight = np.log(model.count[:model.last_entry] + 1)
         value = effect_values
-        similarity = utils.similarity(current_state, model.cause, range(model.last_entry))
+        similarity = utils.similarity(current_state, model.cause, model.last_entry)
 
         # The reactive action is a weighted average of all actions. Actions 
         # that are expected to result in a high value state and actions that are
@@ -139,9 +137,9 @@ class Planner(object):
 
         # Each transition's count and its similarity to the working memory also
         # factor in to its vote
-        count_weight = utils.sigmoid(np.log(model.count[:model.last_entry] + 1) / 3)
+        #count_weight = utils.sigmoid(np.log(model.count[:model.last_entry] + 1) / 3)
 
-        similarity = utils.similarity(agent.working_memory, model.history, range(model.last_entry))
+        similarity = utils.similarity(agent.working_memory, model.history, model.last_entry)
 
         # TODO: Raise similarity by some power to focus on more similar transitions?
 
@@ -210,3 +208,27 @@ class Planner(object):
             self.action[agent.goal[2] > 0] = 1
             agent.goal[2] = np.zeros(np.size( agent.goal[2]))
 
+
+    def step(self, agent):
+        # Reactively chooses an action.
+        # TODO: make reactive actions habit based, not reward based
+        # also make reactive actions general
+        # reactive_action = self.select_action(self.model, self.feature_activity)
+
+        # only acts deliberately on a fraction of the time steps
+        if np.random.random_sample() > self.OBSERVATION_FRACTION:
+            # occasionally explores when making a deliberate action.
+            # Sets self.planner.action
+            if np.random.random_sample() < self.EXPLORATION_FRACTION:
+                logging.debug('EXPLORING')
+                self.explore()
+            else:
+                logging.debug('DELIBERATING')
+                # Deliberately choose features as goals, in addition to actions.
+                self.deliberate(agent)
+
+        else:
+            self.action = np.zeros( self.action.shape[0])
+        
+        return self.action
+            

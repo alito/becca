@@ -3,9 +3,6 @@ import numpy as np
 class FeatureMap(object):
 
     def __init__(self, num_sensors, num_primitives, num_actions):
-        self.NEW_FEATURE_MARGIN = 0.3
-        self.NEW_FEATURE_MIN_SIZE = 0.2
-
         self.map = []
         self.map.append(np.eye(num_sensors))
         self.map.append(np.eye(num_primitives))
@@ -20,8 +17,7 @@ class FeatureMap(object):
         """
         Add a feature to group
         """
-
-        self.map[group] = np.vstack((self.map[group], np.transpose(feature)))                
+        self.map[group] = np.vstack((self.map[group], feature))
         if has_dummy:
             self.map[group] = self.map[group][1:, :]
 
