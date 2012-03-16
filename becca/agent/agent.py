@@ -1,6 +1,7 @@
 '''
 '''
 
+import sys
 import cPickle as pickle
 import copy
 import logging
@@ -42,7 +43,7 @@ class Agent(object):
         self.num_primitives = num_primitives
         self.num_actions = num_actions
 
-        self.actions = np.zeros(self.num_actions)
+        self.action = np.zeros(self.num_actions)
 
         self.SALIENCE_NOISE = 0.1        
         self.GOAL_DECAY_RATE = 0.05   # real, 0 < x <= 1
@@ -66,7 +67,9 @@ class Agent(object):
         self.num_groups = 3
         self.feature_added = False
 
-
+        self.NEW_FEATURE_MARGIN = 0.3
+        self.NEW_FEATURE_MIN_SIZE = 0.2
+        
         # The first group is dedicated to raw sensor information. None of it is
         # passed on directly as features. It must be correlated and combined before
         # it can emerge as part of a feature. As a result, most of the variables
@@ -84,8 +87,6 @@ class Agent(object):
         self.working_memory = copy.deepcopy(self.feature_activity)
         self.previous_working_memory = copy.deepcopy(self.feature_activity)
         self.goal = copy.deepcopy(self.feature_activity)
-        
-        self.action = np.zeros( self.num_actions)
 
 
         
@@ -262,9 +263,7 @@ class Agent(object):
             if np.max(self.feature_map.map[index][0,:]) == 0:
                 margin = 1
             else:
-
-                similarity_values = utils.similarity( grouped_input[index], self.feature_map.map[index].transpose(), 
-                    range(len(self.feature_map.map[index])) )
+                similarity_values = utils.similarity( grouped_input[index], self.feature_map.map[index].transpose())
                 margin = 1 - np.max(similarity_values)
 
 
@@ -289,8 +288,8 @@ class Agent(object):
                     # it will result in a feature vote of 1.
                     feature_vote[index] = np.sqrt( np.dot(self.feature_map.map[index] ** 2, grouped_input[index]))
 
-            if  margin > self.feature_map.NEW_FEATURE_MARGIN and \
-                np.max( grouped_input[index]) > self.feature_map.NEW_FEATURE_MIN_SIZE and not self.grouper.features_full:
+            if  margin > self.NEW_FEATURE_MARGIN and \
+                np.max( grouped_input[index]) > self.NEW_FEATURE_MIN_SIZE and not self.grouper.features_full:
 
                 # This formulation of feature creation was chosen to have 
                 # the property that all feature magnitudes are 1. In other words, 
@@ -448,29 +447,10 @@ class Agent(object):
         # self.model.train(self.feature_activity, self.previous_working_memory, self.reward)
         self.model.train(self.feature_activity, self.pre_previous_working_memory, self.previous_attended_feature, reward)
 
-        # Reactively chooses an action.
-        # TODO: make reactive actions habit based, not reward based
-        # also make reactive actions general
-        # reactive_action = self.planner.select_action(self.model, self.feature_activity)
+        # decide on an action
+        self.action = self.planner.step(self)
+        
 
-        # only acts deliberately on a fraction of the time steps
-        if np.random.random_sample() > self.planner.OBSERVATION_FRACTION:
-            # occasionally explores when making a deliberate action.
-            # Sets self.planner.action
-            if np.random.random_sample() < self.planner.EXPLORATION_FRACTION:
-                self.logger.debug('EXPLORING')
-                self.planner.explore()
-            else:
-                self.logger.debug('DELIBERATING')
-                # Deliberately choose features as goals, in addition to actions.
-                self.planner.deliberate(self)
-
-        else:
-            self.planner.action = np.zeros( self.planner.action.shape[0])
-
-        # DEBUG
-        # self.action = utils.bounded_sum( reactive_action, self.planner.action)
-        self.action = self.planner.action
 
         return self.action
     

@@ -93,7 +93,7 @@ class Model(object):
         # allow often-observed transitions to require a closer fit, and populate
         # the model space more densely in areas where it accumulates more
         # observations.
-        transition_similarity = similarity(new_history, self.history, range(self.last_entry))
+        transition_similarity = similarity(new_history, self.history, self.last_entry)
         #print "transition similarity", transition_similarity
 
         # If the cause doesn't match, the transition doesn't match
