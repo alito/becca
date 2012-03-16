@@ -24,6 +24,7 @@ A number of methods for internal use have been found to be convenient as well:
 
 import logging
 import pickle
+import sys
 
 import numpy as np
 try:
@@ -35,7 +36,7 @@ except ImportError:
 
 
 from ..utils import force_redraw
-	
+
 class World(object):
     '''
     the base class for creating a new world

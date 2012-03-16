@@ -1,8 +1,4 @@
 """
-Created on Jan 11, 2012
-
-@author: brandon_rohrer
-
 A main test harness for a general reinforcement learning agent. 
 """
 

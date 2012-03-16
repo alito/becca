@@ -1,12 +1,10 @@
 '''
-Created on Jan 11, 2012
-
-@author: brandon_rohrer
 '''
 
 import cPickle as pickle
 import copy
 import logging
+import sys
 
 import numpy as np
 try:
@@ -52,14 +50,6 @@ class Agent(object):
 
 
         self.REPORT_PERIOD = 100
-        
-        # Rates at which the feature activity and working memory decay.
-        # Setting these equal to 1 is the equivalent of making the Markovian 
-        # assumption about the task--that all relevant information is captured 
-        # adequately in the current state.
-        self.WORKING_MEMORY_DECAY_RATE = 0.4      # real, 0 < x <= 1
-        # also check out self.grouper.INPUT_DECAY_RATE, set in grouper_initialize
-
         
         # Rates at which the feature activity and working memory decay.
         # Setting these equal to 1 is the equivalent of making the Markovian 
