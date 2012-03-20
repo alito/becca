@@ -8,5 +8,5 @@ setup(name='Becca',
       author='Brandon Rohrer',
       author_email='brohrer@gmail.com',
       url='http://www.sandia.gov/~brrohre/becca.html',
-      packages=['becca', 'becca.agent', 'becca.experiment', 'becca.worlds'],
+      packages=['agent', 'worlds'],
      )
