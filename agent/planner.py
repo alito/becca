@@ -2,7 +2,7 @@ import logging
 
 import numpy as np
 
-from .. import utils
+import utils
 
 class Planner(object):
     """

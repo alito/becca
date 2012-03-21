@@ -1,192 +1,104 @@
-'''
-Created on Jan 11, 2012
 
-@author: brandon_rohrer
-'''
-
-import sys
-import cPickle as pickle
 import copy
-import logging
-
 import numpy as np
-try:
-    import matplotlib.pyplot as plt
-    can_do_graphs = True
-except ImportError:
-    print >> sys.stderr, "No matplotlib available. Turning off graphs"
-    can_do_graphs = False
+#import matplotlib.pyplot as plt
 
-from .feature_map import FeatureMap
-from .planner import Planner
-from .model import Model
-from .grouper import Grouper
-from .. import utils
+from agent_stub import AgentStub
+from feature_map import FeatureMap
+from grouper import Grouper
+from model import Model
+from planner import Planner
+from state import State
+import utils
 
-class Agent(object):
-    '''A general reinforcement learning agent, modeled on human neurophysiology 
-    and performance.  It takes in a time series of 
+class Agent(AgentStub):
+    """ A general reinforcement learning agent, modeled on observations and 
+    theories of human performance. It takes in a time series of 
     sensory input vectors and a scalar reward and puts out a time series 
-    of motor commands.  
-    New features are created as necessary to adequately represent the data.
-    '''
+    of motor commands. New features are created as necessary to adequately 
+    represent the data.
+    """
 
-    def __init__(self, num_sensors, num_primitives, num_actions, max_number_features=None, graphs=True):
-        '''
-        Constructor
-        '''
+    def __init__(self, agent_name, num_sensors, num_primitives, num_actions, 
+                 max_number_features=1000):
+        """ agent_name is a string label for the agent
+            num_sensors, num_primitives, and num_actions are the number of 
+        sensor, primitive feature, and output channels, respectively, that
+        the agent expects in its interaction with the world 
+            max_num_features is an upper limit on the number of 
+        features the agent can produce. 
+        """
 
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.graphing = can_do_graphs and graphs
-
-        self.timestep = 0
+        #super(Agent, self).__init__(agent_name, num_sensors, 
+        #                            num_primitives, num_actions, 
+        #                            max_number_features)
         
+        self.pickle_filename = agent_name + "_agent.pickle"
+        
+        self.REPORTING_PERIOD = 10 ** 3
+        self.BACKUP_PERIOD = 2* 10 ** 3
+
         self.num_sensors = num_sensors
         self.num_primitives = num_primitives
         self.num_actions = num_actions
 
-        self.action = np.zeros(self.num_actions)
-
+        self.reward = 0
+        self.actions = np.zeros(self.num_actions)
+        
+        self.timestep = 0
+        self.graphing = True
+        
+        self.cumulative_reward = 0
+        self.reward_history = []
+        self.reward_steps = []
+        
         self.SALIENCE_NOISE = 0.1        
         self.GOAL_DECAY_RATE = 0.05   # real, 0 < x <= 1
         self.STEP_DISCOUNT = 0.5      # real, 0 < x <= 1
-
-
-        self.REPORT_PERIOD = 100
         
-        # Rates at which the feature activity and working memory decay.
-        # Setting these equal to 1 is the equivalent of making the Markovian 
-        # assumption about the task--that all relevant information is captured 
-        # adequately in the current state.
+        """ Rates at which the feature activity and working memory decay.
+        Setting these equal to 1 is the equivalent of making the Markovian 
+        assumption about the task--that all relevant information is captured 
+        adequately in the current state.
+        Also check out self.grouper.INPUT_DECAY_RATE, set in 
+        the grouper constructor
+        """
         self.WORKING_MEMORY_DECAY_RATE = 0.4      # real, 0 < x <= 1
-        # also check out self.grouper.INPUT_DECAY_RATE, set in grouper_initialize
 
-        
-        # Rates at which the feature activity and working memory decay.
-        # Setting these equal to 1 is the equivalent of making the Markovian 
-        # assumption about the task--that all relevant information is captured 
-        # adequately in the current state.
-        self.WORKING_MEMORY_DECAY_RATE = 0.4      # real, 0 < x <= 1
-        # also check out self.grouper.INPUT_DECAY_RATE, set in grouper_initialize
-
-        self.grouper = Grouper( num_sensors, num_actions, num_primitives, max_number_features, graphs=self.graphing)
+        self.grouper = Grouper( num_sensors, num_actions, num_primitives, 
+                                max_number_features, graphs=self.graphing)
         self.feature_map = FeatureMap(num_sensors, num_primitives, num_actions)        
         self.model = Model( num_primitives, num_actions, graphs=self.graphing)
         self.planner = Planner(num_actions)
 
-        self.num_groups = 3
-        self.feature_added = False
-
         self.NEW_FEATURE_MARGIN = 0.3
         self.NEW_FEATURE_MIN_SIZE = 0.2
         
-        # The first group is dedicated to raw sensor information. None of it is
-        # passed on directly as features. It must be correlated and combined before
-        # it can emerge as part of a feature. As a result, most of the variables
-        # associated with this group are empty
-        self.feature_activity = [np.array([])]
-
-        # The second group is dedicated to basic features.
-        self.feature_activity.append(np.zeros( self.num_primitives))
-
-        # The third group is dedicated to basic actions.
-        self.feature_activity.append(np.zeros( self.num_actions))
-
-        # Initializes other variables containing the full feature information.
-        self.attended_feature = copy.deepcopy(self.feature_activity)
-        self.working_memory = copy.deepcopy(self.feature_activity)
-        self.previous_working_memory = copy.deepcopy(self.feature_activity)
-        self.goal = copy.deepcopy(self.feature_activity)
-
-
-        
-        
-    @classmethod
-    def FromWorld(cls, world, graphs=True):
-        self = cls(world.num_sensors, world.num_primitives, world.num_actions, world.max_number_features, graphs=graphs)
-        return self
-        
-
-    def load(self, pickle_filename):
-        loaded = False
-        try:
-            with open(pickle_filename, 'rb') as agent_data:
-                self = pickle.load(agent_data)
-
-            self.logger = logging.getLogger(self.__class__.__name__)
-            self.model.create_logger()
-            self.logger.info('Agent restored at timestep ' + str(self.timestep))
-
-        # otherwise initializes from scratch     
-        except IOError:
-            # world not found
-            self.logger.warn("Couldn't open %s for loading" % pickle_filename)
-        except pickle.PickleError, e:
-            self.logger.error("Error unpickling world: %s" % e)
-        else:
-            loaded = True
-
-        return loaded
-
-    
-    def save(self, pickle_filename):        
-        success = False
-        try:
-            with open(pickle_filename, 'wb') as agent_data:
-                # HACK: unset the logger before pickling and restore afterwards since it can't be pickled                
-                logger = self.logger
-                del self.logger
-                model_logger = self.model.logger
-                del self.model.logger
-                pickle.dump(self, agent_data)
-
-                self.logger = logger
-                self.model.logger = model_logger
-            self.logger.info('agent data saved at ' + str(self.timestep) + ' time steps')
-
-        except IOError as err:
-            self.logger.error('File error: ' + str(err) + ' encountered while saving agent data')
-        except pickle.PickleError as perr: 
-            self.logger.error('Pickling error: ' + str(perr) + ' encountered while saving agent data')        
-        else:
-            success = True
-            
-        return success
-
-
-    def integrate_state(self, previous_state, new_state, decay_rate):
-        num_groups = len(new_state)
-        integrated_state = utils.AutomaticList()
-        for index in range(1, num_groups):
-            integrated_state[index] = utils.bounded_sum(previous_state[index] * (1 - decay_rate), new_state[index])
-
-        return integrated_state
-            
-
+        self.attended_feature = State(num_sensors, num_primitives, num_actions)
+        self.feature_activity = State(num_sensors, num_primitives, num_actions)
+        self.goal = State(num_sensors, num_primitives, num_actions)
+        self.previous_working_memory = State(num_sensors, num_primitives, 
+                                             num_actions)
+        self.working_memory = State(num_sensors, num_primitives, num_actions)
+               
+               
     def add_group(self, group_length):
-        """
-        adds a new group to the agent
-        """
-
-        logging.info("Adding group")
         self.num_groups += 1
+        print("Adding group " + self.num_groups)
         
-        self.feature_activity.append(np.zeros(1))
-        self.working_memory.append(np.zeros(1))
-        self.previous_working_memory.append(np.zeros(1))
-        self.attended_feature.append(np.zeros(1))
-        self.goal.append(np.zeros(1))
+        self.feature_activity.add_group()
+        self.working_memory.add_group()
+        self.previous_working_memory.add_group()
+        self.attended_feature.add_group()
+        self.goal.add_group()
 
         self.feature_map.add_group(group_length)
         self.grouper.add_group()
         self.model.add_group()
-        # self.planner.add_group()
 
 
     def add_feature(self, new_feature, nth_group, feature_vote):
-        logging.info("Adding feature to group %s" % nth_group)        
-        has_dummy = np.max(self.feature_map.map[nth_group] [0,:]) == 0
-        self.feature_added = True
+        print("Adding feature to group %s" % nth_group)        
         
         feature_vote[nth_group] = np.hstack((feature_vote[nth_group], 0))
         self.feature_activity[nth_group] = np.hstack((self.feature_activity[nth_group], 0))
@@ -213,16 +125,16 @@ class Agent(object):
 
 
     def attend(self):
-        """
-        Selects a feature from feature_activity to attend to.
+        """ Selects a feature from feature_activity to attend to.
         """
 
         max_salience_value = 0
         max_salience_group = 0
         max_salience_index = 0
 
-        # salience is a combination of feature activity magnitude, goal magnitude,
-        # and a small amount of noise
+        """ Salience is a combination of feature activity magnitude, 
+        goal magnitude, and a small amount of noise.
+        """
 
         salience = utils.AutomaticList()
         for group_index in range(len(self.feature_activity)):
@@ -246,7 +158,8 @@ class Agent(object):
 
 
             if self.planner.act:
-                if np.count_nonzero(self.planner.action):
+                # TODO: workaround for numpy versions earlier than 1.6
+                if np.count_nonzero(self.planner.action != 0.0):
                     deliberate_action_index = self.planner.action.nonzero()[0]
 
                     #ensures that exploratory actions will be attended
@@ -254,19 +167,17 @@ class Agent(object):
                     max_salience_group = 2
                     max_salience_index = deliberate_action_index
 
-                #self.planner.explore = False  # this doesn't seem to be used anywhere on becca_m
+                #self.planner.explore = False  # this doesn't seem to be used anywhere on Becca_m
 
 
-        logging.debug('attended--group: %s, feature: %s, value: %s' % \
-                      (max_salience_group, max_salience_index, max_salience_value))
+        #print('attended--group: %s, feature: %s, value: %s' % \
+        #              (max_salience_group, max_salience_index, max_salience_value))
 
 
         self.attended_feature[max_salience_group][max_salience_index] = 1
 
 
     def update_feature_map(self, grouped_input):
-        self.feature_added = False
-
         feature_vote = utils.AutomaticList()
         num_groups = len(grouped_input)
         for index in range(1,num_groups):
@@ -328,9 +239,9 @@ class Agent(object):
         groups, then the expanded feature represents the receptive field for that
         feature. If it has multiple non-zero elements, for instance, all the
         active features at one point in time, then the expanded feature
-        represents the collective perception BECCA has of its environment at that
+        represents the collective perception Becca has of its environment at that
         time.
-
+        
         """
         
         # Expands any active features, group by group, starting at the
@@ -346,6 +257,7 @@ class Agent(object):
 
             # Checks whether there are any nonzero elements in 'feature[group_index]' 
             # that need to be expanded.
+            # TODO: workaround for numpy versions earlier than 1.6
             if np.count_nonzero(feature[group_index]):
 
                 # Finds contributions of all lower groups to the current group,
@@ -403,40 +315,36 @@ class Agent(object):
 
 
     def step(self, sensors, primitives, reward):
-        """
-        A general reinforcement learning agent, modeled on human neurophysiology 
-        and performance.  Takes in a time series of 
-        sensory input vectors and a scalar reward and puts out a time series 
-        of motor commands.  
-        New features are created as necessary to adequately represent the data.
-        """
+        """ Advances the agent's operation by one time step """
 
         self.timestep += 1
 
-        #print self.timestep, self.num_groups
-        
         self.sensors = sensors.copy()
         self.primitives = primitives.copy()
-
-        # looks only at the *change* in reward as reward
         self.reward = reward
 
-        ##############################################################
-        # Feature creator
-        ##############################################################
-
-        # Breaks inputs into groups and creates new feature groups when warranted.
+        """
+        Feature creator
+        ======================================================
+        """
+        
+        """ Breaks inputs into groups and creates new feature 
+        groups when warranted.
+        """
         # [self.grouper grouped_input group_added] = ...
         #     grouper_step( self.grouper, self.sensors, ...
         #     self.primitives, self.feature_activity)
-        # TODO: add actions to sensed features
-        grouped_input, group_added = self.grouper.step(self.sensors, self.primitives, self.action, self.feature_activity)
+        grouped_input, group_added = self.grouper.step(self.sensors, 
+                                                       self.primitives, 
+                                                       self.action, 
+                                                       self.feature_activity)
         if group_added:
             self.add_group( len(grouped_input[-1])) 
 
 
-        # Interprets inputs as features and updates feature map when appropriate.
-        # Assigns self.feature_activity.
+        """ Interprets inputs as features and updates feature map 
+        when appropriate. Assigns self.feature_activity.
+        """
         self.update_feature_map( grouped_input)
 
         ##############################################################
@@ -460,16 +368,13 @@ class Agent(object):
         # decide on an action
         self.action = self.planner.step(self)
         
-
-
         return self.action
     
-
 
     def display(self):
         #print self.timestep
         if (self.timestep % self.REPORT_PERIOD) == 0:
             print 'step', self.timestep
             print 'grouper.last', self.grouper.last_entry
-            self.model.display_n_best(1)
-            utils.force_redraw()
+            #self.model.display_n_best(1)
+            #utils.force_redraw()

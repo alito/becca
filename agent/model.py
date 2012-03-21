@@ -8,7 +8,7 @@ try:
 except ImportError:
     pass
 
-from ..utils import bounded_sum, similarity, force_redraw
+from utils import bounded_sum, similarity, force_redraw
 
 class Model(object):
 
