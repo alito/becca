@@ -1,5 +1,4 @@
 
-import logging
 import copy
 
 import numpy as np
@@ -14,8 +13,6 @@ class Model(object):
 
     def __init__(self, num_primitives, num_actions, graphs=True):
 
-        self.create_logger()
-        
         self.SIMILARITY_THRESHOLD = 0.9       # real, 0 < x < 1
         self.MAX_ENTRIES = 10 ** 4               # integer, somewhat large
         self.CLEANING_PERIOD = 10 ** 5           # integer, somewhat large
@@ -50,11 +47,8 @@ class Model(object):
         self.graphing = graphs
 
 
-    def create_logger(self):
-        self.logger = logging.getLogger(self.__class__.__name__)
-
     def add_group(self):
-        size = (1, self.cause[-1].shape[1])
+        size = (0, self.cause[-1].shape[1])
         self.history.append(np.zeros(size))
         self.cause.append(np.zeros(size))
         self.effect.append(np.zeros(size))
@@ -65,18 +59,14 @@ class Model(object):
         add_feature to the model
         """
         
-        self.history[nth_group] = np.vstack((self.history[nth_group],  np.zeros(self.history[nth_group].shape[1])))
-        self.cause[nth_group]   = np.vstack((self.cause[nth_group],  np.zeros(self.cause[nth_group].shape[1])))
-        self.effect[nth_group]  = np.vstack((self.effect[nth_group], np.zeros(self.effect[nth_group].shape[1])))
+        self.history[nth_group] = np.vstack((self.history[nth_group],  
+                             np.zeros(self.history[nth_group].shape[1])))
+        self.cause[nth_group]   = np.vstack((self.cause[nth_group],  
+                             np.zeros(self.cause[nth_group].shape[1])))
+        self.effect[nth_group]  = np.vstack((self.effect[nth_group], 
+                             np.zeros(self.effect[nth_group].shape[1])))
 
         
-        # if dummy feature is still in place, removes it
-        if has_dummy:
-            self.history[nth_group] = self.history[nth_group][1:]
-            self.cause[nth_group]  = self.cause[nth_group][1:]
-            self.effect[nth_group] = self.effect[nth_group][1:]
-
-
     def train(self, new_effect, new_history, new_cause, reward):
         """
         Takes in 'new_cause' and 'new_effect' 
@@ -323,12 +313,6 @@ class Model(object):
                     if self.cause[index][subindex,N].count_nonzero() or self.effect[index][subindex,N].count_nonzero():
                         self.logger.info('    Feature             %s: %s %s' % (subindex, self.cause[index][subindex,N],
                                                                                 self.effect[index][subindex,N]))
-
-
-    
-
-
-
 
      
     def show(self):

@@ -8,11 +8,11 @@ import logging
 
 import numpy as np
 
-from .world import World
-
 #import matplotlib.pyplot as plt
 
-class Grid_1D_ms(World):
+from .base_world import World as BaseWorld
+
+class World(BaseWorld):
     ''' grid_1D_ms.World
 
     One-dimensional grid task, multi-step
