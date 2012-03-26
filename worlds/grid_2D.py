@@ -8,9 +8,9 @@ import logging
 import numpy as np
 #import matplotlib.pyplot as plt
 
-from .world import World
+from .base_world import World as BaseWorld
 
-class Grid_2D(World):
+class World(BaseWorld):
     ''' grid_2D.World
     Two-dimensional grid task
 

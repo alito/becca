@@ -11,9 +11,10 @@ from agent.agent import Agent
 lines should be uncommented.
 """
 #from worlds.base_world import World
-from worlds.grid_1D import World
-#from worlds.grid_1D import Grid_1D_ms as World
-#from worlds.grid_1D import Grid_1D_noise as World
+#from worlds.grid_1D import World
+#from worlds.grid_1D_ms import World
+#from worlds.grid_1D_noise import World
+from worlds.image_1D import World
 
 def main():
     
@@ -25,7 +26,7 @@ def main():
     agent_name = "test";
     agent = Agent(agent_name, world.num_sensors, world.num_primitives, 
                   world.num_actions)
-    agent = agent.restore()
+    #agent = agent.restore()
     
     """ If configured to do so, the world sets some Becca parameters to 
     modify its behavior. This is a development hack, and should eventually be 

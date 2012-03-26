@@ -36,7 +36,7 @@ class Agent(AgentStub):
         self.pickle_filename = agent_name + "_agent.pickle"
         
         self.REPORTING_PERIOD = 10 ** 3
-        self.BACKUP_PERIOD = 2* 10 ** 3
+        self.BACKUP_PERIOD = 10 ** 4
 
         self.num_sensors = num_sensors
         self.num_primitives = num_primitives
@@ -64,7 +64,7 @@ class Agent(AgentStub):
         the grouper constructor
         """
         self.WORKING_MEMORY_DECAY_RATE = 0.4      # real, 0 < x <= 1
-
+        
         self.grouper = Grouper( num_sensors, num_actions, num_primitives, 
                                 max_number_features, graphs=self.graphing)
         self.feature_map = FeatureMap(num_sensors, num_primitives, num_actions)        
@@ -83,9 +83,7 @@ class Agent(AgentStub):
                
                
     def add_group(self, group_length):
-        self.num_groups += 1
-        print("Adding group " + self.num_groups)
-        
+                
         self.feature_activity.add_group()
         self.working_memory.add_group()
         self.previous_working_memory.add_group()
@@ -96,30 +94,23 @@ class Agent(AgentStub):
         self.grouper.add_group()
         self.model.add_group()
 
+        print("Adding group " + str(len(self.goal.features)))
+
 
     def add_feature(self, new_feature, nth_group, feature_vote):
-        print("Adding feature to group %s" % nth_group)        
         
-        feature_vote[nth_group] = np.hstack((feature_vote[nth_group], 0))
-        self.feature_activity[nth_group] = np.hstack((self.feature_activity[nth_group], 0))
-        self.working_memory[nth_group] = np.hstack((self.working_memory[nth_group], 0))
-        self.previous_working_memory[nth_group] = np.hstack((self.previous_working_memory[nth_group], 0))
-        self.attended_feature[nth_group] = np.hstack((self.attended_feature[nth_group], 0))
-        self.goal[nth_group] = np.hstack((self.goal[nth_group], 0))
+        feature_vote.add_feature(nth_group)
+        self.feature_activity.add_feature(nth_group)
+        self.working_memory.add_feature(nth_group)
+        self.previous_working_memory.add_feature(nth_group)
+        self.attended_feature.add_feature(nth_group)
+        self.goal.add_feature(nth_group)
 
-        # if dummy feature is still in place, removes it
-        if has_dummy:
-            feature_vote[nth_group] = feature_vote[ nth_group][1:]
-            self.feature_activity[nth_group] = self.feature_activity[ nth_group][1:]
-            self.working_memory[nth_group] = self.working_memory[ nth_group][1:]
-            self.previous_working_memory[nth_group] = self.previous_working_memory[ nth_group][1:]
-            self.attended_feature[nth_group] = self.attended_feature[ nth_group][1:]
-            self.goal[nth_group] = self.goal[ nth_group][1:]
+        self.grouper.add_feature(nth_group)
+        self.feature_map.add_feature(nth_group, new_feature)
+        self.model.add_feature(nth_group)
 
-        self.grouper.add_feature(nth_group, has_dummy)
-        self.feature_map.add_feature(nth_group, has_dummy, new_feature)
-        self.model.add_feature(nth_group, has_dummy)
-        # self.planner.add_feature(nth_group, has_dummy)
+        print("Adding feature to group %s" % nth_group)        
 
         return feature_vote
 
@@ -316,7 +307,7 @@ class Agent(AgentStub):
 
     def step(self, sensors, primitives, reward):
         """ Advances the agent's operation by one time step """
-
+        
         self.timestep += 1
 
         self.sensors = sensors.copy()
@@ -331,21 +322,19 @@ class Agent(AgentStub):
         """ Breaks inputs into groups and creates new feature 
         groups when warranted.
         """
-        # [self.grouper grouped_input group_added] = ...
-        #     grouper_step( self.grouper, self.sensors, ...
-        #     self.primitives, self.feature_activity)
-        grouped_input, group_added = self.grouper.step(self.sensors, 
-                                                       self.primitives, 
-                                                       self.action, 
-                                                       self.feature_activity)
+        (grouped_input, group_added) = self.grouper.step(self.sensors, 
+                                                         self.primitives, 
+                                                         self.action, 
+                                                         self.feature_activity)
         if group_added:
             self.add_group( len(grouped_input[-1])) 
-
+        
 
         """ Interprets inputs as features and updates feature map 
         when appropriate. Assigns self.feature_activity.
         """
-        self.update_feature_map( grouped_input)
+        """
+        self.feature_activity = self.update_feature_map( grouped_input)
 
         ##############################################################
         # Reinforcement learner
@@ -366,9 +355,14 @@ class Agent(AgentStub):
         self.model.train(self.feature_activity, self.pre_previous_working_memory, self.previous_attended_feature, reward)
 
         # decide on an action
-        self.action = self.planner.step(self)
+        self.actions = self.planner.step(self)
+        """
+        self.log()
         
-        return self.action
+        self.actions = np.zeros(self.num_actions);
+        self.actions[np.random.randint(self.num_actions)] = 1
+        
+        return self.actions
     
 
     def display(self):

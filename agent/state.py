@@ -33,7 +33,7 @@ class State(object):
         """ Updates the state by combining the new state value with a 
         decayed version of the current state value.
         """
-        
+    
         integrated_state = State.zeros_like(self, new_state)
         integrated_state.sensors = utils.bounded_sum(
                                     self.sensors * (1 - decay_rate), 
@@ -52,5 +52,43 @@ class State(object):
                     
         return integrated_state
             
+            
+    def decay(self, factor):
+        """ Decay all values of the state by a constant factor.
+        Assumes factor is a scalar 0 <= factor < 1
+        """
+        self.sensors *= factor
+        self.primitives *= factor
+        self.actions *= factor
+
+        for i in range(len(self.features)):
+            self.features[i] *= factor 
+
+
+    def bounded_sum(self, other_state):
+        """ Add another State to this State, 
+        ensuring that no value has a magnitude greater than one """
+        new_state = State.zeros_like(self)
+        new_state.sensors = utils.bounded_sum(self.sensors, 
+                                              other_state.sensors)
+        new_state.primitives = utils.bounded_sum(self.primitives, 
+                                                 other_state.primitives)
+        new_state.actions = utils.bounded_sum(self.actions, 
+                                              other_state.actions)
+        
+        for i in range(len(self.features)):
+            new_state.features[i] = utils.bounded_sum(self.features[i], 
+                                                      other_state.features[i])
+
+        
     def add_group(self):
         self.features.append(np.array([]))
+        return None
+        
+    def add_feature(self, nth_group, value=0):
+        self.features[nth_group] = np.hstack((self.features[nth_group], value))
+        return None
+         
+    def n_feature_groups(self):
+        return len(self.features)
+    

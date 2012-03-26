@@ -10,14 +10,12 @@ class FeatureMap(object):
 
 
     def add_group(self, group_length):
-        self.map.append(np.zeros((1, group_length)))
+        self.map.append(np.zeros((0, group_length)))
 
 
-    def add_feature(self, group, has_dummy, feature):
+    def add_feature(self, group, feature):
         """
         Add a feature to group
         """
         self.map[group] = np.vstack((self.map[group], feature))
-        if has_dummy:
-            self.map[group] = self.map[group][1:, :]
 

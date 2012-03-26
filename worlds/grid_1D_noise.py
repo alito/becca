@@ -7,11 +7,10 @@ import logging
 
 import numpy as np
 
-from .world import World
-
 #import matplotlib.pyplot as plt
+from .base_world import World as BaseWorld
 
-class Grid_1D_noise(World):
+class World(BaseWorld):
     ''' grid_1D_noise.World
     One-dimensional grid task with noise
 
