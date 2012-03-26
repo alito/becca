@@ -93,8 +93,8 @@ class Grouper(object):
         self.input_map: State that maps input groups to feature groups
         self.index_map: State that maps input elements to the feature vector
         """
-        self.input_map = state.State.zeros_like(self.previous_input)
-        self.index_map = state.State.zeros_like(self.previous_input)
+        self.input_map = self.previous_input.zeros_like()
+        self.index_map = self.previous_input.zeros_like()
         
         """ Initialize sensor aspects """ 
         self.index_map.sensors = np.cumsum(np.ones(num_sensors, np.int)) - 1
@@ -212,7 +212,7 @@ class Grouper(object):
         """ Decay previous input and combine it with the new input """
         self.previous_input.decay(1 - self.INPUT_DECAY_RATE)
         new_input = new_input.bounded_sum(self.previous_input)
-            
+                    
         """ Update previous input, preparing it for the next iteration """    
         self.previous_input = copy.deepcopy(new_input)
             
@@ -224,7 +224,7 @@ class Grouper(object):
         input_group.sensors = np.zeros_like(sensors)
         input_group.primitives = primitives
         input_group.actions = actions
-        for group_ctr in range(input_group.n_feature_groups()):
+        for group_ctr in range(input_group.n_feature_groups() - 1):
             for element_counter in range(self.input_map[group_ctr].shape[0]):
                 from_group = self.input_map[group_ctr][element_counter, 1]
                 from_feature = self.input_map[group_ctr][element_counter, 0]
@@ -258,12 +258,13 @@ class Grouper(object):
         feature and every other feature, including the sensors, primitives,
         and actions. 
         """
-        
+
         """ Populate the full feature vector """
         self.feature_vector[self.index_map.sensors] = new_input.sensors
         self.feature_vector[self.index_map.primitives] = new_input.primitives
         self.feature_vector[self.index_map.actions] = new_input.actions
-        for index in range(new_input.n_feature_groups()):
+        
+        for index in range(new_input.n_feature_groups() - 1):
             self.feature_vector[self.index_map.features[index]] = \
                                 new_input.features[index]
 

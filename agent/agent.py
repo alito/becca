@@ -66,9 +66,9 @@ class Agent(AgentStub):
         self.WORKING_MEMORY_DECAY_RATE = 0.4      # real, 0 < x <= 1
         
         self.grouper = Grouper( num_sensors, num_actions, num_primitives, 
-                                max_number_features, graphs=self.graphing)
+                                max_number_features)
         self.feature_map = FeatureMap(num_sensors, num_primitives, num_actions)        
-        self.model = Model( num_primitives, num_actions, graphs=self.graphing)
+        self.model = Model( num_primitives, num_actions)
         self.planner = Planner(num_actions)
 
         self.NEW_FEATURE_MARGIN = 0.3
@@ -318,13 +318,13 @@ class Agent(AgentStub):
         Feature creator
         ======================================================
         """
-        
+
         """ Breaks inputs into groups and creates new feature 
         groups when warranted.
         """
         (grouped_input, group_added) = self.grouper.step(self.sensors, 
                                                          self.primitives, 
-                                                         self.action, 
+                                                         self.actions, 
                                                          self.feature_activity)
         if group_added:
             self.add_group( len(grouped_input[-1])) 

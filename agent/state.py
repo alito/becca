@@ -1,4 +1,4 @@
-
+import copy
 import numpy as np
 import utils
 
@@ -17,16 +17,19 @@ class State(object):
         self.primitives = np.zeros(num_primitives)
         self.actions = np.zeros(num_actions)
         
-    def zeros_like(self, old_state):
+    def zeros_like(self):
         """  Create a new state instance the same size as old_state, 
         but all zeros
         """
         
-        self.sensors = np.zeros_like(old_state.sensors)
-        self.primitives = np.zeros_like(old_state.primitives)
-        self.actions = np.zeros_like(old_state.actions)
+        zero_state = copy.deepcopy(self)
+        zero_state.sensors = np.zeros_like(self.sensors)
+        zero_state.primitives = np.zeros_like(self.primitives)
+        zero_state.actions = np.zeros_like(self.actions)
         
-        self.features = [np.zeros_like(f) for f in old_state.features]
+        zero_state.features = [np.zeros_like(f) for f in self.features]
+
+        return zero_state
         
 
     def integrate_state(self, new_state, decay_rate):
@@ -68,7 +71,7 @@ class State(object):
     def bounded_sum(self, other_state):
         """ Add another State to this State, 
         ensuring that no value has a magnitude greater than one """
-        new_state = State.zeros_like(self)
+        new_state = other_state.zeros_like()
         new_state.sensors = utils.bounded_sum(self.sensors, 
                                               other_state.sensors)
         new_state.primitives = utils.bounded_sum(self.primitives, 
@@ -79,6 +82,8 @@ class State(object):
         for i in range(len(self.features)):
             new_state.features[i] = utils.bounded_sum(self.features[i], 
                                                       other_state.features[i])
+
+        return new_state
 
         
     def add_group(self):

@@ -51,16 +51,15 @@ class World(BaseWorld):
         filename = self.Image_Filename
 
         #image = Image.open(filename)
-        image = plt.imread(filename)
-        # convert it to grayscale
-        if image.mode != 'L':
-            grayscale = image.convert('L')
-        else:
-            grayscale = image
-
-        #load it into a numpy array as doubles
-        self.data = np.array(grayscale.getdata()).reshape(grayscale.size[1], grayscale.size[0]).astype('double')
+        self.data = plt.imread(filename)
         
+        """ Convert it to grayscale if it's in color """
+        if self.data.shape[2] == 3:
+            """ Collapse the three RGB matrices into one black/white value
+            matrix.
+            """
+            self.data = np.sum(self.data, axis=2) / 3.0
+
         self.MAX_STEP_SIZE = self.data.shape[1] / 2
         self.TARGET_COLUMN = self.MAX_STEP_SIZE
 
@@ -98,10 +97,6 @@ class World(BaseWorld):
             
             print("%s timesteps done" % self.timestep)
             
-            self.record_reward_history()
-            self.cumulative_reward = 0
-            self.show_reward_history()
-
             if self.graphing:
                 plt.figure("Column history")
                 plt.clf()
@@ -112,10 +107,8 @@ class World(BaseWorld):
                 # Qt backend needs two event rounds to process screen. Any number > 0.01 and <=0.02 would do
                 force_redraw()
                 
-
             
     def log(self, sensors, primitives, reward):
-        World.log(self, sensors, primitives, reward)
         
         self.column_history.append(self.column_position)
 
