@@ -5,17 +5,14 @@ import utils
 class State(object):
     """ A data structure for representing the internal state of the agent
     """ 
-    sensors = np.array([])
-    primitives = np.array([])
-    actions = np.array([])
-    features = [np.array([])]
 
-    def __init__(self, num_sensors, num_primitives, num_actions):
+    def __init__(self, num_sensors=1, num_primitives=1, num_actions=1):
         """ Constructor from scratch """
         
         self.sensors = np.zeros(num_sensors)
         self.primitives = np.zeros(num_primitives)
         self.actions = np.zeros(num_actions)
+        self.features = []
         
     def zeros_like(self):
         """  Create a new state instance the same size as old_state, 
@@ -79,16 +76,28 @@ class State(object):
         new_state.actions = utils.bounded_sum(self.actions, 
                                               other_state.actions)
         
-        for i in range(len(self.features)):
+        #debug
+        """if (self.n_feature_groups() != other_state.n_feature_groups()):
+            print self.features
+            #print self.features[0]
+            print self.n_feature_groups()
+            print other_state.n_feature_groups()
+        """
+            
+        for i in range(self.n_feature_groups()):
             new_state.features[i] = utils.bounded_sum(self.features[i], 
                                                       other_state.features[i])
-
         return new_state
 
         
-    def add_group(self):
-        self.features.append(np.array([]))
+    def add_group(self, new_array=None):
+        if new_array == None:
+            self.features.append(np.array([]))
+        else:
+            self.features.append(new_array)
+            
         return None
+        
         
     def add_feature(self, nth_group, value=0):
         self.features[nth_group] = np.hstack((self.features[nth_group], value))

@@ -39,7 +39,7 @@ class Model(object):
         self.trace_reward = np.zeros(self.TRACE_LENGTH)
 
         # Initializes dummy transitions
-        self.last_entry = 1
+        self.n_inputs = 1
         self.cause[1][0,0] = 1
         self.effect[1][0,0] = 1
         #self.countp[0]= eps
@@ -83,7 +83,7 @@ class Model(object):
         # allow often-observed transitions to require a closer fit, and populate
         # the model space more densely in areas where it accumulates more
         # observations.
-        transition_similarity = similarity(new_history, self.history, self.last_entry)
+        transition_similarity = similarity(new_history, self.history, self.n_inputs)
         #print "transition similarity", transition_similarity
 
         # If the cause doesn't match, the transition doesn't match
@@ -99,22 +99,22 @@ class Model(object):
         match_indices = []
         
         if cause_group is not None:
-            transition_similarity *= self.cause[cause_group][cause_feature, :self.last_entry][0]
+            transition_similarity *= self.cause[cause_group][cause_feature, :self.n_inputs][0]
             match_indices = ( transition_similarity > self.SIMILARITY_THRESHOLD).ravel().nonzero()[0]
 
 
         #if context and cause are sufficiently different, 
         #adds a new entry to the model library
         if np.size(match_indices) == 0: 
-            matching_transition_index = self.last_entry
+            matching_transition_index = self.n_inputs
             for index in range(1,num_groups):
-                self.history[index][:, self.last_entry] = new_history[index]
-                self.cause[index][:, self.last_entry] = new_cause[index]
-                self.effect[index][:, self.last_entry] = new_effect[index]
+                self.history[index][:, self.n_inputs] = new_history[index]
+                self.cause[index][:, self.n_inputs] = new_cause[index]
+                self.effect[index][:, self.n_inputs] = new_effect[index]
                 
             self.count[matching_transition_index] =  1
             current_update_rate = 1.0
-            self.last_entry += 1            
+            self.n_inputs += 1            
 
         #otherwise increments a nearby entry
         else:
@@ -164,14 +164,14 @@ class Model(object):
         self.clean_count += 1
 
         # cleans out the library
-        if self.last_entry >= self.MAX_ENTRIES:
+        if self.n_inputs >= self.MAX_ENTRIES:
             self.clean_count = self.CLEANING_PERIOD + 1
 
         if self.clean_count > self.CLEANING_PERIOD:
             self.logger.info("Cleaning up model")
             
-            self.count[:self.last_entry] -=  1 / self.count[:self.last_entry]
-            forget_indices = (self.count[:self.last_entry] < eps).ravel().nonzero()[0]
+            self.count[:self.n_inputs] -=  1 / self.count[:self.n_inputs]
+            forget_indices = (self.count[:self.n_inputs] < eps).ravel().nonzero()[0]
 
             for index in range(1,num_groups):
                 self.history[index] = np.delete(self.history[index], forget_indices, 1)
@@ -182,12 +182,12 @@ class Model(object):
             self.reward_map = np.delete(self.reward_map, forget_indices, 1)
 
             self.clean_count = 0
-            self.last_entry -= len(forget_indices)
-            if self.last_entry < 0:
-                self.last_entry = 0
+            self.n_inputs -= len(forget_indices)
+            if self.n_inputs < 0:
+                self.n_inputs = 0
 
             #debug
-            self.logger.debug('Library cleaning out %s entries to %s entries' % (len(forget_indices), self.last_entry))
+            self.logger.debug('Library cleaning out %s entries to %s entries' % (len(forget_indices), self.n_inputs))
 
 
 
@@ -212,7 +212,7 @@ class Model(object):
         """
 
 
-        sorted_indices = np.argsort(self.count[:self.last_entry+1])[::-1]
+        sorted_indices = np.argsort(self.count[:self.n_inputs+1])[::-1]
         relevant_sorted_indices = sorted_indices[:N]
 
         for order, index in enumerate(relevant_sorted_indices):
@@ -324,4 +324,4 @@ class Model(object):
         self.logger.info("goal_map: %s" % self.goal_map)
         self.logger.info("trace_index: %s" % self.trace_index)
         self.logger.info("trace_reward: %s" % self.trace_reward)
-        self.logger.info("last_entry: %s" % self.last_entry)
+        self.logger.info("n_inputs: %s" % self.n_inputs)

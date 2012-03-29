@@ -30,10 +30,10 @@ class World(BaseWorld):
     def __init__(self):
         super(World, self).__init__()
 
-        self.REPORTING_PERIOD = 10 ** 2        
+        self.REPORTING_PERIOD = 10 ** 2       
         self.BACKUP_PERIOD = 10 ** 3
         self.LIFESPAN = 10 ** 4
-        self.AnimatePeriod = 10
+        self.AnimatePeriod = 10 ** 2
         self.animate = True
         self.graphing = True
         
@@ -95,7 +95,7 @@ class World(BaseWorld):
         """        
         if (self.timestep % self.REPORTING_PERIOD) == 0:
             
-            print("%s timesteps done" % self.timestep)
+            print("world is %s timesteps old" % self.timestep)
             
             if self.graphing:
                 plt.figure("Column history")

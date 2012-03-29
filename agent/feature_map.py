@@ -3,19 +3,20 @@ import numpy as np
 class FeatureMap(object):
 
     def __init__(self, num_sensors, num_primitives, num_actions):
-        self.map = []
-        self.map.append(np.eye(num_sensors))
-        self.map.append(np.eye(num_primitives))
-        self.map.append(np.eye(num_actions))
+        self.sensors = np.zeros((num_sensors, num_sensors))
+        self.primitives = np.eye(num_primitives)
+        self.actions = np.eye(num_actions)
+        self.features = []
 
 
-    def add_group(self, group_length):
-        self.map.append(np.zeros((0, group_length)))
+    def add_group(self, n_group_inputs):
+        self.features.append(np.zeros((0, n_group_inputs)))
 
 
     def add_feature(self, group, feature):
         """
         Add a feature to group
         """
-        self.map[group] = np.vstack((self.map[group], feature))
+        self.features[group] = \
+                np.vstack((self.features[group], feature))
 

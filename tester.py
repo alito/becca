@@ -4,7 +4,6 @@ A main test harness for a general reinforcement learning agent.
 
 import numpy as np
 
-#from agent.agent_stub import AgentStub as Agent
 from agent.agent import Agent
         
 """  Selects the World that the Agent will be placed in. One of these
