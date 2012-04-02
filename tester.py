@@ -9,17 +9,19 @@ from agent.agent import Agent
 """  Selects the World that the Agent will be placed in. One of these
 lines should be uncommented.
 """
-#from worlds.base_world import World
+#from worlds.base_world import World3
 #from worlds.grid_1D import World
 #from worlds.grid_1D_ms import World
 #from worlds.grid_1D_noise import World
 from worlds.image_1D import World
+#TODO: write visualization methods for worlds that represent a set of
+# sensors, primitives, and actions in an intuitive manner
 
 def main():
     
     world = World()
     
-    """ A unique identifying string for the agent, allowing specific 
+    """ A unique identifying string for the agent, allowing specific
     saved agents to be recalled. 
     """
     agent_name = "test";
@@ -44,7 +46,7 @@ def main():
              
     """ Report the performance of the agent on the world. """
     agent.report_performance()
-    agent.show_reward_history(show=False)
+    agent.show_reward_history()
     
     return 0
     

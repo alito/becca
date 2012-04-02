@@ -1,7 +1,6 @@
 
 from grouper import Grouper
 from learner import Learner
-import utils
 
 import cPickle as pickle
 import matplotlib.pyplot as plt
@@ -107,8 +106,7 @@ class Agent(object):
             plt.xlabel("time step")
             plt.ylabel("average reward")
             plt.draw()
-            #force_redraw()
-            
+
             if show:
                 plt.show()
             
@@ -138,7 +136,6 @@ class Agent(object):
             
             self.grouper.visualize()
             self.learner.visualize()
-            utils.force_redraw()
 
         
     def step(self, sensors, primitives, reward):
@@ -162,9 +159,14 @@ class Agent(object):
         Reinforcement learner
         ======================================================
         """
-        self.actions = self.learner.step(feature_activity) 
+        # debug
+        #self.actions = self.learner.step(feature_activity) 
+        self.actions = np.zeros(self.num_actions);
+        self.actions[np.random.randint(self.num_actions)] = 1
+        
+        self.log()
 
-        return
+        return self.actions
         
         
     def report_performance(self):
@@ -176,6 +178,9 @@ class Agent(object):
         """
         performance = (np.mean(self.reward_history[-3:]) / 3)
         print("Final performance is %f" % performance)
+        
+        self.grouper.visualize(save_eps=True)
+        self.learner.visualize(save_eps=True)
         
         return performance
         

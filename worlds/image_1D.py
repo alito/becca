@@ -6,8 +6,9 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
+import utils
 
-from utils import force_redraw
+#from utils import force_redraw
 from worlds.base_world import World as BaseWorld
 
 class World(BaseWorld):
@@ -34,8 +35,8 @@ class World(BaseWorld):
         self.BACKUP_PERIOD = 10 ** 3
         self.LIFESPAN = 10 ** 4
         self.AnimatePeriod = 10 ** 2
-        self.animate = True
-        self.graphing = True
+        self.animate = False
+        self.graphing = False
         
         self.step_counter = 0
 
@@ -74,10 +75,11 @@ class World(BaseWorld):
         self.sensors = np.zeros(self.num_sensors)
         self.primitives = np.zeros(self.num_primitives)
 
-        if self.animate:
+        '''if self.animate:
             plt.figure("Image sensed")
             plt.gray() # set to grayscale
-                
+            plt.draw()
+        '''        
 
     def calculate_reward(self):
         DISTANCE_FACTOR = self.MAX_STEP_SIZE / 16
@@ -103,10 +105,11 @@ class World(BaseWorld):
                 plt.plot( self.column_history, 'k.')    
                 plt.xlabel('time step')
                 plt.ylabel('position (pixels)')
-                # pause is needed for events to be processed
-                # Qt backend needs two event rounds to process screen. Any number > 0.01 and <=0.02 would do
-                force_redraw()
+                plt.draw()
+                utils.force_redraw()
                 
+                
+            return
             
     def log(self, sensors, primitives, reward):
         
@@ -114,11 +117,14 @@ class World(BaseWorld):
 
         if self.animate and (self.timestep % self.AnimatePeriod) == 0:
             plt.figure("Image sensed")
+
+            """ remaps [0, 1] to [0, 4/5] for display
+            sensed_image = sensed_image / 1.25
+            """
             sensed_image = np.reshape( sensors[:len(sensors)/2], (self.fov_span, self.fov_span))
-            #remaps [0, 1] to [0, 4/5] for display
-            #sensed_image = sensed_image / 1.25
             plt.imshow(sensed_image)
-            force_redraw()
+            plt.draw()
+            utils.force_redraw()
 
         
     def step(self, action): 

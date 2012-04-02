@@ -1,7 +1,7 @@
 import copy
 import numpy as np
 import utils
-
+# TODO: generalize State tp handle an array of states, as in the model
 class State(object):
     """ A data structure for representing the internal state of the agent
     """ 
@@ -14,17 +14,18 @@ class State(object):
         self.actions = np.zeros(num_actions)
         self.features = []
         
-    def zeros_like(self):
+    def zeros_like(self, dtype=np.float):
         """  Create a new state instance the same size as old_state, 
         but all zeros
         """
-        
+        state_type = dtype
         zero_state = copy.deepcopy(self)
-        zero_state.sensors = np.zeros_like(self.sensors)
-        zero_state.primitives = np.zeros_like(self.primitives)
-        zero_state.actions = np.zeros_like(self.actions)
+        zero_state.sensors = np.zeros_like(self.sensors, dtype=state_type)
+        zero_state.primitives = np.zeros_like(self.primitives, dtype=state_type)
+        zero_state.actions = np.zeros_like(self.actions, dtype=state_type)
         
-        zero_state.features = [np.zeros_like(f) for f in self.features]
+        zero_state.features = [np.zeros_like(f, dtype=state_type) 
+                               for f in self.features]
 
         return zero_state
         
@@ -90,9 +91,10 @@ class State(object):
         return new_state
 
         
-    def add_group(self, new_array=None):
+    def add_group(self, new_array=None, dtype=np.float):
+        group_type = dtype
         if new_array == None:
-            self.features.append(np.array([]))
+            self.features.append(np.array([], dtype=group_type))
         else:
             self.features.append(new_array)
             
