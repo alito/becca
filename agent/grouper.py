@@ -4,7 +4,7 @@ import itertools
 import numpy as np
 import state
 import utils
-import visualizer
+import viz_utils
 
 class Grouper(object):
     """ The object responsible for feature creation. 
@@ -42,7 +42,7 @@ class Grouper(object):
         self.MIN_SIG_CORR = 0.05  # real,  x >= 0
         
         """ Stop growing a group, once it reaches this size """
-        self.MAX_GROUP_SIZE = 30
+        self.MAX_GROUP_SIZE = 300
         
         """ Stop creating new groups, once this number of features 
         is nearly reached.
@@ -198,7 +198,6 @@ class Grouper(object):
         grouped_input.primitives = primitives
         grouped_input.actions = actions
         for group_index in range(self.grouping_map_group.n_feature_groups()):
-            #if self.grouping_map_group.features[group_index].size > 0:
             grouped_input.add_group(np.zeros(
                    self.grouping_map_feature.features[group_index].size))
             for input_element_index in range(
@@ -233,11 +232,10 @@ class Grouper(object):
            """
             
         """ debug """      
-        if np.random.random_sample() < 0.01:  
-            #import visualizer
-            viz = visualizer.Visualizer()
-            viz.visualize_state(grouped_input)
-            utils.force_redraw()
+        #if np.random.random_sample() < 0.01:  
+            #viz_utils.visualize_state(grouped_input)
+            #viz_utils.visualize_feature_set(self, save_eps=True)
+            #viz_utils.force_redraw()
             
         """ Updates feature map when appropriate """
         self.update_feature_map(grouped_input)
@@ -450,7 +448,7 @@ class Grouper(object):
             
             print 'adding group ', self.previous_input.n_feature_groups() - 1, \
                     ' with ', len(added_feature_indices), ' features'
-            
+
         return 
 
 
@@ -497,7 +495,6 @@ class Grouper(object):
     
     
     def add_feature(self, nth_group, new_feature):
-
         self.feature_map.add_feature(nth_group, new_feature)
 
         self.feature_activity.add_feature(nth_group)
@@ -507,7 +504,7 @@ class Grouper(object):
         self.inv_corrr_matrix_map_feature[self.n_inputs] = \
                             len(self.corr_matrix_map.features[nth_group]) - 1
         self.n_inputs += 1
-            
+        
         """ Disallow building new groups out of members of the new feature
         and any of its group's inputs.
         """
@@ -585,9 +582,10 @@ class Grouper(object):
 
     
     def visualize(self, save_eps=False):
-        viz = visualizer.Visualizer()
-        viz.visualize_grouper_correlation(self.correlation, self.n_inputs, save_eps)
-        viz.visualize_grouper_hierarchy(self, save_eps)
+        viz_utils.visualize_grouper_correlation(self.correlation, \
+                                          self.n_inputs, save_eps)
+        viz_utils.visualize_grouper_hierarchy(self, save_eps)
+        #viz_utils.visualize_feature_set(self, save_eps)
         
-        utils.force_redraw()
+        viz_utils.force_redraw()
         return

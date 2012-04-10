@@ -1,6 +1,7 @@
 
 from grouper import Grouper
 from learner import Learner
+import viz_utils
 
 import cPickle as pickle
 import matplotlib.pyplot as plt
@@ -20,7 +21,7 @@ class Agent(object):
         self.pickle_filename = agent_name + "_agent.pickle"
         
         self.REPORTING_PERIOD = 10 ** 3
-        self.BACKUP_PERIOD = 10 ** 3
+        self.BACKUP_PERIOD = 10 ** 4
 
         self.num_sensors = num_sensors
         self.num_primitives = num_primitives
@@ -101,11 +102,11 @@ class Agent(object):
             
     def show_reward_history(self, show=False):
         if self.graphing:
-            plt.figure("reward history")
+            plt.figure(1)
             plt.plot(self.reward_steps, self.reward_history)
             plt.xlabel("time step")
             plt.ylabel("average reward")
-            plt.draw()
+            viz_utils.force_redraw()
 
             if show:
                 plt.show()
@@ -136,6 +137,7 @@ class Agent(object):
             
             self.grouper.visualize()
             self.learner.visualize()
+            
 
         
     def step(self, sensors, primitives, reward):
@@ -181,6 +183,8 @@ class Agent(object):
         
         self.grouper.visualize(save_eps=True)
         self.learner.visualize(save_eps=True)
+        self.show_reward_history()
+        plt.show()
         
         return performance
         

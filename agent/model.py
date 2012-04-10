@@ -7,7 +7,8 @@ try:
 except ImportError:
     pass
 
-from utils import bounded_sum, similarity, force_redraw
+from utils import bounded_sum, similarity
+from viz_utils import force_redraw
 
 class Model(object):
 

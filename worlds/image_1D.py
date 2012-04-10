@@ -1,12 +1,11 @@
 
-""" The Python Image Library, required by this world """
-#import PIL.Image as Image
-#import Image
+""" The Python Image Library, required by this world, installed
+as part of pyplot. This allows the loading and interpreting of .jpgs
+"""
+import matplotlib.pyplot as plt
 import numpy as np
 
-import matplotlib.pyplot as plt
-
-import utils
+import agent.viz_utils as viz_utils
 
 #from utils import force_redraw
 from worlds.base_world import World as BaseWorld
@@ -32,8 +31,8 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.REPORTING_PERIOD = 10 ** 2       
-        self.BACKUP_PERIOD = 10 ** 3
-        self.LIFESPAN = 10 ** 4
+        self.BACKUP_PERIOD = 10 ** 4
+        self.LIFESPAN = 10 ** 5
         self.AnimatePeriod = 10 ** 2
         self.animate = False
         self.graphing = False
@@ -106,7 +105,7 @@ class World(BaseWorld):
                 plt.xlabel('time step')
                 plt.ylabel('position (pixels)')
                 plt.draw()
-                utils.force_redraw()
+                viz_utils.force_redraw()
                 
                 
             return
@@ -122,9 +121,9 @@ class World(BaseWorld):
             sensed_image = sensed_image / 1.25
             """
             sensed_image = np.reshape( sensors[:len(sensors)/2], (self.fov_span, self.fov_span))
+            plt.gray()
             plt.imshow(sensed_image)
-            plt.draw()
-            utils.force_redraw()
+            viz_utils.force_redraw()
 
         
     def step(self, action): 

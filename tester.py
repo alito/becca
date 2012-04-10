@@ -9,7 +9,7 @@ from agent.agent import Agent
 """  Selects the World that the Agent will be placed in. One of these
 lines should be uncommented.
 """
-#from worlds.base_world import World3
+#from worlds.base_world import World
 #from worlds.grid_1D import World
 #from worlds.grid_1D_ms import World
 #from worlds.grid_1D_noise import World
