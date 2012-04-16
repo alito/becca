@@ -37,11 +37,121 @@ class Agent(object):
         self.reward_history = []
         self.reward_steps = []
         
-        self.grouper = Grouper( num_sensors, num_actions, num_primitives, 
+        self.grouper = Grouper(num_sensors, num_primitives, num_actions, 
                                 max_num_features)
-        self.learner = Learner( num_sensors, num_actions, num_primitives)
+        self.learner = Learner(num_primitives, num_actions)
+ 
+        
+    def step(self, sensors, primitives, reward):
+        """ Advances the agent's operation by one time step """
+        
+        self.timestep += 1
 
-               
+        self.sensors = sensors
+        self.primitives = primitives
+        self.reward = reward
+
+        """
+        Feature creator
+        ======================================================
+        """
+        feature_activity = self.grouper.step(sensors, 
+                                                     primitives, 
+                                                     self.actions)
+        
+        """
+        Reinforcement learner
+        ======================================================
+        """
+        self.actions = self.learner.step(feature_activity, reward) 
+        
+        self.log()
+
+        return self.actions
+
+    
+    def log(self):
+        """ Logs the state of the world into a history that can be used to
+        evaluate and understand Becca's behavior
+        """
+        self.cumulative_reward += self.reward
+
+        if (self.timestep % self.REPORTING_PERIOD) == 0:
+            self.display()
+            self.cumulative_reward = 0    
+
+
+        if (self.timestep % self.BACKUP_PERIOD) == 0:
+            self.save()    
+
+    
+    def display(self):
+        #print self.timestep
+        if (self.timestep % self.REPORTING_PERIOD) == 0:
+            self.record_reward_history()
+            self.show_reward_history()
+            print("agent is %s timesteps old" % self.timestep)
+            print("%s inputs total" % self.grouper.n_transitions)
+            
+            self.grouper.visualize()
+            self.learner.visualize()
+ 
+    
+    def record_reward_history(self):
+        self.reward_history.append(float(self.cumulative_reward) / 
+                                   self.REPORTING_PERIOD)
+        self.reward_steps.append(self.timestep)
+                    
+            
+    def show_reward_history(self, show=False):
+        if self.graphing:
+            plt.figure(1)
+            plt.plot(self.reward_steps, self.reward_history)
+            plt.xlabel("time step")
+            plt.ylabel("average reward")
+            viz_utils.force_redraw()
+
+            if show:
+                plt.show()
+            
+        
+    def report_performance(self):
+        """ When the world terminates, this returns the performance 
+        of the agent, a real value between -1 and 1. Before reaching
+        the termination condition, it returns a value less than -1.
+        Any terminating activities or reports should be included
+        in this method too.
+        """
+        performance = (np.mean(self.reward_history[-3:]) / 3)
+        print("Final performance is %f" % performance)
+        
+        self.grouper.visualize(save_eps=True)
+        self.learner.visualize(save_eps=True)
+        self.show_reward_history()
+        plt.show()
+        
+        return performance
+        
+    
+    def save(self):
+        success = False
+        try:
+            with open(self.pickle_filename, 'wb') as agent_data:
+                pickle.dump(self, agent_data)
+            print("Agent data saved at " + str(self.timestep) + " time steps")
+
+        except IOError as err:
+            print("File error: " + str(err) + 
+                  " encountered while saving agent data")
+        except pickle.PickleError as perr: 
+            print("Pickling error: " + str(perr) + 
+                  " encountered while saving agent data")        
+        else:
+            success = True
+            
+        return success
+           
+        
     def restore(self):
         
         restored_agent = self
@@ -74,117 +184,4 @@ class Agent(object):
 
         return restored_agent
 
-    
-    def save(self):
-        success = False
-        try:
-            with open(self.pickle_filename, 'wb') as agent_data:
-                pickle.dump(self, agent_data)
-            print("Agent data saved at " + str(self.timestep) + " time steps")
 
-        except IOError as err:
-            print("File error: " + str(err) + 
-                  " encountered while saving agent data")
-        except pickle.PickleError as perr: 
-            print("Pickling error: " + str(perr) + 
-                  " encountered while saving agent data")        
-        else:
-            success = True
-            
-        return success
-
-
-    def record_reward_history(self):
-        self.reward_history.append(float(self.cumulative_reward) / 
-                                   self.REPORTING_PERIOD)
-        self.reward_steps.append(self.timestep)
-                    
-            
-    def show_reward_history(self, show=False):
-        if self.graphing:
-            plt.figure(1)
-            plt.plot(self.reward_steps, self.reward_history)
-            plt.xlabel("time step")
-            plt.ylabel("average reward")
-            viz_utils.force_redraw()
-
-            if show:
-                plt.show()
-            
-        
-    def log(self):
-        """ Logs the state of the world into a history that can be used to
-        evaluate and understand Becca's behavior
-        """
-        self.cumulative_reward += self.reward
-
-        if (self.timestep % self.REPORTING_PERIOD) == 0:
-            self.display()
-            self.cumulative_reward = 0    
-
-
-        if (self.timestep % self.BACKUP_PERIOD) == 0:
-            self.save()    
-
-
-    def display(self):
-        #print self.timestep
-        if (self.timestep % self.REPORTING_PERIOD) == 0:
-            self.record_reward_history()
-            self.show_reward_history()
-            print("agent is %s timesteps old" % self.timestep)
-            print("%s inputs total" % self.grouper.n_inputs)
-            
-            self.grouper.visualize()
-            self.learner.visualize()
-            
-
-        
-    def step(self, sensors, primitives, reward):
-        """ Advances the agent's operation by one time step """
-        
-        self.timestep += 1
-
-        self.sensors = sensors
-        self.primitives = primitives
-        self.reward = reward
-
-        """
-        Feature creator
-        ======================================================
-        """
-        feature_activity = self.grouper.step(sensors, 
-                                             primitives, 
-                                             self.actions)
-        
-        """
-        Reinforcement learner
-        ======================================================
-        """
-        # debug
-        #self.actions = self.learner.step(feature_activity) 
-        self.actions = np.zeros(self.num_actions);
-        self.actions[np.random.randint(self.num_actions)] = 1
-        
-        self.log()
-
-        return self.actions
-        
-        
-    def report_performance(self):
-        """ When the world terminates, this returns the performance 
-        of the agent, a real value between -1 and 1. Before reaching
-        the termination condition, it returns a value less than -1.
-        Any terminating activities or reports should be included
-        in this method too.
-        """
-        performance = (np.mean(self.reward_history[-3:]) / 3)
-        print("Final performance is %f" % performance)
-        
-        self.grouper.visualize(save_eps=True)
-        self.learner.visualize(save_eps=True)
-        self.show_reward_history()
-        plt.show()
-        
-        return performance
-        

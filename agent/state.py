@@ -14,6 +14,7 @@ class State(object):
         self.actions = np.zeros(num_actions)
         self.features = []
         
+        
     def zeros_like(self, dtype=np.float):
         """  Create a new state instance the same size as old_state, 
         but all zeros
@@ -30,12 +31,44 @@ class State(object):
         return zero_state
         
 
+    def add_group(self, new_array=None, dtype=np.float):
+        group_type = dtype
+        if new_array == None:
+            self.features.append(np.array([], dtype=group_type))
+        else:
+            self.features.append(new_array)
+            
+        return None
+        
+        
+    def add_feature(self, nth_group, value=0):
+        self.features[nth_group] = np.hstack((self.features[nth_group], value))
+        return None
+    
+
+    def bounded_sum(self, other_state):
+        """ Add another State to this State, 
+        ensuring that no value has a magnitude greater than one """
+        new_state = other_state.zeros_like()
+        new_state.sensors = utils.bounded_sum(self.sensors, 
+                                              other_state.sensors)
+        new_state.primitives = utils.bounded_sum(self.primitives, 
+                                                 other_state.primitives)
+        new_state.actions = utils.bounded_sum(self.actions, 
+                                              other_state.actions)
+        
+        for i in range(self.n_feature_groups()):
+            new_state.features[i] = utils.bounded_sum(self.features[i], 
+                                                      other_state.features[i])
+        return new_state
+
+    
     def integrate_state(self, new_state, decay_rate):
         """ Updates the state by combining the new state value with a 
         decayed version of the current state value.
         """
     
-        integrated_state = State.zeros_like(self, new_state)
+        integrated_state = new_state.zeros_like()
         integrated_state.sensors = utils.bounded_sum(
                                     self.sensors * (1 - decay_rate), 
                                     new_state.sensors)
@@ -65,46 +98,11 @@ class State(object):
         for i in range(len(self.features)):
             self.features[i] *= factor 
 
-
-    def bounded_sum(self, other_state):
-        """ Add another State to this State, 
-        ensuring that no value has a magnitude greater than one """
-        new_state = other_state.zeros_like()
-        new_state.sensors = utils.bounded_sum(self.sensors, 
-                                              other_state.sensors)
-        new_state.primitives = utils.bounded_sum(self.primitives, 
-                                                 other_state.primitives)
-        new_state.actions = utils.bounded_sum(self.actions, 
-                                              other_state.actions)
-        
-        #debug
-        """if (self.n_feature_groups() != other_state.n_feature_groups()):
-            print self.features
-            #print self.features[0]
-            print self.n_feature_groups()
-            print other_state.n_feature_groups()
-        """
-            
-        for i in range(self.n_feature_groups()):
-            new_state.features[i] = utils.bounded_sum(self.features[i], 
-                                                      other_state.features[i])
-        return new_state
-
-        
-    def add_group(self, new_array=None, dtype=np.float):
-        group_type = dtype
-        if new_array == None:
-            self.features.append(np.array([], dtype=group_type))
-        else:
-            self.features.append(new_array)
-            
-        return None
-        
-        
-    def add_feature(self, nth_group, value=0):
-        self.features[nth_group] = np.hstack((self.features[nth_group], value))
-        return None
-         
+               
     def n_feature_groups(self):
         return len(self.features)
+    
+       
+    def n_features_in_group(self, group_index):
+        return self.features[group_index].size
     

@@ -57,13 +57,13 @@ class Planner(object):
         # When goals are implemented, combine the reward value 
         # associated with each model
         # entry with the goal value associated with it.
-        effect_values = model.reward_map[:model.n_inputs]
+        effect_values = model.reward_value[:model.n_transitions]
 
         # Create a shorthand for the variables to keep the code readable.
-        model_actions = model.cause[2][:, :model.n_inputs]
-        count_weight = np.log(model.count[:model.n_inputs] + 1)
+        model_actions = model.cause[2][:, :model.n_transitions]
+        count_weight = np.log(model.count[:model.n_transitions] + 1)
         value = effect_values
-        similarity = utils.similarity(current_state, model.cause, model.n_inputs)
+        similarity = utils.similarity(current_state, model.cause, model.n_transitions)
 
         # The reactive action is a weighted average of all actions. Actions 
         # that are expected to result in a high value state and actions that are
@@ -120,16 +120,16 @@ class Planner(object):
                 agent.goal[index] *= (1 - agent.GOAL_DECAY_RATE)
 
         # Calculates the value associated with each effect
-        goal_value = np.zeros(model.n_inputs)
+        goal_value = np.zeros(model.n_transitions)
         for index in range (1, agent.num_groups):
             # [newaxis] needed to make it 2D
-            splashed = np.dot(agent.goal[index][np.newaxis].transpose(), np.ones((1, model.n_inputs)))
-            goal_value += np.sum(model.effect[index][:, :model.n_inputs] * splashed, 0)
+            splashed = np.dot(agent.goal[index][np.newaxis].transpose(), np.ones((1, model.n_transitions)))
+            goal_value += np.sum(model.effect[index][:, :model.n_transitions] * splashed, 0)
 
 
         # Sets maximum goal value to 1.
         goal_value = np.minimum(goal_value, 1)
-        reward_value = model.reward_map[:model.n_inputs] - agent.reward
+        reward_value = model.reward_value[:model.n_transitions] - agent.reward
 
         # Combines goal-based and reward-based value, bounded by one.
         # The result is a value for each transition
@@ -137,9 +137,9 @@ class Planner(object):
 
         # Each transition's count and its similarity to the working memory also
         # factor in to its vote
-        #count_weight = utils.sigmoid(np.log(model.count[:model.n_inputs] + 1) / 3)
+        #count_weight = utils.sigmoid(np.log(model.count[:model.n_transitions] + 1) / 3)
 
-        similarity = utils.similarity(agent.working_memory, model.history, model.n_inputs)
+        similarity = utils.similarity(agent.working_memory, model.context, model.n_transitions)
 
         # TODO: Raise similarity by some power to focus on more similar transitions?
 
@@ -156,23 +156,23 @@ class Planner(object):
         # time. 
 
         # Scales the vote by the distance between the cause and any current goals
-        goal_distance = np.zeros(model.n_inputs)
+        goal_distance = np.zeros(model.n_transitions)
         for index in range(1,agent.num_groups):            
-            goal_distance_group = np.max (model.cause[index][:,:model.n_inputs] - \
+            goal_distance_group = np.max (model.cause[index][:,:model.n_transitions] - \
                                               np.dot(agent.goal[index][np.newaxis].transpose(),
-                                                     np.ones((1, model.n_inputs))))
+                                                     np.ones((1, model.n_transitions))))
             goal_distance = np.maximum(goal_distance, goal_distance_group)
 
 
         # ### DEBUG
         # # Scales the vote by the distance between the cause and any currently
         # # active features
-        # feature_dist = zeros( 1, model.n_inputs)
+        # feature_dist = zeros( 1, model.n_transitions)
         # for k = 2:agent.num_groups,
-        # #     feature_dist_group = max (model.cause[k](:,1:model.n_inputs) - ...
-        # #         agent.feature_activity[k] * ones( 1, model.n_inputs))
-        #     feature_dist_group = max (model.cause[k](:,1:model.n_inputs) - ...
-        #         agent.attended_feature[k] * ones( 1, model.n_inputs))
+        # #     feature_dist_group = max (model.cause[k](:,1:model.n_transitions) - ...
+        # #         agent.feature_activity[k] * ones( 1, model.n_transitions))
+        #     feature_dist_group = max (model.cause[k](:,1:model.n_transitions) - ...
+        #         agent.attended_feature[k] * ones( 1, model.n_transitions))
         #     feature_dist = max( feature_dist, feature_dist_group)
         # end
         # ###

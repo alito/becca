@@ -80,52 +80,7 @@ class World(BaseWorld):
             plt.draw()
         '''        
 
-    def calculate_reward(self):
-        DISTANCE_FACTOR = self.MAX_STEP_SIZE / 16
 
-        reward = 0
-        if abs(self.column_position - self.TARGET_COLUMN) < DISTANCE_FACTOR:
-            reward = 1
-
-        return reward
-
-        
-    def display(self):
-        """ Provide an intuitive display of the current state of the World 
-        to the user.
-        """        
-        if (self.timestep % self.REPORTING_PERIOD) == 0:
-            
-            print("world is %s timesteps old" % self.timestep)
-            
-            if self.graphing:
-                plt.figure("Column history")
-                plt.clf()
-                plt.plot( self.column_history, 'k.')    
-                plt.xlabel('time step')
-                plt.ylabel('position (pixels)')
-                plt.draw()
-                viz_utils.force_redraw()
-                
-                
-            return
-            
-    def log(self, sensors, primitives, reward):
-        
-        self.column_history.append(self.column_position)
-
-        if self.animate and (self.timestep % self.AnimatePeriod) == 0:
-            plt.figure("Image sensed")
-
-            """ remaps [0, 1] to [0, 4/5] for display
-            sensed_image = sensed_image / 1.25
-            """
-            sensed_image = np.reshape( sensors[:len(sensors)/2], (self.fov_span, self.fov_span))
-            plt.gray()
-            plt.imshow(sensed_image)
-            viz_utils.force_redraw()
-
-        
     def step(self, action): 
         """ advances the World by one timestep.
         """
@@ -168,4 +123,50 @@ class World(BaseWorld):
         self.display()
         
         return sensors, self.primitives, reward
+    
+    
+    def calculate_reward(self):
+        DISTANCE_FACTOR = self.MAX_STEP_SIZE / 16
+
+        reward = 0
+        if abs(self.column_position - self.TARGET_COLUMN) < DISTANCE_FACTOR:
+            reward = 1
+
+        return reward
+
         
+    def log(self, sensors, primitives, reward):
+        
+        self.column_history.append(self.column_position)
+
+        if self.animate and (self.timestep % self.AnimatePeriod) == 0:
+            plt.figure("Image sensed")
+
+            """ remaps [0, 1] to [0, 4/5] for display
+            sensed_image = sensed_image / 1.25
+            """
+            sensed_image = np.reshape( sensors[:len(sensors)/2], (self.fov_span, self.fov_span))
+            plt.gray()
+            plt.imshow(sensed_image)
+            viz_utils.force_redraw()
+
+         
+    def display(self):
+        """ Provide an intuitive display of the current state of the World 
+        to the user.
+        """        
+        if (self.timestep % self.REPORTING_PERIOD) == 0:
+            
+            print("world is %s timesteps old" % self.timestep)
+            
+            if self.graphing:
+                plt.figure("Column history")
+                plt.clf()
+                plt.plot( self.column_history, 'k.')    
+                plt.xlabel('time step')
+                plt.ylabel('position (pixels)')
+                plt.draw()
+                viz_utils.force_redraw()
+                            
+            return
+            

@@ -14,7 +14,7 @@ class Grouper(object):
     to translate the input into feature activity.
     """
     
-    def __init__(self, num_sensors, num_actions, num_primitives, 
+    def __init__(self, num_sensors, num_primitives, num_actions,
                  max_num_features):
 
         """ Control how rapidly previous inputs are forgotten """
@@ -112,8 +112,7 @@ class Grouper(object):
         self.inv_corrr_matrix_map_feature = np.zeros(self.MAX_NUM_FEATURES, 
                                                      dtype=np.int)
 
-        """
-        input_maps group the inputs into groups 
+        """ input_maps group the inputs into groups 
         self.grouping_map_group: for a given group, lists the group that each of 
             its members belong to
         self.grouping_map_feature: for a given group, lists the feature that 
@@ -133,33 +132,33 @@ class Grouper(object):
         self.inv_corrr_matrix_map_feature[ :num_sensors] = \
                         np.cumsum( np.ones( num_sensors, dtype=np.int), 
                                    dtype=np.int) - 1
-        self.n_inputs = num_sensors
+        self.n_transitions = num_sensors
 
         """ Initialize primitive aspects """
         self.corr_matrix_map.primitives = np.cumsum(np.ones( 
                            num_primitives, dtype=np.int), 
-                                        dtype=np.int) - 1 + self.n_inputs
-        self.inv_corr_matrix_map_group[self.n_inputs: 
-                               self.n_inputs + num_primitives] = \
+                                        dtype=np.int) - 1 + self.n_transitions
+        self.inv_corr_matrix_map_group[self.n_transitions: 
+                               self.n_transitions + num_primitives] = \
                         -2 * np.ones(num_primitives, dtype=np.int)
-        self.inv_corrr_matrix_map_feature[self.n_inputs: 
-                               self.n_inputs + num_primitives] = \
+        self.inv_corrr_matrix_map_feature[self.n_transitions: 
+                               self.n_transitions + num_primitives] = \
                         np.cumsum( np.ones( num_primitives, dtype=np.int), 
                                    dtype=np.int) - 1
-        self.n_inputs += num_primitives
+        self.n_transitions += num_primitives
         
         """ Initialize action aspects """
         self.corr_matrix_map.actions = np.cumsum(np.ones( 
                             num_actions, dtype=np.int), 
-                                         dtype=np.int) - 1 + self.n_inputs
-        self.inv_corr_matrix_map_group[self.n_inputs: 
-                               self.n_inputs + num_actions] = \
+                                         dtype=np.int) - 1 + self.n_transitions
+        self.inv_corr_matrix_map_group[self.n_transitions: 
+                               self.n_transitions + num_actions] = \
                         -1 * np.ones(num_actions, dtype=np.int)
-        self.inv_corrr_matrix_map_feature[self.n_inputs: 
-                               self.n_inputs + num_actions] = \
+        self.inv_corrr_matrix_map_feature[self.n_transitions: 
+                               self.n_transitions + num_actions] = \
                         np.cumsum( np.ones( num_actions, dtype=np.int), 
                                    dtype=np.int) - 1
-        self.n_inputs += num_actions
+        self.n_transitions += num_actions
         
         
     def step(self, sensors, primitives, actions):
@@ -268,19 +267,19 @@ class Grouper(object):
         incrementally stepping the each combintation's platicity toward 
         its upper bound.
         """
-        self.platicity[:self.n_inputs, :self.n_inputs] += \
+        self.platicity[:self.n_transitions, :self.n_transitions] += \
             self.PLASTICITY_UPDATE_RATE * \
             (self.MAX_PROPENSITY - \
-             self.platicity[:self.n_inputs, :self.n_inputs])
+             self.platicity[:self.n_transitions, :self.n_transitions])
 
         """ Decrease the magnitude of features if they are already 
         inputs to feature groups. The penalty is a negative exponential 
         in the number of groups that each feature belongs to. 
         """ 
         weighted_feature_vector = \
-            (np.exp( - self.groups_per_feature [:self.n_inputs] * \
+            (np.exp( - self.groups_per_feature [:self.n_transitions] * \
                      self.GROUP_DISCOUNT ) * \
-                     self.correlation_vector[:self.n_inputs])[np.newaxis]  \
+                     self.correlation_vector[:self.n_transitions])[np.newaxis]  \
                      # newaxis needed for it to be treated as 2D
         
         """ Determine the pseudo-correlation value according to the 
@@ -299,27 +298,27 @@ class Grouper(object):
         feature B with feature A.
         """
         delta_correlation = np.tile(weighted_feature_vector, \
-                     (self.n_inputs, 1)) * \
+                     (self.n_transitions, 1)) * \
                      (instant_correlation - \
-                     self.correlation[:self.n_inputs, :self.n_inputs])
+                     self.correlation[:self.n_transitions, :self.n_transitions])
                      
         """ Adapt correlation toward average activity correlation by
         the calculated step size.
         """
-        self.correlation[:self.n_inputs, :self.n_inputs] += \
-                     self.platicity[:self.n_inputs, :self.n_inputs]* \
+        self.correlation[:self.n_transitions, :self.n_transitions] += \
+                     self.platicity[:self.n_transitions, :self.n_transitions]* \
                      delta_correlation
 
         """ Update legal combinations in the correlation matrix """
-        self.correlation[:self.n_inputs, :self.n_inputs] *= \
-            self.combination[:self.n_inputs, :self.n_inputs]
+        self.correlation[:self.n_transitions, :self.n_transitions] *= \
+            self.combination[:self.n_transitions, :self.n_transitions]
 
         """ Update the plasticity by subtracting the magnitude of the 
         correlation change. 
         """
-        self.platicity[:self.n_inputs, :self.n_inputs] = \
-            np.maximum(self.platicity[:self.n_inputs, 
-                                       :self.n_inputs] - \
+        self.platicity[:self.n_transitions, :self.n_transitions] = \
+            np.maximum(self.platicity[:self.n_transitions, 
+                                       :self.n_transitions] - \
             np.abs(delta_correlation), 0)
 
         return
@@ -333,10 +332,10 @@ class Grouper(object):
         """ Check to see whether the capacity to store and update features
         has been reached.
         """
-        if self.n_inputs > self.MAX_NUM_FEATURES * 0.95:
+        if self.n_transitions > self.MAX_NUM_FEATURES * 0.95:
             self.features_full = True
             print('==Max number of features almost reached (%s)==' 
-                  % self.n_inputs)
+                  % self.n_transitions)
 
         """ If the correlation is high enough, create a new group """
         max_correlation = np.max(self.correlation)
@@ -447,7 +446,7 @@ class Grouper(object):
             '''
             
             print 'adding group ', self.previous_input.n_feature_groups() - 1, \
-                    ' with ', len(added_feature_indices), ' features'
+                    ' with ', len(added_feature_indices), ' inputs'
 
         return 
 
@@ -495,15 +494,18 @@ class Grouper(object):
     
     
     def add_feature(self, nth_group, new_feature):
+        
+        self.feature_added = nth_group
+        
         self.feature_map.add_feature(nth_group, new_feature)
 
         self.feature_activity.add_feature(nth_group)
         self.previous_input.add_feature(nth_group)
-        self.corr_matrix_map.add_feature(nth_group, self.n_inputs)
-        self.inv_corr_matrix_map_group[self.n_inputs] =  nth_group
-        self.inv_corrr_matrix_map_feature[self.n_inputs] = \
+        self.corr_matrix_map.add_feature(nth_group, self.n_transitions)
+        self.inv_corr_matrix_map_group[self.n_transitions] =  nth_group
+        self.inv_corrr_matrix_map_feature[self.n_transitions] = \
                             len(self.corr_matrix_map.features[nth_group]) - 1
-        self.n_inputs += 1
+        self.n_transitions += 1
         
         """ Disallow building new groups out of members of the new feature
         and any of its group's inputs.
@@ -545,8 +547,8 @@ class Grouper(object):
                        (disallowed_elements, matching_element_indices.ravel()))
              
         """ Propogate unallowable combinations with inputs """ 
-        self.combination[self.n_inputs - 1, disallowed_elements] = 0
-        self.combination[disallowed_elements, self.n_inputs - 1] = 0
+        self.combination[self.n_transitions - 1, disallowed_elements] = 0
+        self.combination[disallowed_elements, self.n_transitions - 1] = 0
         
         return
 
@@ -554,7 +556,7 @@ class Grouper(object):
     def get_feature_activity(self, grouped_input):
         
         """ Initialize feature_vote for primitives """
-        self.feature_activity.sensors = None
+        self.feature_activity.sensors = np.zeros((0,0))
         self.feature_activity.primitives =  \
                 copy.deepcopy(grouped_input.primitives)
         self.feature_activity.actions = copy.deepcopy(grouped_input.actions)
@@ -583,7 +585,7 @@ class Grouper(object):
     
     def visualize(self, save_eps=False):
         viz_utils.visualize_grouper_correlation(self.correlation, \
-                                          self.n_inputs, save_eps)
+                                          self.n_transitions, save_eps)
         viz_utils.visualize_grouper_hierarchy(self, save_eps)
         #viz_utils.visualize_feature_set(self, save_eps)
         
