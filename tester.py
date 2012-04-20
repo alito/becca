@@ -25,8 +25,8 @@ def main():
     saved agents to be recalled. 
     """
     agent_name = "test";
-    agent = Agent(agent_name, world.num_sensors, world.num_primitives, 
-                  world.num_actions, 300)
+    agent = Agent(world.num_sensors, world.num_primitives, 
+                  world.num_actions, 300, agent_name)
     
     """ If uncommented, try to restore the agent from saved data.
     If commented out, start fresh each time.

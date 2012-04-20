@@ -15,8 +15,8 @@ class Agent(object):
     of motor commands. New features are created as necessary to adequately 
     represent the data.
     """
-    def __init__(self, agent_name, num_sensors, num_primitives, 
-                 num_actions, max_num_features=1000):
+    def __init__(self, num_sensors, num_primitives, 
+                 num_actions, max_num_features=1000, agent_name='my'):
         
         self.pickle_filename = agent_name + "_agent.pickle"
         

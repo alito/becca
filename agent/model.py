@@ -131,9 +131,28 @@ class Model(object):
         """ Take in new_context, new_cause and new_effect 
         to train the model.
         """
-        eps = np.finfo(np.double).eps            
-        num_groups = new_context.n_feature_groups()
+        transition_match_indices, context_similarity = \
+                    self.find_transition_matches(new_context, new_cause)
 
+        if len(transition_match_indices) == 0: 
+            matching_transition_index, reward_update_rate = \
+                    self.add_new_transition(new_context, 
+                                            new_cause, 
+                                            new_effect)
+        else:
+            matching_transition_index, reward_update_rate = \
+                    self.update_matching_transitions(context_similarity, 
+                                                     new_effect)
+            
+        self.update_reward(reward_update_rate, matching_transition_index, 
+                           reward)               
+        
+        self.clean_library()
+        
+        return
+        
+        
+    def find_transition_matches(self, new_context, new_cause):
         """ Check to see whether the new entry is already in the model """ 
         """ TODO: make the similarity threshold a function of the count? 
         This would
@@ -163,12 +182,11 @@ class Model(object):
             cause_feature = feature_match
                
         """ Check for matches in primitives """
-        for group_index in range(num_groups):
+        for group_index in range(self.n_feature_groups()):
             feature_match = new_cause.features[group_index].ravel().nonzero()[0]
             if feature_match.size > 0:
                 cause_group = group_index
                 cause_feature = feature_match
-                 
                  
         transition_match_indices = []
         if cause_group is not None:
@@ -189,67 +207,77 @@ class Model(object):
             transition_match_indices = ( transition_similarity > 
                                          self.SIMILARITY_THRESHOLD). \
                                          ravel().nonzero()[0]
+ 
+        return transition_match_indices, context_similarity
+    
+    
+    def add_new_transition(self, new_context, new_cause, new_effect):
+        """ If there is no match, the just-experienced transition is
+        novel. Add is a new transision in the model.
+        """
+        matching_transition_index = self.n_transitions
 
+        self.context.primitives[:, self.n_transitions] = new_context.primitives
+        self.cause.primitives[:, self.n_transitions] = new_cause.primitives
+        self.effect.primitives[:, self.n_transitions] = new_effect.primitives
 
-        if len(transition_match_indices) == 0: 
-            """ If there are no matches, the just-experienced transition is
-            novel. Add is a new transision in the model.
-            """
-            matching_transition_index = self.n_transitions
-
-            self.context.primitives[:, self.n_transitions] = new_context.primitives
-            self.cause.primitives[:, self.n_transitions] = new_cause.primitives
-            self.effect.primitives[:, self.n_transitions] = new_effect.primitives
-
-            self.context.actions[:, self.n_transitions] = new_context.actions
-            self.cause.actions[:, self.n_transitions] = new_cause.actions
-            self.effect.actions[:, self.n_transitions] = new_effect.actions
+        self.context.actions[:, self.n_transitions] = new_context.actions
+        self.cause.actions[:, self.n_transitions] = new_cause.actions
+        self.effect.actions[:, self.n_transitions] = new_effect.actions
+    
+        for group_index in range(self.n_feature_groups()):
+            self.context.features[group_index][:, self.n_transitions] = \
+                                new_context.features[group_index]
+            self.cause.features[group_index][:, self.n_transitions] = \
+                                new_cause.features[group_index]
+            self.effect.features[group_index][:, self.n_transitions] = \
+                                new_effect.features[group_index]
         
-            for group_index in range(num_groups):
-                self.context.features[group_index][:, self.n_transitions] = \
-                                    new_context.features[group_index]
-                self.cause.features[group_index][:, self.n_transitions] = \
-                                    new_cause.features[group_index]
-                self.effect.features[group_index][:, self.n_transitions] = \
-                                    new_effect.features[group_index]
-            
-            self.count[matching_transition_index] =  1.
-            current_update_rate = 1.
-            self.n_transitions += 1            
+        self.count[matching_transition_index] =  1.
+        reward_update_rate = 1.
+        self.n_transitions += 1  
+           
+        return matching_transition_index, reward_update_rate       
 
-        else:
-            """ Otherwise increment a nearby entry """
-            matching_transition_index = np.argmax(context_similarity)                    
-            self.count[matching_transition_index] += 1
+    
+    def update_matching_transitions(self, context_similarity, new_effect):
+        """ Increment a nearby entry """
+        matching_transition_index = np.argmax(context_similarity)                    
+        self.count[matching_transition_index] += 1
+        
+        """ Modify the effect.
+        Making the update rate a function of count allows updates to occur
+        more rapidly when there is little past experience 
+        to contradict them. This facilitates one-shot learning.
+        """
+        reward_update_rate = (1 - self.UPDATE_RATE) / \
+                    self.count[matching_transition_index] + self.UPDATE_RATE
+        reward_update_rate = min(1.0, reward_update_rate)
+        
+        self.effect.primitives[:, matching_transition_index] = \
+                self.effect.primitives[:, matching_transition_index] * \
+                (1 - reward_update_rate) + new_effect.primitives * \
+                reward_update_rate
+        
+        self.effect.actions[:, matching_transition_index] = \
+                self.effect.actions[:, matching_transition_index] * \
+                (1 - reward_update_rate) + new_effect.actions * \
+                reward_update_rate
+        
+        for group_index in range(self.n_feature_groups()):
+            self.effect.features[group_index] \
+                    [:, matching_transition_index] = \
+                    self.effect.features[group_index] \
+                    [:, matching_transition_index] * \
+                    (1 - reward_update_rate) + \
+                    new_effect.features[group_index] * reward_update_rate
+        # TODO: update context as well?
+        
+        return matching_transition_index, reward_update_rate
 
-            """ Modifies the effect.
-            Making the update rate a function of count allows updates to occur
-            more rapidly when there is little past experience 
-            to contradict them. This facilitates one-shot learning.
-            """
-            current_update_rate = (1 - self.UPDATE_RATE) / \
-                        self.count[matching_transition_index] + self.UPDATE_RATE
-            current_update_rate = min(1.0, current_update_rate)
-
-            self.effect.primitives[:, matching_transition_index] = \
-                    self.effect.primitives[:, matching_transition_index] * \
-                    (1 - current_update_rate) + new_effect.primitives * \
-                    current_update_rate
-
-            self.effect.actions[:, matching_transition_index] = \
-                    self.effect.actions[:, matching_transition_index] * \
-                    (1 - current_update_rate) + new_effect.actions * \
-                    current_update_rate
-
-            for group_index in range(num_groups):
-                self.effect.features[group_index] \
-                        [:, matching_transition_index] = \
-                        self.effect.features[group_index] \
-                        [:, matching_transition_index] * \
-                        (1 - current_update_rate) + \
-                        new_effect.features[group_index] * current_update_rate
-            # TODO: update context as well?
-                
+    
+    def update_reward(self, reward_update_rate, matching_transition_index, 
+                      reward):
         """ Perform credit assignment on the trace """
         """ Update the transition trace """
         self.trace_index = np.hstack((self.trace_index, 
@@ -266,15 +294,34 @@ class Model(object):
                                 self.trace_reward[trace_index] *  \
                                 (1 - self.TRACE_DECAY_RATE) ** trace_index)
 
-
         """ Update the reward associated with the last entry in the trace """
         update_index = self.trace_index[0]
         max_step_size = credit - self.reward_value[update_index]
 
-        self.reward_value[update_index] += max_step_size * current_update_rate
+        self.reward_value[update_index] += max_step_size * reward_update_rate
+     
+     
+    def update_goal(self, new_goal):
+        """ Decay goals both by a fixed fraction and by the amount that 
+        the feature is currently active. Experiencing a goal feature 
+        causes the goal to be achieved, and the passage of time allows 
+        the goal value to fade.
+        """
+        self.goal_value *= (1 - self.GOAL_DECAY_RATE)
         
+        """ TODO: Increment the goal value of all transitions based on 
+        the similarity of their effects with the goal.
+        """
+
+        return
+
+
+    def clean_library(self):
+
         self.clean_count += 1
 
+        eps = np.finfo(float).eps
+        
         """ Clean out the model when appropriate """
         if self.n_transitions >= self.MAX_ENTRIES:
             self.clean_count = self.CLEANING_PERIOD + 1
@@ -282,7 +329,8 @@ class Model(object):
         if self.clean_count > self.CLEANING_PERIOD:
             print("Cleaning up model")
             
-            self.count[:self.n_transitions] -=  1 / self.count[:self.n_transitions]
+            self.count[:self.n_transitions] -=  \
+                                1 / self.count[:self.n_transitions]
             forget_indices = (self.count[:self.n_transitions] < eps). \
                                 ravel().nonzero()[0]
 
@@ -300,7 +348,7 @@ class Model(object):
             self.effect.actions = np.delete(self.effect.actions, 
                                                forget_indices, 1)
 
-            for group_index in range(num_groups):
+            for group_index in range(self.n_feature_groups()):
                 self.context.features[group_index] = np.delete(
                                    self.context.features[group_index], 
                                    forget_indices, 1)
@@ -323,6 +371,11 @@ class Model(object):
             print 'Library cleaning out ', len(forget_indices), \
                     ' entries to ', self.n_transitions, ' entries '
 
+            self.pad_model()
+        return
+
+
+    def pad_model(self):
         """ Pad the model (re-allocate memory space) 
         if it has shrunk too far. 
         """
@@ -362,22 +415,7 @@ class Model(object):
                                            np.zeros(self.MAX_ENTRIES)))
 
         return
-
-
-    def update_goal(self, new_goal):
-        """ Decay goals both by a fixed fraction and by the amount that 
-        the feature is currently active. Experiencing a goal feature 
-        causes the goal to be achieved, and the passage of time allows 
-        the goal value to fade.
-        """
-        self.goal_value *= (1 - self.GOAL_DECAY_RATE)
-        
-        """ TODO: Increment the goal value of all transitions based on 
-        the similarity of their effects with the goal.
-        """
-
-        pass
-
+    
 
     def add_group(self):
         size = (0, self.cause.actions.shape[1])
