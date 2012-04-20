@@ -21,34 +21,57 @@ class AutomaticList(list):
 '''               
 
 def bounded_sum(a, b):
-    """ Sum the values A and B, which are assumed to fall on the interval
+    """ Perform a bounded sum.
+    Sum the values A and B, which are assumed to fall on the interval
     [-1,1], to create a value C with the following properties:
     
-    for A and B on [0,1]
-    1. if C = bsum(A,B), C > A, C > B
+    For A and B on [0,1] and
+    C = bsum(A,B)
+    1. C > A and C > B
     2. C is on [0,1]
     3. bsum(A,B) = bsum(B,A)
     4. if A1 > A2, bsum(A1,B) > bsum(A2, B)
     
-    opposites are true for A and B on [-1,0]
+    The opposite of statesments 1-4 are true for A and B on [-1,0]
     
-    for A and B on [-1,1]
+    For A and B on [-1,1]
     1. C is on [-1,1]
     
-    for A and B oppositely signed, C = A + B
-    
-    if A and B are vectors or matrices, they must be of the same size, and
-    C will be of the same size too
-
+    If A and B are vectors or matrices, they must be of the same size, and
+    C will be of the that size too.
     """
+    
+    """ The functions used to do this are different depending on 
+    whether A and B have same or opposite signs.
+    
+    For A, B opposite signs,
+    bsum(A,B) = A + B
+    
+    For A > 0, B > 0, both A and B are mapped to from the interval [0,1] onto
+    the interval [0, infinity) using a transformation, T(), given by
+    T(A) = A' = -1 + 1/(1 - A)
+    
+    The inverse transformation, to remap the variable from 
+    the interval [0, infinity) back to [0,1], T'(), is given by
+    T'(A') = A = 1 - 1/(1 + A)
+    
+    Using this notation,  
+    bsum(A,B) = T'(T(A) + T(B))
+    
+    For A < 0, B < 0, 
+    bsum(A,B) = -T'(T(-A) + T(-B))
+    """
+    
     scalars = np.isscalar(a)
     if scalars:
+        """ Handle the case where a and b are scalars """
         if not np.isscalar(b):
             raise ValueError("Both parameters have to be of the same type")
 
         a = np.array([a])
         b = np.array([b])
     else:
+        """ Perform error checking on the size of and b """
         if a.size != b.size:
             raise ValueError("Both parameters must have the same number " \
                              "of elements. Got %s and %s" % (a.size, b.size))
@@ -59,40 +82,48 @@ def bounded_sum(a, b):
         if a.shape != b.shape:
             raise ValueError("Both parameters have to have the same shape." \
                               " Got %s and %s" % (a.shape, b.shape))
-    
-    eps = np.finfo(np.double).eps
-    
+        
     result = np.zeros(np.shape(a))
-    # maps [0,1]  onto [1,Inf)
-    # maps [-1,1] onto (-Inf,Inf)
+
     
-    # different functions for when a and b are same or opposite signs
+    """ There are different functions, depending on whether 
+    a and b are same or opposite signs. 
+    """
+
+    """ First handle the case where a and b are of opposite signs """ 
+    opposite_sign_indices = (np.sign(a) != np.sign(b)).nonzero()
+    c_opposite_sign = a[opposite_sign_indices] + b[opposite_sign_indices]
+    
+    """ Then handle the case where a and b are of the same sign """ 
     same_sign_indices = (np.sign(a) == np.sign(b)).nonzero()
     
-    a_same_sign = a[same_sign_indices]
-
-    b_same_sign = b[same_sign_indices]
-    a_t = np.sign(a_same_sign) / (1 - np.abs(a_same_sign) + eps) - np.sign(a_same_sign)
-    b_t = np.sign(b_same_sign) / (1 - np.abs(b_same_sign) + eps) - np.sign(b_same_sign)
+    """ Map [0,1]  onto [0,Inf) and  maps [-1,0] onto (-Inf,0] 
+    Then map back after dum is completed.
+    """
+    a_prime = bounded_sum_map(a[same_sign_indices])
+    b_prime = bounded_sum_map(b[same_sign_indices])
+    c_same_sign = bounded_sum_unmap(a_prime + b_prime) 
     
-    c_t = a_t + b_t 
-    
-    c_same_sign = np.sign(c_t) * (1 - 1 / (np.abs(c_t) + 1))
-    c_same_sign[ c_t == 0] = 0
-    
-    opposite_sign_indices = (np.sign(a) != np.sign(b)).nonzero()
-    a_opposite_sign = a[opposite_sign_indices]
-    b_opposite_sign = b[opposite_sign_indices]
-    c_opposite_sign = a_opposite_sign + b_opposite_sign
-    
+    """ Compile the results """
     result[same_sign_indices] = c_same_sign
     result[opposite_sign_indices] = c_opposite_sign
 
     if scalars:
-        # return same type that we got
+        """ Return the same type that we started with """
         return result[0]
     else:
         return result
+    
+    
+def bounded_sum_map(a):
+    eps = np.finfo(np.double).eps
+    a_prime = np.sign(a) / (1 - np.abs(a) + eps) - np.sign(a)
+    return a_prime
+
+
+def bounded_sum_unmap(a_prime):
+    a = np.sign(a_prime) * (1 - 1 / (np.abs(a_prime) + 1))
+    return a
 
 
 def similarity(point, point_set, max_index=None):

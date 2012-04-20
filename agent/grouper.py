@@ -587,7 +587,7 @@ class Grouper(object):
         viz_utils.visualize_grouper_correlation(self.correlation, \
                                           self.n_transitions, save_eps)
         viz_utils.visualize_grouper_hierarchy(self, save_eps)
-        #viz_utils.visualize_feature_set(self, save_eps)
+        viz_utils.visualize_feature_set(self, save_eps)
         
         viz_utils.force_redraw()
         return

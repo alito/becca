@@ -477,12 +477,13 @@ def visualize_state(state, label='state', y_min=0.25, y_max=0.75,
     """
        
     #debug
-    
+    '''
     print state.sensors
     print state.primitives
     print state.actions
     for group_index in range(state.n_feature_groups()):
         print state.features[group_index]
+    '''
     
     if axes == None:
         fig = plt.figure(label)
@@ -512,9 +513,6 @@ def visualize_state(state, label='state', y_min=0.25, y_max=0.75,
         
     x = 0
     for indx in range(state.sensors.size):
-        print(state.sensors)
-        print(state.sensors.size)
-        print(indx)
         rectPatch(x, x + 1, y_min, y_max, state.sensors[indx], axes)
         x += 1
         

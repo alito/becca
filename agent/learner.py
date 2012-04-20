@@ -61,14 +61,12 @@ class Learner(object):
                          self.previous_attended_feature, 
                          feature_activity, reward)
 
-        '''
         """ Decide on an action """
-        self.actions = self.planner.step(self)
-        '''
+        self.actions = self.planner.step(self.model, self.working_memory)
         
         """ debug: choose a random action """
-        self.actions = np.zeros(self.goal.actions.size);
-        self.actions[np.random.randint(self.goal.actions.size)] = 1
+        #self.actions = np.zeros(self.goal.actions.size);
+        #self.actions[np.random.randint(self.goal.actions.size)] = 1
         
         return self.actions
 
@@ -123,7 +121,7 @@ class Learner(object):
                                    self.goal.actions, 
                                    max_salience_value, max_salience_group, 
                                    max_salience_index,
-                                   group_indx=-1, deliberate=self.planner.act)
+                                   group_indx=-1, deliberate=self.planner.deliberately_acted)
                 
         """ Calculate salience for feature groups """
         for group_index in range(feature_activity.n_feature_groups()):
@@ -202,7 +200,7 @@ class Learner(object):
     
                    
     def visualize(self, save_eps=True):
-        viz_utils.visualize_model(self.model, 10)
+        #viz_utils.visualize_model(self.model, 10)
         viz_utils.force_redraw()
         
         return

@@ -14,7 +14,7 @@ lines should be uncommented.
 #from worlds.grid_1D_ms import World
 #from worlds.grid_1D_noise import World
 from worlds.image_1D import World
-#TODO: write visualization methods for worlds that represent a set of
+# TODO: write visualization methods for worlds that represent a set of
 # sensors, primitives, and actions in an intuitive manner
 
 def main():
@@ -26,7 +26,11 @@ def main():
     """
     agent_name = "test";
     agent = Agent(agent_name, world.num_sensors, world.num_primitives, 
-                  world.num_actions)
+                  world.num_actions, 300)
+    
+    """ If uncommented, try to restore the agent from saved data.
+    If commented out, start fresh each time.
+    """
     #agent = agent.restore()
     
     """ If configured to do so, the world sets some Becca parameters to 

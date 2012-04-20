@@ -86,13 +86,18 @@ class Model(object):
         The trace is used to assign credit for transitions with deferred
         effects and rewards.
         """  
-        self.TRACE_LENGTH = 10                # integer, small
+        self.TRACE_LENGTH = 1                # integer, small
         
         """ The factor by which the reward is decayed for each
         timestep between when it was received and the event to which
         it is assigned.
         """
         self.TRACE_DECAY_RATE = 0.2           # real, 0 < x < 1
+
+        """ The factor by which goals are decayed for each
+        timestep.
+        """
+        self.GOAL_DECAY_RATE = 0.2           # real, 0 < x < 1
 
         """ The total number of transitions in the model """
         self.n_transitions = 0
@@ -172,7 +177,7 @@ class Model(object):
                 transition_similarity = context_similarity * \
                                     self.cause.primitives \
                                     [cause_feature, :self.n_transitions][0]
-            if cause_group == -1:
+            elif cause_group == -1:
                 transition_similarity = context_similarity * \
                                     self.cause.actions \
                                     [cause_feature, :self.n_transitions][0]
@@ -359,6 +364,21 @@ class Model(object):
         return
 
 
+    def update_goal(self, new_goal):
+        """ Decay goals both by a fixed fraction and by the amount that 
+        the feature is currently active. Experiencing a goal feature 
+        causes the goal to be achieved, and the passage of time allows 
+        the goal value to fade.
+        """
+        self.goal_value *= (1 - self.GOAL_DECAY_RATE)
+        
+        """ TODO: Increment the goal value of all transitions based on 
+        the similarity of their effects with the goal.
+        """
+
+        pass
+
+
     def add_group(self):
         size = (0, self.cause.actions.shape[1])
         self.context.features.append(np.zeros(size))
@@ -378,3 +398,7 @@ class Model(object):
         self.effect.features[nth_group]  = \
                     np.vstack((self.effect.features[nth_group], 
                     np.zeros(self.effect.features[nth_group].shape[1])))
+                    
+                    
+    def n_feature_groups(self):
+        return len(self.context.features)
