@@ -12,7 +12,7 @@ world-specific interpretation of Becca's information. That should be
 taken care of by individual worlds.  
 """
 
-def visualize_grouper_correlation(correlation, size=0, 
+def visualize_grouper_coactivity(correlation, size=0, 
                                     save_eps=False, 
                                     epsfilename='log/correlation.eps'):
     """ Produce a visual representation of the correlation matrix """
