@@ -1,5 +1,6 @@
 *.pyc
 *.pickle
+log/*
 *~
 build
 

@@ -35,21 +35,6 @@ class World(BaseWorld):
         self.simple_state = 0
 
     
-    def display(self):
-        """ provides an intuitive display of the current state of the World 
-        to the user
-        """
-        if (self.display_state):
-            state_image = ['.'] * self.num_primitives
-            state_image[self.simple_state] = 'O'
-            #print('world timestep %s    %s' % (self.timestep, ''.join(state_image)))
-            print(''.join(state_image))
-            
-        if (self.timestep % self.REPORTING_PERIOD) == 0:
-            print("world age is %s timesteps " % self.timestep)
-
-        
-        
     def step(self, action): 
         """ advances the World by one timestep.
         Accepts agent as an argument only so that it can occasionally backup
@@ -106,4 +91,20 @@ class World(BaseWorld):
         self.display()
         
         return sensors, primitives, reward
+    
+        
+    def display(self):
+        """ provides an intuitive display of the current state of the World 
+        to the user
+        """
+        if (self.display_state):
+            state_image = ['.'] * self.num_primitives
+            state_image[self.simple_state] = 'O'
+            #print('world timestep %s    %s' % (self.timestep, ''.join(state_image)))
+            print(''.join(state_image))
+            
+        if (self.timestep % self.REPORTING_PERIOD) == 0:
+            print("world age is %s timesteps " % self.timestep)
+
+        
         

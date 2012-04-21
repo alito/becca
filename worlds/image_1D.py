@@ -1,13 +1,13 @@
 
-""" The Python Image Library, required by this world """
-#import PIL.Image as Image
-#import Image
+""" The Python Image Library, required by this world, installed
+as part of pyplot. This allows the loading and interpreting of .jpgs
+"""
+import matplotlib.pyplot as plt
 import numpy as np
 
-import matplotlib.pyplot as plt
+import agent.viz_utils as viz_utils
 
-
-from utils import force_redraw
+#from utils import force_redraw
 from worlds.base_world import World as BaseWorld
 
 class World(BaseWorld):
@@ -30,12 +30,12 @@ class World(BaseWorld):
     def __init__(self):
         super(World, self).__init__()
 
-        self.REPORTING_PERIOD = 10 ** 2        
-        self.BACKUP_PERIOD = 10 ** 3
-        self.LIFESPAN = 10 ** 4
-        self.AnimatePeriod = 10
-        self.animate = True
-        self.graphing = True
+        self.REPORTING_PERIOD = 10 ** 2       
+        self.BACKUP_PERIOD = 10 ** 4
+        self.LIFESPAN = 10 ** 5
+        self.AnimatePeriod = 10 ** 2
+        self.animate = False
+        self.graphing = False
         
         self.step_counter = 0
 
@@ -51,16 +51,15 @@ class World(BaseWorld):
         filename = self.Image_Filename
 
         #image = Image.open(filename)
-        image = plt.imread(filename)
-        # convert it to grayscale
-        if image.mode != 'L':
-            grayscale = image.convert('L')
-        else:
-            grayscale = image
-
-        #load it into a numpy array as doubles
-        self.data = np.array(grayscale.getdata()).reshape(grayscale.size[1], grayscale.size[0]).astype('double')
+        self.data = plt.imread(filename)
         
+        """ Convert it to grayscale if it's in color """
+        if self.data.shape[2] == 3:
+            """ Collapse the three RGB matrices into one black/white value
+            matrix.
+            """
+            self.data = np.sum(self.data, axis=2) / 3.0
+
         self.MAX_STEP_SIZE = self.data.shape[1] / 2
         self.TARGET_COLUMN = self.MAX_STEP_SIZE
 
@@ -75,59 +74,13 @@ class World(BaseWorld):
         self.sensors = np.zeros(self.num_sensors)
         self.primitives = np.zeros(self.num_primitives)
 
-        if self.animate:
+        '''if self.animate:
             plt.figure("Image sensed")
             plt.gray() # set to grayscale
-                
+            plt.draw()
+        '''        
 
-    def calculate_reward(self):
-        DISTANCE_FACTOR = self.MAX_STEP_SIZE / 16
 
-        reward = 0
-        if abs(self.column_position - self.TARGET_COLUMN) < DISTANCE_FACTOR:
-            reward = 1
-
-        return reward
-
-        
-    def display(self):
-        """ Provide an intuitive display of the current state of the World 
-        to the user.
-        """        
-        if (self.timestep % self.REPORTING_PERIOD) == 0:
-            
-            print("%s timesteps done" % self.timestep)
-            
-            self.record_reward_history()
-            self.cumulative_reward = 0
-            self.show_reward_history()
-
-            if self.graphing:
-                plt.figure("Column history")
-                plt.clf()
-                plt.plot( self.column_history, 'k.')    
-                plt.xlabel('time step')
-                plt.ylabel('position (pixels)')
-                # pause is needed for events to be processed
-                # Qt backend needs two event rounds to process screen. Any number > 0.01 and <=0.02 would do
-                force_redraw()
-                
-
-            
-    def log(self, sensors, primitives, reward):
-        World.log(self, sensors, primitives, reward)
-        
-        self.column_history.append(self.column_position)
-
-        if self.animate and (self.timestep % self.AnimatePeriod) == 0:
-            plt.figure("Image sensed")
-            sensed_image = np.reshape( sensors[:len(sensors)/2], (self.fov_span, self.fov_span))
-            #remaps [0, 1] to [0, 4/5] for display
-            #sensed_image = sensed_image / 1.25
-            plt.imshow(sensed_image)
-            force_redraw()
-
-        
     def step(self, action): 
         """ advances the World by one timestep.
         """
@@ -170,4 +123,50 @@ class World(BaseWorld):
         self.display()
         
         return sensors, self.primitives, reward
+    
+    
+    def calculate_reward(self):
+        DISTANCE_FACTOR = self.MAX_STEP_SIZE / 16
+
+        reward = 0
+        if abs(self.column_position - self.TARGET_COLUMN) < DISTANCE_FACTOR:
+            reward = 1
+
+        return reward
+
         
+    def log(self, sensors, primitives, reward):
+        
+        self.column_history.append(self.column_position)
+
+        if self.animate and (self.timestep % self.AnimatePeriod) == 0:
+            plt.figure("Image sensed")
+
+            """ remaps [0, 1] to [0, 4/5] for display
+            sensed_image = sensed_image / 1.25
+            """
+            sensed_image = np.reshape( sensors[:len(sensors)/2], (self.fov_span, self.fov_span))
+            plt.gray()
+            plt.imshow(sensed_image)
+            viz_utils.force_redraw()
+
+         
+    def display(self):
+        """ Provide an intuitive display of the current state of the World 
+        to the user.
+        """        
+        if (self.timestep % self.REPORTING_PERIOD) == 0:
+            
+            print("world is %s timesteps old" % self.timestep)
+            
+            if self.graphing:
+                plt.figure("Column history")
+                plt.clf()
+                plt.plot( self.column_history, 'k.')    
+                plt.xlabel('time step')
+                plt.ylabel('position (pixels)')
+                plt.draw()
+                viz_utils.force_redraw()
+                            
+            return
+            
