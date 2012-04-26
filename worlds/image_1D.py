@@ -4,10 +4,7 @@ as part of pyplot. This allows the loading and interpreting of .jpgs
 """
 import matplotlib.pyplot as plt
 import numpy as np
-
 import agent.viz_utils as viz_utils
-
-#from utils import force_redraw
 from worlds.base_world import World as BaseWorld
 
 class World(BaseWorld):
@@ -23,10 +20,6 @@ class World(BaseWorld):
 
     Optimal performance is between 0.7 and 0.8 reward per time step.
     """
-
-    MAX_NUM_FEATURES = 500
-    Image_Filename = "./images/bar_test.jpg" 
-    
     def __init__(self):
         super(World, self).__init__()
 
@@ -39,7 +32,6 @@ class World(BaseWorld):
         self.graphing = False
         
         self.step_counter = 0
-
         self.fov_span = 10
 
         self.num_sensors = 2 * self.fov_span ** 2
@@ -48,11 +40,9 @@ class World(BaseWorld):
 
         self.column_history = []
 
-        # initializes the image to be used as the environment
-        filename = self.Image_Filename
-
-        #image = Image.open(filename)
-        self.data = plt.imread(filename)
+        """ Initialize the image to be used as the environment """
+        self.image_filename = "./images/bar_test.jpg" 
+        self.data = plt.imread(self.image_filename)
         
         """ Convert it to grayscale if it's in color """
         if self.data.shape[2] == 3:
@@ -74,12 +64,6 @@ class World(BaseWorld):
 
         self.sensors = np.zeros(self.num_sensors)
         self.primitives = np.zeros(self.num_primitives)
-
-        '''if self.animate:
-            plt.figure("Image sensed")
-            plt.gray() # set to grayscale
-            plt.draw()
-        '''        
 
 
     def step(self, action): 

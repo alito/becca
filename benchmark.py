@@ -41,11 +41,11 @@ def main():
     #performance.append(test(world))
     #world = World_grid_2D_dc()
     #performance.append(test(world))
-    #world = World_image_1D()
-    #performance.append(test(world))
-    
-    world = World_image_2D()
+    world = World_image_1D()
     performance.append(test(world))
+    
+    #world = World_image_2D()
+    #performance.append(test(world))
     
     print "Agent benchmarks: " , performance
     

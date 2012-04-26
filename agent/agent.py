@@ -86,7 +86,6 @@ class Agent(object):
 
     
     def display(self):
-        #print self.timestep
         if (self.timestep % self.REPORTING_PERIOD) == 0:
             self.record_reward_history()
             self.show_reward_history()
