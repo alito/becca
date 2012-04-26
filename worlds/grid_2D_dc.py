@@ -1,17 +1,9 @@
-'''
-Created on Jan 11, 2012
-
-@author: brandon_rohrer
-'''
-import logging
-
+\
 import numpy as np
-#import matplotlib.pyplot as plt
-
 from .base_world import World as BaseWorld
 
 class World(BaseWorld):
-    ''' grid_2D_dc.World
+    """ grid_2D_dc.World
     Two-dimensional grid task
 
     dc stands for decoupled. It's just like the task_grid_2D task except that 
@@ -30,17 +22,16 @@ class World(BaseWorld):
 
     Optimal performance is between 0.3 and 0.35.
 
-    '''
-
-    def __init__(self, graphs=True):
-        ''' default constructor
-        '''
-
-        super(Grid_2D_dc,self).__init__(graphs=graphs)
+    """
+    def __init__(self):
+                
+        super(World, self).__init__()
         
         self.REPORTING_PERIOD = 10 ** 3
-        self.LIFESPAN = 10 ** 4
-        self.ENERGY_PENALTY = 0.05
+        self.LIFESPAN = 5 * 10 ** 4
+        self.ENERGY_COST = 0.05
+        self.REWARD_MAGNITUDE = 0.5
+        self.display_state = False
 
         self.num_sensors = 1
         self.num_actions = 9            
@@ -54,22 +45,9 @@ class World(BaseWorld):
 
         self.sensors = np.zeros(self.num_sensors)
 
-
         self.motor_output_history = np.array([])            
 
-    
-    def display(self):
-        ''' provides an intuitive display of the current state of the World 
-        to the user
-        '''            
-        if (self.timestep % self.REPORTING_PERIOD) == 0:
-            logging.info("%s timesteps done" % self.timestep)
-            self.record_reward_history()
-            self.cumulative_reward = 0
-            self.show_reward_history()
-
-        
-        
+            
     def step(self, action): 
         ''' advances the World by one timestep.
         '''
@@ -77,50 +55,55 @@ class World(BaseWorld):
         
         action = np.round(action)
 
-        self.world_state += (action[0:2] + 2 * action[2:4] - action[4:6] - 2 * action[6:8]).transpose()
+        self.world_state += (action[0:2] + 2 * action[2:4] - action[4:6] - \
+                             2 * action[6:8]).transpose()
 
-        energy = np.sum(action[0:2]) + np.sum(2 * action[2:4]) + np.sum(action[4:6]) - np.sum(2 * action[6:8])
+        energy = np.sum(action[0:2]) + np.sum(2 * action[2:4]) + \
+                 np.sum(action[4:6]) - np.sum(2 * action[6:8])
         
 
-        #enforces lower and upper limits on the grid world by looping them around.
-        #It actually has a toroidal topology.
-        indices = self.world_state >= self.world_size - 0.5
+        """ Enforces lower and upper limits on the grid world by 
+        looping them around.
+        It actually has a toroidal topology.
+        """
+        indices = (self.world_state >= self.world_size - 0.5).nonzero()
         self.world_state[indices] -= self.world_size
 
-        indices = self.world_state <= -0.5
+        indices = (self.world_state <= -0.5).nonzero()
         self.world_state[indices] += self.world_size
 
         self.simple_state = np.round(self.world_state)
 
-        primitives = np.zeros((self.num_primitives,))
+        primitives = np.zeros(self.num_primitives)
         primitives[self.simple_state[0]] = 1
         primitives[self.simple_state[1] + self.world_size] = 1
 
         reward = 0
         if tuple(self.simple_state.flatten()) == self.obstacle:
-            reward = -0.5
+            reward = -self.REWARD_MAGNITUDE
         elif tuple(self.simple_state.flatten()) == self.target:
-            reward = 0.5
+            reward = self.REWARD_MAGNITUDE
 
-        reward -= self.ENERGY_PENALTY * energy
+        reward -= self.ENERGY_COST * energy
 
-        
-        self.log(self.sensors, primitives, reward)
         self.display()
-        
+
         return self.sensors, primitives, reward
     
+    
+    def set_agent_parameters(self, agent):
+        """ Prevent the agent from forming any groups """
+        agent.grouper.NEW_GROUP_THRESHOLD = 1.0
         
-    def final_performance(self):
-        ''' When the world terminates, this returns the average performance 
-        of the agent on the last 3 blocks.
-        '''
-        if (self.timestep > self.LIFESPAN):
-            performance = np.mean(self.reward_history[-3:]) / self.REPORTING_PERIOD
-            #plt.ioff()
-            #plt.show()
+
+    def display(self):
+        """ Provide an intuitive display of the current state of the World 
+        to the user.
+        """
+        if (self.display_state):
+            print self.simple_state
             
-            assert(performance >= -1.)
-            return performance
+        if (self.timestep % self.REPORTING_PERIOD) == 0:
+            print("world age is %s timesteps " % self.timestep)
+
         
-        return -2

@@ -9,7 +9,7 @@ import viz_utils
 class Learner(object):
     """ The reinforcement learner portion of the Becca agent """
 
-    def __init__(self, num_primitives, num_actions):
+    def __init__(self, num_real_primitives, num_actions):
 
         """ Sensors are irrelevant in the learner """
         num_sensors = 0
@@ -27,14 +27,14 @@ class Learner(object):
         """
         self.WORKING_MEMORY_DECAY_RATE = 0.4      # real, 0 < x <= 1
         
-        self.model = Model(num_primitives, num_actions)
+        self.model = Model(num_real_primitives, num_actions)
         self.planner = Planner(num_actions)
 
-        self.attended_feature = State(num_sensors, num_primitives, num_actions)
-        self.goal = State(num_sensors, num_primitives, num_actions)
-        self.previous_working_memory = State(num_sensors, num_primitives, 
+        self.attended_feature = State(num_sensors, num_real_primitives, num_actions)
+        self.goal = State(num_sensors, num_real_primitives, num_actions)
+        self.previous_working_memory = State(num_sensors, num_real_primitives, 
                                              num_actions)
-        self.working_memory = State(num_sensors, num_primitives, num_actions)
+        self.working_memory = State(num_sensors, num_real_primitives, num_actions)
 
 
     def step(self, feature_activity, reward):

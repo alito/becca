@@ -6,11 +6,11 @@ class State(object):
     """ A data structure for representing the internal state of the agent
     """ 
 
-    def __init__(self, num_sensors=1, num_primitives=1, num_actions=1):
+    def __init__(self, num_sensors=1, num_real_primitives=1, num_actions=1):
         """ Constructor from scratch """
         
         self.sensors = np.zeros(num_sensors)
-        self.primitives = np.zeros(num_primitives)
+        self.primitives = np.zeros(num_real_primitives)
         self.actions = np.zeros(num_actions)
         self.features = []
         
@@ -50,6 +50,7 @@ class State(object):
         """ Add another State to this State, 
         ensuring that no value has a magnitude greater than one """
         new_state = other_state.zeros_like()
+        
         new_state.sensors = utils.bounded_sum(self.sensors, 
                                               other_state.sensors)
         new_state.primitives = utils.bounded_sum(self.primitives, 

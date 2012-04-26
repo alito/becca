@@ -61,7 +61,7 @@ class Model(object):
     
     """
 
-    def __init__(self, num_primitives, num_actions, graphs=True):
+    def __init__(self, num_real_primitives, num_actions, graphs=True):
 
         """ The threshold above which two states are similar enough
         to be considered a match.
@@ -112,7 +112,7 @@ class Model(object):
         around with it during operation. 
         """ 
         self.context = state.State()
-        self.context.primitives = np.zeros((num_primitives, 2*self.MAX_ENTRIES))
+        self.context.primitives = np.zeros((num_real_primitives, 2*self.MAX_ENTRIES))
         self.context.actions = np.zeros((num_actions, 2*self.MAX_ENTRIES))
         self.context.features = []
 
@@ -397,7 +397,7 @@ class Model(object):
             self.effect.actions = np.hstack((self.effect.actions, 
                                              np.zeros(size)))
 
-            for group_index in range(num_groups):
+            for group_index in range(self.n_feature_groups()):
                 size = (self.effect.features[group_index].shape[0], 
                         self.MAX_ENTRIES)
                 self.context.features[group_index] = np.hstack((

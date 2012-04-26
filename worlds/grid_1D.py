@@ -24,8 +24,11 @@ class World(BaseWorld):
                 
         super(World, self).__init__()
         
-        self.REPORTING_PERIOD = 10 ** 8
-        self.display_state = False
+        self.REPORTING_PERIOD = 10 ** 3
+        self.LIFESPAN = 2 * 10 ** 4
+        self.REWARD_MAGNITUDE = 0.5
+        self.ENERGY_COST = 0.01
+        self.display_state = True
 
         self.num_sensors = 1
         self.num_primitives = 9
@@ -36,10 +39,7 @@ class World(BaseWorld):
 
     
     def step(self, action): 
-        """ advances the World by one timestep.
-        Accepts agent as an argument only so that it can occasionally backup
-        the agent's state to disk.
-        """
+        """ Advance the World by one timestep """
 
         if action is None:
             action = np.zeros(self.num_actions)
@@ -55,7 +55,7 @@ class World(BaseWorld):
                  3 * action[6] - 
                  4 * action[7])
                         
-        # an approximation of metabolic energy
+        """ An approximation of metabolic energy """
         energy    = (action[0] + 
                  2 * action[1] + 
                  3 * action[2] + 
@@ -67,25 +67,25 @@ class World(BaseWorld):
 
         self.world_state = self.world_state + step_size
         
-        # ensures that the world state falls between 0 and 9
-        self.world_state = (self.world_state - 
-                            9 * np.floor_divide(self.world_state, self.num_primitives))
+        """ Ensure that the world state falls between 0 and 9 """
+        self.world_state -= self.num_primitives * \
+                            np.floor_divide(self.world_state, 
+                                            self.num_primitives)
         self.simple_state = int(np.floor(self.world_state))
         
-        # Assigns basic_feature_input elements as binary. Represents the presence
-        # or absence of the current position in the bin.
+        """ Assign basic_feature_input elements as binary. 
+        Represent the presence or absence of the current position in the bin.
+        """
         sensors = np.zeros(self.num_sensors)
         primitives = np.zeros(self.num_primitives)
         primitives[self.simple_state] = 1
 
-        # Assigns reward based on the current state
-        reward = primitives[8] * (-0.5)
-        reward += primitives[3] * ( 0.5)
+        """Assign reward based on the current state """
+        reward = primitives[8] * (-self.REWARD_MAGNITUDE)
+        reward += primitives[3] * ( self.REWARD_MAGNITUDE)
         
-        # Punishes actions just a little.
-        reward -= energy / 100
-
-        #print action, primitives, reward        
+        """ Punish actions just a little """
+        reward -= energy  * self.ENERGY_COST
         reward = np.max(reward, -1)
         
         self.display()
@@ -93,18 +93,21 @@ class World(BaseWorld):
         return sensors, primitives, reward
     
         
+    def set_agent_parameters(self, agent):
+        """ Prevent the agent from forming any groups """
+        agent.grouper.NEW_GROUP_THRESHOLD = 1.0
+        
+        
     def display(self):
-        """ provides an intuitive display of the current state of the World 
-        to the user
+        """ Provide an intuitive display of the current state of the World 
+        to the user.
         """
         if (self.display_state):
             state_image = ['.'] * self.num_primitives
             state_image[self.simple_state] = 'O'
-            #print('world timestep %s    %s' % (self.timestep, ''.join(state_image)))
             print(''.join(state_image))
             
         if (self.timestep % self.REPORTING_PERIOD) == 0:
             print("world age is %s timesteps " % self.timestep)
 
-        
         

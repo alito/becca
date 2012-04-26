@@ -10,10 +10,10 @@ from agent.agent import Agent
 lines should be uncommented.
 """
 #from worlds.base_world import World
-#from worlds.grid_1D import World
+from worlds.grid_1D import World
 #from worlds.grid_1D_ms import World
 #from worlds.grid_1D_noise import World
-from worlds.image_1D import World
+#from worlds.image_1D import World
 # TODO: write visualization methods for worlds that represent a set of
 # sensors, primitives, and actions in an intuitive manner
 
@@ -26,7 +26,7 @@ def main():
     """
     agent_name = "test";
     agent = Agent(world.num_sensors, world.num_primitives, 
-                  world.num_actions, 300, agent_name)
+                  world.num_actions, 20, agent_name)
     
     """ If uncommented, try to restore the agent from saved data.
     If commented out, start fresh each time.

@@ -15,7 +15,7 @@ class Agent(object):
     of motor commands. New features are created as necessary to adequately 
     represent the data.
     """
-    def __init__(self, num_sensors, num_primitives, 
+    def __init__(self, num_sensors, num_real_primitives, 
                  num_actions, max_num_features=1000, agent_name='my'):
         
         self.pickle_filename = agent_name + "_agent.pickle"
@@ -24,7 +24,7 @@ class Agent(object):
         self.BACKUP_PERIOD = 10 ** 4
 
         self.num_sensors = num_sensors
-        self.num_primitives = num_primitives
+        self.num_primitives = num_real_primitives
         self.num_actions = num_actions
 
         self.reward = 0
@@ -37,9 +37,9 @@ class Agent(object):
         self.reward_history = []
         self.reward_steps = []
         
-        self.grouper = Grouper(num_sensors, num_primitives, num_actions, 
+        self.grouper = Grouper(num_sensors, num_real_primitives, num_actions, 
                                 max_num_features)
-        self.learner = Learner(num_primitives, num_actions)
+        self.learner = Learner(num_real_primitives, num_actions)
  
         
     def step(self, sensors, primitives, reward):
@@ -115,20 +115,22 @@ class Agent(object):
                 plt.show()
             
         
-    def report_performance(self):
+    def report_performance(self, show=True):
         """ When the world terminates, this returns the performance 
         of the agent, a real value between -1 and 1. Before reaching
         the termination condition, it returns a value less than -1.
         Any terminating activities or reports should be included
         in this method too.
         """
-        performance = (np.mean(self.reward_history[-3:]) / 3)
+        performance = np.mean(self.reward_history[-3:])
         print("Final performance is %f" % performance)
         
         self.grouper.visualize(save_eps=True)
         self.learner.visualize(save_eps=True)
         self.show_reward_history()
-        plt.show()
+
+        if show:
+            plt.show()    
         
         return performance
         

@@ -33,6 +33,7 @@ class World(BaseWorld):
         self.REPORTING_PERIOD = 10 ** 2       
         self.BACKUP_PERIOD = 10 ** 4
         self.LIFESPAN = 10 ** 5
+        self.REWARD_MAGNITUDE = 1.0
         self.AnimatePeriod = 10 ** 2
         self.animate = False
         self.graphing = False
@@ -130,7 +131,7 @@ class World(BaseWorld):
 
         reward = 0
         if abs(self.column_position - self.TARGET_COLUMN) < DISTANCE_FACTOR:
-            reward = 1
+            reward = self.REWARD_MAGNITUDE
 
         return reward
 

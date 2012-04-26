@@ -52,8 +52,8 @@ class World(object):
         """
         self.timestep += 1
         
-        sensors = np.zeros([self.num_sensors, 1])
-        primitives = np.zeros([self.num_primitives, 1])
+        sensors = np.zeros(self.num_sensors)
+        primitives = np.zeros(self.num_primitives)
         reward = 0
         
         

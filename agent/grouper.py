@@ -14,7 +14,7 @@ class Grouper(object):
     to translate the input into feature activity.
     """
     
-    def __init__(self, num_sensors, num_primitives, num_actions,
+    def __init__(self, num_sensors, num_real_primitives, num_actions,
                  max_num_features):
 
         """ Control how rapidly previous inputs are forgotten """
@@ -61,7 +61,7 @@ class Grouper(object):
         """ The list of 2D arrays that translates grouped inputs 
         into feature activities.
         """
-        self.feature_map = FeatureMap(num_sensors, num_primitives, num_actions)        
+        self.feature_map = FeatureMap(num_sensors, num_real_primitives, num_actions)        
         
         """ 2D array for holding the estimate of the coactivity """
         self.coactivity = np.zeros(
@@ -94,7 +94,7 @@ class Grouper(object):
         """ State that provides memory of the input on 
         the previous time step 
         """
-        self.previous_input = state.State(num_sensors, num_primitives, 
+        self.previous_input = state.State(num_sensors, num_real_primitives, 
                                           num_actions)
         
         """ The activity levels of all features in all groups.
@@ -137,16 +137,16 @@ class Grouper(object):
 
         """ Initialize primitive aspects """
         self.coactivity_map.primitives = np.cumsum(np.ones( 
-                           num_primitives, dtype=np.int), 
+                           num_real_primitives, dtype=np.int), 
                                         dtype=np.int) - 1 + self.n_transitions
         self.inv_coactivity_map_group[self.n_transitions: 
-                               self.n_transitions + num_primitives] = \
-                        -2 * np.ones(num_primitives, dtype=np.int)
+                               self.n_transitions + num_real_primitives] = \
+                        -2 * np.ones(num_real_primitives, dtype=np.int)
         self.inv_coactivity_map_feature[self.n_transitions: 
-                               self.n_transitions + num_primitives] = \
-                        np.cumsum( np.ones( num_primitives, dtype=np.int), 
+                               self.n_transitions + num_real_primitives] = \
+                        np.cumsum( np.ones( num_real_primitives, dtype=np.int), 
                                    dtype=np.int) - 1
-        self.n_transitions += num_primitives
+        self.n_transitions += num_real_primitives
         
         """ Initialize action aspects """
         self.coactivity_map.actions = np.cumsum(np.ones( 
