@@ -21,7 +21,7 @@ class Grouper(object):
         self.INPUT_DECAY_RATE = 1.0 # real, 0 < x < 1
         
         """ Control how rapidly the coactivity update platicity changes """
-        self.PLASTICITY_UPDATE_RATE = 10 ** (-2) # real, 0 < x < 1, small
+        self.PLASTICITY_UPDATE_RATE = 2 * 10 ** (-3) # real, 0 < x < 1, small
         
         """ The maximum value of platicity """
         self.MAX_PROPENSITY = 0.1
@@ -42,7 +42,7 @@ class Grouper(object):
         self.MIN_SIG_COACTIVITY = 0.05  # real,  x >= 0
         
         """ Stop growing a group, once it reaches this size """
-        self.MAX_GROUP_SIZE = 300
+        self.MAX_GROUP_SIZE = 10 ** 6 # effectively no limit
         
         """ Stop creating new groups, once this number of features 
         is nearly reached.
@@ -61,7 +61,8 @@ class Grouper(object):
         """ The list of 2D arrays that translates grouped inputs 
         into feature activities.
         """
-        self.feature_map = FeatureMap(num_sensors, num_real_primitives, num_actions)        
+        self.feature_map = FeatureMap(num_sensors, num_real_primitives, 
+                                      num_actions)        
         
         """ 2D array for holding the estimate of the coactivity """
         self.coactivity = np.zeros(
@@ -161,7 +162,16 @@ class Grouper(object):
                                    dtype=np.int) - 1
         self.n_transitions += num_actions
         
+        """ Disallowed co-activities. 
+        A list of 1D numpy arrays, one for each feature group, 
+        giving the coactivity
+        indices that features in that group are descended from. The coactivity
+        between these is forced to be zero to discourage these being combined 
+        to create new features.
+        """
+        self.disallowed = []
         
+
     def step(self, sensors, primitives, actions):
         """ Incrementally estimate coactivity between inputs 
         and form groups when appropriate
@@ -176,7 +186,8 @@ class Grouper(object):
         new_input.primitives = primitives
         
         """ It's not yet clear whether this should be included or not """
-        new_input.actions = actions
+        # debug - don't treat actions as primitive inputs
+        #new_input.actions = actions
         
         """ Decay previous input and combine it with the new input """
         self.previous_input.decay(1 - self.INPUT_DECAY_RATE)
@@ -196,7 +207,9 @@ class Grouper(object):
         grouped_input = state.State()
         grouped_input.sensors = None
         grouped_input.primitives = primitives
-        grouped_input.actions = actions
+        # debug - don't treat actions as primitive inputs
+        #grouped_input.actions = actions
+        grouped_input.actions = np.zeros(actions.shape)
         for group_index in range(self.grouping_map_group.n_feature_groups()):
             grouped_input.add_group(np.zeros(
                    self.grouping_map_feature.features[group_index].size))
@@ -435,6 +448,50 @@ class Grouper(object):
                     self.inv_coactivity_map_feature[added_feature_indices],
                     dtype=np.int)
             
+            """ Calculate the disallowed cominations for the new group """
+            nth_group = self.feature_activity.n_feature_groups() - 1;
+            disallowed_elements = np.zeros(0, dtype=np.int)
+            for group_ctr in range(-3, nth_group):    
+                
+                """ Find the input features indices from group [group_ctr] that 
+                contribute to the nth_group.
+                """
+                matching_group_member_indices = (
+                         self.grouping_map_group.features[nth_group] == 
+                         group_ctr).nonzero()[0]
+    
+                matching_feature_members = \
+                      self.grouping_map_feature.features[nth_group] \
+                      [matching_group_member_indices]
+                      
+                """ Find the corresponding elements in the feature vector
+                and coactivity estimation matrix.
+                """
+                if group_ctr == -3:
+                    matching_element_indices = self.coactivity_map.sensors \
+                          [matching_feature_members]
+                elif group_ctr == -2:
+                    matching_element_indices = self.coactivity_map.primitives \
+                          [matching_feature_members]
+                elif group_ctr == -1:
+                    matching_element_indices = self.coactivity_map.actions \
+                          [matching_feature_members]
+                else:
+                    matching_element_indices = self.coactivity_map.features \
+                          [group_ctr][matching_feature_members]
+                      
+                """ Add these to the set of elements that are not allowed to 
+                be grouped with the new feature to create new groups.
+                """
+                disallowed_elements = np.hstack((disallowed_elements, 
+                                    matching_element_indices.ravel()))
+                if group_ctr >= 0:
+                    disallowed_elements = np.hstack((disallowed_elements, 
+                                    self.disallowed[group_ctr]))
+
+            self.disallowed.append(disallowed_elements)
+    
+            
             '''
             """ Visualize the new group """
             viz = visualizer.Visualizer()
@@ -482,7 +539,6 @@ class Grouper(object):
                 """ If all the conditions are met, add the new feature 
                 to the group.
                 """
-
                 """ This formulation of feature creation was chosen to have 
                 the property that all feature magnitudes are 1. In other words, 
                 every feature is a unit vector in the vector space formed by its 
@@ -492,7 +548,6 @@ class Grouper(object):
                         np.linalg.norm( grouped_input.features[group_index])    
                 
                 self.add_feature(group_index, new_feature) 
-                #print 'adding feauture to group ', group_index
                 
         return
     
@@ -514,45 +569,10 @@ class Grouper(object):
         """ Disallow building new groups out of members of the new feature
         and any of its group's inputs.
         """
-        disallowed_elements = np.zeros(0, dtype=np.int)
-        for group_ctr in range(-3, nth_group - 1):    
-            
-            """ Find the input features indices from group [group_ctr] that 
-            contribute to the nth_group.
-            """
-            matching_group_member_indices = (
-                     self.grouping_map_group.features[nth_group] == 
-                     group_ctr).nonzero()[0]
-
-            matching_feature_members = \
-                  self.grouping_map_feature.features[nth_group] \
-                  [matching_group_member_indices]
-                  
-            """ Find the corresponding elements in the feature vector
-            and coactivity estimation matrix.
-            """
-            if group_ctr == -3:
-                matching_element_indices = self.coactivity_map.sensors \
-                      [matching_feature_members]
-            elif group_ctr == -2:
-                matching_element_indices = self.coactivity_map.primitives \
-                      [matching_feature_members]
-            elif group_ctr == -1:
-                matching_element_indices = self.coactivity_map.actions \
-                      [matching_feature_members]
-            else:
-                matching_element_indices = self.coactivity_map.features[group_ctr] \
-                      [matching_feature_members]
-                  
-            """ Add these to the set of elements that are not allowed to 
-            be grouped with the new feature to create new groups.
-            """
-            disallowed_elements = np.hstack(
-                       (disallowed_elements, matching_element_indices.ravel()))
-             
-        """ Propogate unallowable combinations with inputs """ 
-        self.combination[self.n_transitions - 1, disallowed_elements] = 0
-        self.combination[disallowed_elements, self.n_transitions - 1] = 0
+        self.combination[self.n_transitions - 1, 
+                         self.disallowed[nth_group]] = 0
+        self.combination[self.disallowed[nth_group], 
+                         self.n_transitions - 1] = 0
         
         return
 

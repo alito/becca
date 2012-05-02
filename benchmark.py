@@ -23,7 +23,7 @@ from worlds.grid_1D_noise import World as World_grid_1D_noise
 from worlds.grid_2D import World as World_grid_2D
 from worlds.grid_2D_dc import World as World_grid_2D_dc
 from worlds.image_1D import World as World_image_1D
-from worlds.image_1D import World as World_image_2D
+from worlds.image_2D import World as World_image_2D
 
 
 def main():
@@ -31,8 +31,8 @@ def main():
     """ Tabulate the performance from each world """
     performance = []
     
-    #world = World_grid_1D()
-    #performance.append(test(world))
+    world = World_grid_1D()
+    performance.append(test(world))
     #world = World_grid_1D_ms()
     #performance.append(test(world))
     #world = World_grid_1D_noise()
@@ -41,14 +41,17 @@ def main():
     #performance.append(test(world))
     #world = World_grid_2D_dc()
     #performance.append(test(world))
-    world = World_image_1D()
-    performance.append(test(world))
+    #world = World_image_1D()
+    #performance.append(test(world))
     
     #world = World_image_2D()
     #performance.append(test(world))
     
     print "Agent benchmarks: " , performance
     
+    """ Block the program, displaying all plots.
+    When the plot windows are closed, the program closes.
+    """
     plt.show()
     
     

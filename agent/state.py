@@ -80,7 +80,7 @@ class State(object):
                                     self.actions * (1 - decay_rate), 
                                     new_state.actions)
 
-        for index in range(1, len(self.features)):
+        for index in range(self.n_feature_groups()):
             integrated_state.features[index] = utils.bounded_sum(
                                     self.features[index] * (1 - decay_rate), 
                                     new_state.features[index])

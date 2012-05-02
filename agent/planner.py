@@ -29,16 +29,22 @@ class Planner(object):
         # debug
         # reactive_action = self.select_action(self.model, self.feature_activity)
 
+        deliberately_acted = False
+        
         """ Second, choose a deliberate action (or non-action) """
         """ Only act deliberately on a fraction of the time steps """
         if np.random.random_sample() > self.OBSERVATION_FRACTION:
             
             """ Occasionally explore when making a deliberate action """
             if np.random.random_sample() < self.EXPLORATION_FRACTION:
-                #print('EXPLORING')
+                print('EXPLORING')
                 self.action = self.explore()
+                            
+                """ Attend to any deliberate actions """
+                deliberately_acted = True
+
             else:
-                #print('DELIBERATING')
+                print('DELIBERATING')
                 """ The rest of the time, deliberately choose an action.
                 Choose features as goals, in addition to actions.
                 """
@@ -46,21 +52,25 @@ class Planner(object):
                 
                 """ Pass goal to model """ 
                 model.update_goal(goal)
+                
+                if np.count_nonzero(self.action) > 0:
+                    """ Attend to any deliberate actions """
+                    deliberately_acted = True
+        
+                #debug
+                print self.action                
 
         else:
             self.action = np.zeros( self.action.shape[0])
         
-        return self.action
+        return self.action, deliberately_acted
             
 
     def explore(self):
         """ Forms a random, exploratory plan """
         """ TODO: form and execute multi-step plans, rather than single-step
         random actions.
-        """
-        
-        self.deliberately_acted = True
-        
+        """        
         """ Exploratory commands are only generated at the basic 
         action feature level. Features and higher-level commands 
         are not excited.
@@ -145,7 +155,6 @@ class Planner(object):
         Choose the cause of the winning transition as the goal for 
         the timestep.
         """
-        
         """ Combine the goal-based and reward-based value, for all
         transisions, bounded by one.
         """
@@ -187,12 +196,8 @@ class Planner(object):
         """
         
         transition_vote = value * similarity
-        # debug
-        #transition_vote = value * similarity
-        
         max_transition_index = np.argmax(transition_vote)
 
-        #if transition_vote[max_transition_index] > 0:
         goal = working_memory.zeros_like()
         goal.primitives = model.cause.primitives[:, max_transition_index]
         goal.actions = model.cause.actions[:, max_transition_index]

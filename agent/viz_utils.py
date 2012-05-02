@@ -247,19 +247,21 @@ def reduce_feature_set(grouper):
         
         
 def visualize_model(model, n=None):
-    """ Visualize the n transitions from the model that have the 
-    highest count.
-    """
+    """ Visualize some of the transitions in the model """
     if n == None:
         n = model.n_transitions
         
     n = np.minimum(n, model.n_transitions)
         
-    """ NOTE: argsort returns indices of sort in *ascending* order """
-    index_by_rank = np.argsort(model.count[:model.n_transitions])
-    
     print "The model has a total of ", model.n_transitions, \
             " transitions."
+    
+    '''
+    """ Show the n transitions from the model that have the 
+    highest count.
+    NOTE: argsort returns indices of sort in *ascending* order. 
+    """
+    index_by_rank = np.argsort(model.count[:model.n_transitions])
     
     for index in range(n):
         print "Showing the " + str(index) + \
@@ -271,6 +273,37 @@ def visualize_model(model, n=None):
         """
         plt.show()
         
+    """ Show the n transitions from the model that have the highest reward """
+    index_by_rank = np.argsort(model.reward_value[:model.n_transitions])
+    
+    for index in range(n):
+        print "Showing the " + str(index) + \
+                    "th most rewarding transition."
+        
+        visualize_transition(model, index_by_rank[-(index+1)])
+        """ Hold the plot, blocking the program until the user closes
+        the figure window.
+        """
+        plt.show()
+    '''    
+    """ Show the n transitions from the model that have the 
+    highest impact.
+    NOTE: argsort returns indices of sort in *ascending* order. 
+    """
+    index_by_rank = np.argsort(model.count[:model.n_transitions] * \
+                        (np.log(model.reward_value[:model.n_transitions] + \
+                                np.ones(model.n_transitions))))
+    
+    for index in range(n):
+        print "Showing the " + str(index) + \
+                    "th most impact."
+        
+        visualize_transition(model, index_by_rank[-(index+1)])
+        """ Hold the plot, blocking the program until the user closes
+        the figure window.
+        """
+        plt.show()
+
     return
     
         
@@ -478,6 +511,7 @@ def visualize_state(state, label='state', y_min=0.25, y_max=0.75,
        
     #debug
     '''
+    print label
     print state.sensors
     print state.primitives
     print state.actions

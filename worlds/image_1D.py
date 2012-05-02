@@ -27,7 +27,7 @@ class World(BaseWorld):
         self.BACKUP_PERIOD = 10 ** 4
         self.LIFESPAN = 10 ** 5
         self.REWARD_MAGNITUDE = 1.0
-        self.AnimatePeriod = 10 ** 2
+        self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
         self.graphing = False
         
@@ -36,7 +36,7 @@ class World(BaseWorld):
 
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 1
-        self.num_actions = 16
+        self.num_actions = 8
 
         self.column_history = []
 
@@ -51,14 +51,21 @@ class World(BaseWorld):
             """
             self.data = np.sum(self.data, axis=2) / 3.0
 
+        """ Define the size of the field of view, 
+        its range of allowable positions,
+        and its initial position.
+        """
         self.MAX_STEP_SIZE = self.data.shape[1] / 2
         self.TARGET_COLUMN = self.MAX_STEP_SIZE
+        self.REWARD_REGION_WIDTH = self.MAX_STEP_SIZE / 8
+        self.NOISE_MAGNITUDE = self.MAX_STEP_SIZE * 0.1
 
         self.fov_height = self.data.shape[0]
         self.fov_width = self.data.shape[0]
         self.column_min = self.fov_width / 2
         self.column_max = self.data.shape[1] - self.column_min
-        self.column_position = np.random.random_integers(self.column_min, self.column_max)
+        self.column_position = np.random.random_integers(self.column_min, 
+                                                         self.column_max)
 
         self.block_width = self.fov_width / self.fov_span
 
@@ -67,11 +74,13 @@ class World(BaseWorld):
 
 
     def step(self, action): 
-        """ advances the World by one timestep.
-        """
-
+        """ Advance the World by one time step """
         self.timestep += 1
         
+        """ Actions 0-3 move the field of view to a higher-numbered 
+        row (downward in the image) with varying magnitudes, and
+        actions 4-7 do the opposite.
+        """
         column_step = np.round(action[0] * self.MAX_STEP_SIZE / 2 + 
                                action[1] * self.MAX_STEP_SIZE / 4 + 
                                action[2] * self.MAX_STEP_SIZE / 8 + 
@@ -81,14 +90,18 @@ class World(BaseWorld):
                                action[6] * self.MAX_STEP_SIZE / 8 - 
                                action[7] * self.MAX_STEP_SIZE / 16)
         
-        column_step = np.round( column_step * ( 1 + 0.1 * np.random.random_sample() - 0.1 * np.random.random_sample()))
+        column_step = np.round( column_step * ( 1 + self.NOISE_MAGNITUDE * 
+                                np.random.random_sample() - 
+                                self.NOISE_MAGNITUDE * 
+                                np.random.random_sample()))
         self.column_position = self.column_position + int(column_step)
 
         self.column_position = max(self.column_position, self.column_min)
         self.column_position = min(self.column_position, self.column_max)
 
-        # creates sensory input vector
-        fov = self.data[:, self.column_position - self.fov_width / 2: self.column_position + self.fov_width / 2]
+        """ Create the sensory input vector """
+        fov = self.data[:, self.column_position - self.fov_width / 2: 
+                        self.column_position + self.fov_width / 2]
 
         sensors = np.zeros(self.num_sensors / 2)
 
@@ -96,8 +109,10 @@ class World(BaseWorld):
             for column in range(self.fov_span):
 
                 sensors[row + self.fov_span * column] = \
-                    np.mean( fov[row * self.block_width: (row + 1) * self.block_width, 
-                    column * self.block_width: (column + 1) * self.block_width ]) / 256.0
+                    np.mean( fov[row * self.block_width: (row + 1) * \
+                                 self.block_width , 
+                                 column * self.block_width: (column + 1) * \
+                                 self.block_width ]) / 255.0
 
         sensors = sensors.ravel()
         sensors = np.concatenate((sensors, 1 - sensors))
@@ -105,16 +120,15 @@ class World(BaseWorld):
         reward = self.calculate_reward()               
         
         self.log(sensors, self.primitives, reward)
-        self.display()
         
         return sensors, self.primitives, reward
     
     
     def calculate_reward(self):
-        DISTANCE_FACTOR = self.MAX_STEP_SIZE / 16
 
         reward = 0
-        if abs(self.column_position - self.TARGET_COLUMN) < DISTANCE_FACTOR:
+        if abs(self.column_position - self.TARGET_COLUMN) < \
+            self.REWARD_REGION_WIDTH / 2.0:
             reward = self.REWARD_MAGNITUDE
 
         return reward
@@ -122,15 +136,14 @@ class World(BaseWorld):
         
     def log(self, sensors, primitives, reward):
         
+        self.display()
+
         self.column_history.append(self.column_position)
 
-        if self.animate and (self.timestep % self.AnimatePeriod) == 0:
+        if self.animate and (self.timestep % self.ANIMATE_PERIOD) == 0:
             plt.figure("Image sensed")
-
-            """ remaps [0, 1] to [0, 4/5] for display
-            sensed_image = sensed_image / 1.25
-            """
-            sensed_image = np.reshape( sensors[:len(sensors)/2], (self.fov_span, self.fov_span))
+            sensed_image = np.reshape(sensors[:len(sensors)/2], 
+                                      (self.fov_span, self.fov_span))
             plt.gray()
             plt.imshow(sensed_image)
             viz_utils.force_redraw()
@@ -154,4 +167,3 @@ class World(BaseWorld):
                 viz_utils.force_redraw()
                             
             return
-            

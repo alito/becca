@@ -14,7 +14,7 @@ class Learner(object):
         """ Sensors are irrelevant in the learner """
         num_sensors = 0
         
-        self.SALIENCE_NOISE = 0.1        
+        self.SALIENCE_NOISE = 0.001        
         self.GOAL_DECAY_RATE = 0.05   # real, 0 < x <= 1
         self.STEP_DISCOUNT = 0.5      # real, 0 < x <= 1
         
@@ -55,15 +55,28 @@ class Learner(object):
         self.working_memory = self.previous_working_memory.integrate_state(
                                            self.attended_feature, 
                                            self.WORKING_MEMORY_DECAY_RATE)
-
+        
         """ Associate the reward with each transition """
         self.model.train(self.pre_previous_working_memory, 
                          self.previous_attended_feature, 
                          feature_activity, reward)
 
         """ Decide on an action """
-        self.actions = self.planner.step(self.model, self.working_memory)
+        self.actions, deliberately_acted = \
+                        self.planner.step(self.model, self.working_memory)
         
+        """ If a deliberate action was made on this timestep,
+        force the agent to attend to it. This ensures that 
+        exploratory actions will be attended.
+        """  
+        if deliberately_acted:
+            self.attended_feature = self.attended_feature.zeros_like()
+            self.attended_feature.actions = self.actions
+            self.working_memory = self.previous_working_memory.integrate_state(
+                                               self.attended_feature, 
+                                               self.WORKING_MEMORY_DECAY_RATE)
+                
+            
         """ debug: choose a random action """
         #self.actions = np.zeros(self.goal.actions.size);
         #self.actions[np.random.randint(self.goal.actions.size)] = 1
@@ -121,13 +134,15 @@ class Learner(object):
                                    self.goal.actions, 
                                    max_salience_value, max_salience_group, 
                                    max_salience_index,
-                                   group_indx=-1, deliberate=self.planner.deliberately_acted)
+                                   group_indx=-1)
+        # group_indx=-1, deliberate=self.planner.deliberately_acted)
                 
         """ Calculate salience for feature groups """
         for group_index in range(feature_activity.n_feature_groups()):
             
-            (max_salience_value, max_salience_group, max_salience_index) = \
-                self.calculate_salience(salience.features[group_index], 
+            if feature_activity.n_features_in_group(group_index) > 0:
+                (max_salience_value, max_salience_group, max_salience_index) =\
+                    self.calculate_salience(salience.features[group_index], 
                                    feature_activity.features[group_index], 
                                    self.goal.features[group_index], 
                                    max_salience_value, max_salience_group, 
@@ -146,6 +161,16 @@ class Learner(object):
             self.attended_feature.features[max_salience_group] \
                                           [max_salience_index] = 1
 
+        # debug
+        '''
+        if np.random.random_sample(1) < 0.01:
+            print "attention report "
+            viz_utils.visualize_state(feature_activity, label='feature_activity')
+            viz_utils.visualize_state(self.attended_feature, label='attended_feature')
+            import matplotlib.pyplot
+            matplotlib.pyplot.show()
+        '''
+            
         return self.attended_feature
 
 
@@ -168,14 +193,16 @@ class Learner(object):
         """ If a deliberate action was made on the previous timestep,
         force the agent to attend to it. This ensures that 
         exploratory actions will be attended.
-        """                    
+        """  
+        '''                  
         if deliberate:
             if np.count_nonzero(feature_activity != 0.0):
                 deliberate_action_index = feature_activity.nonzero()[0]
                 max_salience_val = 10
                 max_salience_grp = -1
                 max_salience_indx = deliberate_action_index
-
+        '''
+                
         return max_salience_val, max_salience_grp, max_salience_indx
     
 
@@ -200,7 +227,7 @@ class Learner(object):
     
                    
     def visualize(self, save_eps=True):
-        #viz_utils.visualize_model(self.model, 10)
+        viz_utils.visualize_model(self.model, 10)
         viz_utils.force_redraw()
         
         return

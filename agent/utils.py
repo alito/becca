@@ -260,9 +260,16 @@ def empty_array():
 def winner_takes_all(a):
     """ Perform winner-take-all on a """
     max_index = np.argmax(np.abs(a))
+    
+    """ Enforce a max absolute value of 1.0 """
+    if a[max_index] > 1.0:
+        a[max_index] = 1.0
+    if a[max_index] < -1.0:
+        a[max_index] = -1.0
+        
     wta_features = np.zeros(a.shape)
     wta_features[max_index] = a[max_index]
-        
+
     return wta_features
 
 
