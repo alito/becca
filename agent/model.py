@@ -86,7 +86,7 @@ class Model(object):
         The trace is used to assign credit for transitions with deferred
         effects and rewards.
         """  
-        self.TRACE_LENGTH = 1                # integer, small
+        self.TRACE_LENGTH = 2               # integer, small
         
         """ The factor by which the reward is decayed for each
         timestep between when it was received and the event to which
@@ -137,43 +137,55 @@ class Model(object):
         if len(transition_match_indices) == 0:             
             
             # debug
-            
-            import viz_utils
-            import matplotlib.pyplot as plt
-            fig = plt.figure('new transition')
-            ax = fig.add_subplot(1,1,1)
-
-            viz_utils.visualize_state(new_cause, "new_cause",
-                                      y_min=1.25, y_max=1.75, axes=ax)
-            viz_utils.visualize_state(new_effect, "new_effect",
-                                      y_min=0.25, y_max=0.75, axes=ax)
-            viz_utils.visualize_state(new_context,  "new_context",
-                                      y_min=2.25, y_max=2.75, axes=ax)
-                                      
-            plt.plot(0, 0, color='black') 
-
-            plt.show()
-            
+            '''
+            if np.random.random_sample() < 0.02:
+                import viz_utils
+                import matplotlib.pyplot as plt
+                fig = plt.figure('new transition')
+                ax = fig.add_subplot(1,1,1)
+    
+                viz_utils.visualize_state(new_cause, "new_cause",
+                                          y_min=1.25, y_max=1.75, axes=ax)
+                viz_utils.visualize_state(new_effect, "new_effect",
+                                          y_min=0.25, y_max=0.75, axes=ax)
+                viz_utils.visualize_state(new_context,  "new_context",
+                                          y_min=2.25, y_max=2.75, axes=ax)
+                                          
+                plt.plot(0, 0, color='black') 
+    
+                plt.show()
+            '''
             
             matching_transition_index, reward_update_rate = \
                     self.add_new_transition(new_context, 
                                             new_cause, 
                                             new_effect)
-        else:
-            # debug
-            '''
-            import viz_utils
-            import matplotlib.pyplot as plt
-            viz_utils.visualize_state(new_context, "new_context")
-            viz_utils.visualize_state(new_cause, "new_cause")
-            viz_utils.visualize_state(new_effect, "new_effect")
-            print transition_match_indices
-            viz_utils.visualize_transition(self, transition_match_indices[0])
-            plt.show()
-            '''
+        else:            
             matching_transition_index, reward_update_rate = \
                     self.update_matching_transitions(context_similarity, 
+                                                     transition_match_indices,
                                                      new_effect)
+                    
+            # debug  
+            '''    
+            if np.random.random_sample() < 0.02:
+                import viz_utils
+                import matplotlib.pyplot as plt
+                fig = plt.figure('new transition')
+                ax = fig.add_subplot(1,1,1)
+    
+                viz_utils.visualize_state(new_cause, "new_cause",
+                                          y_min=1.25, y_max=1.75, axes=ax)
+                viz_utils.visualize_state(new_effect, "new_effect",
+                                          y_min=0.25, y_max=0.75, axes=ax)
+                viz_utils.visualize_state(new_context,  "new_context",
+                                          y_min=2.25, y_max=2.75, axes=ax)
+                                          
+                plt.plot(0, 0, color='black') 
+    
+                viz_utils.visualize_transition(self, matching_transition_index)
+                plt.show()        
+            '''
             
         self.update_reward(reward_update_rate, matching_transition_index, 
                            reward)               
@@ -268,21 +280,20 @@ class Model(object):
         reward_update_rate = 1.
         self.n_transitions += 1  
         
-        # debug
-        '''
-        if np.random.random_sample(1) < 0.01:
-            import viz_utils
-            viz_utils.visualize_state(new_context, 'added context')
-            import matplotlib.pyplot
-            matplotlib.pyplot.show()
-        '''
-           
         return matching_transition_index, reward_update_rate       
 
     
-    def update_matching_transitions(self, context_similarity, new_effect):
-        """ Increment a nearby entry """
-        matching_transition_index = np.argmax(context_similarity)                    
+    def update_matching_transitions(self, context_similarity, 
+                                    transition_match_indices, new_effect):
+        """ Only consider matching transitions. Use transition_match_indices
+        as a mask for context_similarity.
+        """
+        transition_similarity = np.zeros(context_similarity.shape)
+        transition_similarity[transition_match_indices] = \
+                    context_similarity[transition_match_indices]
+                    
+        """ Increment the nearest entry """
+        matching_transition_index = np.argmax(transition_similarity)                    
         self.count[matching_transition_index] += 1
         
         """ Modify the effect.

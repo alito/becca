@@ -31,10 +31,10 @@ def main():
     """ Tabulate the performance from each world """
     performance = []
     
-    world = World_grid_1D()
-    performance.append(test(world))
-    #world = World_grid_1D_ms()
+    #world = World_grid_1D()
     #performance.append(test(world))
+    world = World_grid_1D_ms()
+    performance.append(test(world))
     #world = World_grid_1D_noise()
     #performance.append(test(world))
     #world = World_grid_2D()
@@ -43,7 +43,6 @@ def main():
     #performance.append(test(world))
     #world = World_image_1D()
     #performance.append(test(world))
-    
     #world = World_image_2D()
     #performance.append(test(world))
     

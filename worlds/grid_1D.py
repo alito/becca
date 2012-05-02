@@ -28,7 +28,7 @@ class World(BaseWorld):
         self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 0.5
         self.ENERGY_COST = 0.01
-        self.display_state = True
+        self.display_state = False
 
         self.num_sensors = 1
         self.num_primitives = 9

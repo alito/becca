@@ -227,7 +227,7 @@ class Learner(object):
     
                    
     def visualize(self, save_eps=True):
-        viz_utils.visualize_model(self.model, 10)
+        #viz_utils.visualize_model(self.model, 10)
         viz_utils.force_redraw()
         
         return

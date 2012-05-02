@@ -37,14 +37,14 @@ class Planner(object):
             
             """ Occasionally explore when making a deliberate action """
             if np.random.random_sample() < self.EXPLORATION_FRACTION:
-                print('EXPLORING')
+                print('exploring')
                 self.action = self.explore()
                             
                 """ Attend to any deliberate actions """
                 deliberately_acted = True
 
             else:
-                print('DELIBERATING')
+                print('deliberating')
                 """ The rest of the time, deliberately choose an action.
                 Choose features as goals, in addition to actions.
                 """
@@ -57,9 +57,6 @@ class Planner(object):
                     """ Attend to any deliberate actions """
                     deliberately_acted = True
         
-                #debug
-                print self.action                
-
         else:
             self.action = np.zeros( self.action.shape[0])
         
@@ -167,8 +164,8 @@ class Planner(object):
         """ Each transition's count and its similarity to the working memory 
         also factor in to its vote.
         """
-        #count_weight = utils.sigmoid(np.log(model.count
-        #        [:model.n_transitions] + 1) / 3)
+        count_weight = utils.sigmoid(np.log(model.count
+                [:model.n_transitions] + 1) / 3)
 
         """ TODO: query model, so I don't have to probe 
         its members directly. 
@@ -194,8 +191,10 @@ class Planner(object):
         """ TODO: Add recency? This is likely to be useful when 
         rewards change over time. 
         """
+        #debug--have count be a factor?
+        #transition_vote = value * similarity
+        transition_vote = value * similarity * count_weight
         
-        transition_vote = value * similarity
         max_transition_index = np.argmax(transition_vote)
 
         goal = working_memory.zeros_like()
