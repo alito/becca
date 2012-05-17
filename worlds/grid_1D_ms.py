@@ -28,7 +28,7 @@ class World(BaseWorld):
         self.REWARD_MAGNITUDE = 0.5
         self.ENERGY_COST = 0.01
         self.JUMP_FRACTION = 0.1
-        self.display_state = True
+        self.display_state = False
 
         self.num_sensors = 1
         self.num_primitives = 9
@@ -54,7 +54,7 @@ class World(BaseWorld):
             action += round(random.random() * 6) * \
                     np.round(np.random.random_sample(self.num_actions))
                     
-            print('jumping')
+            #print('jumping')
                 
 
         energy = action[0] + action[1]
