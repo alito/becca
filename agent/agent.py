@@ -165,8 +165,8 @@ class Agent(object):
             If it matches, accept the agent. If it doesn't,
             print a message, and keep the just-initialized agent.
             """
-            if((loaded_agent.num_sensors == self.num_sensors) & 
-               (loaded_agent.num_primitives == self.num_primitives) & 
+            if((loaded_agent.num_sensors == self.num_sensors) and 
+               (loaded_agent.num_primitives == self.num_primitives) and
                (loaded_agent.num_actions == self.num_actions)):
             
                 print("Agent restored at timestep " + str(loaded_agent.timestep))
