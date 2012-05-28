@@ -76,7 +76,7 @@ def bounded_sum(a, b):
             raise ValueError("Both parameters must have the same number " \
                              "of elements. Got %s and %s" % (a.size, b.size))
             
-        if a.size == 0 | b.size == 0:
+        if a.size == 0 or b.size == 0:
             return np.zeros((0,0))
         
         if a.shape != b.shape:
