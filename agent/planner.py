@@ -37,14 +37,14 @@ class Planner(object):
             
             """ Occasionally explore when making a deliberate action """
             if np.random.random_sample() < self.EXPLORATION_FRACTION:
-                print('exploring')
+                #print('exploring')
                 self.action = self.explore()
                             
                 """ Attend to any deliberate actions """
                 deliberately_acted = True
 
             else:
-                print('deliberating')
+                #print('deliberating')
                 """ The rest of the time, deliberately choose an action.
                 Choose features as goals, in addition to actions.
                 """

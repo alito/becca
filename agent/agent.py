@@ -21,7 +21,7 @@ class Agent(object):
         self.pickle_filename = agent_name + "_agent.pickle"
         
         self.REPORTING_PERIOD = 10 ** 3
-        self.BACKUP_PERIOD = 10 ** 4
+        self.BACKUP_PERIOD = 10 ** 8
 
         self.num_sensors = num_sensors
         self.num_primitives = num_real_primitives
@@ -63,6 +63,7 @@ class Agent(object):
         Reinforcement learner
         ======================================================
         """
+        # debug for watch task
         self.actions = self.learner.step(feature_activity, reward) 
         
         self.log()
@@ -77,7 +78,7 @@ class Agent(object):
         self.cumulative_reward += self.reward
 
         if (self.timestep % self.REPORTING_PERIOD) == 0:
-            self.display()
+            #self.display()
             self.cumulative_reward = 0    
 
 
@@ -92,7 +93,7 @@ class Agent(object):
             print("agent is %s timesteps old" % self.timestep)
             print("%s inputs total" % self.grouper.n_transitions)
             
-            self.grouper.visualize()
+            self.grouper.visualize(save_eps=True)
             self.learner.visualize()
  
     
@@ -124,8 +125,8 @@ class Agent(object):
         performance = np.mean(self.reward_history[-3:])
         print("Final performance is %f" % performance)
         
-        self.grouper.visualize(save_eps=True)
-        self.learner.visualize(save_eps=True)
+        #self.grouper.visualize(save_eps=True)
+        #self.learner.visualize(save_eps=True)
         self.show_reward_history()
 
         if show:

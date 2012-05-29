@@ -226,6 +226,7 @@ def reduce_feature_set(grouper):
     """ Reduce the entire feature set (every feature from every group) 
     to their low-level constituents in terms of sensors, primitives, 
     and actions.
+    Returns a list of lists of State objects.
     """
     n_feature_groups = grouper.previous_input.n_feature_groups()    
     reduced_features = []
