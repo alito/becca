@@ -1,8 +1,6 @@
 \contentsline {chapter}{\numberline {1}Get and run Becca}{2}
-\contentsline {chapter}{\numberline {2}Write and run your first world}{3}
-\contentsline {chapter}{\numberline {3}Share your world with other Becca users}{4}
-\contentsline {chapter}{\numberline {4}Modify your agent code}{5}
-\contentsline {chapter}{\numberline {5}Share your agent with other Becca users}{6}
-\contentsline {chapter}{\numberline {6}Understand how Becca learns}{7}
-\contentsline {chapter}{\numberline {A}Related work}{8}
-\contentsline {chapter}{\numberline {B}Revision history}{9}
+\contentsline {chapter}{\numberline {2}Write and run your first world}{4}
+\contentsline {chapter}{\numberline {3}Share your world with other Becca users}{5}
+\contentsline {chapter}{\numberline {4}Modify your agent code}{6}
+\contentsline {chapter}{\numberline {5}Share your agent with other Becca users}{7}
+\contentsline {chapter}{\numberline {6}Future contributions}{8}

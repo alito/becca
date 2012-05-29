@@ -18,3 +18,15 @@ see www.sandia.gov/rohrer for more detailed documentation,
 papers, and videos.
 
 
+Major changes
+
+version 0.4.0
+- Ported to Python 2.7 from MATLAB. Props to to Alejandro Dubrovsky.
+- Agent and World objects disentangled.
+- Grouper object expanded to be responsible for all aspects of feature creation.
+- Learner object created, responsible for all model building and learning.
+- State object created, containing sensors, primitives, actions, and features.
+- Model structure revised to reflect new state structure.
+- Deliberate actions are now attended immediately.
+- Benchmark module added for measuring performance on all worlds in the battery.
+- Becca now works on all battery worlds, but with much room for improvement.

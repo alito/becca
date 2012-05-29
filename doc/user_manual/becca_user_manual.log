@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.3-1.40.12 (TeX Live 2011) (format=pdflatex 2011.7.3)  16 MAR 2012 10:02
+This is pdfTeX, Version 3.1415926-2.3-1.40.12 (TeX Live 2011) (format=pdflatex 2011.7.3)  15 MAY 2012 18:13
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -87,7 +87,7 @@ Package: ltxcmds 2011/04/18 v1.20 LaTeX kernel commands for general use (HO)
 \Gin@req@height=\dimen103
 \Gin@req@width=\dimen104
 )
-(./becca_user_manual.aux (./download.aux))
+(./becca_user_manual.aux (./download.aux) (./future.aux))
 \openout1 = `becca_user_manual.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 8.
@@ -189,61 +189,83 @@ LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <12> not available
 
  (./download.tex
 Chapter 1.
-) [2
+
+Overfull \hbox (4.87894pt too wide) in paragraph at lines 5--6
+[]\T1/ptm/m/n/12 Becca can be down-loaded from www.openbecca.org or www.sandia.
+gov/rohrer.
+ []
+
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 9.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 9.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 9.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 9.
+
+Overfull \hbox (0.44948pt too wide) in paragraph at lines 11--12
+[]\T1/ptm/m/n/12 The bench-mark.py mod-ule au-to-mat-i-cally runs Becca on a co
+l-lec-tions of worlds
+ []
+
+[2
 
 
-]
+]) [3]
 Chapter 2.
-[3
+[4
 
 
 ]
 Chapter 3.
-[4
-
-]
-Chapter 4.
 [5
 
 ]
-Chapter 5.
+Chapter 4.
 [6
 
 ]
-Chapter 6.
+Chapter 5.
 [7
 
 ]
-Appendix A.
+Chapter 6.
 [8
 
 ]
-Appendix B.
-(./becca_user_manual.bbl [9
+\openout2 = `future.aux'.
+
+ (./future.tex
+LaTeX Font Info:    Try loading font information for OMS+ptm on input line 4.
+
+(/usr/local/texlive/2011/texmf-dist/tex/latex/psnfss/omsptm.fd
+File: omsptm.fd 
+)
+LaTeX Font Info:    Font shape `OMS/ptm/m/n' in size <12> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 4.
+) [9
 
 ]
-
-LaTeX Warning: Empty `thebibliography' environment on input line 3.
-
-) [10
-
-] (./becca_user_manual.aux (./download.aux)) ) 
+(./becca_user_manual.aux (./download.aux) (./future.aux)) ) 
 Here is how much of TeX's memory you used:
- 1760 strings out of 493633
- 24006 string characters out of 3143378
- 73795 words of memory out of 3000000
- 5045 multiletter control sequences out of 15000+200000
- 20774 words of font info for 30 fonts, out of 3000000 for 9000
+ 1809 strings out of 493633
+ 24620 string characters out of 3143378
+ 75045 words of memory out of 3000000
+ 5076 multiletter control sequences out of 15000+200000
+ 34165 words of font info for 46 fonts, out of 3000000 for 9000
  831 hyphenation exceptions out of 8191
- 37i,6n,23p,243b,179s stack positions out of 5000i,500n,10000p,200000b,50000s
-{/usr/local/texlive/2011/texmf-di
-st/fonts/enc/dvips/base/8r.enc}</usr/local/texlive/2011/texmf-dist/fonts/type1/
-urw/times/utmb8a.pfb></usr/local/texlive/2011/texmf-dist/fonts/type1/urw/times/
-utmr8a.pfb>
-Output written on becca_user_manual.pdf (11 pages, 31717 bytes).
+ 37i,8n,23p,845b,179s stack positions out of 5000i,500n,10000p,200000b,50000s
+{/usr/local/texlive/
+2011/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/texlive/2011/texmf-dist
+/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2011/texmf-dist/
+fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2011/texmf-dist/fonts/type
+1/urw/times/utmr8a.pfb></usr/local/texlive/2011/texmf-dist/fonts/type1/urw/time
+s/utmr8a.pfb>
+Output written on becca_user_manual.pdf (10 pages, 52410 bytes).
 PDF statistics:
- 49 PDF objects out of 1000 (max. 8388607)
- 33 compressed objects within 1 object stream
+ 54 PDF objects out of 1000 (max. 8388607)
+ 37 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 
