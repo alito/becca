@@ -38,7 +38,7 @@ class World(BaseWorld):
 
         self.TASK_DURATION = 10 ** 2
         self.FEATURE_DISPLAY_INTERVAL = 10 ** 6
-        self.LIFESPAN = 2.5 * 10 ** 3
+        self.LIFESPAN = 2.5 * 10 ** 4
         self.FOV_FRACTION = 0.5
         
         self.timestep = 0
@@ -52,7 +52,8 @@ class World(BaseWorld):
 
         self.image_filenames = []
         path = 'images/lib/' 
-        extensions = ['.jpg', '.tif', '.gif', '.png', '.bmp']
+        #extensions = ['.jpg', '.tif', '.gif', '.png', '.bmp']
+        extensions = ['.png']
 
         for localpath, directories, filenames in os.walk(path):
             for filename in filenames:
@@ -76,24 +77,24 @@ class World(BaseWorld):
         self.sample_counter = 0
         
         filename = self.image_filenames[np.random.randint(0, self.image_count)]
-        self.data = plt.imread(filename)
+        self.image = plt.imread(filename)
 
         """ Convert it to grayscale if it's in color """
-        if len(self.data.shape) == 3:
+        if len(self.image.shape) == 3:
             """ Collapse the three RGB matrices into one black/white value
             matrix.
             """
-            self.data = np.sum(self.data, axis=2) / 3.0
+            self.image = np.sum(self.image, axis=2) / 3.0
 
-        self.fov_height = np.minimum(self.data.shape[0], 
-                                     self.data.shape[1]) * self.FOV_FRACTION
+        self.fov_height = np.minimum(self.image.shape[0], 
+                                     self.image.shape[1]) * self.FOV_FRACTION
         self.fov_width = self.fov_height
 
         self.column_min = int(np.ceil( self.fov_width/2)) + 1
-        self.column_max = self.data.shape[1] - \
+        self.column_max = self.image.shape[1] - \
                             int(np.ceil( self.fov_width/2)) - 1
         self.row_min = int(np.ceil( self.fov_height/2)) + 1
-        self.row_max = self.data.shape[0] - \
+        self.row_max = self.image.shape[0] - \
                             int(np.ceil( self.fov_height/2)) - 1
 
         self.block_width = int(np.floor(self.fov_width/ (self.fov_span + 2)))
@@ -153,11 +154,11 @@ class World(BaseWorld):
         self.column_position = np.minimum(self.column_position, self.column_max)
 
         """ Create the sensory input vector """
-        fov = self.data[int(self.row_position - self.fov_height / 2): 
+        fov = self.image[int(self.row_position - self.fov_height / 2): 
                         int(self.row_position + self.fov_height / 2), 
                         int(self.column_position - self.fov_width / 2): 
                         int(self.column_position + self.fov_width / 2)]
-
+        
         sensors = np.zeros(self.num_sensors / 2)
 
         for row in range(self.fov_span):
@@ -167,8 +168,13 @@ class World(BaseWorld):
                     np.mean( fov[row * self.block_height: (row + 1) * \
                                  self.block_height, 
                                  column * self.block_width: (column + 1) * \
+                                 self.block_width ])
+                '''sensors[row + self.fov_span * column] = \
+                    np.mean( fov[row * self.block_height: (row + 1) * \
+                                 self.block_height, 
+                                 column * self.block_width: (column + 1) * \
                                  self.block_width ]) / 255.0
-
+                '''
         """ TODO: Implement a center-surround filter """
         #self.sensory_input = (1 +  util_sigm( 10 * util_center_surround(...
         #reshape(task.sensory_input,[task.fov_span + 2 task.fov_span + 2]))))/2;

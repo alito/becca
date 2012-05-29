@@ -28,8 +28,8 @@ class World(BaseWorld):
         self.LIFESPAN = 10 ** 5
         self.REWARD_MAGNITUDE = 1.0
         self.ANIMATE_PERIOD = 10 ** 2
-        self.animate = False
-        self.graphing = False
+        self.animate = True
+        self.graphing = True
         
         self.step_counter = 0
         self.fov_span = 10
@@ -41,7 +41,7 @@ class World(BaseWorld):
         self.column_history = []
 
         """ Initialize the image to be used as the environment """
-        self.image_filename = "./images/bar_test.jpg" 
+        self.image_filename = "./images/bar_test.png" 
         self.data = plt.imread(self.image_filename)
         
         """ Convert it to grayscale if it's in color """
@@ -58,12 +58,12 @@ class World(BaseWorld):
         self.MAX_STEP_SIZE = self.data.shape[1] / 2
         self.TARGET_COLUMN = self.MAX_STEP_SIZE
         self.REWARD_REGION_WIDTH = self.MAX_STEP_SIZE / 8
-        self.NOISE_MAGNITUDE = self.MAX_STEP_SIZE * 0.1
-
+        self.NOISE_MAGNITUDE = 0.1
+        
         self.fov_height = self.data.shape[0]
         self.fov_width = self.data.shape[0]
-        self.column_min = self.fov_width / 2
-        self.column_max = self.data.shape[1] - self.column_min
+        self.column_min = np.ceil(self.fov_width / 2)
+        self.column_max = np.floor(self.data.shape[1] - self.column_min)
         self.column_position = np.random.random_integers(self.column_min, 
                                                          self.column_max)
 
@@ -91,9 +91,10 @@ class World(BaseWorld):
                                action[7] * self.MAX_STEP_SIZE / 16)
         
         column_step = np.round( column_step * ( 1 + self.NOISE_MAGNITUDE * 
-                                np.random.random_sample() - 
+                                np.random.random_sample() * 2.0- 
                                 self.NOISE_MAGNITUDE * 
-                                np.random.random_sample()))
+                                np.random.random_sample() * 2.0))
+        
         self.column_position = self.column_position + int(column_step)
 
         self.column_position = max(self.column_position, self.column_min)
@@ -112,7 +113,7 @@ class World(BaseWorld):
                     np.mean( fov[row * self.block_width: (row + 1) * \
                                  self.block_width , 
                                  column * self.block_width: (column + 1) * \
-                                 self.block_width ]) / 255.0
+                                 self.block_width ])
 
         sensors = sensors.ravel()
         sensors = np.concatenate((sensors, 1 - sensors))
@@ -148,6 +149,12 @@ class World(BaseWorld):
             plt.imshow(sensed_image)
             viz_utils.force_redraw()
 
+
+    def set_agent_parameters(self, agent):
+        pass
+        #agent.grouper.MIN_SIG_COACTIVITY = 0.0027
+        #return
+        
          
     def display(self):
         """ Provide an intuitive display of the current state of the World 

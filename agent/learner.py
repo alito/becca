@@ -80,7 +80,7 @@ class Learner(object):
         """ debug: choose a random action """
         #self.actions = np.zeros(self.goal.actions.size);
         #self.actions[np.random.randint(self.goal.actions.size)] = 1
-        
+
         return self.actions
 
 

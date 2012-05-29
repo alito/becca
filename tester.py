@@ -7,8 +7,8 @@ import numpy as np
 from agent.agent import Agent
 from agent import viz_utils
         
-"""  Selects the World that the Agent will be placed in. One of these
-lines should be uncommented.
+"""  Select the World that the Agent will be placed in. 
+One of these import lines should be uncommented.
 """
 #from worlds.base_world import World
 #from worlds.grid_1D import World
@@ -17,9 +17,9 @@ lines should be uncommented.
 #from worlds.grid_2D import World
 #from worlds.grid_2D_dc import World
 #from worlds.image_1D import World
-#from worlds.image_2D import World
+from worlds.image_2D import World
 
-from worlds.watch import World
+#from worlds.watch import World
 
 
 # TODO: write visualization methods for worlds that represent a set of

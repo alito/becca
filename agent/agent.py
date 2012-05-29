@@ -78,7 +78,7 @@ class Agent(object):
         self.cumulative_reward += self.reward
 
         if (self.timestep % self.REPORTING_PERIOD) == 0:
-            #self.display()
+            self.display()
             self.cumulative_reward = 0    
 
 

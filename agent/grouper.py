@@ -21,7 +21,7 @@ class Grouper(object):
         self.INPUT_DECAY_RATE = 1.0 # real, 0 < x < 1
         
         """ Control how rapidly the coactivity update platicity changes """
-        self.PLASTICITY_UPDATE_RATE = 2 * 10 ** (-3) # real, 0 < x < 1, small
+        self.PLASTICITY_UPDATE_RATE = 10 ** (-3) # real, 0 < x < 1, small
         
         """ The maximum value of platicity """
         self.MAX_PROPENSITY = 0.1
@@ -243,12 +243,6 @@ class Grouper(object):
                      grouped_input[k] = grouped_input[k].ravel() / \
                              np.sqrt( len( grouped_input[k]))
            """
-            
-        """ debug """      
-        #if np.random.random_sample() < 0.01:  
-            #viz_utils.visualize_state(grouped_input)
-            #viz_utils.visualize_feature_set(self, save_eps=True)
-            #viz_utils.force_redraw()
             
         """ Updates feature map when appropriate """
         self.update_feature_map(grouped_input)
@@ -532,7 +526,7 @@ class Grouper(object):
                          self.feature_map.features[group_index].transpose())
                 margin = 1 - np.max(similarity_values)
             
-            if  margin > self.NEW_FEATURE_MARGIN and \
+            if margin > self.NEW_FEATURE_MARGIN and \
                 np.max(grouped_input.features[group_index]) > \
                        self.NEW_FEATURE_MIN_SIZE and \
                 not self.features_full:
