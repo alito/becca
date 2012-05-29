@@ -1,6 +1,7 @@
 *.pyc
 *.pickle
 log/*
+images/lib/*
 *~
 build
 
