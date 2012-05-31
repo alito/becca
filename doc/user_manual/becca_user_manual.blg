@@ -1,50 +1,51 @@
 This is BibTeX, Version 0.99d (TeX Live 2011)
 Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
 The top-level auxiliary file: becca_user_manual.aux
-A level-1 auxiliary file: navigate.aux
 A level-1 auxiliary file: download.aux
+A level-1 auxiliary file: world_mod.aux
+A level-1 auxiliary file: world_share.aux
+A level-1 auxiliary file: agent_mod.aux
+A level-1 auxiliary file: future.aux
 The style file: plain.bst
-I found no \citation commands---while reading file becca_user_manual.aux
 Database file #1: RohrerBECCA.bib
-You've used 0 entries,
+You've used 3 entries,
             2118 wiz_defined-function locations,
-            499 strings with 4042 characters,
-and the built_in function-call counts, 18 in all, are:
-= -- 0
-> -- 0
+            516 strings with 4540 characters,
+and the built_in function-call counts, 749 in all, are:
+= -- 63
+> -- 27
 < -- 0
-+ -- 0
-- -- 0
-* -- 2
-:= -- 7
-add.period$ -- 0
-call.type$ -- 0
-change.case$ -- 0
++ -- 12
+- -- 8
+* -- 33
+:= -- 132
+add.period$ -- 9
+call.type$ -- 3
+change.case$ -- 12
 chr.to.int$ -- 0
-cite$ -- 0
-duplicate$ -- 0
-empty$ -- 1
-format.name$ -- 0
-if$ -- 1
+cite$ -- 3
+duplicate$ -- 40
+empty$ -- 79
+format.name$ -- 8
+if$ -- 159
 int.to.chr$ -- 0
-int.to.str$ -- 0
-missing$ -- 0
-newline$ -- 3
-num.names$ -- 0
-pop$ -- 0
+int.to.str$ -- 3
+missing$ -- 4
+newline$ -- 18
+num.names$ -- 6
+pop$ -- 24
 preamble$ -- 1
-purify$ -- 0
+purify$ -- 10
 quote$ -- 0
-skip$ -- 1
+skip$ -- 21
 stack$ -- 0
-substring$ -- 0
-swap$ -- 0
+substring$ -- 16
+swap$ -- 5
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 0
+type$ -- 10
 warning$ -- 0
-while$ -- 0
-width$ -- 0
-write$ -- 2
-(There was 1 error message)
+while$ -- 6
+width$ -- 4
+write$ -- 33

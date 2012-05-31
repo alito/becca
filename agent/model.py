@@ -127,7 +127,7 @@ class Model(object):
         self.trace_reward = np.zeros(self.TRACE_LENGTH)
 
 
-    def train(self, new_context, new_cause, new_effect, reward):
+    def step(self, new_context, new_cause, new_effect, reward):
         """ Take in new_context, new_cause and new_effect 
         to train the model.
         """
@@ -268,6 +268,7 @@ class Model(object):
         self.cause.actions[:, self.n_transitions] = new_cause.actions
         self.effect.actions[:, self.n_transitions] = new_effect.actions
     
+        # TODO: find bug that occurs here?
         for group_index in range(self.n_feature_groups()):
             self.context.features[group_index][:, self.n_transitions] = \
                                 new_context.features[group_index]

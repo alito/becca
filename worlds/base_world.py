@@ -29,23 +29,6 @@ class World(object):
         self.num_actions = 1
         
 
-    def set_agent_parameters(self, agent):
-        """ Sets parameters in the Becca agent that are specific to a 
-        particular world.
-        Strictly speaking, this method violates the minimal interface 
-        between the agent and the world (observations, action, and reward). 
-        Ideally, it will eventually become obselete. As Becca matures it 
-        will be able to handle more tasks without changing its parameters.
-        """
-        pass
-    
-    def is_alive(self):
-        if(self.timestep < self.LIFESPAN):
-            return True
-        else:
-            return False
-        
-    
     def step(self, action):
         """ Advances the World by one timestep.
         Returns a 3-tuple: sensors, primitives and reward
@@ -58,4 +41,24 @@ class World(object):
         
         
         return sensors, primitives, reward
+
+    
+    def set_agent_parameters(self, agent):
+        """ Sets parameters in the Becca agent that are specific to a 
+        particular world.
+        Strictly speaking, this method violates the minimal interface 
+        between the agent and the world (observations, action, and reward). 
+        Ideally, it will eventually become obselete. As Becca matures it 
+        will be able to handle more tasks without changing its parameters.
+        """
+        pass
+    
+    
+    def is_alive(self):
+        if(self.timestep < self.LIFESPAN):
+            return True
+        else:
+            return False
+        
+    
     

@@ -5,6 +5,7 @@ as part of pyplot. This allows the loading and interpreting of .jpgs
 
 import matplotlib.pyplot as plt
 import numpy as np
+from PIL import Image
 import os
 
 #import agent.viz_utils as viz_utils
@@ -16,7 +17,7 @@ class World(BaseWorld):
 
     In this task, Becca's feature creator is used to create visual    
     features. It is provided input from portions of images in the
-    Caltech-256 image dataset. The reinforcement learner serves no
+    Caltech-256 image_data dataset. The reinforcement learner serves no
     vital purpose in this task. It is intended to showcase the
     feature creator.
     
@@ -37,9 +38,9 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.TASK_DURATION = 10 ** 2
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 6
-        self.LIFESPAN = 2.5 * 10 ** 4
-        self.FOV_FRACTION = 0.5
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 2
+        self.LIFESPAN = 10 ** 6
+        self.FOV_FRACTION = 0.2
         
         self.timestep = 0
         self.sample_counter = 0
@@ -52,8 +53,8 @@ class World(BaseWorld):
 
         self.image_filenames = []
         path = 'images/lib/' 
-        #extensions = ['.jpg', '.tif', '.gif', '.png', '.bmp']
-        extensions = ['.png']
+        extensions = ['.jpg', '.tif', '.gif', '.png', '.bmp']
+        #extensions = ['.png']
 
         for localpath, directories, filenames in os.walk(path):
             for filename in filenames:
@@ -63,9 +64,9 @@ class World(BaseWorld):
                                                     (localpath,filename))
                                                      
         self.image_count = len(self.image_filenames)
-        print self.image_count, ' image filenames loaded.'
+        print self.image_count, ' image_data filenames loaded.'
         
-        """ Initialize the image to be viewed """
+        """ Initialize the image_data to be viewed """
         self.initialize_image()
         
         self.sensors = np.zeros(self.num_sensors)
@@ -77,24 +78,31 @@ class World(BaseWorld):
         self.sample_counter = 0
         
         filename = self.image_filenames[np.random.randint(0, self.image_count)]
-        self.image = plt.imread(filename)
+        
+        # replace with PIL command
+        #self.image_data = plt.imread(filename)
+        self.image = Image.open(filename)
 
         """ Convert it to grayscale if it's in color """
-        if len(self.image.shape) == 3:
+        self.image = self.image.convert('L')
+        self.image_data = np.asarray(self.image)
+        
+        '''if len(self.image_data.shape) == 3:
             """ Collapse the three RGB matrices into one black/white value
             matrix.
             """
-            self.image = np.sum(self.image, axis=2) / 3.0
-
-        self.fov_height = np.minimum(self.image.shape[0], 
-                                     self.image.shape[1]) * self.FOV_FRACTION
+            self.image_data = np.sum(self.image_data, axis=2) / 3.0
+        '''
+        
+        self.fov_height = np.minimum(self.image_data.shape[0], 
+                                     self.image_data.shape[1]) * self.FOV_FRACTION
         self.fov_width = self.fov_height
 
         self.column_min = int(np.ceil( self.fov_width/2)) + 1
-        self.column_max = self.image.shape[1] - \
+        self.column_max = self.image_data.shape[1] - \
                             int(np.ceil( self.fov_width/2)) - 1
         self.row_min = int(np.ceil( self.fov_height/2)) + 1
-        self.row_max = self.image.shape[0] - \
+        self.row_max = self.image_data.shape[0] - \
                             int(np.ceil( self.fov_height/2)) - 1
 
         self.block_width = int(np.floor(self.fov_width/ (self.fov_span + 2)))
@@ -122,10 +130,10 @@ class World(BaseWorld):
             self.initialize_image()
 
         """ Actions 0-3 move the field of view to a higher-numbered 
-        row (downward in the image) with varying magnitudes, and
+        row (downward in the image_data) with varying magnitudes, and
         actions 4-7 do the opposite.
         Actions 8-11 move the field of view to a higher-numbered 
-        column (rightward in the image) with varying magnitudes, and
+        column (rightward in the image_data) with varying magnitudes, and
         actions 12-15 do the opposite.
         """
         row_step    = np.round(action[0] * self.MAX_STEP_SIZE / 2 + 
@@ -154,7 +162,7 @@ class World(BaseWorld):
         self.column_position = np.minimum(self.column_position, self.column_max)
 
         """ Create the sensory input vector """
-        fov = self.image[int(self.row_position - self.fov_height / 2): 
+        fov = self.image_data[int(self.row_position - self.fov_height / 2): 
                         int(self.row_position + self.fov_height / 2), 
                         int(self.column_position - self.fov_width / 2): 
                         int(self.column_position + self.fov_width / 2)]
@@ -204,7 +212,7 @@ class World(BaseWorld):
         """ Build more tightly co-active groups """
         agent.grouper.MIN_SIG_COACTIVITY = 0.27
         #agent.grouper.MIN_SIG_COACTIVITY = 0.027
-        agent.grouper.PLASTICITY_UPDATE_RATE = 2 * 10 ** (-2) # debug
+        #agent.grouper.PLASTICITY_UPDATE_RATE = 2 * 10 ** (-2) # debug
         agent.learner.model.MAX_ENTRIES = 10 ** 2
         agent.learner.model.SIMILARITY_THRESHOLD = 0.
         
@@ -235,6 +243,7 @@ class World(BaseWorld):
         """
         """ feature_set is a list of lists of State objects """
        
+        print len(feature_set)
         if len(feature_set) == 0:
             return
         
@@ -251,7 +260,7 @@ class World(BaseWorld):
         """ The contrast factor. 1 is unchanged. 2 is high contrast. """
         contrast = 1.
         
-        """ Find the size of the overall image """
+        """ Find the size of the overall image_data """
         n_groups = len(feature_set)
         n_features_max = 0
         for group_index in range(n_groups):
@@ -262,7 +271,7 @@ class World(BaseWorld):
         n_pixel_rows = n_groups * (gap + 2 * border + fov_span) + gap
         feature_image = 0.8 * np.ones((n_pixel_rows, n_pixel_columns))
         
-        """ Populate each feature in the feature image """
+        """ Populate each feature in the feature image_data """
         for group_index in range(n_groups):
             for feature_index in range(len(feature_set[group_index])):
                 sensors = feature_set[group_index][feature_index].sensors

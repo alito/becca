@@ -17,9 +17,9 @@ One of these import lines should be uncommented.
 #from worlds.grid_2D import World
 #from worlds.grid_2D_dc import World
 #from worlds.image_1D import World
-from worlds.image_2D import World
+#from worlds.image_2D import World
 
-#from worlds.watch import World
+from worlds.watch import World
 
 
 # TODO: write visualization methods for worlds that represent a set of
@@ -62,6 +62,7 @@ def main():
         """
         try:
             if world.is_time_to_display():
+                print "Trying to display features"
                 world.vizualize_feature_set(
                     viz_utils.reduce_feature_set(agent.grouper), save_eps=True)
                 viz_utils.force_redraw()

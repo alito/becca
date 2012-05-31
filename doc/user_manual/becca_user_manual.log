@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.3-1.40.12 (TeX Live 2011) (format=pdflatex 2011.7.3)  15 MAY 2012 18:13
+This is pdfTeX, Version 3.1415926-2.3-1.40.12 (TeX Live 2011) (format=pdflatex 2011.7.3)  31 MAY 2012 07:44
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -87,21 +87,28 @@ Package: ltxcmds 2011/04/18 v1.20 LaTeX kernel commands for general use (HO)
 \Gin@req@height=\dimen103
 \Gin@req@width=\dimen104
 )
-(./becca_user_manual.aux (./download.aux) (./future.aux))
+(/usr/local/texlive/2011/texmf-dist/tex/latex/tools/verbatim.sty
+Package: verbatim 2003/08/22 v1.5q LaTeX2e package for verbatim enhancements
+\every@verbatim=\toks15
+\verbatim@line=\toks16
+\verbatim@in@stream=\read1
+)
+(./becca_user_manual.aux (./download.aux) (./world_mod.aux) (./world_share.aux)
+(./agent_mod.aux) (./agent_share.aux))
 \openout1 = `becca_user_manual.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 8.
-LaTeX Font Info:    ... okay on input line 8.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 8.
-LaTeX Font Info:    ... okay on input line 8.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 8.
-LaTeX Font Info:    ... okay on input line 8.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 8.
-LaTeX Font Info:    ... okay on input line 8.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 8.
-LaTeX Font Info:    ... okay on input line 8.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 8.
-LaTeX Font Info:    ... okay on input line 8.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 9.
+LaTeX Font Info:    ... okay on input line 9.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 9.
+LaTeX Font Info:    ... okay on input line 9.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 9.
+LaTeX Font Info:    ... okay on input line 9.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 9.
+LaTeX Font Info:    ... okay on input line 9.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 9.
+LaTeX Font Info:    ... okay on input line 9.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 9.
+LaTeX Font Info:    ... okay on input line 9.
 
 (/usr/local/texlive/2011/texmf-dist/tex/context/base/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
@@ -110,12 +117,12 @@ LaTeX Font Info:    ... okay on input line 8.
 \scratchbox=\box26
 \nofMPsegments=\count90
 \nofMParguments=\count91
-\everyMPshowfont=\toks15
+\everyMPshowfont=\toks17
 \MPscratchCnt=\count92
 \MPscratchDim=\dimen106
 \MPnumerator=\count93
 \makeMPintoPDFobject=\count94
-\everyMPtoPDFconversion=\toks16
+\everyMPtoPDFconversion=\toks18
 ) (/usr/local/texlive/2011/texmf-dist/tex/generic/oberdiek/pdftexcmds.sty
 Package: pdftexcmds 2011/04/22 v0.16 Utilities of pdfTeX for LuaTeX (HO)
 
@@ -164,108 +171,211 @@ File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <14.4> on input line 12.
+(Font)              <14.4> on input line 13.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 12.
+(Font)              <7> on input line 13.
 
 [1
 
 
 {/usr/local/texlive/2011/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <24.88> not available
-(Font)              Font shape `T1/ptm/b/n' tried instead on input line 13.
+(Font)              Font shape `T1/ptm/b/n' tried instead on input line 14.
 
 (./becca_user_manual.toc
 LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <12> not available
 (Font)              Font shape `T1/ptm/b/n' tried instead on input line 1.
-)
+LaTeX Font Info:    Font shape `T1/ptm/bx/sc' in size <12> not available
+(Font)              Font shape `T1/ptm/b/sc' tried instead on input line 1.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 2.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 2.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 2.
+LaTeX Font Info:    Try loading font information for T1+pcr on input line 9.
+
+(/usr/local/texlive/2011/texmf-dist/tex/latex/psnfss/t1pcr.fd
+File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
+) [1
+
+])
 \tf@toc=\write3
 \openout3 = `becca_user_manual.toc'.
 
- [1
-
-]
+ [2]
 \openout2 = `download.aux'.
 
- (./download.tex
+
+(./download.tex
 Chapter 1.
-
-Overfull \hbox (4.87894pt too wide) in paragraph at lines 5--6
-[]\T1/ptm/m/n/12 Becca can be down-loaded from www.openbecca.org or www.sandia.
-gov/rohrer.
- []
-
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <12> on input line 9.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 9.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 9.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 9.
-
-Overfull \hbox (0.44948pt too wide) in paragraph at lines 11--12
-[]\T1/ptm/m/n/12 The bench-mark.py mod-ule au-to-mat-i-cally runs Becca on a co
-l-lec-tions of worlds
- []
-
-[2
-
-
-]) [3]
-Chapter 2.
-[4
+LaTeX Font Info:    Font shape `T1/ptm/bx/sc' in size <24.88> not available
+(Font)              Font shape `T1/ptm/b/sc' tried instead on input line 1.
+LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <17.28> not available
+(Font)              Font shape `T1/ptm/b/n' tried instead on input line 5.
+[3
 
 
 ]
-Chapter 3.
-[5
-
-]
-Chapter 4.
-[6
-
-]
-Chapter 5.
-[7
-
-]
-Chapter 6.
-[8
-
-]
-\openout2 = `future.aux'.
-
- (./future.tex
-LaTeX Font Info:    Try loading font information for OMS+ptm on input line 4.
-
-(/usr/local/texlive/2011/texmf-dist/tex/latex/psnfss/omsptm.fd
+LaTeX Font Info:    Try loading font information for OMS+ptm on input line 23.
+ (/usr/local/texlive/2011/texmf-dist/tex/latex/psnfss/omsptm.fd
 File: omsptm.fd 
 )
 LaTeX Font Info:    Font shape `OMS/ptm/m/n' in size <12> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 4.
-) [9
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 23.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 24.
+
+Overfull \hbox (7.35318pt too wide) in paragraph at lines 33--34
+\T1/ptm/m/n/12 tings, each of which is re-ferred to as a world. The worlds test
+ed in \T1/pcr/m/n/12 benchmark.py
+ []
+
+[4]) [5]
+\openout2 = `world_mod.aux'.
+
+ (./world_mod.tex
+Chapter 2.
+Package epstopdf Info: Source file: <figs/agent_world.eps>
+(epstopdf)                    date: 2012-05-30 07:00:27
+(epstopdf)                    size: 603002 bytes
+(epstopdf)             Output file: <figs/agent_world-eps-converted-to.pdf>
+(epstopdf)                    date: 2012-05-30 07:04:42
+(epstopdf)                    size: 25053 bytes
+(epstopdf)             Command: <epstopdf --outfile=figs/agent_world-eps-conver
+ted-to.pdf figs/agent_world.eps>
+(epstopdf)             \includegraphics on input line 11.
+Package epstopdf Info: Output file is already uptodate.
+<figs/agent_world-eps-converted-to.pdf, id=27, 397.485pt x 144.54pt>
+File: figs/agent_world-eps-converted-to.pdf Graphic file (type pdf)
+
+<use figs/agent_world-eps-converted-to.pdf>
+Package pdftex.def Info: figs/agent_world-eps-converted-to.pdf used on input li
+ne 11.
+(pdftex.def)             Requested size: 391.243pt x 142.26378pt.
+
+Overfull \hbox (1.243pt too wide) in paragraph at lines 11--12
+ [][] 
+ []
+
+[6
+
+
 
 ]
-(./becca_user_manual.aux (./download.aux) (./future.aux)) ) 
+LaTeX Font Info:    Font shape `T1/ptm/bx/it' in size <17.28> not available
+(Font)              Font shape `T1/ptm/b/it' tried instead on input line 28.
+ [7 <./figs/agent_world-eps-converted-to.pdf>]
+Overfull \hbox (19.05257pt too wide) in paragraph at lines 50--52
+\T1/ptm/m/n/12 to \T1/pcr/m/n/12 tester.py\T1/ptm/m/n/12 . Make sure all the ot
+her lines be-gin-ning with \T1/pcr/m/n/12 from worlds\T1/ptm/m/n/12 ...
+ []
+
+[8]
+LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <14.4> not available
+(Font)              Font shape `T1/ptm/b/n' tried instead on input line 85.
+LaTeX Font Info:    Font shape `T1/pcr/bx/n' in size <14.4> not available
+(Font)              Font shape `T1/pcr/b/n' tried instead on input line 85.
+ [9] [10]
+LaTeX Font Info:    Font shape `T1/pcr/bx/n' in size <17.28> not available
+(Font)              Font shape `T1/pcr/b/n' tried instead on input line 111.
+ [11] [12]
+Overfull \hbox (49.77452pt too wide) in paragraph at lines 170--170
+ []        \T1/pcr/m/n/12 sensors, primitives, reward = world.step(actions)[] 
+ []
+
+
+Overfull \hbox (49.77452pt too wide) in paragraph at lines 171--171
+ []        \T1/pcr/m/n/12 actions = agent.step(sensors, primitives, reward)[] 
+ []
+
+[13]) [14]
+\openout2 = `world_share.aux'.
+
+ (./world_share.tex
+Chapter 3.
+[15
+
+
+
+]
+Overfull \hbox (56.39981pt too wide) in paragraph at lines 33--33
+[]\T1/pcr/m/n/12 https://groups.google.com/forum/?fromgroups#!forum/becca_users
+[] 
+ []
+
+[16]) [17]
+\openout2 = `agent_mod.aux'.
+
+ (./agent_mod.tex
+Chapter 4.
+Package epstopdf Info: Source file: <figs/class_structure.eps>
+(epstopdf)                    date: 2012-05-30 07:00:30
+(epstopdf)                    size: 1043538 bytes
+(epstopdf)             Output file: <figs/class_structure-eps-converted-to.pdf>
+
+(epstopdf)                    date: 2012-05-30 07:04:42
+(epstopdf)                    size: 27451 bytes
+(epstopdf)             Command: <epstopdf --outfile=figs/class_structure-eps-co
+nverted-to.pdf figs/class_structure.eps>
+(epstopdf)             \includegraphics on input line 13.
+Package epstopdf Info: Output file is already uptodate.
+<figs/class_structure-eps-converted-to.pdf, id=79, 534.99875pt x 480.79625pt>
+File: figs/class_structure-eps-converted-to.pdf Graphic file (type pdf)
+
+<use figs/class_structure-eps-converted-to.pdf>
+Package pdftex.def Info: figs/class_structure-eps-converted-to.pdf used on inpu
+t line 13.
+(pdftex.def)             Requested size: 402.09706pt x 361.3499pt.
+
+Overfull \hbox (12.09706pt too wide) in paragraph at lines 13--14
+ [][] 
+ []
+
+[18
+
+
+
+] [19 <./figs/class_structure-eps-converted-to.pdf>] [20]) [21] [22]
+\openout2 = `agent_share.aux'.
+
+
+(./agent_share.tex
+Chapter 5.
+) [23
+
+
+
+] (./becca_user_manual.bbl) [24
+
+
+] (./becca_user_manual.aux (./download.aux) (./world_mod.aux) (./world_share.au
+x) (./agent_mod.aux) (./agent_share.aux))
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+ ) 
 Here is how much of TeX's memory you used:
- 1809 strings out of 493633
- 24620 string characters out of 3143378
- 75045 words of memory out of 3000000
- 5076 multiletter control sequences out of 15000+200000
- 34165 words of font info for 46 fonts, out of 3000000 for 9000
+ 1950 strings out of 493633
+ 26908 string characters out of 3143378
+ 79456 words of memory out of 3000000
+ 5164 multiletter control sequences out of 15000+200000
+ 77509 words of font info for 74 fonts, out of 3000000 for 9000
  831 hyphenation exceptions out of 8191
- 37i,8n,23p,845b,179s stack positions out of 5000i,500n,10000p,200000b,50000s
-{/usr/local/texlive/
-2011/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/texlive/2011/texmf-dist
-/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2011/texmf-dist/
-fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2011/texmf-dist/fonts/type
-1/urw/times/utmr8a.pfb></usr/local/texlive/2011/texmf-dist/fonts/type1/urw/time
-s/utmr8a.pfb>
-Output written on becca_user_manual.pdf (10 pages, 52410 bytes).
+ 37i,8n,23p,810b,304s stack positions out of 5000i,500n,10000p,200000b,50000s
+{/usr/local/texlive/2011/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/t
+exlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/te
+xlive/2011/texmf-dist/fonts/type1/urw/courier/ucrb8a.pfb></usr/local/texlive/20
+11/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2011/texmf
+-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2011/texmf-dist/font
+s/type1/urw/times/utmbi8a.pfb></usr/local/texlive/2011/texmf-dist/fonts/type1/u
+rw/times/utmr8a.pfb></usr/local/texlive/2011/texmf-dist/fonts/type1/urw/times/u
+tmr8a.pfb></usr/local/texlive/2011/texmf-dist/fonts/type1/urw/times/utmri8a.pfb
+>
+Output written on becca_user_manual.pdf (25 pages, 143154 bytes).
 PDF statistics:
- 54 PDF objects out of 1000 (max. 8388607)
- 37 compressed objects within 1 object stream
+ 139 PDF objects out of 1000 (max. 8388607)
+ 94 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 1 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 11 words of extra memory for PDF output out of 10000 (max. 10000000)
 

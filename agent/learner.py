@@ -57,7 +57,7 @@ class Learner(object):
                                            self.WORKING_MEMORY_DECAY_RATE)
         
         """ Associate the reward with each transition """
-        self.model.train(self.pre_previous_working_memory, 
+        self.model.step(self.pre_previous_working_memory, 
                          self.previous_attended_feature, 
                          feature_activity, reward)
 

@@ -1,3 +1,21 @@
-\begin{thebibliography}{}
+\begin{thebibliography}{1}
+
+\bibitem{rohrer11c}
+B.~Rohrer.
+\newblock Biologically inspired feature creation for multi-sensory perception.
+\newblock In {\em Second International Conference on Biologicall Inspired
+  Cognitive Architectures}, 2011.
+
+\bibitem{rohrer11b}
+B.~Rohrer.
+\newblock A developmental agent for learning features, environment models, and
+  general tasks.
+\newblock In {\em First Joint International Conference on Development and
+  Learning and Epigenetic Robotics}, 2011.
+
+\bibitem{sutton98}
+R.~S. Sutton and A.~G. Barto.
+\newblock {\em Reinforcement Learning: An Introduction}.
+\newblock MIT Press, Cambridge, Massachusetts, 1998.
 
 \end{thebibliography}

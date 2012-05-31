@@ -4,9 +4,10 @@
 \normalfont
 \usepackage[T1]{fontenc}
 \usepackage{graphicx}
+\usepackage{verbatim}
 
 \begin{document}
-\title{Becca version 0.4.0 // User's Manual}
+\title{\textsc{Becca} version 0.4.0 \\User's Manual}
 \author{Brandon Rohrer}
 
 \maketitle
@@ -21,35 +22,36 @@
 
 \include{download}
 
-\chapter{Write and run your first world}
-world code overview
+\include{world_mod}
 
-\chapter{Share your world with other Becca users}
-%contrib vs. core: parallel distribution
-%find worlds that others have written-link to contributions page
-%becca's online presence
+\include{world_share}
 
-\chapter{Modify your agent code}
-%agent code overview
-%benchmarking
+\include{agent_mod}
 
-\chapter{Share your agent with other Becca users}
-%core vs. branch
-%style guide
+\include{agent_share}
 
-%\chapter{Understand how Becca learns}
+%\include{documentation}
+%\chapter{Document your changes}
+% report your changes in the users guide
+% modify the history appendix
+
+%\include{theory}
+%\chapter{Understand how \textsc{Becca} learns}
 %technical overview
 
-%\appendix
+\appendix
+
+%\include{background}
 %\chapter{Related work}
 
-%\chapter{Revision history}
+%\include{issues}
+%\chapter{Stuff that needs to be done}
+
+%\include{history}
+%\chapter{Stuff that we've done already}
 %contributions
 
-\chapter{Future contributions}
-\include{future}
-
-%\bibliographystyle{plain}
-%\bibliography{RohrerBECCA}
+\bibliographystyle{plain}
+\bibliography{RohrerBECCA}
 
 \end{document}

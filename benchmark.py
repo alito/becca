@@ -1,5 +1,5 @@
 """
-benchmark 0.1.0
+benchmark 0.4.0
 
 A suite of worlds to characterize the performance of Becca variants.
 Other agents may use this benchmark as well, as long as they have the 
@@ -31,20 +31,20 @@ def main():
     """ Tabulate the performance from each world """
     performance = []
     
-    #world = World_grid_1D()
-    #performance.append(test(world))
+    world = World_grid_1D()
+    performance.append(test(world))
     world = World_grid_1D_ms()
     performance.append(test(world))
-    #world = World_grid_1D_noise()
-    #performance.append(test(world))
-    #world = World_grid_2D()
-    #performance.append(test(world))
-    #world = World_grid_2D_dc()
-    #performance.append(test(world))
-    #world = World_image_1D()
-    #performance.append(test(world))
-    #world = World_image_2D()
-    #performance.append(test(world))
+    world = World_grid_1D_noise()
+    performance.append(test(world))
+    world = World_grid_2D()
+    performance.append(test(world))
+    world = World_grid_2D_dc()
+    performance.append(test(world))
+    world = World_image_1D()
+    performance.append(test(world))
+    world = World_image_2D()
+    performance.append(test(world))
     
     print "Agent benchmarks: " , performance
     

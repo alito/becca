@@ -1,13 +1,8 @@
 
-""" The Python Image Library, required by this world, installed
-as part of pyplot. This allows the loading and interpreting of .jpgs
-"""
 import matplotlib.pyplot as plt
 import numpy as np
-
 import agent.viz_utils as viz_utils
 
-#from utils import force_redraw
 from worlds.base_world import World as BaseWorld
 
 class World(BaseWorld):
@@ -15,7 +10,7 @@ class World(BaseWorld):
     two-dimensional visual servo task
 
     In this task, BECCA can direct its gaze up, down, left, and
-    right, saccading about an image of a black square on a white
+    right, saccading about an image_data of a black square on a white
     background. It is rewarded for directing it near the center.
     The mural is not represented using basic features, but rather
     using raw inputs, which BECCA must build into features. See
@@ -24,18 +19,17 @@ class World(BaseWorld):
     
     for a full writeup.
     
-    Optimal performance is around 0.7 reward per time step.
+    Optimal performance is around 0.73 reward per time step.
     """
     def __init__(self):
         super(World, self).__init__()
 
         self.REPORTING_PERIOD = 10 ** 2       
-        self.BACKUP_PERIOD = 10 ** 4
-        self.LIFESPAN = 10 ** 5
+        self.LIFESPAN = 10 ** 6
         self.REWARD_MAGNITUDE = 1.0
         self.ANIMATE_PERIOD = 10 ** 2
-        self.animate = True
-        self.graphing = True
+        self.animate = False
+        self.graphing = False
         
         self.step_counter = 0
 
@@ -43,41 +37,41 @@ class World(BaseWorld):
 
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 1
-        self.num_actions = 16
+        self.num_actions = 17
 
         self.column_history = []
         self.row_history = []
 
-        """ Initialize the image to be used as the environment """
+        """ Initialize the image_data to be used as the environment """
         self.image_filename = "./images/block_test.png" 
-        self.image = plt.imread(self.image_filename)
+        self.image_data = plt.imread(self.image_filename)
         
         """ Convert it to grayscale if it's in color """
-        if self.image.shape[2] == 3:
+        if self.image_data.shape[2] == 3:
             """ Collapse the three RGB matrices into one black/white value
             matrix.
             """
-            self.image = np.sum(self.image, axis=2) / 3.0
+            self.image_data = np.sum(self.image_data, axis=2) / 3.0
 
         """ Define the size of the field of view, 
         its range of allowable positions,
         and its initial position.
         """
-        self.MAX_STEP_SIZE = self.image.shape[1] / 2
-        self.TARGET_COLUMN = self.MAX_STEP_SIZE
-        self.TARGET_ROW = self.MAX_STEP_SIZE
-        self.REWARD_REGION_WIDTH = self.MAX_STEP_SIZE / 8
+        im_size = np.minimum(self.image_data.shape[0], 
+                                     self.image_data.shape[1])
+        self.MAX_STEP_SIZE = im_size / 2
+        self.TARGET_COLUMN = im_size / 2
+        self.TARGET_ROW = im_size / 2
+        self.REWARD_REGION_WIDTH = im_size / 16
         self.NOISE_MAGNITUDE = 0.1
 
         self.FIELD_OF_VIEW_FRACTION = 0.5;
-        self.fov_height = np.minimum(self.image.shape[0], 
-                                     self.image.shape[1]) *\
-                                     self.FIELD_OF_VIEW_FRACTION
+        self.fov_height =  im_size * self.FIELD_OF_VIEW_FRACTION
         self.fov_width = self.fov_height
         self.column_min = np.ceil(self.fov_width / 2)
-        self.column_max = np.floor(self.image.shape[1] - self.column_min)
+        self.column_max = np.floor(self.image_data.shape[1] - self.column_min)
         self.row_min = np.ceil(self.fov_height / 2)
-        self.row_max = np.floor(self.image.shape[0] - self.row_min)
+        self.row_max = np.floor(self.image_data.shape[0] - self.row_min)
         self.column_position = np.random.random_integers(self.column_min, 
                                                          self.column_max)
         self.row_position = np.random.random_integers(self.row_min, 
@@ -95,10 +89,10 @@ class World(BaseWorld):
         self.timestep += 1
         
         """ Actions 0-3 move the field of view to a higher-numbered 
-        row (downward in the image) with varying magnitudes, and
+        row (downward in the image_data) with varying magnitudes, and
         actions 4-7 do the opposite.
         Actions 8-11 move the field of view to a higher-numbered 
-        column (rightward in the image) with varying magnitudes, and
+        column (rightward in the image_data) with varying magnitudes, and
         actions 12-15 do the opposite.
         """
         row_step    = np.round(action[0] * self.MAX_STEP_SIZE / 2 + 
@@ -129,14 +123,14 @@ class World(BaseWorld):
         self.row_position = self.row_position + int(row_step)
         self.column_position = self.column_position + int(column_step)
 
-        """ Respect the boundaries of the image """
+        """ Respect the boundaries of the image_data """
         self.row_position = max(self.row_position, self.row_min)
         self.row_position = min(self.row_position, self.row_max)
         self.column_position = max(self.column_position, self.column_min)
         self.column_position = min(self.column_position, self.column_max)
 
         """ Create the sensory input vector """
-        fov = self.image[self.row_position - self.fov_height / 2: 
+        fov = self.image_data[self.row_position - self.fov_height / 2: 
                         self.row_position + self.fov_height / 2, 
                         self.column_position - self.fov_width / 2: 
                         self.column_position + self.fov_width / 2]

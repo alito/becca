@@ -20,7 +20,7 @@ class Agent(object):
         
         self.pickle_filename = agent_name + "_agent.pickle"
         
-        self.REPORTING_PERIOD = 10 ** 3
+        self.REPORTING_PERIOD = 10 ** 2
         self.BACKUP_PERIOD = 10 ** 8
 
         self.num_sensors = num_sensors
@@ -89,7 +89,7 @@ class Agent(object):
     def display(self):
         if (self.timestep % self.REPORTING_PERIOD) == 0:
             self.record_reward_history()
-            self.show_reward_history()
+            self.show_reward_history(save_eps=True)
             print("agent is %s timesteps old" % self.timestep)
             print("%s inputs total" % self.grouper.n_transitions)
             
@@ -103,13 +103,17 @@ class Agent(object):
         self.reward_steps.append(self.timestep)
                     
             
-    def show_reward_history(self, show=False):
+    def show_reward_history(self, show=False, save_eps=False,
+                            epsfilename='log/reward_history.eps'):
         if self.graphing:
             plt.figure(1)
             plt.plot(self.reward_steps, self.reward_history)
             plt.xlabel("time step")
             plt.ylabel("average reward")
             viz_utils.force_redraw()
+
+            if save_eps:
+                plt.savefig(epsfilename, format='eps')
 
             if show:
                 plt.show()

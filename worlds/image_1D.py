@@ -24,7 +24,6 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.REPORTING_PERIOD = 10 ** 2       
-        self.BACKUP_PERIOD = 10 ** 4
         self.LIFESPAN = 10 ** 5
         self.REWARD_MAGNITUDE = 1.0
         self.ANIMATE_PERIOD = 10 ** 2
