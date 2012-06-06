@@ -1,27 +1,20 @@
 
-""" The Python Image Library, required by this world, installed
-as part of pyplot. This allows the loading and interpreting of .jpgs
-"""
-
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
 import os
-
-#import agent.viz_utils as viz_utils
 from worlds.base_world import World as BaseWorld
 
 class World(BaseWorld):
     """ watch
     visual feature creation
 
-    In this task, Becca's feature creator is used to create visual    
-    features. It is provided input from portions of images in the
+    In this world, Becca's feature creator creates visual    
+    features from portions of images in the
     Caltech-256 image_data dataset. The reinforcement learner serves no
-    vital purpose in this task. It is intended to showcase the
+    vital purpose in this world--it is intended to showcase the
     feature creator.
     
-    By default, this task pull images from the collection at 
+    By default, this world pulls images from the collection at 
     ./images/lib . This directory is specifically excluded from 
     the repository since it can be quite large and shouldn't be 
     distributed with Becca. You will have to fill this directory
@@ -30,6 +23,10 @@ class World(BaseWorld):
     http://www.sandia.gov/~brrohre/doc/Rohrer11BiologicallyInspiredFeature.pdf
 
     for a full writeup. 
+    
+    This world also requires an installation of the Python Imaging Library
+    (PIL). I've had problems installing it on Windows. I had to recompile it
+    to run it on Mac. It ran on Ubuntu Linux 12.04 right out of the box.
     
     For fastest running of this task, comment out the line that calls the 
     learner in the step() method of agent.py.
@@ -51,10 +48,19 @@ class World(BaseWorld):
         self.num_primitives = 1
         self.num_actions = 16
 
+        try:
+            from PIL import Image
+            self.using_pil = True
+        except ImportError:
+            self.using_pil = False
+            
         self.image_filenames = []
         path = 'images/lib/' 
-        extensions = ['.jpg', '.tif', '.gif', '.png', '.bmp']
-        #extensions = ['.png']
+        
+        if self.using_pil:
+            extensions = ['.jpg', '.tif', '.gif', '.png', '.bmp']
+        else:
+            extensions = ['.png']
 
         for localpath, directories, filenames in os.walk(path):
             for filename in filenames:
@@ -64,8 +70,18 @@ class World(BaseWorld):
                                                     (localpath,filename))
                                                      
         self.image_count = len(self.image_filenames)
-        print self.image_count, ' image_data filenames loaded.'
-        
+        if self.image_count == 0:
+            try:
+                raise RuntimeError('Add image files to image\/lib\/')
+            except RuntimeError:
+                print 'Error in watch.py: No images loaded.'
+                print '    Make sure the \'images\' directory contains '
+                print '    a \'lib\' directory and that it contains'
+                print '    some image files.'
+                raise
+        else:
+            print self.image_count, ' image_data filenames loaded.'
+            
         """ Initialize the image_data to be viewed """
         self.initialize_image()
         
@@ -79,21 +95,18 @@ class World(BaseWorld):
         
         filename = self.image_filenames[np.random.randint(0, self.image_count)]
         
-        # replace with PIL command
-        #self.image_data = plt.imread(filename)
-        self.image = Image.open(filename)
-
-        """ Convert it to grayscale if it's in color """
-        self.image = self.image.convert('L')
-        self.image_data = np.asarray(self.image)
-        
-        '''if len(self.image_data.shape) == 3:
-            """ Collapse the three RGB matrices into one black/white value
-            matrix.
-            """
-            self.image_data = np.sum(self.image_data, axis=2) / 3.0
-        '''
-        
+        if self.using_pil:
+            self.image = Image.open(filename)
+            """ Convert it to grayscale if it's in color """
+            self.image = self.image.convert('L')
+            self.image_data = np.asarray(self.image) / 255.0    
+                    
+        else:
+            self.image_data = plt.imread(filename)
+            """ Convert it to grayscale if it's in color """
+            if len(self.image_data.shape) == 3:
+                self.image_data = np.sum(self.image_data, axis=2) / 3.0
+            
         self.fov_height = np.minimum(self.image_data.shape[0], 
                                      self.image_data.shape[1]) * self.FOV_FRACTION
         self.fov_width = self.fov_height
@@ -177,12 +190,6 @@ class World(BaseWorld):
                                  self.block_height, 
                                  column * self.block_width: (column + 1) * \
                                  self.block_width ])
-                '''sensors[row + self.fov_span * column] = \
-                    np.mean( fov[row * self.block_height: (row + 1) * \
-                                 self.block_height, 
-                                 column * self.block_width: (column + 1) * \
-                                 self.block_width ]) / 255.0
-                '''
         """ TODO: Implement a center-surround filter """
         #self.sensory_input = (1 +  util_sigm( 10 * util_center_surround(...
         #reshape(task.sensory_input,[task.fov_span + 2 task.fov_span + 2]))))/2;
@@ -191,8 +198,6 @@ class World(BaseWorld):
         sensors = np.concatenate((sensors, 1 - sensors))
 
         reward = self.calculate_reward()               
-        
-        self.log(sensors, self.primitives, reward)
         
         return sensors, self.primitives, reward
     
@@ -216,18 +221,6 @@ class World(BaseWorld):
         agent.learner.model.MAX_ENTRIES = 10 ** 2
         agent.learner.model.SIMILARITY_THRESHOLD = 0.
         
-        
-    def log(self, sensors, primitives, reward):
-        #self.display()
-        pass
-    
-         
-    def display(self):
-        """ Provide an intuitive display of the current state of the World 
-        to the user.
-        """        
-        pass
-    
     
     def is_time_to_display(self):
         if (self.timestep % self.FEATURE_DISPLAY_INTERVAL == 0):

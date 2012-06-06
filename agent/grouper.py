@@ -479,10 +479,7 @@ class Grouper(object):
                 """
                 disallowed_elements = np.hstack((disallowed_elements, 
                                     matching_element_indices.ravel()))
-                if group_ctr >= 0:
-                    disallowed_elements = np.hstack((disallowed_elements, 
-                                    self.disallowed[group_ctr]))
-
+                
             self.disallowed.append(disallowed_elements)
     
             

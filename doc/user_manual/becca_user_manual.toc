@@ -21,19 +21,20 @@
 \contentsline {section}{\numberline {3.2}How do I tell them about it?}{16}
 \contentsline {chapter}{\numberline {4}Modify your agent code}{18}
 \contentsline {section}{\numberline {4.1}How is the agent code structured?}{18}
-\contentsline {subsection}{\numberline {4.1.1}\texttt {Agent}}{20}
-\contentsline {subsection}{\numberline {4.1.2}\texttt {Grouper}}{20}
-\contentsline {subsection}{\numberline {4.1.3}\texttt {FeatureMap}}{20}
-\contentsline {subsection}{\numberline {4.1.4}\texttt {Learner}}{20}
-\contentsline {subsection}{\numberline {4.1.5}\texttt {Model}}{20}
-\contentsline {subsection}{\numberline {4.1.6}\texttt {Planner}}{20}
-\contentsline {subsection}{\numberline {4.1.7}Utilities}{21}
+\contentsline {subsection}{\numberline {4.1.1}\texttt {State}}{20}
+\contentsline {subsection}{\numberline {4.1.2}\texttt {Agent}}{20}
+\contentsline {subsection}{\numberline {4.1.3}\texttt {Grouper}}{20}
+\contentsline {subsection}{\numberline {4.1.4}\texttt {FeatureMap}}{20}
+\contentsline {subsection}{\numberline {4.1.5}\texttt {Learner}}{20}
+\contentsline {subsection}{\numberline {4.1.6}\texttt {Model}}{21}
+\contentsline {subsection}{\numberline {4.1.7}\texttt {Planner}}{21}
+\contentsline {subsection}{\numberline {4.1.8}Utility modules: \texttt {utils} and \texttt {viz\_utils}}{21}
 \contentsline {section}{\numberline {4.2}Is my agent better than the core agent?}{21}
 \contentsline {subsection}{\numberline {4.2.1}\texttt {grid\_1D.py}}{22}
 \contentsline {subsection}{\numberline {4.2.2}\texttt {grid\_1D\_ms.py}}{22}
-\contentsline {subsection}{\numberline {4.2.3}\texttt {grid\_1D\_noise.py}}{22}
-\contentsline {subsection}{\numberline {4.2.4}\texttt {grid\_2D.py}}{22}
-\contentsline {subsection}{\numberline {4.2.5}\texttt {grid\_2D\_dc.py}}{22}
-\contentsline {subsection}{\numberline {4.2.6}\texttt {image\_1D.py}}{22}
-\contentsline {subsection}{\numberline {4.2.7}\texttt {image\_2D.py}}{22}
-\contentsline {chapter}{\numberline {5}Share your agent with other \textsc {Becca} users}{23}
+\contentsline {subsection}{\numberline {4.2.3}\texttt {grid\_1D\_noise.py}}{23}
+\contentsline {subsection}{\numberline {4.2.4}\texttt {grid\_2D.py}}{23}
+\contentsline {subsection}{\numberline {4.2.5}\texttt {grid\_2D\_dc.py}}{23}
+\contentsline {subsection}{\numberline {4.2.6}\texttt {image\_1D.py}}{23}
+\contentsline {subsection}{\numberline {4.2.7}\texttt {image\_2D.py}}{23}
+\contentsline {chapter}{\numberline {5}Share your agent with other \textsc {Becca} users}{27}
