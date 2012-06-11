@@ -86,7 +86,7 @@ class Model(object):
         The trace is used to assign credit for transitions with deferred
         effects and rewards.
         """  
-        self.TRACE_LENGTH = 2               # integer, small
+        self.TRACE_LENGTH = 4               # integer, small
         
         """ The factor by which the reward is decayed for each
         timestep between when it was received and the event to which
@@ -112,7 +112,8 @@ class Model(object):
         around with it during operation. 
         """ 
         self.context = state.State()
-        self.context.primitives = np.zeros((num_real_primitives, 2*self.MAX_ENTRIES))
+        self.context.primitives = np.zeros((num_real_primitives, 
+                                            2*self.MAX_ENTRIES))
         self.context.actions = np.zeros((num_actions, 2*self.MAX_ENTRIES))
         self.context.features = []
 
@@ -268,7 +269,6 @@ class Model(object):
         self.cause.actions[:, self.n_transitions] = new_cause.actions
         self.effect.actions[:, self.n_transitions] = new_effect.actions
     
-        # TODO: find bug that occurs here?
         for group_index in range(self.n_feature_groups()):
             self.context.features[group_index][:, self.n_transitions] = \
                                 new_context.features[group_index]

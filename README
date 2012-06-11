@@ -4,29 +4,10 @@ This code implements a brain-emulating cognition and control
 architecture (BECCA). A BECCA agent is placed in various
 worlds to seek reward. Worlds may be physical or simulated.
 
-To run it, configure the tester.py module to select a world
-and run it as main() in a python interpreter. This code imports
-from the numpy and matplotlib packages. 
+Run benchmark.py to see BECCA in action.
 
-To create worlds of your own, extend the template class
-WorldInterface (in the module world_interface.py). 
-Its documentation explains what you methods you will
-need to flesh out. Copying and pasting from other worlds has proven 
-effective as well.
+For information on how to configure and use BECCA, check out
+the User's Guide in this repository in the 'doc' directory.
 
-see www.sandia.gov/rohrer for more detailed documentation,
+And check out openbecca.org for more detailed documentation, 
 papers, and videos.
-
-
-Major changes
-
-version 0.4.0
-- Ported to Python 2.7 from MATLAB. Props to to Alejandro Dubrovsky.
-- Agent and World objects disentangled.
-- Grouper object expanded to be responsible for all aspects of feature creation.
-- Learner object created, responsible for all model building and learning.
-- State object created, containing sensors, primitives, actions, and features.
-- Model structure revised to reflect new state structure.
-- Deliberate actions are now attended immediately.
-- Benchmark module added for measuring performance on all worlds in the battery.
-- Becca now works on all battery worlds, but with much room for improvement.

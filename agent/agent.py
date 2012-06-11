@@ -20,7 +20,7 @@ class Agent(object):
         
         self.pickle_filename = agent_name + "_agent.pickle"
         
-        self.REPORTING_PERIOD = 10 ** 2
+        self.REPORTING_PERIOD = 10 ** 3
         self.BACKUP_PERIOD = 10 ** 8
 
         self.num_sensors = num_sensors
@@ -63,7 +63,6 @@ class Agent(object):
         Reinforcement learner
         ======================================================
         """
-        # debug for watch task
         self.actions = self.learner.step(feature_activity, reward) 
         
         self.log()
@@ -126,7 +125,8 @@ class Agent(object):
         Any terminating activities or reports should be included
         in this method too.
         """
-        performance = np.mean(self.reward_history[-3:])
+        tail_length = int(np.ceil(len(self.reward_history) / 4))
+        performance = np.mean(self.reward_history[-tail_length:])
         print("Final performance is %f" % performance)
         
         #self.grouper.visualize(save_eps=True)

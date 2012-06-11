@@ -1,0 +1,35 @@
+\chapter{Get and run \textsc{Becca}}
+
+Each chapter in this guide is designed to help you do something specific with \textsc{Becca}. This chapter helps you to get a copy of it on your local machine and run it on some generic worlds.
+
+\section{Where do I get the code?}
+
+You can download \textsc{Becca} from 
+
+\texttt{www.openbecca.org} 
+
+or 
+
+\texttt{www.sandia.gov/rohrer} 
+
+Or you can get the latest bleeding edge version (for which any of this documentation may already be outdated) from the github repository at
+
+\texttt{https://github.com/matt2000/becca}.
+
+\section{What tools do I need to run it?}
+
+\textsc{Becca} is intended to be runnable on any hardware platform. This version relies on and was developed on 
+\begin{itemize}
+\item{Python 2.7}
+\item{NumPy 1.6.1\footnote{The code makes use of at least one NumPy call, \texttt{count\_nonzero()}, that is not supported in NumPy 1.5.x.} }
+\item{matplotlib 1.2}.
+\end{itemize}
+\textsc{Becca} has been run several different platforms (Mac OS 10.6.8, Ubuntu 12.04,\footnote{From developer SeH: \textsc{Becca}'s dependency on NumPy 1.6 is provided by the latest Ubuntu 12.04 package (but not Ubuntu 11.10 which provides NumPy 1.5).  Matplotlib is also provided, so everything seems to work fine on Ubuntu 12.04.} 32-bit Windows Vista, and 32-bit Windows 7) and IDEs/editors (Eclipse, PyScripter, IDLE, Stani's Python Editor, emacs, command line)\footnote{Any notes on successes or incompatibilities would be very welcome at \texttt{openbecca.org}.}. 
+
+\section{How do I run it?}
+
+Run \texttt{benchmark.py} in your Python interpreter. The \texttt{benchmark.py} module automatically runs \textsc{Becca} on a collections of worlds that are included with the download. It gives a report of \textsc{Becca}'s performance in the worlds. The benchmark can be used both to compare \textsc{Becca}'s speed on different computing platforms and, more importantly, to compare different variants of \textsc{Becca} against each other.
+
+The worlds in \texttt{benchmark.py} are designed to be simple tests of \textsc{Becca}'s fundamental learning capabilities. \textsc{Becca} is an agent, in the sense that it makes decisions in order to achieve a goal, but it was created to be used in many different settings. The worlds tested in \texttt{benchmark.py} include one and two dimensional grid worlds and one and two dimensional visual worlds. The reward provided by each world gives motivation to \textsc{Becca} to behave in certain ways. When it behaves correctly, it maximizes its reward. This is \textsc{Becca}'s one and only goal. Each world in the benchmark provides periodic updates and final reports of its progress. 
+
+Nice job. Now for the fun part.

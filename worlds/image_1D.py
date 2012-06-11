@@ -18,12 +18,12 @@ class World(BaseWorld):
 
     http://www.sandia.gov/~brrohre/doc/Rohrer11ImplementedArchitectureFeature.pdf
 
-    Optimal performance is between 0.7 and 0.8 reward per time step.
+    Good performance is around 0.4 reward per time step.
     """
     def __init__(self):
         super(World, self).__init__()
 
-        self.REPORTING_PERIOD = 10 ** 2       
+        self.REPORTING_PERIOD = 10 ** 4       
         self.LIFESPAN = 10 ** 5
         self.REWARD_MAGNITUDE = 1.0
         self.ANIMATE_PERIOD = 10 ** 2
@@ -151,9 +151,7 @@ class World(BaseWorld):
 
     def set_agent_parameters(self, agent):
         pass
-        #agent.grouper.MIN_SIG_COACTIVITY = 0.0027
-        #return
-        
+            
          
     def display(self):
         """ Provide an intuitive display of the current state of the World 

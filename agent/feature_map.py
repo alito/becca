@@ -14,9 +14,7 @@ class FeatureMap(object):
 
 
     def add_feature(self, group, feature):
-        """
-        Add a feature to group
-        """
+        """ Add a feature to group """
         self.features[group] = \
                 np.vstack((self.features[group], feature))
 

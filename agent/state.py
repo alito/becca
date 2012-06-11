@@ -1,10 +1,9 @@
 import copy
 import numpy as np
 import utils
-# TODO: generalize State tp handle an array of states, as in the model
+# TODO: generalize State to handle an array of states, as in the model
 class State(object):
-    """ A data structure for representing the internal state of the agent
-    """ 
+    """ A data structure for representing the internal state of the agent """ 
 
     def __init__(self, num_sensors=1, num_real_primitives=1, num_actions=1):
         """ Constructor from scratch """
@@ -27,7 +26,6 @@ class State(object):
         
         zero_state.features = [np.zeros_like(f, dtype=state_type) 
                                for f in self.features]
-
         return zero_state
         
 

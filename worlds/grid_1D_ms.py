@@ -27,7 +27,7 @@ class World(BaseWorld):
         self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 0.5
         self.ENERGY_COST = 0.01
-        self.JUMP_FRACTION = 0.1
+        self.JUMP_FRACTION = 0.10
         self.display_state = False
 
         self.num_sensors = 1

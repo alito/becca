@@ -7,10 +7,32 @@
 \usepackage{verbatim}
 
 \begin{document}
-\title{\textsc{Becca} version 0.4.0 \\User's Manual}
-\author{Brandon Rohrer}
 
-\maketitle
+\begin{centering}
+\thispagestyle{empty}
+\vspace{7cm}
+{\huge \textsc{Becca} version 0.4.0 
+\vspace{1cm}
+
+User's Guide}
+\vspace{4cm}
+
+{\Large
+Brandon Rohrer
+\vspace{1cm}
+
+June 11, 2012}
+
+\vspace{4cm}
+
+\begin{figure}[h]
+\centering
+\includegraphics[height=3cm]{figs/becca_logo.eps}
+\end{figure}
+
+\newpage
+\end{centering}
+
 \tableofcontents
 \newpage
 
@@ -30,11 +52,6 @@
 
 \include{agent_share}
 
-%\include{documentation}
-%\chapter{Document your changes}
-% report your changes in the users guide
-% modify the history appendix
-
 %\include{theory}
 %\chapter{Understand how \textsc{Becca} learns}
 %technical overview
@@ -45,11 +62,16 @@
 %\chapter{Related work}
 
 %\include{issues}
-%\chapter{Stuff that needs to be done}
 
-%\include{history}
-%\chapter{Stuff that we've done already}
-%contributions
+\include{contributions}
+
+\include{achievements}
+
+\include{history}
+
+\include{legal}
+
+\include{citation}
 
 \bibliographystyle{plain}
 \bibliography{RohrerBECCA}

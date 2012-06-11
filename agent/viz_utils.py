@@ -137,8 +137,7 @@ def visualize_grouper_hierarchy(grouper, save_eps=False,
 
 def visualize_feature_set(grouper, save_eps=False, 
                           epsfilename='log/features.eps'):
-    """ Visualize all the groups in all the features 
-    """
+    """ Visualize all the groups in all the features """
     label = 'feature_set'
     fig = plt.figure(label)
     fig.clf()
@@ -158,12 +157,6 @@ def visualize_feature_set(grouper, save_eps=False,
         if n_features > 0:
             plt.text(1.0, pos_ctr - 0.15, 'Group' + str(group_index))
 
-        """
-        print 'n_feature_groups ' + str(n_feature_groups)
-        print 'group_index ' + str(group_index)
-        print 'current_group ' + str(current_group)
-        print 'n_features ' + str(n_features)
-        """
         for feature_index in range(n_features):
 
             visualize_state(current_group[feature_index], 

@@ -19,14 +19,14 @@ class World(BaseWorld):
     
     for a full writeup.
     
-    Optimal performance is around 0.73 reward per time step.
+    Good performance is around 0.4 reward per time step.
     """
     def __init__(self):
         super(World, self).__init__()
 
-        self.REPORTING_PERIOD = 10 ** 2       
-        self.LIFESPAN = 10 ** 6
-        self.REWARD_MAGNITUDE = 1.0
+        self.REPORTING_PERIOD = 10 ** 3       
+        self.LIFESPAN = 10 ** 5
+        self.REWARD_MAGNITUDE = 0.5
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
         self.graphing = False
@@ -193,8 +193,6 @@ class World(BaseWorld):
  
     def set_agent_parameters(self, agent):
         
-        #agent.grouper.PLASTICITY_UPDATE_RATE = 2 * 10 ** (-2) # debug
-
         pass
 
         

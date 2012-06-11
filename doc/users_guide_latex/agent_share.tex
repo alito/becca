@@ -1,0 +1,31 @@
+\chapter{Share your agent with other \textsc{Becca} users}
+
+So you've modified your agent, it's really cool, and now you want to share it. Everything in Chapter~\ref{world_share} about sharing your worlds applies to sharing agents too. Unlike other open source software projects, branching is not discouraged. The motivation behind \textsc{Becca} is not to produce a slick tool that can be used as a black box. It is to make an architecture that gets used as often and as widely as possible. 
+
+To some extent every implementation will be custom. Ideally, every implementation will be driven by the well-articulated vision of one person or of a small group. \textsc{Becca} 0.4.0 is intended to be a generic starting point for your work. If it were an ice cream flavor, it would be vanilla. It will be up to you to create chocolate, cappachino, and habanero. When you do, please pass them around so we can all get a taste.
+
+If you have modifications, edits, or additions that you think may improve the core \textsc{Becca} code, send a GitHub pull request to Matt Chapman, the curator of the core repository. An informal discussion will ensue in the becca\_users group, and based on the outcome, your code will be incorporated into the core repository.
+
+\section{How do I make my code look like the rest of the core?}
+For any code destined for the repository, please follow these high level style goals (in rough order of priority):
+\begin{enumerate}
+\item Usability--a new user can apply it to their project with a minimum
+of effort and pain
+\item Readability--a new developer can get oriented in the code with a
+minimum of effort and pain
+\item Brevity--the number of packages, modules, methods, and lines of
+code are minimized
+\item Performance--it works well and quickly
+\end{enumerate}
+
+The implications of these priorities are that if performance can be increased by 0.2\% by importing another
+package or adding another module, it's not worth it. But an
+increase of 50\% would probably merit it. This may also mean neglecting
+some code development best practices because of their verbosity.
+Adding another layer of abstraction in places may make the core more
+easily extensible, but that may not be worth making it harder to
+navigate.
+
+On low level style specifics, the PEP 8 Python style guide\footnote{\texttt{http://www.python.org/dev/peps/pep-0008/}} and PEP 257 Docstring style guide\footnote{\texttt{http://www.python.org/dev/peps/pep-0257/}} are the default word on style. However if there is ever a conflict between readability and PEP compliance, err in favor of readability.
+
+Of course any work done to bring the existing core code into better alignment with the style goals will be greatly appreciated and applauded.

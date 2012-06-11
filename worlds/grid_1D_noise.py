@@ -26,7 +26,7 @@ class World(BaseWorld):
 
         """ Number of primitives that have no basis in the world. These
         are noise meant to distract. """
-        self.num_noise_primitives = 7
+        self.num_noise_primitives = 3
         self.num_sensors = 1
         self.num_real_primitives = 3
         self.num_actions = 3

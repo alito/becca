@@ -27,7 +27,8 @@ class Planner(object):
         """ TODO: make reactive actions habit based, not reward based
         also make reactive actions general """
         # debug
-        # reactive_action = self.select_action(self.model, self.feature_activity)
+        # reactive_action = self.select_action(self.model, 
+        #                                      self.feature_activity)
 
         deliberately_acted = False
         

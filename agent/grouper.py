@@ -481,7 +481,6 @@ class Grouper(object):
                                     matching_element_indices.ravel()))
                 
             self.disallowed.append(disallowed_elements)
-    
             
             '''
             """ Visualize the new group """

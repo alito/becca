@@ -4,6 +4,19 @@ import numpy as np
 import os
 from worlds.base_world import World as BaseWorld
 
+""" Import the Python Imaging Library if it can be found.
+If not, carry on.
+"""
+try:
+    from PIL import Image
+    using_pil = True
+except ImportError:
+    using_pil = False
+    print "PIL (the Python Imaging Library) was not found."
+    print "This means that the watch world will only be able to load .png files."
+    print "If you want to load .jpgs and other formats, install PIL."
+
+
 class World(BaseWorld):
     """ watch
     visual feature creation
@@ -48,16 +61,10 @@ class World(BaseWorld):
         self.num_primitives = 1
         self.num_actions = 16
 
-        try:
-            from PIL import Image
-            self.using_pil = True
-        except ImportError:
-            self.using_pil = False
-            
         self.image_filenames = []
         path = 'images/lib/' 
         
-        if self.using_pil:
+        if using_pil:
             extensions = ['.jpg', '.tif', '.gif', '.png', '.bmp']
         else:
             extensions = ['.png']
@@ -95,7 +102,7 @@ class World(BaseWorld):
         
         filename = self.image_filenames[np.random.randint(0, self.image_count)]
         
-        if self.using_pil:
+        if using_pil:
             self.image = Image.open(filename)
             """ Convert it to grayscale if it's in color """
             self.image = self.image.convert('L')
@@ -235,8 +242,7 @@ class World(BaseWorld):
         agent. 
         """
         """ feature_set is a list of lists of State objects """
-       
-        print len(feature_set)
+               
         if len(feature_set) == 0:
             return
         
