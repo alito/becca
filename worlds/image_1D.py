@@ -24,18 +24,18 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.REPORTING_PERIOD = 10 ** 4       
-        self.LIFESPAN = 10 ** 5
-        self.REWARD_MAGNITUDE = 1.0
+        self.LIFESPAN = 2 * 10 ** 4
+        self.REWARD_MAGNITUDE = 0.5
         self.ANIMATE_PERIOD = 10 ** 2
-        self.animate = True
-        self.graphing = True
+        self.animate = False
+        self.graphing = False
         
         self.step_counter = 0
         self.fov_span = 10
 
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 1
-        self.num_actions = 8
+        self.num_actions = 9
 
         self.column_history = []
 

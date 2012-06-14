@@ -15,7 +15,7 @@ class World(BaseWorld):
     The mural is not represented using basic features, but rather
     using raw inputs, which BECCA must build into features. See
     
-    http://www.sandia.gov/~brrohre/doc/Rohrer11DevelopmentalAgentLearning.pdf
+    http://www.sandia.gov/rohrer/doc/Rohrer11DevelopmentalAgentLearning.pdf
     
     for a full writeup.
     
@@ -25,7 +25,7 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.REPORTING_PERIOD = 10 ** 3       
-        self.LIFESPAN = 10 ** 5
+        self.LIFESPAN = 2 * 10 ** 5
         self.REWARD_MAGNITUDE = 0.5
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
@@ -62,7 +62,7 @@ class World(BaseWorld):
         self.MAX_STEP_SIZE = im_size / 2
         self.TARGET_COLUMN = im_size / 2
         self.TARGET_ROW = im_size / 2
-        self.REWARD_REGION_WIDTH = im_size / 16
+        self.REWARD_REGION_WIDTH = im_size / 8
         self.NOISE_MAGNITUDE = 0.1
 
         self.FIELD_OF_VIEW_FRACTION = 0.5;
