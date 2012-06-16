@@ -492,3 +492,22 @@ class Model(object):
                     
     def n_feature_groups(self):
         return len(self.context.features)
+
+                  
+    def size(self):
+        """ Determine the approximate number of elements being used by the
+        class and its members. Created to debug an apparently excessive 
+        use of memory.
+        """
+        total = 0
+        total += self.context.size()
+        total += self.cause.size()
+        total += self.effect.size()
+        total += self.count.size
+        total += self.reward_value.size
+        total += self.goal_value.size
+        total += self.trace_index.size
+        total += self.trace_reward.size
+
+        return total
+            

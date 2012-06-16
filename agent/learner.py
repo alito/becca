@@ -226,6 +226,22 @@ class Learner(object):
         return
     
                    
+    def size(self):
+        """ Determine the approximate number of elements being used by the
+        class and its members. Created to debug an apparently excessive 
+        use of memory.
+        """
+        total = 0
+        total += self.model.size()
+        total += self.planner.size()
+        total += self.attended_feature.size()
+        total += self.goal.size()
+        total += self.previous_working_memory.size()
+        total += self.working_memory.size()
+
+        return total
+            
+            
     def visualize(self, save_eps=True):
         #viz_utils.visualize_model(self.model, 10)
         viz_utils.force_redraw()

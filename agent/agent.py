@@ -20,7 +20,7 @@ class Agent(object):
         
         self.pickle_filename = agent_name + "_agent.pickle"
         
-        self.REPORTING_PERIOD = 10 ** 4
+        self.REPORTING_PERIOD = 10 ** 3
         self.BACKUP_PERIOD = 10 ** 8
 
         self.num_sensors = num_sensors
@@ -89,8 +89,10 @@ class Agent(object):
         if (self.timestep % self.REPORTING_PERIOD) == 0:
             self.record_reward_history()
             self.show_reward_history(save_eps=True)
-            print("agent is %s timesteps old" % self.timestep)
-            print("%s inputs total" % self.grouper.n_transitions)
+            print "agent is %", self.timestep ," timesteps old" 
+            print self.grouper.n_transitions , " inputs total"  
+            print "Total size is about ", self.size() / 10 ** 6 , \
+                    " million elements" 
             
             self.grouper.visualize(save_eps=True)
             self.learner.visualize()
@@ -116,6 +118,18 @@ class Agent(object):
 
             if show:
                 plt.show()
+    
+    
+    def size(self):
+        """ Determine the approximate number of elements being used by the
+        class and its members. Created to debug an apparently excessive 
+        use of memory.
+        """
+        total = 0
+        total += self.grouper.size()
+        total += self.learner.size()
+        
+        return total
             
         
     def report_performance(self, show=True):
@@ -131,7 +145,7 @@ class Agent(object):
         
         #self.grouper.visualize(save_eps=True)
         #self.learner.visualize(save_eps=True)
-        self.show_reward_history()
+        self.show_reward_history(save_eps=True)
 
         if show:
             plt.show()    

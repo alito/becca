@@ -20,10 +20,10 @@ class Grouper(object):
         """ Control how rapidly previous inputs are forgotten """
         self.INPUT_DECAY_RATE = 1.0 # real, 0 < x < 1
         
-        """ Control how rapidly the coactivity update platicity changes """
+        """ Control how rapidly the coactivity update plasticity changes """
         self.PLASTICITY_UPDATE_RATE = 10 ** (-3) # real, 0 < x < 1, small
         
-        """ The maximum value of platicity """
+        """ The maximum value of plasticity """
         self.MAX_PROPENSITY = 0.1
         
         """ The feature actvity penalty associated with 
@@ -78,7 +78,7 @@ class Grouper(object):
         """ 2D array for tracking the propensity for individual
         coactivity values to change, i.e. their plasticty
         """
-        self.platicity = np.zeros(
+        self.plasticity = np.zeros(
                         (self.MAX_NUM_FEATURES, self.MAX_NUM_FEATURES))
         
         """ 1D array recording the number of groups that each input
@@ -270,16 +270,16 @@ class Grouper(object):
                 self.input_activity[self.coactivity_map.features[index]] = \
                                     new_input.features[index]
 
-        """ Find the upper bound on platicity based on how many groups
+        """ Find the upper bound on plasticity based on how many groups
         each feature is associated with.
-        Then update the platicity of each input to form new associations, 
-        incrementally stepping the each combintation's platicity toward 
+        Then update the plasticity of each input to form new associations, 
+        incrementally stepping the each combintation's plasticity toward 
         its upper bound.
         """
-        self.platicity[:self.n_transitions, :self.n_transitions] += \
+        self.plasticity[:self.n_transitions, :self.n_transitions] += \
             self.PLASTICITY_UPDATE_RATE * \
             (self.MAX_PROPENSITY - \
-             self.platicity[:self.n_transitions, :self.n_transitions])
+             self.plasticity[:self.n_transitions, :self.n_transitions])
 
         """ Decrease the magnitude of features if they are already 
         inputs to feature groups. The penalty is a negative exponential 
@@ -301,7 +301,7 @@ class Grouper(object):
         """ Determine the upper bound on the size of the incremental step 
         toward the instant coactivity. It is weighted both by the 
         feature associated with the column of the coactivity estimate and
-        the platicity of each pair of elements. Weighting by the feature
+        the plasticity of each pair of elements. Weighting by the feature
         column introduces an asymmetry, that is the coactivity of feature
         A with feature B is not necessarily the same as the coactivity of
         feature B with feature A.
@@ -315,7 +315,7 @@ class Grouper(object):
         the calculated step size.
         """
         self.coactivity[:self.n_transitions, :self.n_transitions] += \
-                     self.platicity[:self.n_transitions, :self.n_transitions]* \
+                     self.plasticity[:self.n_transitions, :self.n_transitions]* \
                      delta_coactivity
 
         """ Update legal combinations in the coactivity matrix """
@@ -325,8 +325,8 @@ class Grouper(object):
         """ Update the plasticity by subtracting the magnitude of the 
         coactivity change. 
         """
-        self.platicity[:self.n_transitions, :self.n_transitions] = \
-            np.maximum(self.platicity[:self.n_transitions, 
+        self.plasticity[:self.n_transitions, :self.n_transitions] = \
+            np.maximum(self.plasticity[:self.n_transitions, 
                                        :self.n_transitions] - \
             np.abs(delta_coactivity), 0)
 
@@ -596,7 +596,30 @@ class Grouper(object):
 
         return 
 
-    
+
+    def size(self):
+        """ Determine the approximate number of elements being used by the
+        class and its members. Created to debug an apparently excessive 
+        use of memory.
+        """
+        total = 0
+        total += self.feature_map.size()
+        total += self.coactivity.size
+        total += self.combination.size
+        total += self.plasticity.size
+        total += self.groups_per_feature.size
+        total += self.input_activity.size
+        total += self.previous_input.size()
+        total += self.feature_activity.size()
+        total += self.inv_coactivity_map_group.size
+        total += self.inv_coactivity_map_feature.size
+        total += self.grouping_map_group.size()
+        total += self.grouping_map_feature.size()
+        total += self.coactivity_map.size()
+
+        return total
+            
+            
     def visualize(self, save_eps=False):
         viz_utils.visualize_grouper_coactivity(self.coactivity, \
                                           self.n_transitions, save_eps)

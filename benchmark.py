@@ -77,7 +77,6 @@ def test(world):
              
     """ Report the performance of the agent on the world. """
     performance = agent.report_performance(show=False)
-    agent.show_reward_history()
     
     return performance
 

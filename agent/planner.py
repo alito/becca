@@ -214,3 +214,15 @@ class Planner(object):
             goal.actions = np.zeros(np.size(goal.actions))
 
         return action, goal
+    
+    
+    def size(self):
+        """ Determine the approximate number of elements being used by the
+        class and its members. Created to debug an apparently excessive 
+        use of memory.
+        """
+        total = 0
+        total += self.action.size
+
+        return total
+            

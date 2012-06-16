@@ -18,3 +18,20 @@ class FeatureMap(object):
         self.features[group] = \
                 np.vstack((self.features[group], feature))
 
+
+    def size(self):
+        """ Determine the approximate number of elements being used by the
+        class and its members. Created to debug an apparently excessive 
+        use of memory.
+        """
+        total = 0
+        total += self.sensors.size
+        total += self.primitives.size
+        total += self.actions.size
+        for group_index in range(len(self.features)):
+            total += self.features[group_index].size
+
+        return total
+            
+            
+
