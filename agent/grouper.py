@@ -39,7 +39,7 @@ class Grouper(object):
         """ Once coactivity between group members and new candidates 
         fall below this value, stop adding them.
         """
-        self.MIN_SIG_COACTIVITY = 0.05  # real,  x >= 0
+        self.MIN_SIG_COACTIVITY = 0.27  # real,  x >= 0
         
         """ Stop growing a group, once it reaches this size """
         self.MAX_GROUP_SIZE = 10 ** 6 # effectively no limit
@@ -135,33 +135,33 @@ class Grouper(object):
         self.inv_coactivity_map_feature[ :num_sensors, 0] = \
                         np.cumsum( np.ones((num_sensors,1), dtype=np.int), 
                                    dtype=np.int) - 1
-        self.n_transitions = num_sensors
+        self.n_inputs = num_sensors
 
         """ Initialize primitive aspects """
         self.coactivity_map.primitives = np.cumsum(np.ones( 
                            (num_primitives,1), dtype=np.int), 
-                                        dtype=np.int) - 1 + self.n_transitions
-        self.inv_coactivity_map_group[self.n_transitions: 
-                               self.n_transitions + num_primitives, 0] = \
+                                        dtype=np.int) - 1 + self.n_inputs
+        self.inv_coactivity_map_group[self.n_inputs: 
+                               self.n_inputs + num_primitives, 0] = \
                         -2 * np.ones(num_primitives, dtype=np.int)
-        self.inv_coactivity_map_feature[self.n_transitions: 
-                               self.n_transitions + num_primitives, 0] = \
+        self.inv_coactivity_map_feature[self.n_inputs: 
+                               self.n_inputs + num_primitives, 0] = \
                         np.cumsum( np.ones(num_primitives, dtype=np.int), 
                                    dtype=np.int) - 1
-        self.n_transitions += num_primitives
+        self.n_inputs += num_primitives
         
         """ Initialize action aspects """
         self.coactivity_map.actions = np.cumsum(np.ones( 
                             (num_actions,1), dtype=np.int), 
-                                         dtype=np.int) - 1 + self.n_transitions
-        self.inv_coactivity_map_group[self.n_transitions: 
-                               self.n_transitions + num_actions, 0] = \
+                                         dtype=np.int) - 1 + self.n_inputs
+        self.inv_coactivity_map_group[self.n_inputs: 
+                               self.n_inputs + num_actions, 0] = \
                         -1 * np.ones(num_actions, dtype=np.int)
-        self.inv_coactivity_map_feature[self.n_transitions: 
-                               self.n_transitions + num_actions, 0] = \
+        self.inv_coactivity_map_feature[self.n_inputs: 
+                               self.n_inputs + num_actions, 0] = \
                         np.cumsum( np.ones(num_actions, dtype=np.int), 
                                    dtype=np.int) - 1
-        self.n_transitions += num_actions
+        self.n_inputs += num_actions
         
         """ Disallowed co-activities. 
         A list of 1D numpy arrays, one for each feature group, 
@@ -185,7 +185,7 @@ class Grouper(object):
             primitives = primitives[:,np.newaxis]
         if len(actions.shape) == 1:
             actions = actions[:,np.newaxis]
-            
+
         """ Build the feature vector.
         Combine sensors and primitives with 
         previous feature_activity to create the full input set.
@@ -301,19 +301,19 @@ class Grouper(object):
         incrementally stepping the each combintation's plasticity toward 
         its upper bound.
         """
-        self.plasticity[:self.n_transitions, :self.n_transitions] += \
+        self.plasticity[:self.n_inputs, :self.n_inputs] += \
             self.PLASTICITY_UPDATE_RATE * \
             (self.MAX_PROPENSITY - \
-             self.plasticity[:self.n_transitions, :self.n_transitions])
+             self.plasticity[:self.n_inputs, :self.n_inputs])
 
         """ Decrease the magnitude of features if they are already 
         inputs to feature groups. The penalty is a negative exponential 
         in the number of groups that each feature belongs to. 
         """ 
         weighted_feature_vector = \
-            (np.exp( - self.groups_per_feature [:self.n_transitions] * \
+            (np.exp( - self.groups_per_feature [:self.n_inputs] * \
                      self.GROUP_DISCOUNT ) * \
-                     self.input_activity[:self.n_transitions])
+                     self.input_activity[:self.n_inputs])
         
         """ Determine the coactivity value according to the 
         only the current inputs. It is the product of every weighted 
@@ -331,27 +331,27 @@ class Grouper(object):
         feature B with feature A.
         """
         delta_coactivity = np.tile(weighted_feature_vector.transpose(), \
-                     (self.n_transitions, 1)) * \
+                     (self.n_inputs, 1)) * \
                      (instant_coactivity - \
-                     self.coactivity[:self.n_transitions, :self.n_transitions])
+                     self.coactivity[:self.n_inputs, :self.n_inputs])
                      
         """ Adapt coactivity toward average activity coactivity by
         the calculated step size.
         """
-        self.coactivity[:self.n_transitions, :self.n_transitions] += \
-                     self.plasticity[:self.n_transitions, :self.n_transitions]* \
+        self.coactivity[:self.n_inputs, :self.n_inputs] += \
+                     self.plasticity[:self.n_inputs, :self.n_inputs]* \
                      delta_coactivity
 
         """ Update legal combinations in the coactivity matrix """
-        self.coactivity[:self.n_transitions, :self.n_transitions] *= \
-            self.combination[:self.n_transitions, :self.n_transitions]
+        self.coactivity[:self.n_inputs, :self.n_inputs] *= \
+            self.combination[:self.n_inputs, :self.n_inputs]
 
         """ Update the plasticity by subtracting the magnitude of the 
         coactivity change. 
         """
-        self.plasticity[:self.n_transitions, :self.n_transitions] = \
-            np.maximum(self.plasticity[:self.n_transitions, 
-                                       :self.n_transitions] - \
+        self.plasticity[:self.n_inputs, :self.n_inputs] = \
+            np.maximum(self.plasticity[:self.n_inputs, 
+                                       :self.n_inputs] - \
             np.abs(delta_coactivity), 0)
 
         return
@@ -365,10 +365,10 @@ class Grouper(object):
         """ Check to see whether the capacity to store and update features
         has been reached.
         """
-        if self.n_transitions > self.MAX_NUM_FEATURES * 0.95:
+        if self.n_inputs > self.MAX_NUM_FEATURES * 0.95:
             self.features_full = True
             print('==Max number of features almost reached (%s)==' 
-                  % self.n_transitions)
+                  % self.n_inputs)
 
         """ If the coactivity is high enough, create a new group """
         max_coactivity = np.max(self.coactivity)
@@ -578,19 +578,19 @@ class Grouper(object):
         self.feature_map.add_feature(nth_group, new_feature)
         self.feature_activity.add_feature(nth_group)
         self.previous_input.add_feature(nth_group)
-        self.coactivity_map.add_feature(nth_group, self.n_transitions)
-        self.inv_coactivity_map_group[self.n_transitions] =  nth_group
-        self.inv_coactivity_map_feature[self.n_transitions] = \
+        self.coactivity_map.add_feature(nth_group, self.n_inputs)
+        self.inv_coactivity_map_group[self.n_inputs] =  nth_group
+        self.inv_coactivity_map_feature[self.n_inputs] = \
                             len(self.coactivity_map.features[nth_group]) - 1
-        self.n_transitions += 1
+        self.n_inputs += 1
         
         """ Disallow building new groups out of members of the new feature
         and any of its group's inputs.
         """
-        self.combination[self.n_transitions - 1, 
+        self.combination[self.n_inputs - 1, 
                          self.disallowed[nth_group][:,0].astype(int)] = 0
         self.combination[self.disallowed[nth_group][:,0].astype(int), 
-                         self.n_transitions - 1] = 0
+                         self.n_inputs - 1] = 0
         
         return
 
@@ -650,7 +650,7 @@ class Grouper(object):
             
     def visualize(self, save_eps=False):
         viz_utils.visualize_grouper_coactivity(self.coactivity, \
-                                          self.n_transitions, save_eps)
+                                          self.n_inputs, save_eps)
         viz_utils.visualize_grouper_hierarchy(self, save_eps)
         viz_utils.visualize_feature_set(self, save_eps)
         

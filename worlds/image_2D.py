@@ -193,8 +193,8 @@ class World(BaseWorld):
  
     def set_agent_parameters(self, agent):
         
-        pass
-
+        agent.grouper.MIN_SIG_COACTIVITY = 0.05
+        
         
     def display(self):
         """ Provide an intuitive display of the current state of the World 

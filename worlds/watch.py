@@ -229,8 +229,8 @@ class World(BaseWorld):
         agent.grouper.PLASTICITY_UPDATE_RATE = 2 * 10 ** (-2) # debug
 
         """ Don't create a model """
-        agent.learner.model.MAX_ENTRIES = 10 ** 2
-        agent.learner.model.SIMILARITY_THRESHOLD = 0.
+        #agent.learner.model.MAX_ENTRIES = 10 ** 2
+        #agent.learner.model.SIMILARITY_THRESHOLD = 0.
         
     
     def is_time_to_display(self):

@@ -45,6 +45,7 @@ class World(BaseWorld):
             action = np.zeros(self.num_actions)
 
         action = np.round(action)
+        action = action.ravel()
 
         self.timestep += 1 
 

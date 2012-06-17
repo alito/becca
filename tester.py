@@ -17,9 +17,9 @@ One of these import lines should be uncommented.
 #from worlds.grid_2D import World
 #from worlds.grid_2D_dc import World
 #from worlds.image_1D import World
-#from worlds.image_2D import World
+from worlds.image_2D import World
 
-from worlds.watch import World
+#from worlds.watch import World
 
 def main():
     
@@ -28,10 +28,9 @@ def main():
     """ A unique identifying string for the agent, allowing specific
     saved agents to be recalled. 
     """
-    agent_name = "test";
     MAX_NUM_FEATURES = 3000
     agent = Agent(world.num_sensors, world.num_primitives, 
-                  world.num_actions, MAX_NUM_FEATURES, agent_name)
+                  world.num_actions, MAX_NUM_FEATURES, agent_name="test")
 
     """ If uncommented, try to restore the agent from saved data.
     If commented out, start fresh each time.

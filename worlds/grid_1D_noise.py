@@ -46,7 +46,7 @@ class World(BaseWorld):
             action = np.zeros(self.num_actions)
 
         action = np.round(action)
-
+        
         self.timestep += 1
 
         energy = np.sum(action)

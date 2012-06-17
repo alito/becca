@@ -246,11 +246,11 @@ def reduce_feature_set(grouper):
 def visualize_model(model, n=None):
     """ Visualize some of the transitions in the model """
     if n == None:
-        n = model.n_transitions
+        n = model.n_inputs
         
-    n = np.minimum(n, model.n_transitions)
+    n = np.minimum(n, model.n_inputs)
         
-    print "The model has a total of ", model.n_transitions, \
+    print "The model has a total of ", model.n_inputs, \
             " transitions."
     
     '''
@@ -258,7 +258,7 @@ def visualize_model(model, n=None):
     highest count.
     NOTE: argsort returns indices of sort in *ascending* order. 
     """
-    index_by_rank = np.argsort(model.count[:model.n_transitions])
+    index_by_rank = np.argsort(model.count[:model.n_inputs])
     
     for index in range(n):
         print "Showing the " + str(index) + \
@@ -271,7 +271,7 @@ def visualize_model(model, n=None):
         plt.show()
         
     """ Show the n transitions from the model that have the highest reward """
-    index_by_rank = np.argsort(model.reward_value[:model.n_transitions])
+    index_by_rank = np.argsort(model.reward_value[:model.n_inputs])
     
     for index in range(n):
         print "Showing the " + str(index) + \
@@ -287,9 +287,9 @@ def visualize_model(model, n=None):
     highest impact.
     NOTE: argsort returns indices of sort in *ascending* order. 
     """
-    index_by_rank = np.argsort(model.count[:model.n_transitions] * \
-                        (np.log(model.reward_value[:model.n_transitions] + \
-                                np.ones(model.n_transitions))))
+    index_by_rank = np.argsort(model.count[:model.n_inputs] * \
+                        (np.log(model.reward_value[:model.n_inputs] + \
+                                np.ones(model.n_inputs))))
     
     for index in range(n):
         print "Showing the " + str(index) + \

@@ -48,6 +48,7 @@ class World(BaseWorld):
         self.timestep += 1
         
         action = np.round(action)
+        action = action.ravel()
 
         self.world_state += (action[0:2] + 2 * action[2:4] - \
                              action[4:6] - 2 * action[6:8]).transpose()

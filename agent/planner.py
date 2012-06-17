@@ -50,7 +50,7 @@ class Planner(object):
                 Choose features as goals, in addition to actions.
                 """
                 (self.action, goal) = self.deliberate(model, working_memory)
-                
+
                 """ Pass goal to model """ 
                 model.update_goal(goal)
                 
@@ -60,7 +60,7 @@ class Planner(object):
         
         else:
             self.action = np.zeros( self.action.shape)
-        
+                
         return self.action, deliberately_acted
             
 
@@ -192,11 +192,11 @@ class Planner(object):
         """
         #debug--have count be a factor?
         #transition_vote = value * similarity
-        transition_vote = value * similarity * count_weight
+        transition_vote = value.ravel() * similarity.ravel() * count_weight.ravel()
         
         max_transition_index = np.argmax(transition_vote)
 
-        goal = working_memory.zeros_like()
+        goal = working_memory.zeros_like()        
         goal.primitives = model.cause.primitives[:, max_transition_index]
         goal.actions = model.cause.actions[:, max_transition_index]
         for group_index in range(model.n_feature_groups()):
@@ -204,7 +204,7 @@ class Planner(object):
                                                 [:, max_transition_index]
                 
         """ Separate action goals from the rest of the goal """
-        action = np.zeros(np.size(self.action))
+        action = np.zeros(self.action.shape)
         if np.size((goal.actions > 0).nonzero()):
             self.deliberately_acted = True
 
