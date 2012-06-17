@@ -171,6 +171,17 @@ def similarity(point, point_set, max_index=None):
         """ First handle the non-list case, comparing 
         an array to each column in a 2D array.
         """
+        """ Make sure point is a 2D numpy column array """
+        if len(point.shape) == 1:
+            point = point[:,np.newaxis]
+        if point.shape[0] == 1:
+            point = point.transpose()
+                
+        if point.shape[0] != point_set.shape[0]:
+            print "Error in utils.similarity(): point must have the same number"
+            print "elements as the 0th dimension of point_set. "
+            print "Got ", point.shape[0] ,' and ', point_set.shape[0]
+            raise ValueError
         
         """ Expand the point array to a 2D array the same size 
         as the point_set.
@@ -188,7 +199,7 @@ def similarity(point, point_set, max_index=None):
         cos_theta = np.minimum(cos_theta, 1)
         theta = np.arccos( cos_theta)
         result = 1 - theta / ( np.pi/2)
-
+        
     else:
         """ Handle the state case, for example comparing full 
         feature activities to contexts in the model.

@@ -203,7 +203,7 @@ class World(BaseWorld):
 
         sensors = sensors.ravel()
         sensors = np.concatenate((sensors, 1 - sensors))
-
+        
         reward = self.calculate_reward()               
         
         return sensors, self.primitives, reward
@@ -222,7 +222,7 @@ class World(BaseWorld):
         agent.learner.planner.OBSERVATION_FRACTION = 0.0
         
         """ Build more tightly co-active groups """
-        agent.grouper.MIN_SIG_COACTIVITY = 0.29
+        agent.grouper.MIN_SIG_COACTIVITY = 0.27
         #agent.grouper.MIN_SIG_COACTIVITY = 0.027
         
         """ Nucleate groups more rapidly """
@@ -318,8 +318,8 @@ class World(BaseWorld):
                 
         fig = plt.figure("watch world features")
         plt.gray()
-        imgplot = plt.imshow(feature_image, vmin=0.0, vmax=1.0)
-        imgplot.set_interpolation('nearest')
+        fig.set_interpolation('nearest')
+        plt.imshow(feature_image, vmin=0.0, vmax=1.0)
         plt.title("Features created while in the watch world")
         plt.draw()
         

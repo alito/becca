@@ -94,8 +94,8 @@ class Agent(object):
             print "Total size is about ", self.size() / 10 ** 6 , \
                     " million elements" 
             
-            #self.grouper.visualize(save_eps=True)
-            #self.learner.visualize()
+            self.grouper.visualize(save_eps=True)
+            self.learner.visualize()
  
     
     def record_reward_history(self):
@@ -107,7 +107,7 @@ class Agent(object):
     def show_reward_history(self, show=False, save_eps=False,
                             epsfilename='log/reward_history.eps'):
         if self.graphing:
-            plt.figure(1)
+            fig = plt.figure("Reward history")
             plt.plot(self.reward_steps, self.reward_history)
             plt.xlabel("time step")
             plt.ylabel("average reward")
@@ -143,8 +143,8 @@ class Agent(object):
         performance = np.mean(self.reward_history[-tail_length:])
         print("Final performance is %f" % performance)
         
-        #self.grouper.visualize(save_eps=True)
-        #self.learner.visualize(save_eps=True)
+        self.grouper.visualize(save_eps=True)
+        self.learner.visualize(save_eps=True)
         self.show_reward_history(save_eps=True)
 
         if show:

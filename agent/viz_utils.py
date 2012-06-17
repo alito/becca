@@ -21,7 +21,9 @@ def visualize_grouper_coactivity(correlation, size=0,
         size = correlation.shape[0]
     fig = plt.figure("grouper correlation visualization")
     plt.gray()
-    plt.imshow(correlation[0:size, 0:size])
+    im = plt.imshow(correlation[0:size, 0:size])
+    im.set_interpolation('nearest')
+
     plt.title("Correlation among inputs")
     plt.draw()
     
@@ -545,7 +547,7 @@ def visualize_state(state, label='state', y_min=0.25, y_max=0.75,
         rectPatch(x, x + 1, y_min, y_max, state.actions[indx], axes)
         x += 1
     
-    for feature_group_indx in range(state.n_feature_groups()):            
+    for feature_group_indx in range(state.n_feature_groups()):    
         x += x_spacer_width
         for indx in range(state.features[feature_group_indx].size):
             rectPatch(x, x + 1, y_min, y_max,

@@ -180,17 +180,11 @@ class Grouper(object):
 
         """ Make sure all the inputs are 2D arrays """
         if len(sensors.shape) == 1:
-            temp = np.zeros((sensors.size,1), dtype=np.int);
-            temp[0:, 0] = sensors
-            sensors = temp
+            sensors = sensors[:,np.newaxis]
         if len(primitives.shape) == 1:
-            temp = np.zeros((primitives.size,1), dtype=np.int);
-            temp[0:, 0] = primitives
-            primitives = temp
+            primitives = primitives[:,np.newaxis]
         if len(actions.shape) == 1:
-            temp = np.zeros((actions.size,1), dtype=np.int);
-            temp[0:, 0] = actions
-            actions = temp
+            actions = actions[:,np.newaxis]
             
         """ Build the feature vector.
         Combine sensors and primitives with 
@@ -208,7 +202,7 @@ class Grouper(object):
         self.previous_input.decay(1 - self.INPUT_DECAY_RATE)
 
         new_input = new_input.bounded_sum(self.previous_input)
-                    
+        
         """ Update previous input, preparing it for the next iteration """    
         self.previous_input = copy.deepcopy(new_input)
         
@@ -249,6 +243,7 @@ class Grouper(object):
                     grouped_input.features[group_index][input_element_index] = \
                              new_input.features[from_group][from_feature]
 
+            
             """ debug
             grouped_input[group_index] = grouped_input[group_index].ravel()
 
@@ -259,7 +254,7 @@ class Grouper(object):
                      grouped_input[k] = grouped_input[k].ravel() / \
                              np.sqrt( len( grouped_input[k]))
            """
-            
+
         """ Updates feature map when appropriate """
         self.update_feature_map(grouped_input)
         
@@ -287,9 +282,17 @@ class Grouper(object):
                 new_input.actions
         
         for index in range(new_input.n_feature_groups()):
+            '''
+            #debug
+            print self.coactivity_map.features[index].astype(int)
+            print self.input_activity[ \
+                    self.coactivity_map.features[index,0].ravel().astype(int)].shape
+            print new_input.features[index,0].shape
+            print '---'
+            '''
             if new_input.features[index].size > 0:
                 self.input_activity[ \
-                    self.coactivity_map.features[index].astype(int)] = \
+                    self.coactivity_map.features[index].ravel().astype(int)] = \
                     new_input.features[index]
 
         """ Find the upper bound on plasticity based on how many groups
@@ -529,7 +532,7 @@ class Grouper(object):
 
 
     def update_feature_map(self, grouped_input):
-
+                               
         """ Check whether to add new features to each of the groups """
         for group_index in range(grouped_input.n_feature_groups()):
             
@@ -542,12 +545,12 @@ class Grouper(object):
                 """ Otherwise, set the threshold margin based on how 
                 different the closest existing feature is from the current 
                 input.
-                """
+                """   
                 similarity_values = utils.similarity( \
                          grouped_input.features[group_index], 
                          self.feature_map.features[group_index].transpose())
                 margin = 1 - np.max(similarity_values)
-            
+                            
             if margin > self.NEW_FEATURE_MARGIN and \
                 np.max(grouped_input.features[group_index]) > \
                        self.NEW_FEATURE_MIN_SIZE and \
