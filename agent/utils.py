@@ -61,7 +61,6 @@ def bounded_sum(a, b):
     For A < 0, B < 0, 
     bsum(A,B) = -T'(T(-A) + T(-B))
     """
-    
     scalars = np.isscalar(a)
     if scalars:
         """ Handle the case where a and b are scalars """
@@ -76,12 +75,12 @@ def bounded_sum(a, b):
             raise ValueError("Both parameters must have the same number " \
                              "of elements. Got %s and %s" % (a.size, b.size))
             
-        if a.size == 0 or b.size == 0:
-            return np.zeros((0,0))
-        
         if a.shape != b.shape:
             raise ValueError("Both parameters have to have the same shape." \
                               " Got %s and %s" % (a.shape, b.shape))
+
+        if a.size == 0:
+            return np.zeros(a.shape)
         
     result = np.zeros(np.shape(a))
 
@@ -132,7 +131,7 @@ def similarity(point, point_set, max_index=None):
     The variable 'point' may either be a numpy array, or a state. 
     If point is an array, point_set must be a 2D 
     numpy array with a zeroth dimension of the same length.
-    If point is a state, point_set must be a 2D state with 
+    If point is a state, point_set must be an array of states with 
     each group of the same size as state, such
     as the context, cause, and effect variables in the model.
     
@@ -176,7 +175,7 @@ def similarity(point, point_set, max_index=None):
         """ Expand the point array to a 2D array the same size 
         as the point_set.
         """
-        point_mat = np.tile(point[np.newaxis].transpose(), (1, max_index))
+        point_mat = np.tile(point, (1, max_index))
         set_mat = point_set[:,:max_index]
         
         """ Calculate the angle between each of the corresponding 
@@ -207,9 +206,9 @@ def similarity(point, point_set, max_index=None):
             """
             """ TODO: consider whether to continue using the weighting """
             weight = point.primitives.size
-            point_mat = np.tile(point.primitives[np.newaxis].transpose(), 
-                                (1, max_index))
+            point_mat = np.tile(point.primitives, (1, max_index))
             set_mat = point_set.primitives[:,:max_index]
+                        
             inner_product += weight * np.sum((point_mat * set_mat), axis=0)
             sum_sq_point += weight * np.sum(point_mat ** 2, axis=0)
             sum_sq_set += weight * np.sum(set_mat ** 2, axis=0)
@@ -217,8 +216,7 @@ def similarity(point, point_set, max_index=None):
         """ Second take care of actions in the same way """
         if point.actions.size > 0:
             weight = point.actions.size
-            point_mat = np.tile(point.actions[np.newaxis].transpose(), 
-                                (1, max_index))
+            point_mat = np.tile(point.actions, (1, max_index))
             set_mat = point_set.actions[:,:max_index]
             inner_product += weight * np.sum((point_mat * set_mat), axis=0)
             sum_sq_point += weight * np.sum(point_mat ** 2, axis=0)
@@ -228,9 +226,7 @@ def similarity(point, point_set, max_index=None):
         for group_index in range(num_groups):
             if point.features[group_index].size > 0:
                 weight = point.features[group_index].size
-                point_mat = np.tile(point.features[group_index]
-                                    [np.newaxis].transpose(), 
-                                    (1, max_index))
+                point_mat = np.tile(point.features[group_index],(1, max_index))
                 set_mat = point_set.features[group_index][:,:max_index]
                 inner_product += weight * np.sum((point_mat * set_mat), axis=0)
                 sum_sq_point += weight * np.sum(point_mat ** 2, axis=0)

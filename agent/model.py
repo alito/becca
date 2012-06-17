@@ -61,7 +61,7 @@ class Model(object):
     
     """
 
-    def __init__(self, num_real_primitives, num_actions, graphs=True):
+    def __init__(self, num_primitives, num_actions, graphs=True):
 
         """ The threshold above which two states are similar enough
         to be considered a match.
@@ -112,7 +112,7 @@ class Model(object):
         around with it during operation. 
         """ 
         self.context = state.State()
-        self.context.primitives = np.zeros((num_real_primitives, 
+        self.context.primitives = np.zeros((num_primitives, 
                                             2*self.MAX_ENTRIES))
         self.context.actions = np.zeros((num_actions, 2*self.MAX_ENTRIES))
         self.context.features = []
@@ -120,12 +120,12 @@ class Model(object):
         self.cause = copy.deepcopy(self.context)
         self.effect = copy.deepcopy(self.context)
 
-        self.count = np.zeros(2*self.MAX_ENTRIES)
-        self.reward_value = np.zeros(2*self.MAX_ENTRIES)
-        self.goal_value = np.zeros(2*self.MAX_ENTRIES)
+        self.count = np.zeros((2*self.MAX_ENTRIES,1))
+        self.reward_value = np.zeros((2*self.MAX_ENTRIES,1))
+        self.goal_value = np.zeros((2*self.MAX_ENTRIES,1))
 
-        self.trace_index = np.ones(self.TRACE_LENGTH)
-        self.trace_reward = np.zeros(self.TRACE_LENGTH)
+        self.trace_index = np.ones((self.TRACE_LENGTH,1))
+        self.trace_reward = np.zeros((self.TRACE_LENGTH,1))
 
 
     def step(self, new_context, new_cause, new_effect, reward):
@@ -225,7 +225,7 @@ class Model(object):
             cause_group = -1
             cause_feature = feature_match
                
-        """ Check for matches in primitives """
+        """ Check for matches in features """
         for group_index in range(self.n_feature_groups()):
             feature_match = new_cause.features[group_index].ravel().nonzero()[0]
             if feature_match.size > 0:
@@ -261,21 +261,27 @@ class Model(object):
         """
         matching_transition_index = self.n_transitions
 
-        self.context.primitives[:, self.n_transitions] = new_context.primitives
-        self.cause.primitives[:, self.n_transitions] = new_cause.primitives
-        self.effect.primitives[:, self.n_transitions] = new_effect.primitives
+        self.context.primitives[:, self.n_transitions] = \
+                                new_context.primitives.ravel()
+        self.cause.primitives[:, self.n_transitions] = \
+                                new_cause.primitives.ravel()
+        self.effect.primitives[:, self.n_transitions] = \
+                                new_effect.primitives.ravel()
 
-        self.context.actions[:, self.n_transitions] = new_context.actions
-        self.cause.actions[:, self.n_transitions] = new_cause.actions
-        self.effect.actions[:, self.n_transitions] = new_effect.actions
+        self.context.actions[:, self.n_transitions] = \
+                                new_context.actions.ravel()
+        self.cause.actions[:, self.n_transitions] = \
+                                new_cause.actions.ravel()
+        self.effect.actions[:, self.n_transitions] = \
+                                new_effect.actions.ravel()
     
         for group_index in range(self.n_feature_groups()):
             self.context.features[group_index][:, self.n_transitions] = \
-                                new_context.features[group_index]
+                                new_context.features[group_index].ravel()
             self.cause.features[group_index][:, self.n_transitions] = \
-                                new_cause.features[group_index]
+                                new_cause.features[group_index].ravel()
             self.effect.features[group_index][:, self.n_transitions] = \
-                                new_effect.features[group_index]
+                                new_effect.features[group_index].ravel()
         
         self.count[matching_transition_index] =  1.
         reward_update_rate = 1.
@@ -308,12 +314,12 @@ class Model(object):
         
         self.effect.primitives[:, matching_transition_index] = \
                 self.effect.primitives[:, matching_transition_index] * \
-                (1 - reward_update_rate) + new_effect.primitives * \
+                (1 - reward_update_rate) + new_effect.primitives[:,0] * \
                 reward_update_rate
         
         self.effect.actions[:, matching_transition_index] = \
                 self.effect.actions[:, matching_transition_index] * \
-                (1 - reward_update_rate) + new_effect.actions * \
+                (1 - reward_update_rate) + new_effect.actions[:,0] * \
                 reward_update_rate
         
         for group_index in range(self.n_feature_groups()):
@@ -322,7 +328,7 @@ class Model(object):
                     self.effect.features[group_index] \
                     [:, matching_transition_index] * \
                     (1 - reward_update_rate) + \
-                    new_effect.features[group_index] * reward_update_rate
+                    new_effect.features[group_index][:,0] * reward_update_rate
         # TODO: update context as well?
         
         return matching_transition_index, reward_update_rate
@@ -332,22 +338,24 @@ class Model(object):
                       reward):
         """ Perform credit assignment on the trace """
         """ Update the transition trace """
-        self.trace_index = np.hstack((self.trace_index, 
-                                      matching_transition_index))
-        self.trace_index = self.trace_index[1:]
+        
+        self.trace_index = np.vstack((self.trace_index, 
+                            matching_transition_index * np.ones((1,1))))
+        self.trace_index = self.trace_index[1:,:]
 
         """ Update the reward trace """
-        self.trace_reward = np.hstack((self.trace_reward, reward))
-        self.trace_reward = self.trace_reward[1:]
+        self.trace_reward = np.vstack((self.trace_reward, 
+                                       reward * np.ones((1,1))))
+        self.trace_reward = self.trace_reward[1:,:]
 
-        credit = self.trace_reward[0]
+        credit = self.trace_reward[0,0]
         for trace_index in range(1, self.TRACE_LENGTH):
             credit = utils.bounded_sum( credit, 
-                                self.trace_reward[trace_index] *  \
+                                self.trace_reward[trace_index,0] *  \
                                 (1 - self.TRACE_DECAY_RATE) ** trace_index)
 
         """ Update the reward associated with the last entry in the trace """
-        update_index = self.trace_index[0]
+        update_index = self.trace_index[0,0]
         max_step_size = credit - self.reward_value[update_index]
 
         self.reward_value[update_index] += max_step_size * reward_update_rate

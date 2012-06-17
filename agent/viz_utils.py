@@ -221,6 +221,7 @@ def reduce_feature_set(grouper):
     and actions.
     Returns a list of lists of State objects.
     """
+    
     n_feature_groups = grouper.previous_input.n_feature_groups()    
     reduced_features = []
 
@@ -230,7 +231,7 @@ def reduce_feature_set(grouper):
         reduced_features_this_group = []
     
         for feature_index in range(n_features):
-            current_feature_state = grouper.previous_input.zeros_like()
+            current_feature_state = grouper.previous_input.zeros_like()            
             current_feature_state.features[group_index][feature_index] = 1.0           
             reduced_state = reduce_state(current_feature_state, grouper)
             reduced_features_this_group.append(reduced_state)   
@@ -398,7 +399,7 @@ def reduce_state(full_state, grouper):
                 """
                 parent_feature_indices = \
                          grouper.grouping_map_feature.features[group_index] \
-                         [match_indices]
+                         [match_indices,:]
                 """print 'parent_feature_indices for group ', group_index, \
                         ' in group ', parent_group_index, ' ', \
                          parent_feature_indices
@@ -437,15 +438,16 @@ def reduce_state(full_state, grouper):
                                    grouper.feature_map.\
                                    features[group_index] \
                                    [feature_index, \
-                                    match_indices].transpose())
+                                    match_indices])
     
                             """ propagated_activation is the propagation
                             strength scaled by the activity of the
                             feature being reduced.
                             """
                             propagated_activation = \
-                                    propagation_strength * \
-                                    this_feature_activity
+                                    this_feature_activity * \
+                                    propagation_strength.transpose()[:,np.newaxis]
+                                    
     
                             """ The lower-level feature is incremented 
                             according to the propagated_activation. The
@@ -458,31 +460,31 @@ def reduce_state(full_state, grouper):
                             """
                             if parent_group_index == -3:
                                 state.sensors \
-                                        [parent_feature_indices] = \
+                                        [parent_feature_indices.ravel()] = \
                                         utils.bounded_sum( \
                                         state.sensors \
-                                        [parent_feature_indices], \
+                                        [parent_feature_indices.ravel()], \
                                         propagated_activation)
                             elif parent_group_index == -2:
                                 state.primitives \
-                                        [parent_feature_indices] = \
+                                        [parent_feature_indices.ravel()] = \
                                         utils.bounded_sum( \
                                         state.primitives \
-                                        [parent_feature_indices], \
+                                        [parent_feature_indices.ravel()], \
                                         propagated_activation)
                             elif parent_group_index == -1:
                                 state.actions \
-                                        [parent_feature_indices] = \
+                                        [parent_feature_indices.ravel()] = \
                                         utils.bounded_sum( \
                                         state.actions \
-                                        [parent_feature_indices], \
+                                        [parent_feature_indices.ravel()], \
                                         propagated_activation)
                             else:
                                 state.features[parent_group_index] \
-                                        [parent_feature_indices] = \
+                                        [parent_feature_indices.ravel()] = \
                                         utils.bounded_sum( \
                                         state.features[parent_group_index] \
-                                        [parent_feature_indices], \
+                                        [parent_feature_indices.ravel()], \
                                         propagated_activation)
     
             """ Eliminate the original representation of 
@@ -501,18 +503,7 @@ def visualize_state(state, label='state', y_min=0.25, y_max=0.75,
     """ Present the state in a visually intuitive way.
     height_proportion is the height of the display as 
     a fraction of width.
-    """
-       
-    #debug
-    '''
-    print label
-    print state.sensors
-    print state.primitives
-    print state.actions
-    for group_index in range(state.n_feature_groups()):
-        print state.features[group_index]
-    '''
-    
+    """       
     if axes == None:
         fig = plt.figure(label)
         fig.clf()

@@ -14,7 +14,7 @@ class Grouper(object):
     to translate the input into feature activity.
     """
     
-    def __init__(self, num_sensors, num_real_primitives, num_actions,
+    def __init__(self, num_sensors, num_primitives, num_actions,
                  max_num_features):
 
         """ Control how rapidly previous inputs are forgotten """
@@ -61,7 +61,7 @@ class Grouper(object):
         """ The list of 2D arrays that translates grouped inputs 
         into feature activities.
         """
-        self.feature_map = FeatureMap(num_sensors, num_real_primitives, 
+        self.feature_map = FeatureMap(num_sensors, num_primitives, 
                                       num_actions)        
         
         """ 2D array for holding the estimate of the coactivity """
@@ -84,18 +84,18 @@ class Grouper(object):
         """ 1D array recording the number of groups that each input
         feature is a member of
         """
-        self.groups_per_feature = np.zeros(self.MAX_NUM_FEATURES)
+        self.groups_per_feature = np.zeros((self.MAX_NUM_FEATURES, 1))
         
         """ 1D array containing all the inputs from all the groups.
         Used in order to make updating the coactivity
         less computationally expensive. 
         """
-        self.input_activity = np.zeros(self.MAX_NUM_FEATURES)
+        self.input_activity = np.zeros((self.MAX_NUM_FEATURES, 1))
         
         """ State that provides memory of the input on 
         the previous time step 
         """
-        self.previous_input = state.State(num_sensors, num_real_primitives, 
+        self.previous_input = state.State(num_sensors, num_primitives, 
                                           num_actions)
         
         """ The activity levels of all features in all groups.
@@ -108,9 +108,9 @@ class Grouper(object):
         A group number of -3 refers to sensors, -2 refers to primitives,
         and -1 refers to actions.
         """ 
-        self.inv_coactivity_map_group   = np.zeros(self.MAX_NUM_FEATURES, 
+        self.inv_coactivity_map_group   = np.zeros((self.MAX_NUM_FEATURES, 1), 
                                                     dtype=np.int)
-        self.inv_coactivity_map_feature = np.zeros(self.MAX_NUM_FEATURES, 
+        self.inv_coactivity_map_feature = np.zeros((self.MAX_NUM_FEATURES, 1), 
                                                      dtype=np.int)
 
         """ input_maps group the inputs into groups 
@@ -126,39 +126,40 @@ class Grouper(object):
         self.coactivity_map = self.previous_input.zeros_like(dtype=np.int)
         
         """ Initialize sensor aspects """ 
-        self.coactivity_map.sensors = np.cumsum(np.ones(num_sensors, 
+        self.coactivity_map.sensors = np.cumsum(np.ones((num_sensors,1), 
                                                          dtype=np.int), 
-                                                 dtype=np.int) - 1
-        self.inv_coactivity_map_group[ :num_sensors] = \
+                                dtype=np.int, out=np.ones((num_sensors,1))) - 1
+                                                 
+        self.inv_coactivity_map_group[ :num_sensors, 0] = \
                         -3 * np.ones(num_sensors, dtype=np.int)
-        self.inv_coactivity_map_feature[ :num_sensors] = \
-                        np.cumsum( np.ones( num_sensors, dtype=np.int), 
+        self.inv_coactivity_map_feature[ :num_sensors, 0] = \
+                        np.cumsum( np.ones((num_sensors,1), dtype=np.int), 
                                    dtype=np.int) - 1
         self.n_transitions = num_sensors
 
         """ Initialize primitive aspects """
         self.coactivity_map.primitives = np.cumsum(np.ones( 
-                           num_real_primitives, dtype=np.int), 
+                           (num_primitives,1), dtype=np.int), 
                                         dtype=np.int) - 1 + self.n_transitions
         self.inv_coactivity_map_group[self.n_transitions: 
-                               self.n_transitions + num_real_primitives] = \
-                        -2 * np.ones(num_real_primitives, dtype=np.int)
+                               self.n_transitions + num_primitives, 0] = \
+                        -2 * np.ones(num_primitives, dtype=np.int)
         self.inv_coactivity_map_feature[self.n_transitions: 
-                               self.n_transitions + num_real_primitives] = \
-                        np.cumsum( np.ones( num_real_primitives, dtype=np.int), 
+                               self.n_transitions + num_primitives, 0] = \
+                        np.cumsum( np.ones(num_primitives, dtype=np.int), 
                                    dtype=np.int) - 1
-        self.n_transitions += num_real_primitives
+        self.n_transitions += num_primitives
         
         """ Initialize action aspects """
         self.coactivity_map.actions = np.cumsum(np.ones( 
-                            num_actions, dtype=np.int), 
+                            (num_actions,1), dtype=np.int), 
                                          dtype=np.int) - 1 + self.n_transitions
         self.inv_coactivity_map_group[self.n_transitions: 
-                               self.n_transitions + num_actions] = \
+                               self.n_transitions + num_actions, 0] = \
                         -1 * np.ones(num_actions, dtype=np.int)
         self.inv_coactivity_map_feature[self.n_transitions: 
-                               self.n_transitions + num_actions] = \
-                        np.cumsum( np.ones( num_actions, dtype=np.int), 
+                               self.n_transitions + num_actions, 0] = \
+                        np.cumsum( np.ones(num_actions, dtype=np.int), 
                                    dtype=np.int) - 1
         self.n_transitions += num_actions
         
@@ -177,10 +178,24 @@ class Grouper(object):
         and form groups when appropriate
         """
 
+        """ Make sure all the inputs are 2D arrays """
+        if len(sensors.shape) == 1:
+            temp = np.zeros((sensors.size,1), dtype=np.int);
+            temp[0:, 0] = sensors
+            sensors = temp
+        if len(primitives.shape) == 1:
+            temp = np.zeros((primitives.size,1), dtype=np.int);
+            temp[0:, 0] = primitives
+            primitives = temp
+        if len(actions.shape) == 1:
+            temp = np.zeros((actions.size,1), dtype=np.int);
+            temp[0:, 0] = actions
+            actions = temp
+            
         """ Build the feature vector.
         Combine sensors and primitives with 
         previous feature_activity to create the full input set.
-        """
+        """        
         new_input = copy.deepcopy(self.feature_activity)
         new_input.sensors = sensors
         new_input.primitives = primitives
@@ -191,11 +206,12 @@ class Grouper(object):
         
         """ Decay previous input and combine it with the new input """
         self.previous_input.decay(1 - self.INPUT_DECAY_RATE)
+
         new_input = new_input.bounded_sum(self.previous_input)
                     
         """ Update previous input, preparing it for the next iteration """    
         self.previous_input = copy.deepcopy(new_input)
-
+        
         """ As appropriate, update the coactivity estimate and 
         create new groups.
         """            
@@ -260,15 +276,21 @@ class Grouper(object):
         """
 
         """ Populate the full feature vector """
-        self.input_activity[self.coactivity_map.sensors] = new_input.sensors
-        self.input_activity[self.coactivity_map.primitives] = \
-                                                        new_input.primitives
-        self.input_activity[self.coactivity_map.actions] = new_input.actions
+        self.input_activity[ \
+                self.coactivity_map.sensors.ravel().astype(int)] = \
+                new_input.sensors
+        self.input_activity[ \
+                self.coactivity_map.primitives.ravel().astype(int)] = \
+                new_input.primitives
+        self.input_activity[ \
+                self.coactivity_map.actions.ravel().astype(int)] = \
+                new_input.actions
         
         for index in range(new_input.n_feature_groups()):
             if new_input.features[index].size > 0:
-                self.input_activity[self.coactivity_map.features[index]] = \
-                                    new_input.features[index]
+                self.input_activity[ \
+                    self.coactivity_map.features[index].astype(int)] = \
+                    new_input.features[index]
 
         """ Find the upper bound on plasticity based on how many groups
         each feature is associated with.
@@ -288,15 +310,14 @@ class Grouper(object):
         weighted_feature_vector = \
             (np.exp( - self.groups_per_feature [:self.n_transitions] * \
                      self.GROUP_DISCOUNT ) * \
-                     self.input_activity[:self.n_transitions])[np.newaxis]  \
-                     # newaxis needed for it to be treated as 2D
+                     self.input_activity[:self.n_transitions])
         
         """ Determine the coactivity value according to the 
         only the current inputs. It is the product of every weighted 
         feature activity with every other weighted feature activity.
         """
-        instant_coactivity = np.dot(weighted_feature_vector.transpose(), 
-                     weighted_feature_vector)
+        instant_coactivity = np.dot(weighted_feature_vector, 
+                     weighted_feature_vector.transpose())
         
         """ Determine the upper bound on the size of the incremental step 
         toward the instant coactivity. It is weighted both by the 
@@ -306,7 +327,7 @@ class Grouper(object):
         A with feature B is not necessarily the same as the coactivity of
         feature B with feature A.
         """
-        delta_coactivity = np.tile(weighted_feature_vector, \
+        delta_coactivity = np.tile(weighted_feature_vector.transpose(), \
                      (self.n_transitions, 1)) * \
                      (instant_coactivity - \
                      self.coactivity[:self.n_transitions, :self.n_transitions])
@@ -444,7 +465,7 @@ class Grouper(object):
             
             """ Calculate the disallowed cominations for the new group """
             nth_group = self.feature_activity.n_feature_groups() - 1;
-            disallowed_elements = np.zeros(0, dtype=np.int)
+            disallowed_elements = np.zeros((0,1), dtype=np.int)
             for group_ctr in range(-3, nth_group):    
                 
                 """ Find the input features indices from group [group_ctr] that 
@@ -471,19 +492,24 @@ class Grouper(object):
                     matching_element_indices = self.coactivity_map.actions \
                           [matching_feature_members]
                 else:
-                    matching_element_indices = self.coactivity_map.features \
-                          [group_ctr][matching_feature_members]
-                      
+                    
+                    if self.coactivity_map.features[group_ctr].size > 0:
+                        matching_element_indices = self.coactivity_map.features \
+                              [group_ctr][matching_feature_members,:]
+
+                    else:
+                        matching_element_indices = np.zeros((0,1))
+                        
                 """ Add these to the set of elements that are not allowed to 
                 be grouped with the new feature to create new groups.
-                """
-                disallowed_elements = np.hstack((disallowed_elements, 
-                                    matching_element_indices.ravel()))
+                """                
+                disallowed_elements = np.vstack((disallowed_elements, 
+                            matching_element_indices.ravel()[:,np.newaxis]))
                 
             self.disallowed.append(disallowed_elements)
             
             '''
-            """ Visualize the new group """
+            """ Visualize the group """
             viz = visualizer.Visualizer()
             # TODO convert arguments to list
             label = str(self.previous_input.n_feature_groups() - 1)
@@ -547,7 +573,6 @@ class Grouper(object):
         self.feature_added = nth_group
         
         self.feature_map.add_feature(nth_group, new_feature)
-
         self.feature_activity.add_feature(nth_group)
         self.previous_input.add_feature(nth_group)
         self.coactivity_map.add_feature(nth_group, self.n_transitions)
@@ -560,8 +585,8 @@ class Grouper(object):
         and any of its group's inputs.
         """
         self.combination[self.n_transitions - 1, 
-                         self.disallowed[nth_group]] = 0
-        self.combination[self.disallowed[nth_group], 
+                         self.disallowed[nth_group][:,0].astype(int)] = 0
+        self.combination[self.disallowed[nth_group][:,0].astype(int), 
                          self.n_transitions - 1] = 0
         
         return
@@ -570,7 +595,7 @@ class Grouper(object):
     def get_feature_activity(self, grouped_input):
         
         """ Initialize feature_vote for primitives """
-        self.feature_activity.sensors = np.zeros((0,0))
+        self.feature_activity.sensors = np.zeros((0,1))
         self.feature_activity.primitives =  \
                 copy.deepcopy(grouped_input.primitives)
         self.feature_activity.actions = copy.deepcopy(grouped_input.actions)
@@ -592,7 +617,7 @@ class Grouper(object):
                 of grouper.step().
                 """
                 self.feature_activity.features[group_index] = \
-                        utils.winner_takes_all(feature_vote)
+                        utils.winner_takes_all(feature_vote[:, np.newaxis])
 
         return 
 

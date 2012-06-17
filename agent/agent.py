@@ -15,16 +15,16 @@ class Agent(object):
     of motor commands. New features are created as necessary to adequately 
     represent the data.
     """
-    def __init__(self, num_sensors, num_real_primitives, 
+    def __init__(self, num_sensors, num_primitives, 
                  num_actions, max_num_features=1000, agent_name='my'):
         
         self.pickle_filename = agent_name + "_agent.pickle"
         
-        self.REPORTING_PERIOD = 10 ** 3
+        self.REPORTING_PERIOD = 10 ** 2
         self.BACKUP_PERIOD = 10 ** 8
 
         self.num_sensors = num_sensors
-        self.num_primitives = num_real_primitives
+        self.num_primitives = num_primitives
         self.num_actions = num_actions
 
         self.reward = 0
@@ -37,9 +37,9 @@ class Agent(object):
         self.reward_history = []
         self.reward_steps = []
         
-        self.grouper = Grouper(num_sensors, num_real_primitives, num_actions, 
+        self.grouper = Grouper(num_sensors, num_primitives, num_actions, 
                                 max_num_features)
-        self.learner = Learner(num_real_primitives, num_actions)
+        self.learner = Learner(num_primitives, num_actions)
  
         
     def step(self, sensors, primitives, reward):
@@ -89,13 +89,13 @@ class Agent(object):
         if (self.timestep % self.REPORTING_PERIOD) == 0:
             self.record_reward_history()
             self.show_reward_history(save_eps=True)
-            print "agent is %", self.timestep ," timesteps old" 
+            print "agent is ", self.timestep ," timesteps old" 
             print self.grouper.n_transitions , " inputs total"  
             print "Total size is about ", self.size() / 10 ** 6 , \
                     " million elements" 
             
-            self.grouper.visualize(save_eps=True)
-            self.learner.visualize()
+            #self.grouper.visualize(save_eps=True)
+            #self.learner.visualize()
  
     
     def record_reward_history(self):

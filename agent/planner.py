@@ -17,7 +17,7 @@ class Planner(object):
         self.OBSERVATION_FRACTION = 0.5    # real, 0 < x < 1
 
         self.deliberately_acted = False
-        self.action = np.zeros(num_actions)
+        self.action = np.zeros((num_actions,1))
 
 
     def step(self, model, working_memory):
@@ -59,7 +59,7 @@ class Planner(object):
                     deliberately_acted = True
         
         else:
-            self.action = np.zeros( self.action.shape[0])
+            self.action = np.zeros( self.action.shape)
         
         return self.action, deliberately_acted
             
@@ -71,15 +71,13 @@ class Planner(object):
         """        
         """ Exploratory commands are only generated at the basic 
         action feature level. Features and higher-level commands 
-        are not excited.
+        are not excited. 
         """
-        num_actions = np.size(self.action)
-        
         """ Set all elements of the action to zero """
-        action = np.zeros(num_actions)
+        action = np.zeros((self.action.shape))
 
         """ When exploring, randomly pick one action element to be active """
-        action[np.random.random_integers(0, num_actions-1)] = 1
+        action[np.random.random_integers(0, action.size-1)] = 1
         
         return action
 

@@ -5,12 +5,12 @@ import utils
 class State(object):
     """ A data structure for representing the internal state of the agent """ 
 
-    def __init__(self, num_sensors=1, num_real_primitives=1, num_actions=1):
+    def __init__(self, num_sensors=1, num_primitives=1, num_actions=1):
         """ Constructor from scratch """
         
-        self.sensors = np.zeros(num_sensors)
-        self.primitives = np.zeros(num_real_primitives)
-        self.actions = np.zeros(num_actions)
+        self.sensors = np.zeros((num_sensors,1))
+        self.primitives = np.zeros((num_primitives,1))
+        self.actions = np.zeros((num_actions,1))
         self.features = []
         
         
@@ -32,7 +32,7 @@ class State(object):
     def add_group(self, new_array=None, dtype=np.float):
         group_type = dtype
         if new_array == None:
-            self.features.append(np.array([], dtype=group_type))
+            self.features.append(np.zeros((0,1), dtype=group_type))
         else:
             self.features.append(new_array)
             
@@ -40,7 +40,9 @@ class State(object):
         
         
     def add_feature(self, nth_group, value=0):
-        self.features[nth_group] = np.hstack((self.features[nth_group], value))
+                    
+        self.features[nth_group] = np.vstack((self.features[nth_group], 
+                                              value * np.ones((1,1))))
         return None
     
 

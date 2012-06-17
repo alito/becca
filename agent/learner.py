@@ -9,7 +9,7 @@ import viz_utils
 class Learner(object):
     """ The reinforcement learner portion of the Becca agent """
 
-    def __init__(self, num_real_primitives, num_actions):
+    def __init__(self, num_primitives, num_actions):
 
         """ Sensors are irrelevant in the learner """
         num_sensors = 0
@@ -27,14 +27,14 @@ class Learner(object):
         """
         self.WORKING_MEMORY_DECAY_RATE = 0.4      # real, 0 < x <= 1
         
-        self.model = Model(num_real_primitives, num_actions)
+        self.model = Model(num_primitives, num_actions)
         self.planner = Planner(num_actions)
 
-        self.attended_feature = State(num_sensors, num_real_primitives, num_actions)
-        self.goal = State(num_sensors, num_real_primitives, num_actions)
-        self.previous_working_memory = State(num_sensors, num_real_primitives, 
+        self.attended_feature = State(num_sensors, num_primitives, num_actions)
+        self.goal = State(num_sensors, num_primitives, num_actions)
+        self.previous_working_memory = State(num_sensors, num_primitives, 
                                              num_actions)
-        self.working_memory = State(num_sensors, num_real_primitives, num_actions)
+        self.working_memory = State(num_sensors, num_primitives, num_actions)
 
 
     def step(self, feature_activity, reward):
@@ -42,7 +42,7 @@ class Learner(object):
         self.grow_states(feature_activity)
         
         self.previous_attended_feature = copy.deepcopy(self.attended_feature)
-        
+
         """ Attend to a single feature """
         self.attended_feature = self.attend(feature_activity)
         
@@ -52,6 +52,7 @@ class Learner(object):
         self.pre_previous_working_memory = \
                     copy.deepcopy(self.previous_working_memory)
         self.previous_working_memory = copy.deepcopy(self.working_memory)
+        
         self.working_memory = self.previous_working_memory.integrate_state(
                                            self.attended_feature, 
                                            self.WORKING_MEMORY_DECAY_RATE)
@@ -78,8 +79,8 @@ class Learner(object):
                 
             
         """ debug: choose a random action """
-        #self.actions = np.zeros(self.goal.actions.size);
-        #self.actions[np.random.randint(self.goal.actions.size)] = 1
+        #self.actions = np.zeros(self.goal.actions.size, 1);
+        #self.actions[np.random.randint(self.goal.actions.size), 0] = 1
 
         return self.actions
 
@@ -179,6 +180,7 @@ class Learner(object):
                            max_salience_indx, group_indx, deliberate=False):
     
         salience = self.SALIENCE_NOISE * np.random.random_sample(salience.shape)
+         
         salience += feature_activity * (1 + goal)
                     
         """ Pick the feature with the greatest salience """

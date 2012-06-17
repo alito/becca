@@ -222,9 +222,13 @@ class World(BaseWorld):
         agent.learner.planner.OBSERVATION_FRACTION = 0.0
         
         """ Build more tightly co-active groups """
-        agent.grouper.MIN_SIG_COACTIVITY = 0.27
+        agent.grouper.MIN_SIG_COACTIVITY = 0.29
         #agent.grouper.MIN_SIG_COACTIVITY = 0.027
+        
+        """ Nucleate groups more rapidly """
         agent.grouper.PLASTICITY_UPDATE_RATE = 2 * 10 ** (-2) # debug
+
+        """ Don't create a model """
         agent.learner.model.MAX_ENTRIES = 10 ** 2
         agent.learner.model.SIMILARITY_THRESHOLD = 0.
         

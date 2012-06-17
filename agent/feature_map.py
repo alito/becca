@@ -2,9 +2,9 @@ import numpy as np
 
 class FeatureMap(object):
 
-    def __init__(self, num_sensors, num_real_primitives, num_actions):
+    def __init__(self, num_sensors, num_primitives, num_actions):
         self.sensors = np.zeros((num_sensors, num_sensors))
-        self.primitives = np.eye(num_real_primitives)
+        self.primitives = np.eye(num_primitives)
         self.actions = np.eye(num_actions)
         self.features = []
 
