@@ -94,8 +94,8 @@ class Agent(object):
             #print "Total size is about ", self.size() / 10 ** 6 , \
             #        " million elements" 
             
-            self.grouper.visualize(save_eps=True)
-            self.learner.visualize()
+            #self.grouper.visualize(save_eps=True)
+            #self.learner.visualize()
  
     
     def record_reward_history(self):
