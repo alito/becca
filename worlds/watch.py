@@ -48,8 +48,8 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.TASK_DURATION = 10 ** 2
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 2
-        self.LIFESPAN = 10 ** 6
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
+        self.LIFESPAN = 10 ** 8
         self.FOV_FRACTION = 0.2
         
         self.timestep = 0
@@ -229,8 +229,8 @@ class World(BaseWorld):
         agent.grouper.PLASTICITY_UPDATE_RATE = 2 * 10 ** (-2) # debug
 
         """ Don't create a model """
-        #agent.learner.model.MAX_ENTRIES = 10 ** 2
-        #agent.learner.model.SIMILARITY_THRESHOLD = 0.
+        agent.learner.model.MAX_ENTRIES = 10 ** 2
+        agent.learner.model.SIMILARITY_THRESHOLD = 0.
         
     
     def is_time_to_display(self):
@@ -246,10 +246,9 @@ class World(BaseWorld):
         agent. 
         """
         """ feature_set is a list of lists of State objects """
-               
         if len(feature_set) == 0:
             return
-        
+ 
         """ Calculate the number of pixels that span the field of view """
         n_pixels = feature_set[0][0].sensors.size / 2
         fov_span = np.sqrt(n_pixels)
@@ -273,7 +272,7 @@ class World(BaseWorld):
         n_pixel_columns = n_features_max * (gap + 2 * border + fov_span) + gap
         n_pixel_rows = n_groups * (gap + 2 * border + fov_span) + gap
         feature_image = 0.8 * np.ones((n_pixel_rows, n_pixel_columns))
-        
+
         """ Populate each feature in the feature image_data """
         for group_index in range(n_groups):
             for feature_index in range(len(feature_set[group_index])):
@@ -318,11 +317,11 @@ class World(BaseWorld):
                 
         fig = plt.figure("watch world features")
         plt.gray()
-        fig.set_interpolation('nearest')
-        plt.imshow(feature_image, vmin=0.0, vmax=1.0)
+        img = plt.imshow(feature_image, vmin=0.0, vmax=1.0)
+        img.set_interpolation('nearest')
         plt.title("Features created while in the watch world")
         plt.draw()
-        
+
         if save_eps:
             fig.savefig(epsfilename, format='eps')
             
