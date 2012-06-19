@@ -13,6 +13,15 @@ In order to facilitate apples-to-apples comparisons between agents, the
 benchmark will be version numbered.
 """
 
+""" Empirically, running this version of the benchmark multiple times
+gives values with a standard deviation of about 0.011. If you want more
+accurate estimate of an agent's performance, run it 3 or 5 times 
+and take the average. 
+Or better yet, to help account for the fact that it may be a non-Gaussian 
+process, run it 7 times, throw away the two highest and two lowest scores, 
+and average the rest.
+"""
+
 from agent.agent import Agent
 import numpy as np
 import matplotlib.pyplot as plt
@@ -46,7 +55,14 @@ def main():
     world = World_image_2D()
     performance.append(test(world))
     
-    print "Agent benchmarks: " , performance
+    print "Individual benchmark scores: " , performance
+    
+    total = 0
+    for val in performance:
+        total += val
+    mean_performance = total / len(performance)
+    
+    print "Overall benchmark score: ", mean_performance 
     
     """ Block the program, displaying all plots.
     When the plot windows are closed, the program closes.

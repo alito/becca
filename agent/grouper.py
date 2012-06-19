@@ -36,13 +36,18 @@ class Grouper(object):
         """ 
         self.NEW_GROUP_THRESHOLD = 0.3     # real,  x >= 0
         
-        """ Once coactivity between group members and new candidates 
-        fall below this value, stop adding them.
+        """ If the coactivity between the first two group members 
+        and the next candidates 
+        is lower than this value, don't add it. 
+        This value approaches NEW_GROUP_THRESHOLD as the group size grows.
+        See create_new_group() below.
         """
-        self.MIN_SIG_COACTIVITY = 0.27  # real,  x >= 0
+        self.MIN_SIG_COACTIVITY = 0.2  # real,  x >= self.NEW_GROUP_THRESHOLD
         
-        """ Stop growing a group, once it reaches this size """
-        self.MAX_GROUP_SIZE = 10 ** 6 # effectively no limit
+        """ The rate that threshold coactivity for adding new
+        inputs to the group decays as new inputs are added.
+        """
+        self.COACTIVITY_THRESHOLD_DECAY_RATE = 0.27 # real, 0 <= x < 1
         
         """ Stop creating new groups, once this number of features 
         is nearly reached.
@@ -51,8 +56,9 @@ class Grouper(object):
 
         """ Constants determining the conditions under which new
         features are created.
+        Larger NEW_FEATURE_MARGIN means fewer features will be created.
         """        
-        self.NEW_FEATURE_MARGIN = 0.3
+        self.NEW_FEATURE_MARGIN = 0.5#0.3 # real, 0 < x < 1
         self.NEW_FEATURE_MIN_SIZE = 0.2
 
         """ A flag determining whether to stop creating new groups """
@@ -402,6 +408,7 @@ class Grouper(object):
             coactivity with the other members of the group cannot be 
             achieved.
             """
+            coactivity_threshold = self.MIN_SIG_COACTIVITY
             while True:
                 """ Calculate overall coactivity of candidate features
                 with all the elements already in the group using a combination 
@@ -423,9 +430,11 @@ class Grouper(object):
                 group.
                 """ 
                 candidate_match_strength[added_feature_indices] = 0
-                if (np.max(candidate_match_strength) < 
-                    self.MIN_SIG_COACTIVITY) \
+                '''if (np.max(candidate_match_strength) < 
+                    coactivity_threshold) \
                     or (len(added_feature_indices) >= self.MAX_GROUP_SIZE):
+                '''
+                if (np.max(candidate_match_strength) < coactivity_threshold):
                     break
 
                 max_match_strength = np.max(candidate_match_strength)
@@ -447,6 +456,14 @@ class Grouper(object):
                     self.combination[element] = 0
                 candidate_matches[:,added_feature_indices] = 1
                 candidate_matches[added_feature_indices,:] = 1
+                
+                """ Update the coactivity threshold. This helps keep
+                the group from becoming too large. This formulation
+                results in an exponential decay 
+                """
+                coactivity_threshold = coactivity_threshold + \
+                            self.COACTIVITY_THRESHOLD_DECAY_RATE * \
+                            (self.NEW_GROUP_THRESHOLD - coactivity_threshold)
 
             """ Add the newly-created group.
             Update all the variables that need to grow to represent 
@@ -652,7 +669,7 @@ class Grouper(object):
         viz_utils.visualize_grouper_coactivity(self.coactivity, \
                                           self.n_inputs, save_eps)
         viz_utils.visualize_grouper_hierarchy(self, save_eps)
-        viz_utils.visualize_feature_set(self, save_eps)
+        #viz_utils.visualize_feature_set(self, save_eps)
         
         viz_utils.force_redraw()
         return
