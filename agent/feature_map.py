@@ -9,15 +9,23 @@ class FeatureMap(object):
         self.features = []
 
 
-    def add_group(self, n_group_inputs):
+    def add_fixed_group(self, n_group_inputs):
+        self.features.append(np.zeros((n_group_inputs, n_group_inputs)))
+        
+        for indx in range(n_group_inputs):
+            feature = np.random.random_sample(n_group_inputs)
+            feature = feature / np.linalg.norm(feature)
+            self.features[-1][indx,:] = feature
+            
+        '''def add_group(self, n_group_inputs):
         self.features.append(np.zeros((0, n_group_inputs)))
 
 
-    def add_feature(self, group, feature):
+        def add_feature(self, group, feature):
         """ Add a feature to group """
         self.features[group] = \
                 np.vstack((self.features[group], feature))
-
+        '''
 
     def size(self):
         """ Determine the approximate number of elements being used by the

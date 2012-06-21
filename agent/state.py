@@ -29,7 +29,18 @@ class State(object):
         return zero_state
         
 
-    def add_group(self, new_array=None, dtype=np.float):
+    def add_fixed_group(self, num_features, new_array=None, dtype=np.float):
+        """ Add a group with a known number of features """
+        group_type = dtype
+        if new_array == None:
+            self.features.append(np.zeros((num_features,1), dtype=group_type))
+        else:
+            self.features.append(new_array)
+            
+        return None
+        
+        
+        """ def add_group(self, new_array=None, dtype=np.float):
         group_type = dtype
         if new_array == None:
             self.features.append(np.zeros((0,1), dtype=group_type))
@@ -37,14 +48,14 @@ class State(object):
             self.features.append(new_array)
             
         return None
+        """
         
-        
-    def add_feature(self, nth_group, value=0):
+        """def add_feature(self, nth_group, value=0):
                     
         self.features[nth_group] = np.vstack((self.features[nth_group], 
                                               value * np.ones((1,1))))
         return None
-    
+        """
 
     def bounded_sum(self, other_state):
         """ Add another State to this State, 

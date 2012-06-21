@@ -477,14 +477,22 @@ class Model(object):
         return
     
 
-    def add_group(self):
-        size = (0, self.cause.actions.shape[1])
+    def add_fixed_group(self, n_features):
+        size = (n_features, self.cause.actions.shape[1])
         self.context.features.append(np.zeros(size))
         self.cause.features.append(np.zeros(size))
         self.effect.features.append(np.zeros(size))
 
+        '''
+        def add_group(self):
+        size = (0, self.cause.actions.shape[1])
+        self.context.features.append(np.zeros(size))
+        self.cause.features.append(np.zeros(size))
+        self.effect.features.append(np.zeros(size))
+        '''
 
-    def add_feature(self, nth_group):
+        '''
+        def add_feature(self, nth_group):
         """ Add a feature to the nth group of the model """
         
         self.context.features[nth_group] = \
@@ -496,7 +504,8 @@ class Model(object):
         self.effect.features[nth_group]  = \
                     np.vstack((self.effect.features[nth_group], 
                     np.zeros(self.effect.features[nth_group].shape[1])))
-                    
+        '''
+                  
                     
     def n_feature_groups(self):
         return len(self.context.features)

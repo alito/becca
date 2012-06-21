@@ -92,6 +92,9 @@ class Learner(object):
         """
         n_learner_feature_groups = self.goal.n_feature_groups()
         
+        if n_learner_feature_groups < feature_activity.n_feature_groups():
+            self.add_fixed_group(feature_activity.features[-1].size)
+        '''
         for group_index in range(feature_activity.n_feature_groups()):
             
             """ Add the group if necessary """
@@ -103,7 +106,7 @@ class Learner(object):
             n_learner_features = self.goal.n_features_in_group(group_index)
             for feature_count in range(n_features - n_learner_features):
                 self.add_feature(group_index)
-
+        '''
         return
     
     
@@ -178,7 +181,7 @@ class Learner(object):
     def calculate_salience(self, salience, feature_activity, goal,
                            max_salience_val, max_salience_grp, 
                            max_salience_indx, group_indx, deliberate=False):
-    
+        
         salience = self.SALIENCE_NOISE * np.random.random_sample(salience.shape)
          
         salience += feature_activity * (1 + goal)
@@ -208,15 +211,27 @@ class Learner(object):
         return max_salience_val, max_salience_grp, max_salience_indx
     
 
-    def add_group(self):
+    def add_fixed_group(self, n_features):
+                
+        self.working_memory.add_fixed_group(n_features)
+        self.previous_working_memory.add_fixed_group(n_features)
+        self.attended_feature.add_fixed_group(n_features)
+        self.goal.add_fixed_group(n_features)
+        self.model.add_fixed_group(n_features)
+        return
+
+
+        '''
+        def add_group(self):
                 
         self.working_memory.add_group()
         self.previous_working_memory.add_group()
         self.attended_feature.add_group()
         self.goal.add_group()
         self.model.add_group()
+        
         return
-
+        '''
 
     def add_feature(self, nth_group):
         
