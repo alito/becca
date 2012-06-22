@@ -54,6 +54,12 @@ class Grouper(object):
         """
         self.MAX_NUM_FEATURES = max_num_features
         
+        """ Factor controlling the strength of the inhibitory effect 
+        that neighboring features have on each other when excersizing
+        mutual inhibition.
+        """
+        self.INHIBITION_STRENGTH_FACTOR = 0. #.2
+        
         """ The rate at which features adapt toward observed input data """
         self.FEATURE_ADAPTATION_RATE = 10 ** -3
 
@@ -70,7 +76,15 @@ class Grouper(object):
         0 means it never decays and 1 means it decays immediately--that
         there is no fatigue.
         """
-        self.FATIGUE_DECAY_RATE = 0.2
+        self.FATIGUE_DECAY_RATE = 0.1
+        
+        """ The strength of the influence that fatigue has on the
+        features.
+        """
+        self.FATIGUE_SUSCEPTIBILITY = 0.2
+        
+        """ To prevent normalization from giving a divide by zero """
+        self.EPSILON = 1e-6
         
         """ A flag determining whether to stop creating new groups """
         self.features_full = False
@@ -119,10 +133,11 @@ class Grouper(object):
         Passed on to the reinforcement learner at each time step.
         """
         self.feature_activity = self.previous_input.zeros_like()
+        self.feature_activity.sensors = np.zeros((0,1))
 
         """ The level of fatigue of each feature in each group """
-        self.fatigue = self.previous_input.zeros_like()
-
+        self.fatigue = self.feature_activity.zeros_like()
+        
         """ 1D arrays that map each element of the input_activity
         onto a group and feature of the input. 
         A group number of -3 refers to sensors, -2 refers to primitives,
@@ -283,20 +298,14 @@ class Grouper(object):
         """ Interprets inputs as features """
         #self.get_feature_activity(grouped_input) 
         
-        excitation = self.calculate_excitation(grouped_input)
+        [excitation, scaled_input] = self.calculate_excitation(grouped_input)
         inhibition = self.calculate_inhibition(excitation)
         self.calculate_activity(excitation, inhibition)
-        self.update_features(grouped_input, excitation, inhibition)
-        
-        #debug
-        self.feature_activity = self.fatigue.zeros_like()
+        self.update_features(scaled_input, inhibition)
         
         self.fatigue = self.fatigue.integrate_state(self.feature_activity, 
                                                     self.FATIGUE_DECAY_RATE)
-        
-        #debug
-        self.feature_activity.sensors = np.zeros((0,1))
-                
+
         return self.feature_activity
 
 
@@ -502,16 +511,17 @@ class Grouper(object):
             added_feature_indices = np.sort(added_feature_indices)
             self.groups_per_feature[added_feature_indices] += 1
             
-            # debug
-            # Add a fixed number of features all at once
+            """ Add a fixed number of features all at once """
             nth_group = self.feature_activity.n_feature_groups()
+            # debug
             n_group_inputs = len(added_feature_indices)
+            n_group_features = n_group_inputs + 2
             
-            self.feature_activity.add_fixed_group(n_group_inputs)
-            self.fatigue.add_fixed_group(n_group_inputs)
-            self.previous_input.add_fixed_group(n_group_inputs)
-            self.coactivity_map.add_fixed_group(n_group_inputs, dtype=np.int)
-            self.feature_map.add_fixed_group(n_group_inputs)
+            self.feature_activity.add_fixed_group(n_group_features)
+            self.fatigue.add_fixed_group(n_group_features)
+            self.previous_input.add_fixed_group(n_group_features)
+            self.coactivity_map.add_fixed_group(n_group_features, dtype=np.int)
+            self.feature_map.add_fixed_group(n_group_features, n_group_inputs)
             self.grouping_map_group.add_fixed_group(n_group_inputs,
                     self.inv_coactivity_map_group[added_feature_indices],
                     dtype=np.int)
@@ -520,12 +530,12 @@ class Grouper(object):
                     dtype=np.int)
             
             self.inv_coactivity_map_group[self.n_inputs: \
-                          self.n_inputs + n_group_inputs] =  nth_group
+                          self.n_inputs + n_group_features] =  nth_group
             self.inv_coactivity_map_feature[self.n_inputs: \
-                          self.n_inputs + n_group_inputs] = \
-                          np.cumsum(np.ones((n_group_inputs,1)), axis=0) \
-                          - np.ones((n_group_inputs,1))
-            self.n_inputs += n_group_inputs
+                          self.n_inputs + n_group_features] = \
+                          np.cumsum(np.ones((n_group_features,1)), axis=0) \
+                          - np.ones((n_group_features,1))
+            self.n_inputs += n_group_features
             
             '''
             self.feature_activity.add_group()
@@ -587,10 +597,10 @@ class Grouper(object):
             """ Disallow building new groups out of members of the new feature
             and any of its group's inputs.
             """
-            self.combination[self.n_inputs - n_group_inputs:self.n_inputs, 
+            self.combination[self.n_inputs - n_group_features:self.n_inputs, 
                              self.disallowed[nth_group][:,0].astype(int)] = 0
             self.combination[self.disallowed[nth_group][:,0].astype(int), 
-                             self.n_inputs - n_group_inputs:self.n_inputs] = 0
+                             self.n_inputs - n_group_features:self.n_inputs] = 0
             
            
             '''
@@ -613,10 +623,6 @@ class Grouper(object):
         return 
 
 
-    def update_feature_map(self, grouped_input):
-        
-        pass
-        
         '''
         def update_feature_map(self, grouped_input):
                                
@@ -717,65 +723,140 @@ class Grouper(object):
         
     def calculate_excitation(self, inputs):
         """ Find the excitation level for each feature """
-        excitation = self.feature_activity.zeros_like()
-        
+        scaled_input = inputs.zeros_like()
+        excitation = self.feature_activity.zeros_like()        
         excitation.primitives =  \
                 copy.deepcopy(inputs.primitives)
         excitation.actions = copy.deepcopy(inputs.actions)
             
         for group_index in range(inputs.n_feature_groups()):
-            if self.feature_activity.features[group_index].size > 0:
-                """ This formulation of voting was chosen to have the
-                property that the maximum excitation possible for
-                any given feature is 1. 
-                The features already have a magnitude of 1.
-                Scaling the input in this way:
-                
-                scaled_input = input * max(input) / norm(input)
-                
-                guarantees that it also will have a maximum 
-                magnitude of 1. 
-                Then, projecting the input onto each feature guarantees
-                a maximum feature excitation of 1.
-                """
-                these_inputs = inputs.features[group_index]
-                scaled_input = these_inputs * np.max(these_inputs) / \
-                                np.linalg.norm(these_inputs)
-                excitation.features[group_index] = np.dot( \
-                         self.feature_map.features[group_index], \
-                         scaled_input)
-                '''
-                excitation.features[group_index] = np.sqrt(np.dot( \
-                         self.feature_map.features[group_index] ** 2, \
-                         inputs.features[group_index]))
-                '''
-                """ TODO: boost winner up closer to 1? This might help 
-                numerically propogate high-level feature activity strength. 
-                Otherwise it might attentuate and disappear for all but 
-                the strongest inputs. See related TODO note at end
-                of grouper.step().
-                """
-                '''
-                self.feature_activity.features[group_index] = \
-                        utils.winner_takes_all(feature_vote)
-                '''
+            #if self.feature_activity.features[group_index].size > 0:
+            """ This formulation of voting was chosen to have the
+            property that the maximum excitation possible for
+            any given feature is 1. 
+            The features already have a magnitude of 1.
+            Scaling the input in this way:
+            
+            scaled_input = input * max(input) / norm(input)
+            
+            guarantees that it also will have a maximum 
+            magnitude of 1. 
+            Then, projecting the input onto each feature guarantees
+            a maximum feature excitation of 1.
+            """
+            these_inputs = inputs.features[group_index]                 
+            scaled_input.features[group_index] = \
+                            these_inputs * np.max(these_inputs) / \
+                            (np.linalg.norm(these_inputs) + self.EPSILON)
+            excitation.features[group_index] = np.dot( \
+                     self.feature_map.features[group_index], \
+                     scaled_input.features[group_index])
+            '''
+            excitation.features[group_index] = np.sqrt(np.dot( \
+                     self.feature_map.features[group_index] ** 2, \
+                     inputs.features[group_index]))
+            '''
+            """ TODO: boost winner up closer to 1? This might help 
+            numerically propogate high-level feature activity strength. 
+            Otherwise it might attentuate and disappear for all but 
+            the strongest inputs. See related TODO note at end
+            of grouper.step().
+            """
+            '''
+            self.feature_activity.features[group_index] = \
+                    utils.winner_takes_all(feature_vote)
+            '''
 
-        return excitation
+        return excitation, scaled_input
     
         
     def calculate_inhibition(self, excitation):
-        #TODO flesh out
+        """ Find the extent to which each feature is inhibited by the
+        othere features in its group.
+        This formulation guarantees that inhibition of each feature will
+        be between 0 and 1:
         
+        inhibition_i = C * (sum(excitation_j * similarity_ij) - excitation_i) 
+        
+        where
+            inhibition_i is the inhibition of the ith feature
+            C is a constant modulating the inhibition strength
+            excitation_j is the excitation of the jth feature
+            similarity_ij is the similarity between the ith and jth features,
+                given by utils.similarity
+            
+        This quantity can become greater than 1. The final inhibition
+        factor, which maps onto (0,1], is given by 
+        
+        e^(-inhibition_i)
+        """
+        
+        inhibition = excitation.zeros_like()
+        
+        for group_index in range(excitation.n_feature_groups()):
+            
+            for feature_index in range(excitation.features[group_index].size):
+                similarities = utils.similarity( 
+                    self.feature_map.features[group_index][feature_index,:], 
+                    self.feature_map.features[group_index].transpose())
+                inhibition_strength = (np.dot(similarities, excitation.features[group_index]) - \
+                    excitation.features[group_index][feature_index,0]) * \
+                    self.INHIBITION_STRENGTH_FACTOR
+                inhibition.features[group_index][feature_index,0] = \
+                    np.exp(-inhibition_strength)
+    
         return inhibition
      
      
     def calculate_activity(self, excitation, inhibition):
-        
+        """ Find the activity of each feature, after excitation and 
+        inhibition. This includes
+        1) figuring out which feature wins and
+        2) figuring out what the activity magnitude is--for now it's just
+        the excitation
+        """
+        self.feature_activity = excitation.zeros_like()
+        for group_index in range(excitation.n_feature_groups()):
+            vote = excitation.features[group_index] * \
+                    inhibition.features[group_index] * \
+                    np.exp(- self.FATIGUE_SUSCEPTIBILITY * \
+                           self.fatigue.features[group_index])
+            winner = np.argmax(vote)
+            self.feature_activity.features[group_index][winner,0] = \
+                    excitation.features[group_index][winner,0]
+  
         return
     
     
-    def update_features(self, input, excitation, inhibition):
-        
+    def update_features(self, scaled_input, inhibition):
+        """ Make the winning feature migrate toward the input that 
+        excited it.
+        """
+        for group_index in range(inhibition.n_feature_groups()):
+            
+            """ The feature to update """
+            winner = np.flatnonzero(self.feature_activity.features[group_index])
+            
+            """ The direction in which to update it """
+            delta = scaled_input.features[group_index].transpose() - \
+                    self.feature_map.features[group_index][winner,:]
+                    
+            """ How far to update it in that direction """
+            step_fraction = \
+                    self.feature_activity.features[group_index][winner,:] * \
+                    inhibition.features[group_index][winner,:] * \
+                    self.FEATURE_ADAPTATION_RATE
+                    
+            """ Perform the update """
+            self.feature_map.features[group_index][winner,:] += \
+                                                delta * step_fraction
+                                                
+            """ Renormalize the feature to make sure it has unit 
+            magnitude.
+            """
+            self.feature_map.features[group_index][winner,:] /= \
+              np.linalg.norm(self.feature_map.features[group_index][winner,:])
+              
         return
        
         
@@ -803,10 +884,11 @@ class Grouper(object):
             
             
     def visualize(self, save_eps=False):
-        viz_utils.visualize_grouper_coactivity(self.coactivity, \
-                                          self.n_inputs, save_eps)
-        viz_utils.visualize_grouper_hierarchy(self, save_eps)
+        #viz_utils.visualize_grouper_coactivity(self.coactivity, \
+        #                                  self.n_inputs, save_eps)
+        #viz_utils.visualize_grouper_hierarchy(self, save_eps)
         #viz_utils.visualize_feature_set(self, save_eps)
+        viz_utils.visualize_feature_spacing(self)
         
         viz_utils.force_redraw()
         return

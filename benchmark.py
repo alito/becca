@@ -11,14 +11,17 @@ than agents that perform a single task optimally and all others very poorly.
 
 In order to facilitate apples-to-apples comparisons between agents, the 
 benchmark will be version numbered.
+
+In 60 runs on the benchmark, Becca 0.4.0 averaged a score of 0.292
 """
 
 """ Empirically, running this version of the benchmark multiple times
-gives values with a standard deviation of about 0.011. If you want more
+gives values with a standard deviation of about 0.013. If you want more
 accurate estimate of an agent's performance, run it 3 or 5 times 
 and take the average. 
-Or better yet, to help account for the fact that it may be a non-Gaussian 
-process, run it 7 times, throw away the two highest and two lowest scores, 
+Or better yet, to help account for the fact that it is a somewhat non-Gaussian 
+process, (it has a short tail on the low side, almost none on the high side)
+run it 7 times, throw away the two highest and two lowest scores, 
 and average the rest.
 """
 

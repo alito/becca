@@ -20,7 +20,7 @@ class Agent(object):
         
         self.pickle_filename ="log/" + agent_name + "_agent.pickle"
         
-        self.REPORTING_PERIOD = 10 ** 4
+        self.REPORTING_PERIOD = 10 ** 3
         self.BACKUP_PERIOD = 10 ** 8
 
         self.num_sensors = num_sensors

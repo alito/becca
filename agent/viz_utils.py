@@ -181,6 +181,49 @@ def visualize_feature_set(grouper, save_eps=False,
     return
   
       
+def visualize_feature_spacing(grouper, save_eps=False, 
+                          epsfilename='log/features.eps'):
+    """ Visualize all the groups in all the features """
+    label = 'feature_spacing'
+    fig = plt.figure(label)
+    fig.clf()
+    plt.ioff()
+    plt.title(label)
+    
+    distances = np.zeros((0,1))
+    fmap = grouper.feature_map
+    n_feature_groups = len(fmap.features)
+    for group_index in range(n_feature_groups):
+        for feature_index in range(fmap.features[group_index].shape[0]):
+            similarities = utils.similarity( 
+                fmap.features[group_index][feature_index,:], 
+                fmap.features[group_index].transpose())
+            
+            #debug
+            '''smalls =  np.flatnonzero(np.logical_and(1-similarities < 0.1, 1-similarities > 0.00001))
+            if smalls.size > 0:
+                print '======'
+                print 'group ', group_index, 'feature ', feature_index, 
+                print fmap.features[group_index][feature_index,:]
+                print 'matches ', smalls
+                print fmap.features[group_index][smalls,:]
+                #print 'all features: '
+                #print fmap.features[group_index]
+            '''
+            similarities = np.delete(similarities, [feature_index])
+            similarities = similarities[:,np.newaxis]
+            distances = np.concatenate((distances, 1-similarities))
+            
+    if n_feature_groups > 0:
+        plt.hist(distances, bins=120)
+        force_redraw()
+              
+        if save_eps:
+            fig.savefig(epsfilename, format='eps')
+            
+    return
+  
+      
 def visualize_feature(grouper, group, feature, label=None):
     """ Visualize a feature or list of features """
     

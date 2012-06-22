@@ -9,10 +9,10 @@ class FeatureMap(object):
         self.features = []
 
 
-    def add_fixed_group(self, n_group_inputs):
-        self.features.append(np.zeros((n_group_inputs, n_group_inputs)))
+    def add_fixed_group(self, n_group_features, n_group_inputs):
+        self.features.append(np.zeros((n_group_features, n_group_inputs)))
         
-        for indx in range(n_group_inputs):
+        for indx in range(n_group_features):
             feature = np.random.random_sample(n_group_inputs)
             feature = feature / np.linalg.norm(feature)
             self.features[-1][indx,:] = feature
