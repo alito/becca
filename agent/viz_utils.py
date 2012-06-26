@@ -19,7 +19,7 @@ def visualize_grouper_coactivity(correlation, size=0,
     
     if size == 0:
         size = correlation.shape[0]
-    fig = plt.figure("grouper correlation visualization")
+    fig = plt.figure("perceiver correlation visualization")
     plt.gray()
     im = plt.imshow(correlation[0:size, 0:size])
     im.set_interpolation('nearest')
@@ -50,7 +50,7 @@ def visualize_grouper_hierarchy(grouper, save_eps=False,
     any feature group may have inputs coming from any lower-numbered 
     feature group.
     """
-    n_nodes = grouper.grouping_map_group.n_feature_groups() + 3
+    n_nodes = perceiver.grouping_map_group.n_feature_groups() + 3
     delta_angle = 2. * np.pi / float(n_nodes)
     nodes = np.zeros((n_nodes,2))
     node_text = []
@@ -74,7 +74,7 @@ def visualize_grouper_hierarchy(grouper, save_eps=False,
     
     """ Display the nodes """   
     """ Prepare the plot """         
-    fig = plt.figure("grouper hierarchy visualization")
+    fig = plt.figure("perceiver hierarchy visualization")
     fig.clf()
     axes = fig.add_subplot(1,1,1)
     axes.set_aspect('equal')
@@ -91,9 +91,9 @@ def visualize_grouper_hierarchy(grouper, save_eps=False,
     """
     line_weight = np.zeros((n_nodes - 3, n_nodes), 'float')
     for group_index in range(n_nodes - 3):
-        for member_index in range(grouper.\
+        for member_index in range(perceiver.\
                           grouping_map_group.features[group_index].size):
-            node_index =  grouper.grouping_map_group.features[group_index] \
+            node_index =  perceiver.grouping_map_group.features[group_index] \
                                           [member_index] + 3
             line_weight[group_index, node_index] += 1
             
@@ -236,7 +236,7 @@ def visualize_feature(grouper, group, feature, label=None):
     """ Create a state with the listed features active, 
     then visualize that.
     """
-    group_state = grouper.previous_input.zeros_like()
+    group_state = perceiver.previous_input.zeros_like()
     
     for feature_index in range(len(feature)):
         if group[feature_index] == -3:
@@ -267,16 +267,16 @@ def reduce_feature_set(grouper):
     Returns a list of lists of State objects.
     """
     
-    n_feature_groups = grouper.previous_input.n_feature_groups()    
+    n_feature_groups = perceiver.previous_input.n_feature_groups()    
     reduced_features = []
 
     for group_index in range(n_feature_groups):
-        current_group = grouper.previous_input.features[group_index]
+        current_group = perceiver.previous_input.features[group_index]
         n_features = current_group.size
         reduced_features_this_group = []
     
         for feature_index in range(n_features):
-            current_feature_state = grouper.previous_input.zeros_like()            
+            current_feature_state = perceiver.previous_input.zeros_like()            
             current_feature_state.features[group_index][feature_index] = 1.0           
             reduced_state = reduce_state(current_feature_state, grouper)
             reduced_features_this_group.append(reduced_state)   
@@ -436,14 +436,14 @@ def reduce_state(full_state, grouper):
             """
             for parent_group_index in range(group_index-1, -4, -1):
                 match_indices = \
-                        (grouper.grouping_map_group.features[group_index] == 
+                        (perceiver.grouping_map_group.features[group_index] == 
                          parent_group_index).nonzero()[0]
                 """print 'match_indices for group ', group_index, \
                         ' in group ', parent_group_index, ' ', \
                          match_indices
                 """
                 parent_feature_indices = \
-                         grouper.grouping_map_feature.features[group_index] \
+                         perceiver.grouping_map_feature.features[group_index] \
                          [match_indices,:]
                 """print 'parent_feature_indices for group ', group_index, \
                         ' in group ', parent_group_index, ' ', \
@@ -477,10 +477,10 @@ def reduce_state(full_state, grouper):
                             to the feature being reduced. The square
                             root is included to offset the squaring that
                             occurs during the upward voting process. (See
-                            grouper.update_feature_map()) 
+                            perceiver.update_feature_map()) 
                             """
                             propagation_strength = np.sqrt( 
-                                   grouper.feature_map.\
+                                   perceiver.feature_map.\
                                    features[group_index] \
                                    [feature_index, \
                                     match_indices])

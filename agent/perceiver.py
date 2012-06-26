@@ -6,7 +6,7 @@ import state
 import utils
 import viz_utils
 
-class Grouper(object):
+class Perceiver(object):
     """ The object responsible for feature creation. 
     This includes assembling inputs of various types,
     determining how to group them, grouping them at each time step,
@@ -76,12 +76,12 @@ class Grouper(object):
         0 means it never decays and 1 means it decays immediately--that
         there is no fatigue.
         """
-        self.FATIGUE_DECAY_RATE = 0.1
+        self.FATIGUE_DECAY_RATE = 1.
         
         """ The strength of the influence that fatigue has on the
         features.
         """
-        self.FATIGUE_SUSCEPTIBILITY = 0.5
+        self.FATIGUE_SUSCEPTIBILITY = 0.
         
         """ To prevent normalization from giving a divide by zero """
         self.EPSILON = 1e-6
@@ -753,25 +753,21 @@ class Grouper(object):
             scaled_input.features[group_index] = \
                             these_inputs * np.max(these_inputs) / \
                             (np.linalg.norm(these_inputs) + self.EPSILON)
+
+            '''
+            cosine^2
             excitation.features[group_index] = np.dot( \
                      self.feature_map.features[group_index], \
                      scaled_input.features[group_index]) ** 2
             '''
-            excitation.features[group_index] = np.sqrt(np.dot( \
-                     self.feature_map.features[group_index] ** 2, \
-                     inputs.features[group_index]))
-            '''
-            """ TODO: boost winner up closer to 1? This might help 
-            numerically propogate high-level feature activity strength. 
-            Otherwise it might attentuate and disappear for all but 
-            the strongest inputs. See related TODO note at end
-            of grouper.step().
-            """
-            '''
-            self.feature_activity.features[group_index] = \
-                    utils.winner_takes_all(feature_vote)
-            '''
+            cos_theta = np.dot( \
+                     self.feature_map.features[group_index], \
+                     scaled_input.features[group_index])
+            cos_theta = np.minimum(cos_theta, 1)
 
+            excitation.features[group_index] = 1. - (2. / np.pi) * np.arccos(cos_theta)
+
+            
         return excitation, scaled_input
     
         

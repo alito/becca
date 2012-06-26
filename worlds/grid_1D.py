@@ -95,7 +95,7 @@ class World(BaseWorld):
         
     def set_agent_parameters(self, agent):
         """ Prevent the agent from forming any groups """
-        agent.grouper.NEW_GROUP_THRESHOLD = 1.0
+        agent.perceiver.NEW_GROUP_THRESHOLD = 1.0
         
         
     def display(self):

@@ -71,13 +71,13 @@ def init(numSensors, numPrimitives, numActions, numFeatures):
     agent.REPORTING_PERIOD = 10**4
 
     """ Control how rapidly previous inputs are forgotten """
-    agent.grouper.INPUT_DECAY_RATE = 0.5 # real, 0 < x < 1
+    agent.perceiver.INPUT_DECAY_RATE = 0.5 # real, 0 < x < 1
 
     """ Control how rapidly the coactivity update platicity changes """
-    agent.grouper.PLASTICITY_UPDATE_RATE = 4 * 10 ** (-1) # real, 0 < x < 1, small
+    agent.perceiver.PLASTICITY_UPDATE_RATE = 4 * 10 ** (-1) # real, 0 < x < 1, small
 
-    agent.grouper.NEW_GROUP_THRESHOLD = 0.25
-    agent.grouper.MAX_PROPENSITY = 0.1
+    agent.perceiver.NEW_GROUP_THRESHOLD = 0.25
+    agent.perceiver.MAX_PROPENSITY = 0.1
 
     agent.learner.WORKING_MEMORY_DECAY_RATE = 0.5      # real, 0 < x <= 1
 
@@ -104,7 +104,7 @@ def plots():
     print 'Updating plots'
     agent.record_reward_history()
     agent.show_reward_history()
-    agent.grouper.visualize()
+    agent.perceiver.visualize()
     agent.learner.visualize()
 
 
