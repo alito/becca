@@ -61,7 +61,7 @@ class Grouper(object):
         self.INHIBITION_STRENGTH_FACTOR = 0. #.2
         
         """ The rate at which features adapt toward observed input data """
-        self.FEATURE_ADAPTATION_RATE = 10 ** -3
+        self.FEATURE_ADAPTATION_RATE = 10 ** -2
 
         '''
         """ Constants determining the conditions under which new
@@ -81,7 +81,7 @@ class Grouper(object):
         """ The strength of the influence that fatigue has on the
         features.
         """
-        self.FATIGUE_SUSCEPTIBILITY = 0.2
+        self.FATIGUE_SUSCEPTIBILITY = 0.5
         
         """ To prevent normalization from giving a divide by zero """
         self.EPSILON = 1e-6
@@ -207,6 +207,8 @@ class Grouper(object):
         """
         self.disallowed = []
         
+        self.feature_history = []
+        
 
     def step(self, sensors, primitives, actions):
         """ Incrementally estimate coactivity between inputs 
@@ -305,6 +307,9 @@ class Grouper(object):
         
         self.fatigue = self.fatigue.integrate_state(self.feature_activity, 
                                                     self.FATIGUE_DECAY_RATE)
+        
+        #debug
+        self.show_feature_history()
 
         return self.feature_activity
 
@@ -750,7 +755,7 @@ class Grouper(object):
                             (np.linalg.norm(these_inputs) + self.EPSILON)
             excitation.features[group_index] = np.dot( \
                      self.feature_map.features[group_index], \
-                     scaled_input.features[group_index])
+                     scaled_input.features[group_index]) ** 2
             '''
             excitation.features[group_index] = np.sqrt(np.dot( \
                      self.feature_map.features[group_index] ** 2, \
@@ -892,3 +897,11 @@ class Grouper(object):
         
         viz_utils.force_redraw()
         return
+    
+    
+    def show_feature_history(self):
+        if np.random.random_sample() < 0.01:
+            if len(self.feature_map.features) > 0:
+                self.feature_history.append(copy.deepcopy(self.feature_map.features[0]))
+                
+                viz_utils.visualize_array_list(self.feature_history)

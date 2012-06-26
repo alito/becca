@@ -91,8 +91,8 @@ class Agent(object):
             self.show_reward_history(save_eps=True)
             print "agent is ", self.timestep ," timesteps old" 
             print self.grouper.n_inputs , " inputs total"  
-            print "Total size is about ", self.size() / 10 ** 6 , \
-                    " million elements" 
+            #print "Total size is about ", self.size() / 10 ** 6 , \
+            #        " million elements" 
             
             self.grouper.visualize(save_eps=True)
             #self.learner.visualize()

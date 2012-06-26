@@ -601,7 +601,32 @@ def visualize_state(state, label='state', y_min=0.25, y_max=0.75,
         fig.savefig(epsfilename, format='eps')
         
     return
+
+
+def visualize_array_list(array_list, label='arrays'):
+    """ Show a list of arrays as a set of line plots in a single figure.
+    Useful for tracking the time history of a set of values.
+    """
+    if len(array_list) == 0:
+        return
     
+    """ Condense all the arrays into a single 2D array """
+    n_cols = len(array_list)
+    n_rows = array_list[0].size
+    master_array = np.zeros((n_rows, n_cols))
+    
+    for i in range(n_cols):
+        master_array[:,i] = array_list[i].ravel()
+    
+    plt.figure(label)
+    plt.clf()
+    plt.hold(True)
+    for i in range(n_rows):
+        plt.plot(master_array[i,:])
+    
+    plt.title(label)
+    plt.draw()
+
 
 def rectPatch (left_x, right_x, lower_y, upper_y, value=0.5, 
            axes=plt.gca(), borders=False):
