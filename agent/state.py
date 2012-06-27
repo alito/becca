@@ -57,6 +57,23 @@ class State(object):
         return None
         """
 
+
+    def unbounded_sum(self, other_state):
+        """ Add another State to this State. 
+        Values of individual features may have a magnitude greater than 1.
+        """
+        new_state = other_state.zeros_like()
+        
+        new_state.sensors = self.sensors + other_state.sensors
+        new_state.primitives = self.primitives + other_state.primitives
+        new_state.actions = self.actions + other_state.actions
+        
+        for i in range(self.n_feature_groups()):
+            new_state.features[i] = self.features[i] + other_state.features[i]
+            
+        return new_state
+        
+
     def bounded_sum(self, other_state):
         """ Add another State to this State, 
         ensuring that no value has a magnitude greater than one """
@@ -72,6 +89,20 @@ class State(object):
         for i in range(self.n_feature_groups()):
             new_state.features[i] = utils.bounded_sum(self.features[i], 
                                                       other_state.features[i])
+        return new_state
+
+    
+    def multiply(self, multiplier):
+        """ Multiply this State by a scalar """
+        new_state = self.zeros_like()
+        
+        new_state.sensors = self.sensors * multiplier
+        new_state.primitives = self.primitives * multiplier
+        new_state.actions = self.actions * multiplier
+        
+        for i in range(self.n_feature_groups()):
+            new_state.features[i] = self.features[i] * multiplier
+            
         return new_state
 
     

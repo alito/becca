@@ -260,7 +260,7 @@ def visualize_feature(grouper, group, feature, label=None):
     return
   
       
-def reduce_feature_set(grouper):
+def reduce_feature_set(perceiver):
     """ Reduce the entire feature set (every feature from every group) 
     to their low-level constituents in terms of sensors, primitives, 
     and actions.
@@ -278,7 +278,7 @@ def reduce_feature_set(grouper):
         for feature_index in range(n_features):
             current_feature_state = perceiver.previous_input.zeros_like()            
             current_feature_state.features[group_index][feature_index] = 1.0           
-            reduced_state = reduce_state(current_feature_state, grouper)
+            reduced_state = reduce_state(current_feature_state, perceiver)
             reduced_features_this_group.append(reduced_state)   
         
         reduced_features.append(reduced_features_this_group)
@@ -403,7 +403,7 @@ def visualize_transition(model, transition_index, save_eps=False,
     return
   
                     
-def reduce_state(full_state, grouper):
+def reduce_state(full_state, perceiver):
     """ Reduce a state, projecting it down to a representation in only
     sensors, primitives, and actions. 
     Returns a state, the same size as the input state, in which 
@@ -603,13 +603,16 @@ def visualize_state(state, label='state', y_min=0.25, y_max=0.75,
     return
 
 
-def visualize_array_list(array_list, label='arrays'):
+def visualize_array_list(array_list, label=None):
     """ Show a list of arrays as a set of line plots in a single figure.
     Useful for tracking the time history of a set of values.
     """
     if len(array_list) == 0:
         return
     
+    if label == None:
+        label = 'arrays'
+        
     """ Condense all the arrays into a single 2D array """
     n_cols = len(array_list)
     n_rows = array_list[0].size

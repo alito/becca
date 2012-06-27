@@ -58,10 +58,10 @@ class Perceiver(object):
         that neighboring features have on each other when excersizing
         mutual inhibition.
         """
-        self.INHIBITION_STRENGTH_FACTOR = 0. #.2
+        self.INHIBITION_STRENGTH_FACTOR = 1.
         
         """ The rate at which features adapt toward observed input data """
-        self.FEATURE_ADAPTATION_RATE = 10 ** -2
+        self.FEATURE_ADAPTATION_RATE = 10 ** -1
 
         '''
         """ Constants determining the conditions under which new
@@ -76,12 +76,15 @@ class Perceiver(object):
         0 means it never decays and 1 means it decays immediately--that
         there is no fatigue.
         """
-        self.FATIGUE_DECAY_RATE = 1.
+        self.FATIGUE_DECAY_RATE = 0.01
         
         """ The strength of the influence that fatigue has on the
         features.
         """
-        self.FATIGUE_SUSCEPTIBILITY = 0.
+        self.FATIGUE_SUSCEPTIBILITY = 0.05#0.2#0.1
+        
+        """ The maximum influence that fatigue has on the features """
+        #self.FATIGUE_MAX = 1.0 #0.2
         
         """ To prevent normalization from giving a divide by zero """
         self.EPSILON = 1e-6
@@ -207,7 +210,9 @@ class Perceiver(object):
         """
         self.disallowed = []
         
+        self.fatigue_history = []
         self.feature_history = []
+        self.inhibition_history = []
         
 
     def step(self, sensors, primitives, actions):
@@ -300,16 +305,29 @@ class Perceiver(object):
         """ Interprets inputs as features """
         #self.get_feature_activity(grouped_input) 
         
+        '''
         [excitation, scaled_input] = self.calculate_excitation(grouped_input)
         inhibition = self.calculate_inhibition(excitation)
         self.calculate_activity(excitation, inhibition)
         self.update_features(scaled_input, inhibition)
+        '''
+        [excitation, scaled_input] = self.calculate_excitation(grouped_input)
+        self.calculate_activity(excitation)
+        inhibition = self.calculate_inhibition(excitation)
+        self.update_features(scaled_input, inhibition)
         
-        self.fatigue = self.fatigue.integrate_state(self.feature_activity, 
-                                                    self.FATIGUE_DECAY_RATE)
+        self.fatigue = self.fatigue.unbounded_sum(self.feature_activity)
+        self.fatigue = self.fatigue.multiply(1 - self.FATIGUE_DECAY_RATE)
         
         #debug
-        self.show_feature_history()
+        if len(self.feature_map.features) > 0:
+            if np.random.random_sample() < .01:
+    
+                #self.make_history(inhibition.features[0], self.inhibition_history, label='inhibition history')
+                #self.make_history(self.fatigue.features[0], self.fatigue_history, label='fatigue history')
+                self.make_history(self.feature_map.features[0], self.feature_history, label='feature history')
+                viz_utils.force_redraw()
+            
 
         return self.feature_activity
 
@@ -754,30 +772,78 @@ class Perceiver(object):
                             these_inputs * np.max(these_inputs) / \
                             (np.linalg.norm(these_inputs) + self.EPSILON)
 
-            '''
-            cosine^2
+            """ cosine^2 """
             excitation.features[group_index] = np.dot( \
                      self.feature_map.features[group_index], \
                      scaled_input.features[group_index]) ** 2
+
+            '''
+            excitation.features[group_index] = np.dot( \
+                     self.feature_map.features[group_index], \
+                     scaled_input.features[group_index])
+            '''
             '''
             cos_theta = np.dot( \
                      self.feature_map.features[group_index], \
                      scaled_input.features[group_index])
+            
+            """ Keep the arccos operation stable with 
+            small numerical errors. 
+            """
+            
             cos_theta = np.minimum(cos_theta, 1)
 
-            excitation.features[group_index] = 1. - (2. / np.pi) * np.arccos(cos_theta)
-
-            
+            excitation.features[group_index] = (1. - (2. / np.pi) * np.arccos(cos_theta)) **2
+            '''
         return excitation, scaled_input
     
         
+    def calculate_activity(self, excitation):
+        #def calculate_activity(self, excitation, inhibition):
+        """ Find the activity of each feature, after excitation and 
+        inhibition. This includes
+        1) figuring out which feature wins and
+        2) figuring out what the activity magnitude is--for now it's just
+        the excitation
+        """
+        self.feature_activity = excitation.zeros_like()
+        for group_index in range(excitation.n_feature_groups()):
+            '''vote = excitation.features[group_index] * \
+                    inhibition.features[group_index] * \
+                    np.exp(- self.FATIGUE_SUSCEPTIBILITY * \
+                           self.fatigue.features[group_index])
+            '''
+            '''
+            vote = excitation.features[group_index] * \
+                    inhibition.features[group_index] * \
+                    ((1 - self.FATIGUE_MAX) + self.FATIGUE_MAX * \
+                     np.exp(- self.FATIGUE_SUSCEPTIBILITY * \
+                           self.fatigue.features[group_index]))
+            '''
+            '''
+            vote = excitation.features[group_index] * \
+                    ((1 - self.FATIGUE_MAX) + self.FATIGUE_MAX * \
+                     np.exp(- self.FATIGUE_SUSCEPTIBILITY * \
+                           self.fatigue.features[group_index]))
+            '''
+            vote = excitation.features[group_index] * \
+                    np.exp(- self.FATIGUE_SUSCEPTIBILITY * \
+                           self.fatigue.features[group_index])
+
+            winner = np.argmax(vote)
+            self.feature_activity.features[group_index][winner,0] = \
+                    excitation.features[group_index][winner,0]
+  
+        return 
+    
+    
     def calculate_inhibition(self, excitation):
         """ Find the extent to which each feature is inhibited by the
         othere features in its group.
         This formulation guarantees that inhibition of each feature will
         be between 0 and 1:
         
-        inhibition_i = C * (sum(excitation_j * similarity_ij) - excitation_i) 
+        inhibition_i = C * sum(excitation_j * similarity_ij) for all j!=i
         
         where
             inhibition_i is the inhibition of the ith feature
@@ -794,41 +860,59 @@ class Perceiver(object):
         
         inhibition = excitation.zeros_like()
         
-        for group_index in range(excitation.n_feature_groups()):
+        for group_index in range(excitation.n_feature_groups()):            
+            #for feature_index in range(excitation.features[group_index].size):
+            feature_index = np.argmax(self.feature_activity.features[group_index])
             
-            for feature_index in range(excitation.features[group_index].size):
-                similarities = utils.similarity( 
-                    self.feature_map.features[group_index][feature_index,:], 
+            #print 'inhibition group ', group_index, ', feature ', feature_index
+            similarities = utils.similarity( 
+                self.feature_map.features[group_index][feature_index,:], 
+                self.feature_map.features[group_index].transpose())
+
+            #print 'utils.similarity', similarities.shape
+            #print similarities
+            
+            cos_theta = \
+                    np.dot(self.feature_map.features \
+                    [group_index][feature_index,:], \
                     self.feature_map.features[group_index].transpose())
-                inhibition_strength = (np.dot(similarities, excitation.features[group_index]) - \
-                    excitation.features[group_index][feature_index,0]) * \
-                    self.INHIBITION_STRENGTH_FACTOR
-                inhibition.features[group_index][feature_index,0] = \
-                    np.exp(-inhibition_strength)
-    
+            similarities = cos_theta ** 2
+            
+            #print 'cos_theta similarity', cos_theta.shape
+            #print cos_theta
+            #print 'theta2 similarity', similarities.shape
+            #print similarities
+            
+            """ Ignore its similarity with itself """
+            similarities[feature_index] = 0.
+            
+            #print 'self.feature_map.features[group_index][feature_index,:]'
+            #print self.feature_map.features[group_index][feature_index,:]
+            #print 'self.feature_map.features[group_index].transpose()'
+            #print self.feature_map.features[group_index].transpose()
+            #print 'similarities'
+            #print similarities
+            
+            inhibition_strength = np.dot(similarities, excitation.features[group_index]) * \
+                self.INHIBITION_STRENGTH_FACTOR
+                
+            #print 'np.dot(similarities, excitation.features[group_index])'
+            #print np.dot(similarities, excitation.features[group_index])
+            #print 'inhibition_strength'
+            #print inhibition_strength
+            
+            inhibition.features[group_index][feature_index,0] = \
+                np.exp(-inhibition_strength)
+                
+            #print 'inhibition.features[group_index][feature_index,0]'
+            #print inhibition.features[group_index][feature_index,0]
+            
+            #print 'inhibition.features[group_index]'
+            #print inhibition.features[group_index] 
+            
         return inhibition
      
      
-    def calculate_activity(self, excitation, inhibition):
-        """ Find the activity of each feature, after excitation and 
-        inhibition. This includes
-        1) figuring out which feature wins and
-        2) figuring out what the activity magnitude is--for now it's just
-        the excitation
-        """
-        self.feature_activity = excitation.zeros_like()
-        for group_index in range(excitation.n_feature_groups()):
-            vote = excitation.features[group_index] * \
-                    inhibition.features[group_index] * \
-                    np.exp(- self.FATIGUE_SUSCEPTIBILITY * \
-                           self.fatigue.features[group_index])
-            winner = np.argmax(vote)
-            self.feature_activity.features[group_index][winner,0] = \
-                    excitation.features[group_index][winner,0]
-  
-        return
-    
-    
     def update_features(self, scaled_input, inhibition):
         """ Make the winning feature migrate toward the input that 
         excited it.
@@ -847,7 +931,7 @@ class Perceiver(object):
                     self.feature_activity.features[group_index][winner,:] * \
                     inhibition.features[group_index][winner,:] * \
                     self.FEATURE_ADAPTATION_RATE
-                    
+            
             """ Perform the update """
             self.feature_map.features[group_index][winner,:] += \
                                                 delta * step_fraction
@@ -895,9 +979,8 @@ class Perceiver(object):
         return
     
     
-    def show_feature_history(self):
-        if np.random.random_sample() < 0.01:
-            if len(self.feature_map.features) > 0:
-                self.feature_history.append(copy.deepcopy(self.feature_map.features[0]))
-                
-                viz_utils.visualize_array_list(self.feature_history)
+    def make_history(self, recordable_array, array_history, label=None):
+        array_history.append(copy.deepcopy(recordable_array))
+        
+        if np.random.random_sample() < 1.:
+            viz_utils.visualize_array_list(array_history, label)

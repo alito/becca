@@ -107,7 +107,7 @@ class Agent(object):
     def show_reward_history(self, show=False, save_eps=False,
                             epsfilename='log/reward_history.eps'):
         if self.graphing:
-            fig = plt.figure("Reward history")
+            plt.figure(1)
             plt.plot(self.reward_steps, self.reward_history)
             plt.xlabel("time step")
             plt.ylabel("average reward")

@@ -48,7 +48,7 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.TASK_DURATION = 10 ** 2
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 4
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 5
         self.LIFESPAN = 10 ** 8
         self.FOV_FRACTION = 0.2
         
