@@ -24,7 +24,7 @@ class ShellWorld(BaseWorld):
         self.num_sensors = num_sensors
         self.num_primitives = num_primitives
         self.num_actions = num_actions
-	self.timestep = 0
+        self.timestep = 0
 
     
     def step(self): 
@@ -40,7 +40,7 @@ class ShellWorld(BaseWorld):
         
 	
     def set_agent_parameters(self, agent):
-	pass
+	   pass
         
         
     def display(self):
@@ -77,7 +77,7 @@ def init(numSensors, numPrimitives, numActions, numFeatures):
     agent.perceiver.PLASTICITY_UPDATE_RATE = 4 * 10 ** (-1) # real, 0 < x < 1, small
 
     agent.perceiver.NEW_GROUP_THRESHOLD = 0.25
-    agent.perceiver.MAX_PROPENSITY = 0.1
+    agent.perceiver.MAX_PLASTICITY = 0.1
 
     agent.learner.WORKING_MEMORY_DECAY_RATE = 0.5      # real, 0 < x <= 1
 

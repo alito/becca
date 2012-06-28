@@ -128,35 +128,34 @@ class Model(object):
         self.trace_reward = np.zeros((self.TRACE_LENGTH,1))
 
 
-    def step(self, new_context, new_cause, new_effect, reward):
+    def step(self, new_context, new_cause, new_effect, reward, verbose_flag=False):
         """ Take in new_context, new_cause and new_effect 
         to train the model.
         """
         transition_match_indices, context_similarity = \
                     self.find_transition_matches(new_context, new_cause)
 
+        if verbose_flag:
+            import viz_utils
+            import matplotlib.pyplot as plt
+            fig = plt.figure('new transition')
+            ax = fig.add_subplot(1,1,1)
+
+            viz_utils.visualize_state(new_cause, "new_cause",
+                                      y_min=1.25, y_max=1.75, axes=ax)
+            viz_utils.visualize_state(new_effect, "new_effect",
+                                      y_min=0.25, y_max=0.75, axes=ax)
+            viz_utils.visualize_state(new_context,  "new_context",
+                                      y_min=2.25, y_max=2.75, axes=ax)
+            plt.title(' current transition candidate ')
+            viz_utils.force_redraw()
+        
         if len(transition_match_indices) == 0:             
             
             # debug
-            '''
-            if np.random.random_sample() < 0.02:
-                import viz_utils
-                import matplotlib.pyplot as plt
-                fig = plt.figure('new transition')
-                ax = fig.add_subplot(1,1,1)
-    
-                viz_utils.visualize_state(new_cause, "new_cause",
-                                          y_min=1.25, y_max=1.75, axes=ax)
-                viz_utils.visualize_state(new_effect, "new_effect",
-                                          y_min=0.25, y_max=0.75, axes=ax)
-                viz_utils.visualize_state(new_context,  "new_context",
-                                          y_min=2.25, y_max=2.75, axes=ax)
-                                          
-                plt.plot(0, 0, color='black') 
-    
-                plt.show()
-            '''
-            
+            if verbose_flag == True:
+                print 'adding new transition--'
+
             matching_transition_index, reward_update_rate = \
                     self.add_new_transition(new_context, 
                                             new_cause, 
@@ -166,27 +165,15 @@ class Model(object):
                     self.update_matching_transitions(context_similarity, 
                                                      transition_match_indices,
                                                      new_effect)
+
+            # debug
+            if verbose_flag == True:
+                print 'matching existing transition--'
                     
-            # debug  
-            '''    
-            if np.random.random_sample() < 0.02:
-                import viz_utils
-                import matplotlib.pyplot as plt
-                fig = plt.figure('new transition')
-                ax = fig.add_subplot(1,1,1)
-    
-                viz_utils.visualize_state(new_cause, "new_cause",
-                                          y_min=1.25, y_max=1.75, axes=ax)
-                viz_utils.visualize_state(new_effect, "new_effect",
-                                          y_min=0.25, y_max=0.75, axes=ax)
-                viz_utils.visualize_state(new_context,  "new_context",
-                                          y_min=2.25, y_max=2.75, axes=ax)
-                                          
-                plt.plot(0, 0, color='black') 
-    
-                viz_utils.visualize_transition(self, matching_transition_index)
-                plt.show()        
-            '''
+                viz_utils.visualize_transition(self, \
+                               matching_transition_index, label='Transition')
+                viz_utils.force_redraw()
+                    
             
         self.update_reward(reward_update_rate, matching_transition_index, 
                            reward)               

@@ -112,7 +112,8 @@ class World(BaseWorld):
             self.image_data = plt.imread(filename)
             """ Convert it to grayscale if it's in color """
             if len(self.image_data.shape) == 3:
-                self.image_data = np.sum(self.image_data, axis=2) / 3.0
+                self.image_data = np.sum(self.image_data, axis=2) / \
+                                    self.image_data.shape[2]
             
         self.fov_height = np.minimum(self.image_data.shape[0], 
                                      self.image_data.shape[1]) * self.FOV_FRACTION

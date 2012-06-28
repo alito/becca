@@ -17,7 +17,7 @@ class World(BaseWorld):
     The theoretically optimal performance without exploration is 0.5 
     reward per time step.
     In practice, the best performance the algorithm can achieve with the 
-    exploration levels given is around 0.35 to 0.37 reward per time step.
+    exploration levels given is around 0.4 reward per time step.
     """
 
     def __init__(self):

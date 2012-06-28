@@ -24,7 +24,7 @@ class Perceiver(object):
         self.PLASTICITY_UPDATE_RATE = 10. ** (-3) # real, 0 < x < 1, small
         
         """ The maximum value of plasticity """
-        self.MAX_PROPENSITY = 0.1
+        self.MAX_PLASTICITY = 0.1
         
         """ The feature actvity penalty associated with 
         prior membership in other groups. 
@@ -338,7 +338,7 @@ class Perceiver(object):
         """
         self.plasticity[:self.n_inputs, :self.n_inputs] += \
             self.PLASTICITY_UPDATE_RATE * \
-            (self.MAX_PROPENSITY - \
+            (self.MAX_PLASTICITY - \
              self.plasticity[:self.n_inputs, :self.n_inputs])
 
         """ Decrease the magnitude of features if they are already 
@@ -502,19 +502,26 @@ class Perceiver(object):
 
             n_group_inputs = len(added_feature_indices)
             n_group_features = n_group_inputs + 2
-            
+
             self.feature_activity.add_fixed_group(n_group_features)
             self.fatigue.add_fixed_group(n_group_features)
             self.previous_input.add_fixed_group(n_group_features)
-            self.coactivity_map.add_fixed_group(n_group_features, dtype=np.int)
+
+            new_coactivity_map_array = \
+                            np.cumsum(np.ones((n_group_features,1)), axis=0) \
+                            + self.n_inputs - 1
+            self.coactivity_map.add_fixed_group(n_group_features, \
+                            new_array=new_coactivity_map_array, dtype=np.int)
+
             self.feature_map.add_fixed_group(n_group_features, n_group_inputs)
+
             self.grouping_map_group.add_fixed_group(n_group_inputs,
-                    self.inv_coactivity_map_group[added_feature_indices],
-                    dtype=np.int)
+                new_array=self.inv_coactivity_map_group \
+                [added_feature_indices], dtype=np.int)
             self.grouping_map_feature.add_fixed_group(n_group_inputs,
-                    self.inv_coactivity_map_feature[added_feature_indices],
-                    dtype=np.int)
-            
+                new_array=self.inv_coactivity_map_feature \
+                [added_feature_indices], dtype=np.int)
+
             self.inv_coactivity_map_group[self.n_inputs: \
                           self.n_inputs + n_group_features] =  nth_group
             self.inv_coactivity_map_feature[self.n_inputs: \
@@ -522,7 +529,7 @@ class Perceiver(object):
                           np.cumsum(np.ones((n_group_features,1)), axis=0) \
                           - np.ones((n_group_features,1))
             self.n_inputs += n_group_features
-            
+
             """ Calculate the disallowed cominations for the new group """
             nth_group = self.feature_activity.n_feature_groups() - 1;
             disallowed_elements = np.zeros((0,1), dtype=np.int)
@@ -625,6 +632,9 @@ class Perceiver(object):
         the excitation
         """
         self.feature_activity = excitation.zeros_like()
+        self.feature_activity.primitives = excitation.primitives
+        #self.feature_activity.actions = excitation.actions
+        
         for group_index in range(excitation.n_feature_groups()):
             vote = excitation.features[group_index] * \
                     np.exp(- self.FATIGUE_SUSCEPTIBILITY * \
@@ -633,7 +643,7 @@ class Perceiver(object):
             winner = np.argmax(vote)
             self.feature_activity.features[group_index][winner,0] = \
                     excitation.features[group_index][winner,0]
-  
+                    
         return 
     
     
@@ -743,11 +753,11 @@ class Perceiver(object):
             
             
     def visualize(self, save_eps=False):
-        #viz_utils.visualize_grouper_coactivity(self.coactivity, \
-        #                                  self.n_inputs, save_eps)
-        #viz_utils.visualize_grouper_hierarchy(self, save_eps)
+        viz_utils.visualize_grouper_coactivity(self.coactivity, \
+                                          self.n_inputs, save_eps)
+        viz_utils.visualize_grouper_hierarchy(self, save_eps)
         #viz_utils.visualize_feature_set(self, save_eps)
-        viz_utils.visualize_feature_spacing(self)
+        #viz_utils.visualize_feature_spacing(self)
         
         viz_utils.force_redraw()
         return
