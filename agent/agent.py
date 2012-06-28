@@ -90,7 +90,7 @@ class Agent(object):
             self.record_reward_history()
             self.show_reward_history(save_eps=True)
             print "agent is ", self.timestep ," timesteps old" 
-            print self.perceiver.n_inputs , " inputs total"  
+            #print self.perceiver.n_inputs , " inputs total"  
             #print "Total size is about ", self.size() / 10 ** 6 , \
             #        " million elements" 
             

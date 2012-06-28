@@ -21,7 +21,7 @@ class Perceiver(object):
         self.INPUT_DECAY_RATE = 1.0 # real, 0 < x < 1
         
         """ Control how rapidly the coactivity update plasticity changes """
-        self.PLASTICITY_UPDATE_RATE = 10 ** (-3) # real, 0 < x < 1, small
+        self.PLASTICITY_UPDATE_RATE = 10. ** (-3) # real, 0 < x < 1, small
         
         """ The maximum value of plasticity """
         self.MAX_PROPENSITY = 0.1
@@ -61,30 +61,18 @@ class Perceiver(object):
         self.INHIBITION_STRENGTH_FACTOR = 1.
         
         """ The rate at which features adapt toward observed input data """
-        self.FEATURE_ADAPTATION_RATE = 10 ** -1
+        self.FEATURE_ADAPTATION_RATE = 10. ** -1
 
-        '''
-        """ Constants determining the conditions under which new
-        features are created.
-        Larger NEW_FEATURE_MARGIN means fewer features will be created.
-        """        
-        self.NEW_FEATURE_MARGIN = 0.5#0.3 # real, 0 < x < 1
-        self.NEW_FEATURE_MIN_SIZE = 0.2
-        '''
-        
         """ The rate at which feature fatigue decays.
         0 means it never decays and 1 means it decays immediately--that
         there is no fatigue.
         """
-        self.FATIGUE_DECAY_RATE = 0.01
+        self.FATIGUE_DECAY_RATE = 10. ** -2
         
         """ The strength of the influence that fatigue has on the
         features.
         """
-        self.FATIGUE_SUSCEPTIBILITY = 0.05#0.2#0.1
-        
-        """ The maximum influence that fatigue has on the features """
-        #self.FATIGUE_MAX = 1.0 #0.2
+        self.FATIGUE_SUSCEPTIBILITY = 10. ** -1
         
         """ To prevent normalization from giving a divide by zero """
         self.EPSILON = 1e-6
@@ -259,14 +247,14 @@ class Perceiver(object):
         grouped_input = state.State()
         grouped_input.sensors = None
         grouped_input.primitives = primitives
+        
         # debug - don't treat actions as primitive inputs
         #grouped_input.actions = actions
+        
         grouped_input.actions = np.zeros(actions.shape)
         for group_index in range(self.grouping_map_group.n_feature_groups()):
             grouped_input.add_fixed_group(
                    self.grouping_map_feature.features[group_index].size)
-            #grouped_input.add_group(np.zeros(
-            #       self.grouping_map_feature.features[group_index].size))
             for input_element_index in range(
                      self.grouping_map_feature.features[group_index].size):
                 from_group = self.grouping_map_group.features \
@@ -287,47 +275,34 @@ class Perceiver(object):
                     grouped_input.features[group_index][input_element_index] = \
                              new_input.features[from_group][from_feature]
 
-            
-            """ debug
-            grouped_input[group_index] = grouped_input[group_index].ravel()
-
-                 # TODO: is this necessary?
-                 if k > 2:
-                     #ensures that the total magnitude of the input features are 
-                     #less than one
-                     grouped_input[k] = grouped_input[k].ravel() / \
-                             np.sqrt( len( grouped_input[k]))
-           """
-
-        """ Updates feature map when appropriate """
-        #self.update_feature_map(grouped_input)
-        
-        """ Interprets inputs as features """
-        #self.get_feature_activity(grouped_input) 
-        
-        '''
-        [excitation, scaled_input] = self.calculate_excitation(grouped_input)
-        inhibition = self.calculate_inhibition(excitation)
-        self.calculate_activity(excitation, inhibition)
-        self.update_features(scaled_input, inhibition)
-        '''
+        """ Calculate feature activity """            
         [excitation, scaled_input] = self.calculate_excitation(grouped_input)
         self.calculate_activity(excitation)
+        
+        """ Evolve features """
         inhibition = self.calculate_inhibition(excitation)
         self.update_features(scaled_input, inhibition)
         
+        """ Calculate fatigue """
         self.fatigue = self.fatigue.unbounded_sum(self.feature_activity)
         self.fatigue = self.fatigue.multiply(1 - self.FATIGUE_DECAY_RATE)
         
+        '''
         #debug
         if len(self.feature_map.features) > 0:
             if np.random.random_sample() < .01:
     
-                #self.make_history(inhibition.features[0], self.inhibition_history, label='inhibition history')
-                #self.make_history(self.fatigue.features[0], self.fatigue_history, label='fatigue history')
-                self.make_history(self.feature_map.features[0], self.feature_history, label='feature history')
+                #self.make_history(inhibition.features[0], 
+                                   self.inhibition_history, 
+                                   label='inhibition history')
+                #self.make_history(self.fatigue.features[0], 
+                                   self.fatigue_history, 
+                                   label='fatigue history')
+                self.make_history(self.feature_map.features[0], 
+                                  self.feature_history, 
+                                  label='feature history')
                 viz_utils.force_redraw()
-            
+        '''    
 
         return self.feature_activity
 
@@ -350,14 +325,6 @@ class Perceiver(object):
                 new_input.actions
         
         for index in range(new_input.n_feature_groups()):
-            '''
-            #debug
-            print self.coactivity_map.features[index].astype(int)
-            print self.input_activity[ \
-                    self.coactivity_map.features[index,0].ravel().astype(int)].shape
-            print new_input.features[index,0].shape
-            print '---'
-            '''
             if new_input.features[index].size > 0:
                 self.input_activity[ \
                     self.coactivity_map.features[index].ravel().astype(int)] = \
@@ -492,10 +459,6 @@ class Perceiver(object):
                 group.
                 """ 
                 candidate_match_strength[added_feature_indices] = 0
-                '''if (np.max(candidate_match_strength) < 
-                    coactivity_threshold) \
-                    or (len(added_feature_indices) >= self.MAX_GROUP_SIZE):
-                '''
                 if (np.max(candidate_match_strength) < coactivity_threshold):
                     break
 
@@ -536,7 +499,7 @@ class Perceiver(object):
             
             """ Add a fixed number of features all at once """
             nth_group = self.feature_activity.n_feature_groups()
-            # debug
+
             n_group_inputs = len(added_feature_indices)
             n_group_features = n_group_inputs + 2
             
@@ -560,18 +523,6 @@ class Perceiver(object):
                           - np.ones((n_group_features,1))
             self.n_inputs += n_group_features
             
-            '''
-            self.feature_activity.add_group()
-            self.previous_input.add_group()
-            self.coactivity_map.add_group(dtype=np.int)
-            self.feature_map.add_group(len(added_feature_indices))
-            self.grouping_map_group.add_group(
-                    self.inv_coactivity_map_group[added_feature_indices],
-                    dtype=np.int)
-            self.grouping_map_feature.add_group(
-                    self.inv_coactivity_map_feature[added_feature_indices],
-                    dtype=np.int)
-            '''
             """ Calculate the disallowed cominations for the new group """
             nth_group = self.feature_activity.n_feature_groups() - 1;
             disallowed_elements = np.zeros((0,1), dtype=np.int)
@@ -625,125 +576,12 @@ class Perceiver(object):
             self.combination[self.disallowed[nth_group][:,0].astype(int), 
                              self.n_inputs - n_group_features:self.n_inputs] = 0
             
-           
-            '''
-            """ Visualize the group """
-            viz = visualizer.Visualizer()
-            # TODO convert arguments to list
-            label = str(self.previous_input.n_feature_groups() - 1)
-            label = 'latest group'
-            viz.visualize_feature(self, 
-                   self.inv_coactivity_map_group[added_feature_indices], 
-                   self.inv_coactivity_map_feature[added_feature_indices],
-                   label)
-        
-            utils.force_redraw()
-            '''
-            
             print 'adding group ', self.previous_input.n_feature_groups() - 1, \
                     ' with ', len(added_feature_indices), ' inputs'
 
         return 
 
 
-        '''
-        def update_feature_map(self, grouped_input):
-                               
-        """ Check whether to add new features to each of the groups """
-        for group_index in range(grouped_input.n_feature_groups()):
-            
-            if self.feature_map.features[group_index].size == 0:
-                """ If there are no features in the group yet, set the 
-                threshold margin to accept any new feature.
-                """
-                margin = 1
-            else:
-                """ Otherwise, set the threshold margin based on how 
-                different the closest existing feature is from the current 
-                input.
-                """   
-                similarity_values = utils.similarity( \
-                         grouped_input.features[group_index], 
-                         self.feature_map.features[group_index].transpose())
-                margin = 1 - np.max(similarity_values)
-                            
-            if margin > self.NEW_FEATURE_MARGIN and \
-                np.max(grouped_input.features[group_index]) > \
-                       self.NEW_FEATURE_MIN_SIZE and \
-                not self.features_full:
-                """ If all the conditions are met, add the new feature 
-                to the group.
-                """
-                """ This formulation of feature creation was chosen to have 
-                the property that all feature magnitudes are 1. In other words, 
-                every feature is a unit vector in the vector space formed by its 
-                group members.
-                """
-                new_feature = grouped_input.features[group_index] / \
-                        np.linalg.norm( grouped_input.features[group_index])    
-                
-                self.add_feature(group_index, new_feature) 
-                
-        return
-        '''
-    
-
-        '''def add_feature(self, nth_group, new_feature):
-        
-        self.feature_added = nth_group
-        
-        self.feature_map.add_feature(nth_group, new_feature)
-        self.feature_activity.add_feature(nth_group)
-        self.previous_input.add_feature(nth_group)
-        self.coactivity_map.add_feature(nth_group, self.n_inputs)
-        self.inv_coactivity_map_group[self.n_inputs] =  nth_group
-        self.inv_coactivity_map_feature[self.n_inputs] = \
-                            len(self.coactivity_map.features[nth_group]) - 1
-        self.n_inputs += 1
-        
-        """ Disallow building new groups out of members of the new feature
-        and any of its group's inputs.
-        """
-        self.combination[self.n_inputs - 1, 
-                         self.disallowed[nth_group][:,0].astype(int)] = 0
-        self.combination[self.disallowed[nth_group][:,0].astype(int), 
-                         self.n_inputs - 1] = 0
-        
-        return
-        '''
-
-        '''
-        def get_feature_activity(self, grouped_input):
-        
-        """ Initialize feature_vote for primitives """
-        self.feature_activity.sensors = np.zeros((0,1))
-        self.feature_activity.primitives =  \
-                copy.deepcopy(grouped_input.primitives)
-        self.feature_activity.actions = copy.deepcopy(grouped_input.actions)
-            
-        for group_index in range(grouped_input.n_feature_groups()):
-            if self.feature_activity.features[group_index].size > 0:
-                """ This formulation of voting was chosen to have the
-                property that if the group's contributing inputs are all 1,
-                it will result in a feature vote of 1.
-                """
-                feature_vote = np.sqrt(np.dot( \
-                         self.feature_map.features[group_index] ** 2, \
-                         grouped_input.features[group_index]))
-
-                """ TODO: boost winner up closer to 1? This might help 
-                numerically propogate high-level feature activity strength. 
-                Otherwise it might attentuate and disappear for all but 
-                the strongest inputs. See related TODO note at end
-                of grouper.step().
-                """
-                self.feature_activity.features[group_index] = \
-                        utils.winner_takes_all(feature_vote)
-
-        return 
-        '''
-        
-        
     def calculate_excitation(self, inputs):
         """ Find the excitation level for each feature """
         scaled_input = inputs.zeros_like()
@@ -753,53 +591,33 @@ class Perceiver(object):
         excitation.actions = copy.deepcopy(inputs.actions)
             
         for group_index in range(inputs.n_feature_groups()):
-            #if self.feature_activity.features[group_index].size > 0:
-            """ This formulation of voting was chosen to have the
-            property that the maximum excitation possible for
-            any given feature is 1. 
-            The features already have a magnitude of 1.
-            Scaling the input in this way:
+            """ Scaling the input in this way:
             
             scaled_input = input * max(input) / norm(input)
             
             guarantees that it also will have a maximum 
             magnitude of 1. 
-            Then, projecting the input onto each feature guarantees
-            a maximum feature excitation of 1.
             """
             these_inputs = inputs.features[group_index]                 
             scaled_input.features[group_index] = \
                             these_inputs * np.max(these_inputs) / \
                             (np.linalg.norm(these_inputs) + self.EPSILON)
 
-            """ cosine^2 """
+            """ cosine^2 tuning 
+            This formulation of excitation was chosen to have the
+            property that the maximum excitation possible for
+            any given feature is 1. 
+            
+            excitation  = cos^2(angle between input and feature)
+            """
             excitation.features[group_index] = np.dot( \
                      self.feature_map.features[group_index], \
                      scaled_input.features[group_index]) ** 2
 
-            '''
-            excitation.features[group_index] = np.dot( \
-                     self.feature_map.features[group_index], \
-                     scaled_input.features[group_index])
-            '''
-            '''
-            cos_theta = np.dot( \
-                     self.feature_map.features[group_index], \
-                     scaled_input.features[group_index])
-            
-            """ Keep the arccos operation stable with 
-            small numerical errors. 
-            """
-            
-            cos_theta = np.minimum(cos_theta, 1)
-
-            excitation.features[group_index] = (1. - (2. / np.pi) * np.arccos(cos_theta)) **2
-            '''
         return excitation, scaled_input
     
         
     def calculate_activity(self, excitation):
-        #def calculate_activity(self, excitation, inhibition):
         """ Find the activity of each feature, after excitation and 
         inhibition. This includes
         1) figuring out which feature wins and
@@ -808,24 +626,6 @@ class Perceiver(object):
         """
         self.feature_activity = excitation.zeros_like()
         for group_index in range(excitation.n_feature_groups()):
-            '''vote = excitation.features[group_index] * \
-                    inhibition.features[group_index] * \
-                    np.exp(- self.FATIGUE_SUSCEPTIBILITY * \
-                           self.fatigue.features[group_index])
-            '''
-            '''
-            vote = excitation.features[group_index] * \
-                    inhibition.features[group_index] * \
-                    ((1 - self.FATIGUE_MAX) + self.FATIGUE_MAX * \
-                     np.exp(- self.FATIGUE_SUSCEPTIBILITY * \
-                           self.fatigue.features[group_index]))
-            '''
-            '''
-            vote = excitation.features[group_index] * \
-                    ((1 - self.FATIGUE_MAX) + self.FATIGUE_MAX * \
-                     np.exp(- self.FATIGUE_SUSCEPTIBILITY * \
-                           self.fatigue.features[group_index]))
-            '''
             vote = excitation.features[group_index] * \
                     np.exp(- self.FATIGUE_SUSCEPTIBILITY * \
                            self.fatigue.features[group_index])
@@ -861,55 +661,29 @@ class Perceiver(object):
         inhibition = excitation.zeros_like()
         
         for group_index in range(excitation.n_feature_groups()):            
-            #for feature_index in range(excitation.features[group_index].size):
-            feature_index = np.argmax(self.feature_activity.features[group_index])
+            feature_index = \
+                    np.argmax(self.feature_activity.features[group_index])
             
-            #print 'inhibition group ', group_index, ', feature ', feature_index
             similarities = utils.similarity( 
                 self.feature_map.features[group_index][feature_index,:], 
                 self.feature_map.features[group_index].transpose())
 
-            #print 'utils.similarity', similarities.shape
-            #print similarities
-            
             cos_theta = \
                     np.dot(self.feature_map.features \
                     [group_index][feature_index,:], \
                     self.feature_map.features[group_index].transpose())
             similarities = cos_theta ** 2
             
-            #print 'cos_theta similarity', cos_theta.shape
-            #print cos_theta
-            #print 'theta2 similarity', similarities.shape
-            #print similarities
-            
             """ Ignore its similarity with itself """
             similarities[feature_index] = 0.
             
-            #print 'self.feature_map.features[group_index][feature_index,:]'
-            #print self.feature_map.features[group_index][feature_index,:]
-            #print 'self.feature_map.features[group_index].transpose()'
-            #print self.feature_map.features[group_index].transpose()
-            #print 'similarities'
-            #print similarities
-            
-            inhibition_strength = np.dot(similarities, excitation.features[group_index]) * \
-                self.INHIBITION_STRENGTH_FACTOR
+            inhibition_strength = np.dot(similarities, \
+                                         excitation.features[group_index]) * \
+                                         self.INHIBITION_STRENGTH_FACTOR
                 
-            #print 'np.dot(similarities, excitation.features[group_index])'
-            #print np.dot(similarities, excitation.features[group_index])
-            #print 'inhibition_strength'
-            #print inhibition_strength
-            
             inhibition.features[group_index][feature_index,0] = \
-                np.exp(-inhibition_strength)
+                                         np.exp(-inhibition_strength)
                 
-            #print 'inhibition.features[group_index][feature_index,0]'
-            #print inhibition.features[group_index][feature_index,0]
-            
-            #print 'inhibition.features[group_index]'
-            #print inhibition.features[group_index] 
-            
         return inhibition
      
      
