@@ -625,6 +625,9 @@ class Perceiver(object):
         the excitation
         """
         self.feature_activity = excitation.zeros_like()
+        self.feature_activity.primitives = excitation.primitives
+        #self.feature_activity.actions = excitation.actions
+        
         for group_index in range(excitation.n_feature_groups()):
             vote = excitation.features[group_index] * \
                     np.exp(- self.FATIGUE_SUSCEPTIBILITY * \
@@ -633,8 +636,8 @@ class Perceiver(object):
             winner = np.argmax(vote)
             self.feature_activity.features[group_index][winner,0] = \
                     excitation.features[group_index][winner,0]
-  
-        return 
+                    
+            return 
     
     
     def calculate_inhibition(self, excitation):
@@ -747,7 +750,7 @@ class Perceiver(object):
         #                                  self.n_inputs, save_eps)
         #viz_utils.visualize_grouper_hierarchy(self, save_eps)
         #viz_utils.visualize_feature_set(self, save_eps)
-        viz_utils.visualize_feature_spacing(self)
+        #viz_utils.visualize_feature_spacing(self)
         
         viz_utils.force_redraw()
         return

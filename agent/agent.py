@@ -59,6 +59,10 @@ class Agent(object):
                                                      primitives, 
                                                      self.actions)
         
+        '''viz_utils.visualize_state(feature_activity, label='feature_activity')
+        print self.timestep
+        viz_utils.force_redraw()
+        '''
         """
         Reinforcement learner
         ======================================================

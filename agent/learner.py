@@ -26,6 +26,7 @@ class Learner(object):
         the grouper constructor
         """
         self.WORKING_MEMORY_DECAY_RATE = 0.4      # real, 0 < x <= 1
+        #self.WORKING_MEMORY_DECAY_RATE = 1.      # real, 0 < x <= 1
         
         self.model = Model(num_primitives, num_actions)
         self.planner = Planner(num_actions)
@@ -35,12 +36,20 @@ class Learner(object):
         self.previous_working_memory = State(num_sensors, num_primitives, 
                                              num_actions)
         self.working_memory = State(num_sensors, num_primitives, num_actions)
-
+        
 
     def step(self, feature_activity, reward):
         
         self.grow_states(feature_activity)
         
+        self.verbose_flag = False
+        if np.random.random_sample() < 0.01:
+            self.verbose_flag = True
+            
+        if self.verbose_flag:
+            #viz_utils.visualize_state(feature_activity, label='feature_activity')
+            pass
+            
         self.previous_attended_feature = copy.deepcopy(self.attended_feature)
 
         """ Attend to a single feature """
@@ -57,14 +66,15 @@ class Learner(object):
                                            self.attended_feature, 
                                            self.WORKING_MEMORY_DECAY_RATE)
         
-        """ Associate the reward with each transition """
+        """ Update the model """
         self.model.step(self.pre_previous_working_memory, 
                          self.previous_attended_feature, 
-                         feature_activity, reward)
+                         feature_activity, reward, self.verbose_flag)
 
         """ Decide on an action """
         self.actions, deliberately_acted = \
-                        self.planner.step(self.model, self.working_memory)
+                        self.planner.step(self.model, self.working_memory, 
+                        self.verbose_flag)
         
         """ If a deliberate action was made on this timestep,
         force the agent to attend to it. This ensures that 
@@ -170,10 +180,10 @@ class Learner(object):
         if np.random.random_sample(1) < 0.01:
             print "attention report "
             viz_utils.visualize_state(feature_activity, label='feature_activity')
+            viz_utils.force_redraw()
             viz_utils.visualize_state(self.attended_feature, label='attended_feature')
-            import matplotlib.pyplot
-            matplotlib.pyplot.show()
-        '''
+            viz_utils.force_redraw()
+         '''
             
         return self.attended_feature
 

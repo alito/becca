@@ -348,9 +348,11 @@ def visualize_model(model, n=None):
     
         
 def visualize_transition(model, transition_index, save_eps=False, 
-                          epsfilename='log/transition.eps'):
+                          label=None, epsfilename='log/transition.eps'):
     """ Visualize a single model transition """
-    label = 'Transition ' + str(transition_index)
+    if label==None:
+        label = 'Transition ' + str(transition_index)
+        
     fig = plt.figure(label)
     fig.clf()
     plt.ioff()
@@ -360,8 +362,10 @@ def visualize_transition(model, transition_index, save_eps=False,
     count = model.count[transition_index]
     reward_value = model.reward_value[transition_index]
     goal_value = model.goal_value[transition_index]
-    plt.title(label + '  count: ' + str(count) + '  reward value: ' + 
+    plt.title('Transition ' + str(transition_index)  + 
+              '  count: ' + str(count) + '  reward value: ' + 
               str(reward_value) + '  goal value: ' + str(goal_value))
+    plt.xlabel(label)
     
     context = state.State()
     cause = state.State()
@@ -596,7 +600,11 @@ def visualize_state(state, label='state', y_min=0.25, y_max=0.75,
             rectPatch(x, x + 1, y_min, y_max,
                            state.features[feature_group_indx][indx], axes)
             x += 1
-            
+     
+    """ Get the figure to recognize that it has something to plot.
+    A blatant hack.  """       
+    plt.plot(0, 0, color='black') 
+
     if save_eps:
         fig.savefig(epsfilename, format='eps')
         
