@@ -224,11 +224,12 @@ class World(BaseWorld):
         
         """ Build more tightly co-active groups """
         #agent.perceiver.MIN_SIG_COACTIVITY = 0.29
-        agent.perceiver.MIN_SIG_COACTIVITY = 0.1
-        #agent.perceiver.MIN_SIG_COACTIVITY = 0.027
+        #agent.perceiver.MIN_SIG_COACTIVITY = 0.1
+        agent.perceiver.MIN_SIG_COACTIVITY = 0.001
+        agent.perceiver.NEW_GROUP_THRESHOLD = 0.01
         
         """ Nucleate groups more rapidly """
-        agent.perceiver.PLASTICITY_UPDATE_RATE = 2 * 10 ** (-2) # debug
+        #agent.perceiver.PLASTICITY_UPDATE_RATE = 2 * 10 ** (-2) # debug
 
         """ Don't create a model """
         agent.learner.model.MAX_ENTRIES = 10 ** 2

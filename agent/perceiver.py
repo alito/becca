@@ -34,7 +34,7 @@ class Perceiver(object):
         """ Once a coactivity value exceeds this value, 
         nucleate a new group.
         """ 
-        self.NEW_GROUP_THRESHOLD = 0.3     # real,  x >= 0
+        self.NEW_GROUP_THRESHOLD = 0.1     # real,  x >= 0
         
         """ If the coactivity between the first two group members 
         and the next candidates 
@@ -42,7 +42,7 @@ class Perceiver(object):
         This value approaches NEW_GROUP_THRESHOLD as the group size grows.
         See create_new_group() below.
         """
-        self.MIN_SIG_COACTIVITY = 0.2  # real,  x >= self.NEW_GROUP_THRESHOLD
+        self.MIN_SIG_COACTIVITY = 0.03  # real,  x >= self.NEW_GROUP_THRESHOLD
         
         """ The rate that threshold coactivity for adding new
         inputs to the group decays as new inputs are added.
@@ -406,14 +406,30 @@ class Perceiver(object):
                   % self.n_inputs)
 
         """ If the coactivity is high enough, create a new group """
-        max_coactivity = np.max(self.coactivity)
+        #debug
+        #max_coactivity = np.max(self.coactivity)
+        symmetric_coactivity = self.coactivity[:self.n_inputs, 
+                                       :self.n_inputs] * \
+                                       self.coactivity[:self.n_inputs, 
+                                       :self.n_inputs].transpose()
+        max_coactivity = np.max(symmetric_coactivity)
+        #debug
+        #if np.random.random_sample() < 0.01:
+        #    print 'np.max(self.coactivity)', np.max(self.coactivity)
+        #    print 'max_coactivity', max_coactivity
+
         if max_coactivity > self.NEW_GROUP_THRESHOLD:
             
             """ Nucleate a new group under the two elements for which 
             coactivity is a maximum.
             """
-            indices1, indices2 = (self.coactivity == 
+            #debug
+            #indices1, indices2 = (self.coactivity ==
+            #                      max_coactivity).nonzero()
+            indices1, indices2 = (symmetric_coactivity ==
                                   max_coactivity).nonzero()
+
+
             which_index = np.random.random_integers(0, len(indices1)-1)
             index1 = indices1[which_index]
             index2 = indices2[which_index]
@@ -424,10 +440,13 @@ class Perceiver(object):
                 self.coactivity[element] = 0
                 self.combination[element] = 0
 
+                #debug
+                symmetric_coactivity[element] = 0
+
             """ Track the available elements with candidate_matches
             to add and the coactivity associated with each.
             """
-            candidate_matches = np.zeros(self.combination.shape)
+            candidate_matches = np.zeros((self.n_inputs, self.n_inputs))
             candidate_matches[:,added_feature_indices] = 1
             candidate_matches[added_feature_indices,:] = 1
             
@@ -445,8 +464,14 @@ class Perceiver(object):
                 coactivity, these would be symmetric. In this 
                 coactivity, they are not. 
                 """
-                candidate_coactivities = np.abs(self.coactivity * 
+                #debug
+                #candidate_coactivities = np.abs(self.coactivity *
+                #                                candidate_matches)
+                candidate_coactivities = np.abs(symmetric_coactivity *
                                                 candidate_matches)
+
+                #TODO symmetry allows either row or column strength to 
+                # be calculated: they are identical
                 match_strength_col = np.sum(candidate_coactivities, axis=0)
                 match_strength_row = np.sum(candidate_coactivities, axis=1)
                 candidate_match_strength = match_strength_col + \
@@ -479,6 +504,10 @@ class Perceiver(object):
                                                  added_feature_indices):
                     self.coactivity [element] = 0
                     self.combination[element] = 0
+                    
+                    #debug
+                    symmetric_coactivity[element] = 0
+
                 candidate_matches[:,added_feature_indices] = 1
                 candidate_matches[added_feature_indices,:] = 1
                 
