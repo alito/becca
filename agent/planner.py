@@ -19,12 +19,12 @@ class Planner(object):
         self.action = np.zeros((num_actions,1))
 
 
-    def step(self, model, working_memory, verbose_flag=False):
+    def step(self, model, verbose_flag=False):
         """ Choose an action at each time step """
         
         """ First, choose a reactive action """
-        """ TODO: make reactive actions habit based, not reward based
-        also make reactive actions general """
+        """ TODO: make reactive action habit based, not reward based
+        also make reactive action general """
         # debug
         # reactive_action = self.select_action(self.model, 
         #                                      self.feature_activity)
@@ -43,23 +43,23 @@ class Planner(object):
                 
                 self.action = self.explore()
                             
-                """ Attend to any deliberate actions """
+                """ Attend to any deliberate action """
                 deliberately_acted = True
-
+                
             else:
                 if verbose_flag:
                     print('deliberating')
                 
                 """ The rest of the time, deliberately choose an action.
-                Choose features as goals, in addition to actions.
+                Choose features as goals, in addition to action.
                 """
-                (self.action, goal) = self.deliberate(model, working_memory, verbose_flag)
+                (self.action, goal) = self.deliberate(model, verbose_flag)
 
                 """ Pass goal to model """ 
                 model.update_goal(goal)
                 
                 if np.count_nonzero(self.action) > 0:
-                    """ Attend to any deliberate actions """
+                    """ Attend to any deliberate action """
                     deliberately_acted = True
         
         else:
@@ -71,7 +71,7 @@ class Planner(object):
     def explore(self):
         """ Forms a random, exploratory plan """
         """ TODO: form and execute multi-step plans, rather than single-step
-        random actions.
+        random action.
         """        
         """ Exploratory commands are only generated at the basic 
         action feature level. Features and higher-level commands 
@@ -89,9 +89,9 @@ class Planner(object):
     def select_action(self, model, current_state):
         """
         Choose a reactive action based on the current feature activities.
-        This is analogous to automatic actions
-        Finds the weighted expected reward for the actions across all model 
-        transitions. Then executes the actions with a magnitude that 
+        This is analogous to automatic action
+        Finds the weighted expected reward for the action across all model 
+        transitions. Then executes the action with a magnitude that 
         is a function of the expected reward associated with each.
         
         It's a low-level all-to-all planner, capable of executing many plans in
@@ -107,14 +107,14 @@ class Planner(object):
         effect_values = model.reward_value[:model.n_transitions]
 
         """ Create a shorthand for the variables to keep the code readable """
-        model_actions = model.cause.actions[:, :model.n_transitions]
+        model_actions = model.cause.action[:, :model.n_transitions]
         count_weight = np.log(model.count[:model.n_transitions] + 1)
         value = effect_values
         similarity = utils.similarity(current_state, model.cause, model.n_transitions)
 
-        # The reactive action is a weighted average of all actions. Actions 
-        # that are expected to result in a high value state and actions that are
-        # similar to the current state are weighted more heavily. All actions 
+        # The reactive action is a weighted average of all action. Actions 
+        # that are expected to result in a high value state and action that are
+        # similar to the current state are weighted more heavily. All action 
         # computed in this way will be <= 1.
         weights = count_weight * value * similarity
 
@@ -138,13 +138,13 @@ class Planner(object):
 
         action = action_positive - action_negative
 
-        # Sets a floor for action magnitudes. Negative actions are not defined.
+        # Sets a floor for action magnitudes. Negative action are not defined.
         action = np.maximum(action, 0)
 
         return action
         '''
 
-    def deliberate(self, model, working_memory, verbose_flag):
+    def deliberate(self, model, verbose_flag):
         """
         Deliberate, choosing goals based on the current working memory.
         Find the transition that is best suited based on:
@@ -170,11 +170,7 @@ class Planner(object):
         count_weight = utils.sigmoid(np.log(model.count
                 [:model.n_transitions] + 1) / 3)
 
-        """ TODO: query model, so I don't have to probe 
-        its members directly. 
-        """
-        similarity = utils.similarity(working_memory, model.context, 
-                                      model.n_transitions)
+        similarity = model.get_context_similarities_for_planning()
 
         """ TODO: Raise similarity by some power to focus on more 
         similar transitions?
@@ -199,39 +195,59 @@ class Planner(object):
         #
         #incorporate both the expected value of the reward+goal, as well as 
         #the confidence (expected error) into the vote
-        transition_vote = value.ravel() * similarity.ravel() * count_weight.ravel()
+        transition_vote = value.ravel() * similarity.ravel() * \
+                            count_weight.ravel()
+        
+        if transition_vote.size == 0:
+            action = np.zeros(self.action.shape)
+            goal = None
+            return action, goal
+
         
         max_transition_index = np.argmax(transition_vote)
         
-        goal = working_memory.zeros_like()        
-        goal.primitives = model.cause.primitives[:, max_transition_index]
-        goal.actions = model.cause.actions[:, max_transition_index]
-        for group_index in range(model.n_feature_groups()):
-            goal.features[group_index] = model.cause.features[group_index] \
-                                                [:, max_transition_index]
+        """ Update the transition used to select this action. 
+        Setting wait to True allows one extra time step for the 
+        action to be executed.
+        """
+        model.update_transition(max_transition_index, 
+                            update_strength=similarity[max_transition_index], 
+                            wait=True)
+        
+        goal = model.get_cause(max_transition_index)
                 
         """ Separate action goals from the rest of the goal """
         action = np.zeros(self.action.shape)
-        if np.size((goal.actions > 0).nonzero()):
+        if np.size((goal.action > 0).nonzero()):
             self.deliberately_acted = True
 
-            action[goal.actions > 0] = 1
-            goal.actions = np.zeros(np.size(goal.actions))
+            action[goal.action > 0] = 1
+            goal.action = np.zeros(np.size(goal.action))
 
         if verbose_flag:
             import viz_utils
             import matplotlib.pyplot as plt
+            #print 'value.ravel()', value.ravel()
+            #print 'similarity.ravel()', similarity.ravel()
+            #print 'count_weight.ravel()', count_weight.ravel()
+            #print 'transition_vote', transition_vote
+                            
+            print 'np.max(transition_vote)', np.max(transition_vote)
+            print 'max_transition_index', max_transition_index
             
-            viz_utils.visualize_state(working_memory, label='working_memory')
+            #viz_utils.visualize_state(working_memory, label='working_memory')
             #viz_utils.visualize_state(goal, label='goal')
             for i in range(4):
                 best_transition_vote = np.argmax(transition_vote)
-                label = str(i) + 'th best transition: ' + str(best_transition_vote)
+                label = str(i) + 'th best transition: ' + str(best_transition_vote) + \
+                        ', similarity ' + str(similarity[best_transition_vote]) + \
+                        ', value ' + str(value[best_transition_vote]) + \
+                        ', count ' + str(count_weight[best_transition_vote])
                 viz_utils.visualize_transition(model, best_transition_vote, 
                                                label=label)
                 transition_vote[best_transition_vote] = -10.
                 
-            print 'actions: ', action.ravel()
+            print 'action: ', action.ravel()
 
             plt.show()
             

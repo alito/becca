@@ -150,7 +150,11 @@ class World(BaseWorld):
 
 
     def set_agent_parameters(self, agent):
-        agent.perceiver.MIN_SIG_COACTIVITY = 0.05
+        """ Force all the inputs to be added as one group """
+        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10. ** (-2)
+        #agent.perceiver.COACTIVITY_THRESHOLD_DECAY_RATE = 0.0
+        #agent.perceiver.MIN_SIG_COACTIVITY = 0.0
+        pass
             
          
     def display(self):

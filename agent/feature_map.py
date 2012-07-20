@@ -5,7 +5,7 @@ class FeatureMap(object):
     def __init__(self, num_sensors, num_primitives, num_actions):
         self.sensors = np.zeros((num_sensors, num_sensors))
         self.primitives = np.eye(num_primitives)
-        self.actions = np.eye(num_actions)
+        self.action = np.eye(num_actions)
         self.features = []
 
 
@@ -35,7 +35,7 @@ class FeatureMap(object):
         total = 0
         total += self.sensors.size
         total += self.primitives.size
-        total += self.actions.size
+        total += self.action.size
         for group_index in range(len(self.features)):
             total += self.features[group_index].size
 

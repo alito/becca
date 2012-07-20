@@ -132,7 +132,7 @@ class Perceiver(object):
         """ 1D arrays that map each element of the input_activity
         onto a group and feature of the input. 
         A group number of -3 refers to sensors, -2 refers to primitives,
-        and -1 refers to actions.
+        and -1 refers to action.
         """ 
         self.inv_coactivity_map_group   = np.zeros((self.MAX_NUM_FEATURES, 1), 
                                                     dtype=np.int)
@@ -177,7 +177,7 @@ class Perceiver(object):
         self.n_inputs += num_primitives
         
         """ Initialize action aspects """
-        self.coactivity_map.actions = np.cumsum(np.ones( 
+        self.coactivity_map.action = np.cumsum(np.ones( 
                             (num_actions,1), dtype=np.int), 
                                          dtype=np.int) - 1 + self.n_inputs
         self.inv_coactivity_map_group[self.n_inputs: 
@@ -225,12 +225,11 @@ class Perceiver(object):
         new_input.primitives = primitives
         
         """ It's not yet clear whether this should be included or not """
-        # debug - don't treat actions as primitive inputs
-        #new_input.actions = actions
+        new_input.action = actions
         
         """ Decay previous input and combine it with the new input """
-        self.previous_input.decay(1 - self.INPUT_DECAY_RATE)
-
+        self.previous_input = self.previous_input.multiply(1 - 
+                                                self.INPUT_DECAY_RATE)
         new_input = new_input.bounded_sum(self.previous_input)
         
         """ Update previous input, preparing it for the next iteration """    
@@ -238,7 +237,7 @@ class Perceiver(object):
         
         """ As appropriate, update the coactivity estimate and 
         create new groups.
-        """            
+        """                 
         if not self.features_full:
             self.update_coactivity_matrix(new_input)
             self.create_new_group()
@@ -248,10 +247,12 @@ class Perceiver(object):
         grouped_input.sensors = None
         grouped_input.primitives = primitives
         
-        # debug - don't treat actions as primitive inputs
-        #grouped_input.actions = actions
+        """ It's still not clear whether actions should be treated 
+        as primitive inputs.
+        """ 
+        grouped_input.action = actions
+        #grouped_input.action = np.zeros(actions.shape)
         
-        grouped_input.actions = np.zeros(actions.shape)
         for group_index in range(self.grouping_map_group.n_feature_groups()):
             grouped_input.add_fixed_group(
                    self.grouping_map_feature.features[group_index].size)
@@ -270,7 +271,7 @@ class Perceiver(object):
                              new_input.primitives[from_feature]
                 elif from_group == -1:
                     grouped_input.features[group_index][input_element_index] = \
-                             new_input.actions[from_feature]
+                             new_input.action[from_feature]
                 else:
                     grouped_input.features[group_index][input_element_index] = \
                              new_input.features[from_group][from_feature]
@@ -278,7 +279,7 @@ class Perceiver(object):
         """ Calculate feature activity """            
         [excitation, scaled_input] = self.calculate_excitation(grouped_input)
         self.calculate_activity(excitation)
-        
+                
         """ Evolve features """
         inhibition = self.calculate_inhibition(excitation)
         self.update_features(scaled_input, inhibition)
@@ -310,7 +311,7 @@ class Perceiver(object):
     def update_coactivity_matrix(self, new_input):
         """ Update an estimate of coactivity between every
         feature and every other feature, including the sensors, primitives,
-        and actions. 
+        and action. 
         """
 
         """ Populate the full feature vector """
@@ -321,15 +322,15 @@ class Perceiver(object):
                 self.coactivity_map.primitives.ravel().astype(int)] = \
                 new_input.primitives
         self.input_activity[ \
-                self.coactivity_map.actions.ravel().astype(int)] = \
-                new_input.actions
+                self.coactivity_map.action.ravel().astype(int)] = \
+                new_input.action
         
         for index in range(new_input.n_feature_groups()):
             if new_input.features[index].size > 0:
                 self.input_activity[ \
                     self.coactivity_map.features[index].ravel().astype(int)] = \
                     new_input.features[index]
-
+            
         """ Find the upper bound on plasticity based on how many groups
         each feature is associated with.
         Then update the plasticity of each input to form new associations, 
@@ -483,8 +484,8 @@ class Perceiver(object):
                 whether its coactivity is high enough to add it to the
                 group.
                 """ 
-                candidate_match_strength[added_feature_indices] = 0
-                if (np.max(candidate_match_strength) < coactivity_threshold):
+                candidate_match_strength[added_feature_indices] = 0.
+                if (np.max(candidate_match_strength) <= coactivity_threshold):
                     break
 
                 max_match_strength = np.max(candidate_match_strength)
@@ -530,8 +531,9 @@ class Perceiver(object):
             nth_group = self.feature_activity.n_feature_groups()
 
             n_group_inputs = len(added_feature_indices)
+            
             n_group_features = n_group_inputs + 2
-
+            
             self.feature_activity.add_fixed_group(n_group_features)
             self.fatigue.add_fixed_group(n_group_features)
             self.previous_input.add_fixed_group(n_group_features)
@@ -585,7 +587,7 @@ class Perceiver(object):
                     matching_element_indices = self.coactivity_map.primitives \
                           [matching_feature_members]
                 elif group_ctr == -1:
-                    matching_element_indices = self.coactivity_map.actions \
+                    matching_element_indices = self.coactivity_map.action \
                           [matching_feature_members]
                 else:
                     
@@ -619,12 +621,13 @@ class Perceiver(object):
 
 
     def calculate_excitation(self, inputs):
-        """ Find the excitation level for each feature """
+        """ Find the excitation level for each feature """        
+
         scaled_input = inputs.zeros_like()
         excitation = self.feature_activity.zeros_like()        
         excitation.primitives =  \
                 copy.deepcopy(inputs.primitives)
-        excitation.actions = copy.deepcopy(inputs.actions)
+        excitation.action = copy.deepcopy(inputs.action)
             
         for group_index in range(inputs.n_feature_groups()):
             """ Scaling the input in this way:
@@ -662,7 +665,7 @@ class Perceiver(object):
         """
         self.feature_activity = excitation.zeros_like()
         self.feature_activity.primitives = excitation.primitives
-        #self.feature_activity.actions = excitation.actions
+        self.feature_activity.action = excitation.action
         
         for group_index in range(excitation.n_feature_groups()):
             vote = excitation.features[group_index] * \
@@ -782,7 +785,14 @@ class Perceiver(object):
             
             
     def visualize(self, save_eps=False):
-        viz_utils.visualize_grouper_coactivity(self.coactivity, \
+        symmetric_coactivity = self.coactivity[:self.n_inputs, 
+                               :self.n_inputs] * \
+                               self.coactivity[:self.n_inputs, 
+                               :self.n_inputs].transpose()
+
+        #viz_utils.visualize_grouper_coactivity(self.coactivity, \
+        #                                  self.n_inputs, save_eps)
+        viz_utils.visualize_grouper_coactivity(symmetric_coactivity, \
                                           self.n_inputs, save_eps)
         viz_utils.visualize_grouper_hierarchy(self, save_eps)
         #viz_utils.visualize_feature_set(self, save_eps)

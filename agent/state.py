@@ -10,7 +10,7 @@ class State(object):
         
         self.sensors = np.zeros((num_sensors,1))
         self.primitives = np.zeros((num_primitives,1))
-        self.actions = np.zeros((num_actions,1))
+        self.action = np.zeros((num_actions,1))
         self.features = []
         
         
@@ -22,7 +22,7 @@ class State(object):
         zero_state = copy.deepcopy(self)
         zero_state.sensors = np.zeros_like(self.sensors, dtype=state_type)
         zero_state.primitives = np.zeros_like(self.primitives, dtype=state_type)
-        zero_state.actions = np.zeros_like(self.actions, dtype=state_type)
+        zero_state.action = np.zeros_like(self.action, dtype=state_type)
         
         zero_state.features = [np.zeros_like(f, dtype=state_type) 
                                for f in self.features]
@@ -66,7 +66,7 @@ class State(object):
         
         new_state.sensors = self.sensors + other_state.sensors
         new_state.primitives = self.primitives + other_state.primitives
-        new_state.actions = self.actions + other_state.actions
+        new_state.action = self.action + other_state.action
         
         for i in range(self.n_feature_groups()):
             new_state.features[i] = self.features[i] + other_state.features[i]
@@ -83,8 +83,8 @@ class State(object):
                                               other_state.sensors)
         new_state.primitives = utils.bounded_sum(self.primitives, 
                                                  other_state.primitives)
-        new_state.actions = utils.bounded_sum(self.actions, 
-                                              other_state.actions)
+        new_state.action = utils.bounded_sum(self.action, 
+                                              other_state.action)
         
         for i in range(self.n_feature_groups()):
             new_state.features[i] = utils.bounded_sum(self.features[i], 
@@ -98,7 +98,7 @@ class State(object):
         
         new_state.sensors = self.sensors * multiplier
         new_state.primitives = self.primitives * multiplier
-        new_state.actions = self.actions * multiplier
+        new_state.action = self.action * multiplier
         
         for i in range(self.n_feature_groups()):
             new_state.features[i] = self.features[i] * multiplier
@@ -118,9 +118,9 @@ class State(object):
         integrated_state.primitives = utils.bounded_sum(
                                     self.primitives * (1 - decay_rate), 
                                     new_state.primitives)
-        integrated_state.actions = utils.bounded_sum(
-                                    self.actions * (1 - decay_rate), 
-                                    new_state.actions)
+        integrated_state.action = utils.bounded_sum(
+                                    self.action * (1 - decay_rate), 
+                                    new_state.action)
 
         for index in range(self.n_feature_groups()):
             integrated_state.features[index] = utils.bounded_sum(
@@ -130,17 +130,17 @@ class State(object):
         return integrated_state
             
             
-    def decay(self, factor):
+        '''def decay(self, factor):
         """ Decay all values of the state by a constant factor.
         Assumes factor is a scalar 0 <= factor < 1
         """
         self.sensors *= factor
         self.primitives *= factor
-        self.actions *= factor
+        self.action *= factor
 
         for i in range(len(self.features)):
             self.features[i] *= factor 
-
+        '''
                
     def n_feature_groups(self):
         return len(self.features)
@@ -158,7 +158,7 @@ class State(object):
         total = 0
         total += self.sensors.size
         total += self.primitives.size
-        total += self.actions.size
+        total += self.action.size
         for group_index in range(len(self.features)):
             total += self.features[group_index].size
 

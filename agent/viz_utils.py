@@ -12,19 +12,18 @@ world-specific interpretation of Becca's information. That should be
 taken care of by individual worlds.  
 """
 
-def visualize_grouper_coactivity(correlation, size=0, 
+def visualize_grouper_coactivity(coactivity, size=0, 
                                     save_eps=False, 
-                                    epsfilename='log/correlation.eps'):
-    """ Produce a visual representation of the correlation matrix """
+                                    epsfilename='log/coactivity.eps'):
+    """ Produce a visual representation of the coactivity matrix """
     
     if size == 0:
-        size = correlation.shape[0]
-    fig = plt.figure("perceiver correlation visualization")
+        size = coactivity.shape[0]
+    fig = plt.figure("perceiver coactivity visualization")
     plt.gray()
-    im = plt.imshow(correlation[0:size, 0:size])
+    im = plt.imshow(coactivity[0:size, 0:size])
     im.set_interpolation('nearest')
-
-    plt.title("Correlation among inputs")
+    plt.title("Coactivity among inputs")
     plt.draw()
     
     if save_eps:
@@ -69,7 +68,7 @@ def visualize_grouper_hierarchy(perceiver, save_eps=False,
     node_text[0] = 's'  
     """ node 1 represents the primitives group """
     node_text[1] = 'p'  
-    """ node 2 represents the actions group """
+    """ node 2 represents the action group """
     node_text[2] = 'a'  
     
     """ Display the nodes """   
@@ -244,7 +243,7 @@ def visualize_feature(grouper, group, feature, label=None):
         elif group[feature_index] == -2:
             group_state.primitives[feature[feature_index]] = 1
         elif group[feature_index] == -1:
-            group_state.actions[feature[feature_index]] = 1
+            group_state.action[feature[feature_index]] = 1
         else:
             group_state.features[group[feature_index]] \
                               [feature[feature_index]] = 1
@@ -263,7 +262,7 @@ def visualize_feature(grouper, group, feature, label=None):
 def reduce_feature_set(perceiver):
     """ Reduce the entire feature set (every feature from every group) 
     to their low-level constituents in terms of sensors, primitives, 
-    and actions.
+    and action.
     Returns a list of lists of State objects.
     """
     
@@ -377,9 +376,9 @@ def visualize_transition(model, transition_index, save_eps=False,
     context.primitives = model.context.primitives[:,transition_index]
     cause.primitives = model.cause.primitives[:,transition_index]
     effect.primitives = model.effect.primitives[:,transition_index]
-    context.actions = model.context.actions[:,transition_index]
-    cause.actions = model.cause.actions[:,transition_index]
-    effect.actions = model.effect.actions[:,transition_index]
+    context.action = model.context.action[:,transition_index]
+    cause.action = model.cause.action[:,transition_index]
+    effect.action = model.effect.action[:,transition_index]
     
     for group_index in range(len(model.context.features)):
         context.features.append(model.context.features \
@@ -409,9 +408,9 @@ def visualize_transition(model, transition_index, save_eps=False,
                     
 def reduce_state(full_state, perceiver):
     """ Reduce a state, projecting it down to a representation in only
-    sensors, primitives, and actions. 
+    sensors, primitives, and action. 
     Returns a state, the same size as the input state, in which 
-    only the sensors, primitives, and actions have non-zero elements.
+    only the sensors, primitives, and action have non-zero elements.
     """
     
     """ Expand any active features, group by group, starting at the
@@ -419,11 +418,11 @@ def reduce_state(full_state, perceiver):
     Features from higher numbered groups always reduce into lower numbered
     groups. Counting down allows for a cascading expansion of high-level
     features into their lower level component parts, until they are
-    completely broken down into sensors, primitives, and actions.
+    completely broken down into sensors, primitives, and action.
     
     Lower numbered feature groups that contribute features as inputs
     to higher numbered feature groups are considered their parents.
-    The sensors, primitives, and actions groups are the original parents 
+    The sensors, primitives, and action groups are the original parents 
     of all other features.
     """
     state = copy.deepcopy(full_state)
@@ -504,7 +503,7 @@ def reduce_state(full_state, perceiver):
                             that the activity of the lower level features
                             never exceeds 1.
                             """
-                            """ Handle sensors, primitives, and actions
+                            """ Handle sensors, primitives, and action
                             separately.
                             """
                             if parent_group_index == -3:
@@ -522,10 +521,10 @@ def reduce_state(full_state, perceiver):
                                         [parent_feature_indices.ravel()], \
                                         propagated_activation)
                             elif parent_group_index == -1:
-                                state.actions \
+                                state.action \
                                         [parent_feature_indices.ravel()] = \
                                         utils.bounded_sum( \
-                                        state.actions \
+                                        state.action \
                                         [parent_feature_indices.ravel()], \
                                         propagated_activation)
                             else:
@@ -571,7 +570,7 @@ def visualize_state(state, label='state', y_min=0.25, y_max=0.75,
     total_width += x_spacer_width
     total_width += state.primitives.size
     total_width += x_spacer_width
-    total_width += state.actions.size
+    total_width += state.action.size
     
     for indx in range(state.n_feature_groups()):
         total_width += x_spacer_width
@@ -590,8 +589,8 @@ def visualize_state(state, label='state', y_min=0.25, y_max=0.75,
         x += 1
         
     x += x_spacer_width
-    for indx in range(state.actions.size):
-        rectPatch(x, x + 1, y_min, y_max, state.actions[indx], axes)
+    for indx in range(state.action.size):
+        rectPatch(x, x + 1, y_min, y_max, state.action[indx], axes)
         x += 1
     
     for feature_group_indx in range(state.n_feature_groups()):    

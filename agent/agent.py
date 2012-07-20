@@ -28,7 +28,7 @@ class Agent(object):
         self.num_actions = num_actions
 
         self.reward = 0
-        self.actions = np.zeros(self.num_actions)
+        self.action = np.zeros(self.num_actions)
         
         self.timestep = 0
         self.graphing = True
@@ -57,7 +57,7 @@ class Agent(object):
         """
         feature_activity = self.perceiver.step(sensors, 
                                                      primitives, 
-                                                     self.actions)
+                                                     self.action)
         
         '''viz_utils.visualize_state(feature_activity, label='feature_activity')
         print self.timestep
@@ -67,11 +67,11 @@ class Agent(object):
         Reinforcement learner
         ======================================================
         """
-        self.actions = self.learner.step(feature_activity, reward) 
+        self.action = self.learner.step(feature_activity, reward) 
         
         self.log()
 
-        return self.actions
+        return self.action
 
     
     def log(self):
