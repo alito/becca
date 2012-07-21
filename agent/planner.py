@@ -16,6 +16,11 @@ class Planner(object):
         """
         self.OBSERVATION_FRACTION = 0.3    # real, 0 < x < 1
 
+        """ Add just a bit of noise to the vote.
+        Serves to randomize selection among nearly equal votes.
+        """
+        self.VOTE_NOISE = 1e-6            # real, 0 < x < 1, typically small
+
         self.action = np.zeros((num_actions,1))
 
 
@@ -203,6 +208,8 @@ class Planner(object):
             goal = None
             return action, goal
 
+        transition_vote += np.random.random_sample(transition_vote.shape) * \
+                            self.VOTE_NOISE
         
         max_transition_index = np.argmax(transition_vote)
         

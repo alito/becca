@@ -198,25 +198,17 @@ class Model(object):
                 
             self.add_new_transition()
 
-            #matching_transition_index, reward_update_rate = \
-            #        self.add_new_transition(current_context, 
-            #                                current_cause, 
-            #                                new_effect)
         else: 
-            # debug
             matching_transition_similarities = np.zeros(context_similarity.shape)
             matching_transition_similarities[transition_match_indices] = \
                          context_similarity[transition_match_indices]
+
             if verbose_flag == True:
                 label = 'matched transition, similarity ' + str(np.max(matching_transition_similarities))
                 viz_utils.visualize_transition(self, np.argmax(matching_transition_similarities), 
                                                label=label)
 
             self.update_transition(np.argmax(matching_transition_similarities))           
-            #matching_transition_index, reward_update_rate = \
-            #        self.update_transition(context_similarity, 
-            #                                         transition_match_indices,
-            #                                         new_effect)
 
         self.clean_library()
 
@@ -359,7 +351,7 @@ class Model(object):
                                 new_context.features[group_index].ravel()
             self.cause.features[group_index][:, matching_transition_index] = \
                                 new_cause.features[group_index].ravel()
-        
+                                
         self.count[matching_transition_index] =  1.
         self.n_transitions += 1  
 
@@ -447,8 +439,11 @@ class Model(object):
         '''
     
     
-    def update_transition(self, matching_transition_index, 
+    def update_transition(self, matching_transition_index,
                           update_strength=1.0, wait=False):
+        #debug
+        #def update_transition(self, matching_transition_index, 
+        #                  update_strength=1.0, wait=False):
         """ Add a new entry in the update queue.
         Each entry is formatted as a tuple:
         0) A timer that counts down while the effect and reward 
@@ -464,9 +459,13 @@ class Model(object):
         timer = self.TRACE_LENGTH + 1
         if wait:
             timer += 1
-            
+       
+        #debug    
+        #self.transition_update_q.append([timer, matching_transition_index, 
+        #                                 update_strength])
         self.transition_update_q.append([timer, matching_transition_index, 
-                                         update_strength])
+                                        update_strength, 
+                                        copy.deepcopy(self.current_context)])
         
         return
     
@@ -485,6 +484,8 @@ class Model(object):
                 update_strength = self.transition_update_q[i][2] 
                 
                 """ Calculate the current effect and the total reward """
+                #debug
+                new_context = self.transition_update_q[i][3] 
                 new_effect = self.collapse(self.feature_activity_history)
                 reward = self.collapse(self.reward_history)
 
@@ -516,17 +517,31 @@ class Model(object):
                 self.reward_value[matching_transition_index] += \
                                             max_step_size * update_rate
                 
+                self.context.primitives[:, matching_transition_index] = \
+                        self.context.primitives[:, matching_transition_index] * \
+                        (1 - update_rate) + new_context.primitives[:,0] * \
+                        update_rate
                 self.effect.primitives[:, matching_transition_index] = \
                         self.effect.primitives[:, matching_transition_index] * \
                         (1 - update_rate) + new_effect.primitives[:,0] * \
                         update_rate
                 
+                self.context.action[:, matching_transition_index] = \
+                        self.context.action[:, matching_transition_index] * \
+                        (1 - update_rate) + new_context.action[:,0] * \
+                        update_rate
                 self.effect.action[:, matching_transition_index] = \
                         self.effect.action[:, matching_transition_index] * \
                         (1 - update_rate) + new_effect.action[:,0] * \
                         update_rate
                 
                 for group_index in range(self.n_feature_groups()):
+                    self.context.features[group_index] \
+                            [:, matching_transition_index] = \
+                            self.context.features[group_index] \
+                            [:, matching_transition_index] * \
+                            (1 - update_rate) + \
+                            new_context.features[group_index][:,0] * update_rate
                     self.effect.features[group_index] \
                             [:, matching_transition_index] = \
                             self.effect.features[group_index] \
@@ -830,13 +845,20 @@ class Model(object):
         self.effect.features.append(np.zeros(size))
         self.next_context.add_fixed_group(n_features)
         
-        for i in range(len(self.attended_feature_history)):
-            self.attended_feature_history[i].add_fixed_group(n_features)
-            self.feature_activity_history[i].add_fixed_group(n_features)
+        for group_index in range(len(self.attended_feature_history)):
+            self.attended_feature_history[group_index].\
+                                                add_fixed_group(n_features)
+            self.feature_activity_history[group_index].\
+                                                add_fixed_group(n_features)
+            
+        for group_index in range(len(self.transition_update_q)):
+            self.transition_update_q[group_index][3].\
+                                                add_fixed_group(n_features)
 
-        #for i in range(len(self.attended_feature_history)):
-        ##    print 'self.attended_feature_history[', i , '].n_feature_groups()', self.attended_feature_history[i].n_feature_groups()
-        #    print 'self.feature_activity_history[', i , '].n_feature_groups()', self.feature_activity_history[i].n_feature_groups()
+
+        #for group_index in range(len(self.attended_feature_history)):
+        ##    print 'self.attended_feature_history[', group_index , '].n_feature_groups()', self.attended_feature_history[group_index].n_feature_groups()
+        #    print 'self.feature_activity_history[', group_index , '].n_feature_groups()', self.feature_activity_history[group_index].n_feature_groups()
         
         '''
         def add_group(self):

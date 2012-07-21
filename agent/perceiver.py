@@ -531,7 +531,6 @@ class Perceiver(object):
             nth_group = self.feature_activity.n_feature_groups()
 
             n_group_inputs = len(added_feature_indices)
-            
             n_group_features = n_group_inputs + 2
             
             self.feature_activity.add_fixed_group(n_group_features)
