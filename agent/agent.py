@@ -1,5 +1,5 @@
 
-from grouper import Grouper
+from perceiver import Perceiver
 from learner import Learner
 import viz_utils
 
@@ -37,7 +37,7 @@ class Agent(object):
         self.reward_history = []
         self.reward_steps = []
         
-        self.grouper = Grouper(num_sensors, num_primitives, num_actions, 
+        self.perceiver = Perceiver(num_sensors, num_primitives, num_actions, 
                                 max_num_features)
         self.learner = Learner(num_primitives, num_actions)
  
@@ -55,10 +55,14 @@ class Agent(object):
         Feature creator
         ======================================================
         """
-        feature_activity = self.grouper.step(sensors, 
+        feature_activity = self.perceiver.step(sensors, 
                                                      primitives, 
                                                      self.actions)
         
+        '''viz_utils.visualize_state(feature_activity, label='feature_activity')
+        print self.timestep
+        viz_utils.force_redraw()
+        '''
         """
         Reinforcement learner
         ======================================================
@@ -90,11 +94,11 @@ class Agent(object):
             self.record_reward_history()
             self.show_reward_history(save_eps=True)
             print "agent is ", self.timestep ," timesteps old" 
-            print self.grouper.n_inputs , " inputs total"  
+            #print self.perceiver.n_inputs , " inputs total"  
             #print "Total size is about ", self.size() / 10 ** 6 , \
             #        " million elements" 
             
-            #self.grouper.visualize(save_eps=True)
+            self.perceiver.visualize(save_eps=True)
             #self.learner.visualize()
  
     
@@ -107,7 +111,7 @@ class Agent(object):
     def show_reward_history(self, show=False, save_eps=False,
                             epsfilename='log/reward_history.eps'):
         if self.graphing:
-            fig = plt.figure("Reward history")
+            plt.figure(1)
             plt.plot(self.reward_steps, self.reward_history)
             plt.xlabel("time step")
             plt.ylabel("average reward")
@@ -126,7 +130,7 @@ class Agent(object):
         use of memory.
         """
         total = 0
-        total += self.grouper.size()
+        total += self.perceiver.size()
         total += self.learner.size()
         
         return total
@@ -143,7 +147,7 @@ class Agent(object):
         performance = np.mean(self.reward_history[-tail_length:])
         print("Final performance is %f" % performance)
         
-        self.grouper.visualize(save_eps=True)
+        self.perceiver.visualize(save_eps=True)
         self.learner.visualize(save_eps=True)
         self.show_reward_history(save_eps=True)
 

@@ -26,6 +26,7 @@ class Learner(object):
         the grouper constructor
         """
         self.WORKING_MEMORY_DECAY_RATE = 0.4      # real, 0 < x <= 1
+        #self.WORKING_MEMORY_DECAY_RATE = 1.      # real, 0 < x <= 1
         
         self.model = Model(num_primitives, num_actions)
         self.planner = Planner(num_actions)
@@ -35,15 +36,31 @@ class Learner(object):
         self.previous_working_memory = State(num_sensors, num_primitives, 
                                              num_actions)
         self.working_memory = State(num_sensors, num_primitives, num_actions)
-
+        
 
     def step(self, feature_activity, reward):
         
-        self.grow_states(feature_activity)
+        self.maintain_state_size(feature_activity)
         
+        self.verbose_flag = False
+        if np.random.random_sample() < 0.:
+            self.verbose_flag = True
+            
+        if self.verbose_flag:
+            #viz_utils.visualize_state(feature_activity, label='feature_activity')
+            pass
+            
         self.previous_attended_feature = copy.deepcopy(self.attended_feature)
 
+        #compare feature activity to predicted feature activity
+        #update the transition used to make the prediction
+        #both the expected value of the effect, and the expected error on
+        #those values
+        #the details of this should be taken care of by the model
+
         """ Attend to a single feature """
+        #use the prediction of the feature activity and the current feature 
+        #activity to help direct attention
         self.attended_feature = self.attend(feature_activity)
         
         """ Perform leaky integration on attended feature to get 
@@ -57,14 +74,17 @@ class Learner(object):
                                            self.attended_feature, 
                                            self.WORKING_MEMORY_DECAY_RATE)
         
-        """ Associate the reward with each transition """
+        """ Update the model """
         self.model.step(self.pre_previous_working_memory, 
                          self.previous_attended_feature, 
-                         feature_activity, reward)
+                         feature_activity, reward, self.verbose_flag)
 
         """ Decide on an action """
         self.actions, deliberately_acted = \
-                        self.planner.step(self.model, self.working_memory)
+                        self.planner.step(self.model, self.working_memory, 
+                        self.verbose_flag)
+        #prediction, confidence from planner (expected value, expected error)
+        #planning and prediction are intertwined. 
         
         """ If a deliberate action was made on this timestep,
         force the agent to attend to it. This ensures that 
@@ -85,25 +105,21 @@ class Learner(object):
         return self.actions
 
 
-    def grow_states(self, feature_activity):
+    def maintain_state_size(self, feature_activity):
         """ Checks whether feature_activity is larger than any of 
         the learner's state variables, and grows them as appropriate
         by adding states and features.
         """
         n_learner_feature_groups = self.goal.n_feature_groups()
         
-        for group_index in range(feature_activity.n_feature_groups()):
-            
-            """ Add the group if necessary """
-            if group_index >= n_learner_feature_groups:
-                self.add_group()
-
-            """ Add as many features as necessary """
-            n_features = feature_activity.n_features_in_group(group_index)
-            n_learner_features = self.goal.n_features_in_group(group_index)
-            for feature_count in range(n_features - n_learner_features):
-                self.add_feature(group_index)
-
+        if n_learner_feature_groups < feature_activity.n_feature_groups():
+            n_features = feature_activity.features[-1].size
+                                           
+            self.working_memory.add_fixed_group(n_features)
+            self.previous_working_memory.add_fixed_group(n_features)
+            self.attended_feature.add_fixed_group(n_features)
+            self.goal.add_fixed_group(n_features)
+            self.model.add_fixed_group(n_features)
         return
     
     
@@ -167,10 +183,10 @@ class Learner(object):
         if np.random.random_sample(1) < 0.01:
             print "attention report "
             viz_utils.visualize_state(feature_activity, label='feature_activity')
+            viz_utils.force_redraw()
             viz_utils.visualize_state(self.attended_feature, label='attended_feature')
-            import matplotlib.pyplot
-            matplotlib.pyplot.show()
-        '''
+            viz_utils.force_redraw()
+         '''
             
         return self.attended_feature
 
@@ -178,7 +194,7 @@ class Learner(object):
     def calculate_salience(self, salience, feature_activity, goal,
                            max_salience_val, max_salience_grp, 
                            max_salience_indx, group_indx, deliberate=False):
-    
+        
         salience = self.SALIENCE_NOISE * np.random.random_sample(salience.shape)
          
         salience += feature_activity * (1 + goal)
@@ -206,19 +222,8 @@ class Learner(object):
         '''
                 
         return max_salience_val, max_salience_grp, max_salience_indx
-    
 
-    def add_group(self):
-                
-        self.working_memory.add_group()
-        self.previous_working_memory.add_group()
-        self.attended_feature.add_group()
-        self.goal.add_group()
-        self.model.add_group()
-        return
-
-
-    def add_feature(self, nth_group):
+        '''def add_feature(self, nth_group):
         
         self.working_memory.add_feature(nth_group)
         self.previous_working_memory.add_feature(nth_group)
@@ -226,7 +231,7 @@ class Learner(object):
         self.goal.add_feature(nth_group)
         self.model.add_feature(nth_group)
         return
-    
+        '''
                    
     def size(self):
         """ Determine the approximate number of elements being used by the

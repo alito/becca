@@ -51,11 +51,13 @@ class World(BaseWorld):
 
         """ Occasionally add a perturbation to the action to knock it into 
         a different state. """
-        if random.random() < self.JUMP_FRACTION:
-            action += round(random.random() * 6) * \
+        if np.random.random_sample() < self.JUMP_FRACTION:
+            action += round(np.random.random_sample() * 6) * \
                     np.round(np.random.random_sample(self.num_actions))
                     
-            #print('jumping')
+            print('jumping')
+        else:
+            print('not jumping')
                 
 
         energy = action[0] + action[1]
@@ -90,7 +92,7 @@ class World(BaseWorld):
                     
     def set_agent_parameters(self, agent):
         """ Prevent the agent from forming any groups """
-        agent.grouper.NEW_GROUP_THRESHOLD = 1.0
+        agent.perceiver.NEW_GROUP_THRESHOLD = 1.0
 
 
     def display(self):

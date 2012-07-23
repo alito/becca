@@ -14,13 +14,12 @@ class Planner(object):
         """ The approximate fraction of time steps on which the 
         planner intentionally does nothing so that the model can observe.
         """
-        self.OBSERVATION_FRACTION = 0.5    # real, 0 < x < 1
+        self.OBSERVATION_FRACTION = 0.3    # real, 0 < x < 1
 
-        self.deliberately_acted = False
         self.action = np.zeros((num_actions,1))
 
 
-    def step(self, model, working_memory):
+    def step(self, model, working_memory, verbose_flag=False):
         """ Choose an action at each time step """
         
         """ First, choose a reactive action """
@@ -38,18 +37,23 @@ class Planner(object):
             
             """ Occasionally explore when making a deliberate action """
             if np.random.random_sample() < self.EXPLORATION_FRACTION:
-                #print('exploring')
+                
+                if verbose_flag:
+                    print('exploring')
+                
                 self.action = self.explore()
                             
                 """ Attend to any deliberate actions """
                 deliberately_acted = True
 
             else:
-                #print('deliberating')
+                if verbose_flag:
+                    print('deliberating')
+                
                 """ The rest of the time, deliberately choose an action.
                 Choose features as goals, in addition to actions.
                 """
-                (self.action, goal) = self.deliberate(model, working_memory)
+                (self.action, goal) = self.deliberate(model, working_memory, verbose_flag)
 
                 """ Pass goal to model """ 
                 model.update_goal(goal)
@@ -140,7 +144,7 @@ class Planner(object):
         return action
         '''
 
-    def deliberate(self, model, working_memory):
+    def deliberate(self, model, working_memory, verbose_flag):
         """
         Deliberate, choosing goals based on the current working memory.
         Find the transition that is best suited based on:
@@ -192,10 +196,13 @@ class Planner(object):
         """
         #debug--have count be a factor?
         #transition_vote = value * similarity
+        #
+        #incorporate both the expected value of the reward+goal, as well as 
+        #the confidence (expected error) into the vote
         transition_vote = value.ravel() * similarity.ravel() * count_weight.ravel()
         
         max_transition_index = np.argmax(transition_vote)
-
+        
         goal = working_memory.zeros_like()        
         goal.primitives = model.cause.primitives[:, max_transition_index]
         goal.actions = model.cause.actions[:, max_transition_index]
@@ -211,6 +218,25 @@ class Planner(object):
             action[goal.actions > 0] = 1
             goal.actions = np.zeros(np.size(goal.actions))
 
+        if verbose_flag:
+            import viz_utils
+            import matplotlib.pyplot as plt
+            
+            viz_utils.visualize_state(working_memory, label='working_memory')
+            #viz_utils.visualize_state(goal, label='goal')
+            for i in range(4):
+                best_transition_vote = np.argmax(transition_vote)
+                label = str(i) + 'th best transition: ' + str(best_transition_vote)
+                viz_utils.visualize_transition(model, best_transition_vote, 
+                                               label=label)
+                transition_vote[best_transition_vote] = -10.
+                
+            print 'actions: ', action.ravel()
+
+            plt.show()
+            
+            
+        #return a prediction
         return action, goal
     
     

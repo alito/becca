@@ -48,7 +48,7 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.TASK_DURATION = 10 ** 2
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 4
         self.LIFESPAN = 10 ** 8
         self.FOV_FRACTION = 0.2
         
@@ -112,7 +112,8 @@ class World(BaseWorld):
             self.image_data = plt.imread(filename)
             """ Convert it to grayscale if it's in color """
             if len(self.image_data.shape) == 3:
-                self.image_data = np.sum(self.image_data, axis=2) / 3.0
+                self.image_data = np.sum(self.image_data, axis=2) / \
+                                    self.image_data.shape[2]
             
         self.fov_height = np.minimum(self.image_data.shape[0], 
                                      self.image_data.shape[1]) * self.FOV_FRACTION
@@ -222,11 +223,13 @@ class World(BaseWorld):
         agent.learner.planner.OBSERVATION_FRACTION = 0.0
         
         """ Build more tightly co-active groups """
-        agent.grouper.MIN_SIG_COACTIVITY = 0.27
-        #agent.grouper.MIN_SIG_COACTIVITY = 0.027
+        #agent.perceiver.MIN_SIG_COACTIVITY = 0.29
+        #agent.perceiver.MIN_SIG_COACTIVITY = 0.1
+        agent.perceiver.MIN_SIG_COACTIVITY = 0.001
+        agent.perceiver.NEW_GROUP_THRESHOLD = 0.01
         
         """ Nucleate groups more rapidly """
-        agent.grouper.PLASTICITY_UPDATE_RATE = 2 * 10 ** (-2) # debug
+        #agent.perceiver.PLASTICITY_UPDATE_RATE = 2 * 10 ** (-2) # debug
 
         """ Don't create a model """
         agent.learner.model.MAX_ENTRIES = 10 ** 2

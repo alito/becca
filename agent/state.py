@@ -29,7 +29,18 @@ class State(object):
         return zero_state
         
 
-    def add_group(self, new_array=None, dtype=np.float):
+    def add_fixed_group(self, num_features, new_array=None, dtype=np.float):
+        """ Add a group with a known number of features """
+        group_type = dtype
+        if new_array == None:
+            self.features.append(np.zeros((num_features,1), dtype=group_type))
+        else:
+            self.features.append(new_array)
+            
+        return None
+        
+        
+        """ def add_group(self, new_array=None, dtype=np.float):
         group_type = dtype
         if new_array == None:
             self.features.append(np.zeros((0,1), dtype=group_type))
@@ -37,14 +48,31 @@ class State(object):
             self.features.append(new_array)
             
         return None
+        """
         
-        
-    def add_feature(self, nth_group, value=0):
+        """def add_feature(self, nth_group, value=0):
                     
         self.features[nth_group] = np.vstack((self.features[nth_group], 
                                               value * np.ones((1,1))))
         return None
-    
+        """
+
+
+    def unbounded_sum(self, other_state):
+        """ Add another State to this State. 
+        Values of individual features may have a magnitude greater than 1.
+        """
+        new_state = other_state.zeros_like()
+        
+        new_state.sensors = self.sensors + other_state.sensors
+        new_state.primitives = self.primitives + other_state.primitives
+        new_state.actions = self.actions + other_state.actions
+        
+        for i in range(self.n_feature_groups()):
+            new_state.features[i] = self.features[i] + other_state.features[i]
+            
+        return new_state
+        
 
     def bounded_sum(self, other_state):
         """ Add another State to this State, 
@@ -61,6 +89,20 @@ class State(object):
         for i in range(self.n_feature_groups()):
             new_state.features[i] = utils.bounded_sum(self.features[i], 
                                                       other_state.features[i])
+        return new_state
+
+    
+    def multiply(self, multiplier):
+        """ Multiply this State by a scalar """
+        new_state = self.zeros_like()
+        
+        new_state.sensors = self.sensors * multiplier
+        new_state.primitives = self.primitives * multiplier
+        new_state.actions = self.actions * multiplier
+        
+        for i in range(self.n_feature_groups()):
+            new_state.features[i] = self.features[i] * multiplier
+            
         return new_state
 
     

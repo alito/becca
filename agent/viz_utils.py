@@ -19,7 +19,7 @@ def visualize_grouper_coactivity(correlation, size=0,
     
     if size == 0:
         size = correlation.shape[0]
-    fig = plt.figure("grouper correlation visualization")
+    fig = plt.figure("perceiver correlation visualization")
     plt.gray()
     im = plt.imshow(correlation[0:size, 0:size])
     im.set_interpolation('nearest')
@@ -33,7 +33,7 @@ def visualize_grouper_coactivity(correlation, size=0,
     return
   
     
-def visualize_grouper_hierarchy(grouper, save_eps=False, 
+def visualize_grouper_hierarchy(perceiver, save_eps=False, 
                                   epsfilename='log/hierarchy.eps'):
     """ Produce a visual representation of the feature group 
     inheritance hierarchy. 
@@ -50,7 +50,7 @@ def visualize_grouper_hierarchy(grouper, save_eps=False,
     any feature group may have inputs coming from any lower-numbered 
     feature group.
     """
-    n_nodes = grouper.grouping_map_group.n_feature_groups() + 3
+    n_nodes = perceiver.grouping_map_group.n_feature_groups() + 3
     delta_angle = 2. * np.pi / float(n_nodes)
     nodes = np.zeros((n_nodes,2))
     node_text = []
@@ -74,7 +74,7 @@ def visualize_grouper_hierarchy(grouper, save_eps=False,
     
     """ Display the nodes """   
     """ Prepare the plot """         
-    fig = plt.figure("grouper hierarchy visualization")
+    fig = plt.figure("perceiver hierarchy visualization")
     fig.clf()
     axes = fig.add_subplot(1,1,1)
     axes.set_aspect('equal')
@@ -91,9 +91,9 @@ def visualize_grouper_hierarchy(grouper, save_eps=False,
     """
     line_weight = np.zeros((n_nodes - 3, n_nodes), 'float')
     for group_index in range(n_nodes - 3):
-        for member_index in range(grouper.\
+        for member_index in range(perceiver.\
                           grouping_map_group.features[group_index].size):
-            node_index =  grouper.grouping_map_group.features[group_index] \
+            node_index =  perceiver.grouping_map_group.features[group_index] \
                                           [member_index] + 3
             line_weight[group_index, node_index] += 1
             
@@ -181,6 +181,49 @@ def visualize_feature_set(grouper, save_eps=False,
     return
   
       
+def visualize_feature_spacing(grouper, save_eps=False, 
+                          epsfilename='log/features.eps'):
+    """ Visualize all the groups in all the features """
+    label = 'feature_spacing'
+    fig = plt.figure(label)
+    fig.clf()
+    plt.ioff()
+    plt.title(label)
+    
+    distances = np.zeros((0,1))
+    fmap = grouper.feature_map
+    n_feature_groups = len(fmap.features)
+    for group_index in range(n_feature_groups):
+        for feature_index in range(fmap.features[group_index].shape[0]):
+            similarities = utils.similarity( 
+                fmap.features[group_index][feature_index,:], 
+                fmap.features[group_index].transpose())
+            
+            #debug
+            '''smalls =  np.flatnonzero(np.logical_and(1-similarities < 0.1, 1-similarities > 0.00001))
+            if smalls.size > 0:
+                print '======'
+                print 'group ', group_index, 'feature ', feature_index, 
+                print fmap.features[group_index][feature_index,:]
+                print 'matches ', smalls
+                print fmap.features[group_index][smalls,:]
+                #print 'all features: '
+                #print fmap.features[group_index]
+            '''
+            similarities = np.delete(similarities, [feature_index])
+            similarities = similarities[:,np.newaxis]
+            distances = np.concatenate((distances, 1-similarities))
+            
+    if n_feature_groups > 0:
+        plt.hist(distances, bins=120)
+        force_redraw()
+              
+        if save_eps:
+            fig.savefig(epsfilename, format='eps')
+            
+    return
+  
+      
 def visualize_feature(grouper, group, feature, label=None):
     """ Visualize a feature or list of features """
     
@@ -193,7 +236,7 @@ def visualize_feature(grouper, group, feature, label=None):
     """ Create a state with the listed features active, 
     then visualize that.
     """
-    group_state = grouper.previous_input.zeros_like()
+    group_state = perceiver.previous_input.zeros_like()
     
     for feature_index in range(len(feature)):
         if group[feature_index] == -3:
@@ -217,25 +260,25 @@ def visualize_feature(grouper, group, feature, label=None):
     return
   
       
-def reduce_feature_set(grouper):
+def reduce_feature_set(perceiver):
     """ Reduce the entire feature set (every feature from every group) 
     to their low-level constituents in terms of sensors, primitives, 
     and actions.
     Returns a list of lists of State objects.
     """
     
-    n_feature_groups = grouper.previous_input.n_feature_groups()    
+    n_feature_groups = perceiver.previous_input.n_feature_groups()    
     reduced_features = []
 
     for group_index in range(n_feature_groups):
-        current_group = grouper.previous_input.features[group_index]
+        current_group = perceiver.previous_input.features[group_index]
         n_features = current_group.size
         reduced_features_this_group = []
     
         for feature_index in range(n_features):
-            current_feature_state = grouper.previous_input.zeros_like()            
+            current_feature_state = perceiver.previous_input.zeros_like()            
             current_feature_state.features[group_index][feature_index] = 1.0           
-            reduced_state = reduce_state(current_feature_state, grouper)
+            reduced_state = reduce_state(current_feature_state, perceiver)
             reduced_features_this_group.append(reduced_state)   
         
         reduced_features.append(reduced_features_this_group)
@@ -305,9 +348,11 @@ def visualize_model(model, n=None):
     
         
 def visualize_transition(model, transition_index, save_eps=False, 
-                          epsfilename='log/transition.eps'):
+                          label=None, epsfilename='log/transition.eps'):
     """ Visualize a single model transition """
-    label = 'Transition ' + str(transition_index)
+    if label==None:
+        label = 'Transition ' + str(transition_index)
+        
     fig = plt.figure(label)
     fig.clf()
     plt.ioff()
@@ -317,8 +362,10 @@ def visualize_transition(model, transition_index, save_eps=False,
     count = model.count[transition_index]
     reward_value = model.reward_value[transition_index]
     goal_value = model.goal_value[transition_index]
-    plt.title(label + '  count: ' + str(count) + '  reward value: ' + 
+    plt.title('Transition ' + str(transition_index)  + 
+              '  count: ' + str(count) + '  reward value: ' + 
               str(reward_value) + '  goal value: ' + str(goal_value))
+    plt.xlabel(label)
     
     context = state.State()
     cause = state.State()
@@ -360,7 +407,7 @@ def visualize_transition(model, transition_index, save_eps=False,
     return
   
                     
-def reduce_state(full_state, grouper):
+def reduce_state(full_state, perceiver):
     """ Reduce a state, projecting it down to a representation in only
     sensors, primitives, and actions. 
     Returns a state, the same size as the input state, in which 
@@ -393,14 +440,14 @@ def reduce_state(full_state, grouper):
             """
             for parent_group_index in range(group_index-1, -4, -1):
                 match_indices = \
-                        (grouper.grouping_map_group.features[group_index] == 
+                        (perceiver.grouping_map_group.features[group_index] == 
                          parent_group_index).nonzero()[0]
                 """print 'match_indices for group ', group_index, \
                         ' in group ', parent_group_index, ' ', \
                          match_indices
                 """
                 parent_feature_indices = \
-                         grouper.grouping_map_feature.features[group_index] \
+                         perceiver.grouping_map_feature.features[group_index] \
                          [match_indices,:]
                 """print 'parent_feature_indices for group ', group_index, \
                         ' in group ', parent_group_index, ' ', \
@@ -434,10 +481,10 @@ def reduce_state(full_state, grouper):
                             to the feature being reduced. The square
                             root is included to offset the squaring that
                             occurs during the upward voting process. (See
-                            grouper.update_feature_map()) 
+                            perceiver.update_feature_map()) 
                             """
                             propagation_strength = np.sqrt( 
-                                   grouper.feature_map.\
+                                   perceiver.feature_map.\
                                    features[group_index] \
                                    [feature_index, \
                                     match_indices])
@@ -553,12 +600,44 @@ def visualize_state(state, label='state', y_min=0.25, y_max=0.75,
             rectPatch(x, x + 1, y_min, y_max,
                            state.features[feature_group_indx][indx], axes)
             x += 1
-            
+     
+    """ Get the figure to recognize that it has something to plot.
+    A blatant hack.  """       
+    plt.plot(0, 0, color='black') 
+
     if save_eps:
         fig.savefig(epsfilename, format='eps')
         
     return
+
+
+def visualize_array_list(array_list, label=None):
+    """ Show a list of arrays as a set of line plots in a single figure.
+    Useful for tracking the time history of a set of values.
+    """
+    if len(array_list) == 0:
+        return
     
+    if label == None:
+        label = 'arrays'
+        
+    """ Condense all the arrays into a single 2D array """
+    n_cols = len(array_list)
+    n_rows = array_list[0].size
+    master_array = np.zeros((n_rows, n_cols))
+    
+    for i in range(n_cols):
+        master_array[:,i] = array_list[i].ravel()
+    
+    plt.figure(label)
+    plt.clf()
+    plt.hold(True)
+    for i in range(n_rows):
+        plt.plot(master_array[i,:])
+    
+    plt.title(label)
+    plt.draw()
+
 
 def rectPatch (left_x, right_x, lower_y, upper_y, value=0.5, 
            axes=plt.gca(), borders=False):

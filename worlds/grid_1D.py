@@ -17,7 +17,7 @@ class World(BaseWorld):
     The theoretically optimal performance without exploration is 0.5 
     reward per time step.
     In practice, the best performance the algorithm can achieve with the 
-    exploration levels given is around 0.35 to 0.37 reward per time step.
+    exploration levels given is around 0.4 reward per time step.
     """
 
     def __init__(self):
@@ -95,7 +95,7 @@ class World(BaseWorld):
         
     def set_agent_parameters(self, agent):
         """ Prevent the agent from forming any groups """
-        agent.grouper.NEW_GROUP_THRESHOLD = 1.0
+        agent.perceiver.NEW_GROUP_THRESHOLD = 1.0
         
         
     def display(self):

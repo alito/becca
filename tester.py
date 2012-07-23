@@ -58,7 +58,7 @@ def main():
         try:
             if world.is_time_to_display():
                 world.vizualize_feature_set(
-                    viz_utils.reduce_feature_set(agent.grouper), save_eps=True)
+                    viz_utils.reduce_feature_set(agent.perceiver), save_eps=True)
                 viz_utils.force_redraw()
         except AttributeError:
             pass

@@ -11,6 +11,18 @@ than agents that perform a single task optimally and all others very poorly.
 
 In order to facilitate apples-to-apples comparisons between agents, the 
 benchmark will be version numbered.
+
+In 60 runs on the benchmark, Becca 0.4.0 averaged a score of 0.292
+"""
+
+""" Empirically, running this version of the benchmark multiple times
+gives values with a standard deviation of about 0.013. If you want more
+accurate estimate of an agent's performance, run it 3 or 5 times 
+and take the average. 
+Or better yet, to help account for the fact that it is a somewhat non-Gaussian 
+process, (it has a short tail on the low side, almost none on the high side)
+run it 7 times, throw away the two highest and two lowest scores, 
+and average the rest.
 """
 
 from agent.agent import Agent
@@ -46,7 +58,14 @@ def main():
     world = World_image_2D()
     performance.append(test(world))
     
-    print "Agent benchmarks: " , performance
+    print "Individual benchmark scores: " , performance
+    
+    total = 0
+    for val in performance:
+        total += val
+    mean_performance = total / len(performance)
+    
+    print "Overall benchmark score: ", mean_performance 
     
     """ Block the program, displaying all plots.
     When the plot windows are closed, the program closes.
