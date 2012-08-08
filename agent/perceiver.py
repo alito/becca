@@ -254,7 +254,7 @@ class Perceiver(object):
         #grouped_input.action = np.zeros(actions.shape)
         
         for group_index in range(self.grouping_map_group.n_feature_groups()):
-            grouped_input.add_fixed_group(
+            grouped_input.add_group(
                    self.grouping_map_feature.features[group_index].size)
             for input_element_index in range(
                      self.grouping_map_feature.features[group_index].size):
@@ -533,22 +533,22 @@ class Perceiver(object):
             n_group_inputs = len(added_feature_indices)
             n_group_features = n_group_inputs + 2
             
-            self.feature_activity.add_fixed_group(n_group_features)
-            self.fatigue.add_fixed_group(n_group_features)
-            self.previous_input.add_fixed_group(n_group_features)
+            self.feature_activity.add_group(n_group_features)
+            self.fatigue.add_group(n_group_features)
+            self.previous_input.add_group(n_group_features)
 
             new_coactivity_map_array = \
                             np.cumsum(np.ones((n_group_features,1)), axis=0) \
                             + self.n_inputs - 1
-            self.coactivity_map.add_fixed_group(n_group_features, \
+            self.coactivity_map.add_group(n_group_features, \
                             new_array=new_coactivity_map_array, dtype=np.int)
 
-            self.feature_map.add_fixed_group(n_group_features, n_group_inputs)
+            self.feature_map.add_group(n_group_features, n_group_inputs)
 
-            self.grouping_map_group.add_fixed_group(n_group_inputs,
+            self.grouping_map_group.add_group(n_group_inputs,
                 new_array=self.inv_coactivity_map_group \
                 [added_feature_indices], dtype=np.int)
-            self.grouping_map_feature.add_fixed_group(n_group_inputs,
+            self.grouping_map_feature.add_group(n_group_inputs,
                 new_array=self.inv_coactivity_map_feature \
                 [added_feature_indices], dtype=np.int)
 
@@ -759,30 +759,7 @@ class Perceiver(object):
               
         return
        
-        
-    def size(self):
-        """ Determine the approximate number of elements being used by the
-        class and its members. Created to debug an apparently excessive 
-        use of memory.
-        """
-        total = 0
-        total += self.feature_map.size()
-        total += self.coactivity.size
-        total += self.combination.size
-        total += self.plasticity.size
-        total += self.groups_per_feature.size
-        total += self.input_activity.size
-        total += self.previous_input.size()
-        total += self.feature_activity.size()
-        total += self.inv_coactivity_map_group.size
-        total += self.inv_coactivity_map_feature.size
-        total += self.grouping_map_group.size()
-        total += self.grouping_map_feature.size()
-        total += self.coactivity_map.size()
-
-        return total
-            
-            
+          
     def visualize(self, save_eps=False):
         symmetric_coactivity = self.coactivity[:self.n_inputs, 
                                :self.n_inputs] * \

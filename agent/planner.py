@@ -187,14 +187,6 @@ class Planner(object):
         a transition is used for planning, whether the intended plan 
         is executed?
         """
-        """ TODO: Address the lottery problem? (Reliability is 
-        one possible solution)
-        This is the problem in which less common, but rewarding, 
-        transitions are selected over more common transitions. The 
-        distinguishing factor should not be the count, but the 
-        reliability of the transition. Fixing the
-        lottery problem may make BECCA less human-trainable.
-        """
         """ TODO: Add recency? This is likely to be useful when 
         rewards change over time. 
         """

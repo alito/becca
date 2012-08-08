@@ -72,11 +72,11 @@ class Learner(object):
         if n_learner_feature_groups < feature_activity.n_feature_groups():
             n_features = feature_activity.features[-1].size
                                            
-            #self.working_memory.add_fixed_group(n_features)
-            #self.previous_working_memory.add_fixed_group(n_features)
-            #self.attended_feature.add_fixed_group(n_features)
-            self.goal.add_fixed_group(n_features)
-            self.model.add_fixed_group(n_features)
+            #self.working_memory.add_group(n_features)
+            #self.previous_working_memory.add_group(n_features)
+            #self.attended_feature.add_group(n_features)
+            self.goal.add_group(n_features)
+            self.model.add_group(n_features)
         return
     
     
@@ -109,7 +109,6 @@ class Learner(object):
                                    max_salience_value, max_salience_group, 
                                    max_salience_index,
                                    group_indx=-1)
-        # group_indx=-1, deliberate=self.planner.deliberately_acted)
                 
         """ Calculate salience for feature groups """
         for group_index in range(feature_activity.n_feature_groups()):
@@ -169,48 +168,10 @@ class Learner(object):
             max_salience_val = max_value
             max_salience_grp = group_indx
             max_salience_indx = max_index
-            
-        """ If a deliberate action was made on the previous timestep,
-        force the agent to attend to it. This ensures that 
-        exploratory action will be attended.
-        """  
-        '''                  
-        if deliberate:
-            if np.count_nonzero(feature_activity != 0.0):
-                deliberate_action_index = feature_activity.nonzero()[0]
-                max_salience_val = 10
-                max_salience_grp = -1
-                max_salience_indx = deliberate_action_index
-        '''
-                
+                 
         return max_salience_val, max_salience_grp, max_salience_indx
 
-        '''def add_feature(self, nth_group):
-        
-        self.working_memory.add_feature(nth_group)
-        self.previous_working_memory.add_feature(nth_group)
-        self.attended_feature.add_feature(nth_group)
-        self.goal.add_feature(nth_group)
-        self.model.add_feature(nth_group)
-        return
-        '''
                    
-    def size(self):
-        """ Determine the approximate number of elements being used by the
-        class and its members. Created to debug an apparently excessive 
-        use of memory.
-        """
-        total = 0
-        total += self.model.size()
-        total += self.planner.size()
-        total += self.attended_feature.size()
-        total += self.goal.size()
-        total += self.previous_working_memory.size()
-        total += self.working_memory.size()
-
-        return total
-            
-            
     def visualize(self, save_eps=True):
         #viz_utils.visualize_model(self.model, 10)
         viz_utils.force_redraw()

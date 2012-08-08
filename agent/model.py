@@ -159,8 +159,7 @@ class Model(object):
         self.transition_update_q = []
         
 
-    def step(self, attended_feature, feature_activity, reward, 
-             verbose_flag=False):
+    def step(self, attended_feature, feature_activity, reward):
         
         """ Update histories of attended features, feature activities, 
         and rewards. 
@@ -183,49 +182,22 @@ class Model(object):
         self.current_reward = self.collapse(self.reward_history)
                  
         self.process_new_transitions()
-        self.process_transition_updates(verbose_flag)
+        self.process_transition_updates()
         
         """ Find transitions in the library that are similar to 
         the current situation. 
         """                
         transition_match_indices, context_similarity = self.find_transition_matches()
 
-        if verbose_flag:
-            import viz_utils
-            import matplotlib.pyplot as plt
-            fig = plt.figure('new transition')
-            ax = fig.add_subplot(1,1,1)
-
-            viz_utils.visualize_state(self.current_cause, "current_cause",
-                                      y_min=1.25, y_max=1.75, axes=ax)
-            viz_utils.visualize_state(self.current_context,  "current_context",
-                                      y_min=2.25, y_max=2.75, axes=ax)
-            plt.title(' current transition candidate ')
-            viz_utils.force_redraw()
-        
         if len(transition_match_indices) == 0:             
-            
-            # debug
-            if verbose_flag == True:
-                print 'adding new transition--'
-                
             self.add_new_transition()
 
         else: 
             matching_transition_similarities = np.zeros(context_similarity.shape)
             matching_transition_similarities[transition_match_indices] = \
                          context_similarity[transition_match_indices]
-
-            if verbose_flag == True:
-                label = 'current matched transition, similarity ' + str(np.max(matching_transition_similarities))
-                viz_utils.visualize_transition(self, np.argmax(matching_transition_similarities), 
-                                               label=label)
-
             self.update_transition(np.argmax(matching_transition_similarities))           
 
-        if verbose_flag == True:
-            plt.show()
-            
         self.clean_library()
 
     def find_transition_matches(self):
@@ -387,7 +359,7 @@ class Model(object):
         return
     
     
-    def process_transition_updates(self, verbose_flag):
+    def process_transition_updates(self):
         """ If any transitions are ready to be updated, do it """
         graduates = []
         
@@ -421,16 +393,6 @@ class Model(object):
                             self.effect.features[group_index] \
                             [:, matching_transition_index])
                             
-                if verbose_flag:
-                    import viz_utils
-                    import matplotlib.pyplot as plt
-                    print 'before change, update strength =', update_strength
-                    label = 'About to update transition ' + str(matching_transition_index)
-
-                    viz_utils.visualize_transition(self, matching_transition_index, label=label)
-                    viz_utils.visualize_state(new_effect, label='new effect')
-
-                
                 self.count[matching_transition_index] += update_strength
                 
                 """ Modify the effect.
@@ -485,14 +447,6 @@ class Model(object):
                             (1. - update_rate) + \
                             effect_difference.features[group_index] * \
                             update_rate
-                
-                #debug
-                if verbose_flag == True:
-                    viz_utils.visualize_state(effect_difference, label='effect_difference')
-                    print 'after change'
-                    label = 'Updated transition ' + str(matching_transition_index)
-                    viz_utils.visualize_transition(self, matching_transition_index, label=label)
-                    plt.show()
                 
         """ Remove the transitions from the queue that were added.
         This was sliced a little fancy in order to ensure that the highest
@@ -714,7 +668,7 @@ class Model(object):
         return
     
 
-    def add_fixed_group(self, n_features):
+    def add_group(self, n_features):
         size = (n_features, self.cause.action.shape[1])
         self.context.features.append(np.zeros(size))
         self.cause.features.append(np.zeros(size))
@@ -722,17 +676,17 @@ class Model(object):
         self.effect_uncertainty.features.append(np.ones(size)) \
                                         * self.INITIAL_UNCERTAINTY
                                         
-        self.next_context.add_fixed_group(n_features)
+        self.next_context.add_group(n_features)
         
         for group_index in range(len(self.attended_feature_history)):
             self.attended_feature_history[group_index].\
-                                                add_fixed_group(n_features)
+                                                add_group(n_features)
             self.feature_activity_history[group_index].\
-                                                add_fixed_group(n_features)
+                                                add_group(n_features)
             
         for group_index in range(len(self.transition_update_q)):
             self.transition_update_q[group_index][3].\
-                                                add_fixed_group(n_features)
+                                                add_group(n_features)
         
                     
     def n_feature_groups(self):

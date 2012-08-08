@@ -29,7 +29,7 @@ class State(object):
         return zero_state
         
 
-    def add_fixed_group(self, num_features, new_array=None, dtype=np.float):
+    def add_group(self, num_features, new_array=None, dtype=np.float):
         """ Add a group with a known number of features """
         group_type = dtype
         if new_array == None:
