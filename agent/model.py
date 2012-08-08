@@ -30,6 +30,9 @@ class Model(object):
             cause. It can be a probability distribution over 
             multiple features.
             
+    effect_uncertainty: This state is the expected difference
+            between transition effect and the observed effect.
+            
     count: This scalar tracks the number of times the transision has
             been observed, and decays slowly with time.
             It is used to represent the usefulness of
@@ -38,6 +41,9 @@ class Model(object):
             
     reward_value: This scalar is the expected reward, given the context
             and the cause.
+            
+    reward_uncertainty: This scalar is the expected difference
+            between the expected reward_value and the observed reward_value.
             
     goal_value: This scalar is an internally-assigned reward value. It 
             is used during planning to prioritize intermediate 
@@ -66,7 +72,7 @@ class Model(object):
         """ The threshold above which two states are similar enough
         to be considered a match.
         """
-        self.SIMILARITY_THRESHOLD = 0.8       # real, 0 < x < 1
+        self.SIMILARITY_THRESHOLD = 0.9       # real, 0 < x < 1
         
         """ The maximum number of entries allowed in the model.
         This number is driven by the practical limitations of available
@@ -79,7 +85,7 @@ class Model(object):
         """
         self.CLEANING_PERIOD = 10 ** 5        # integer, somewhat large
         
-        """ Lower bound on the rate at which effects are updated """
+        """ Lower bound on the rate at which transitions are updated """
         self.UPDATE_RATE = 0.1                # real, 0 < x < 1
         
         """ The number of transitions to be included in the trace context.
@@ -98,6 +104,9 @@ class Model(object):
         timestep.
         """
         self.GOAL_DECAY_RATE = 1.0           # real, 0 < x < 1
+        
+        """ The initial value for uncertainty in the effect and the reward """
+        self.INITIAL_UNCERTAINTY = 0.25
 
         """ The total number of transitions in the model """
         self.n_transitions = 0
@@ -119,26 +128,30 @@ class Model(object):
 
         self.cause = copy.deepcopy(self.context)
         self.effect = copy.deepcopy(self.context)
-        self.uncertainty = copy.deepcopy(self.context)
+
+        self.effect_uncertainty = state.State()
+        self.effect_uncertainty.primitives = np.ones((num_primitives, 
+                            2*self.MAX_ENTRIES)) * self.INITIAL_UNCERTAINTY
+        self.effect_uncertainty.action = np.ones((num_actions, 
+                            2*self.MAX_ENTRIES)) * self.INITIAL_UNCERTAINTY
+        self.effect_uncertainty.features = []
 
         self.count = np.zeros((2*self.MAX_ENTRIES,1))
         self.reward_value = np.zeros((2*self.MAX_ENTRIES,1))
-        self.reward_uncertainty = np.zeros((2*self.MAX_ENTRIES,1))
+        self.reward_uncertainty = np.ones((2*self.MAX_ENTRIES,1)) * \
+                                    self.INITIAL_UNCERTAINTY
         self.goal_value = np.zeros((2*self.MAX_ENTRIES,1))
-
-        #self.trace_index = np.ones((self.TRACE_LENGTH,1))
-        #self.trace_reward = np.zeros((self.TRACE_LENGTH,1))
 
         """ Maintain a history of the attended features and feature activity"""
         self.zero_state = state.State(num_sensors=0, 
                                       num_primitives=num_primitives, 
                                       num_actions=num_actions)
         self.attended_feature_history = [copy.deepcopy(self.zero_state)] * \
-                                        self.TRACE_LENGTH
+                                        (self.TRACE_LENGTH)
         self.feature_activity_history = [copy.deepcopy(self.zero_state)] * \
-                                        self.TRACE_LENGTH
+                                        (self.TRACE_LENGTH)
         self.next_context = copy.deepcopy(self.zero_state)
-        self.reward_history = [0] * self.TRACE_LENGTH
+        self.reward_history = [0] * (self.TRACE_LENGTH)
         
         """ Hold on to transitions to be added or updated until their 
         future effects and rewards can be determined """
@@ -152,7 +165,7 @@ class Model(object):
         """ Update histories of attended features, feature activities, 
         and rewards. 
         """
-        self.attended_feature_history.append(attended_feature)
+        self.attended_feature_history.append(copy.deepcopy(attended_feature))
         self.attended_feature_history.pop(0)
         self.feature_activity_history.append(copy.deepcopy(feature_activity))
         self.feature_activity_history.pop(0)
@@ -163,10 +176,12 @@ class Model(object):
         The next context is a combination of the current cause and the 
         current context.
         """ 
-        self.current_cause = self.attended_feature_history[-1]
         self.current_context = self.next_context
         self.next_context = self.collapse(self.attended_feature_history[::-1])
-        
+        self.current_cause = self.attended_feature_history[-1]
+        self.current_effect = self.collapse(self.feature_activity_history)
+        self.current_reward = self.collapse(self.reward_history)
+                 
         self.process_new_transitions()
         self.process_transition_updates(verbose_flag)
         
@@ -185,8 +200,6 @@ class Model(object):
                                       y_min=1.25, y_max=1.75, axes=ax)
             viz_utils.visualize_state(self.current_context,  "current_context",
                                       y_min=2.25, y_max=2.75, axes=ax)
-            #viz_utils.visualize_state(self.new_effect, "new_effect",
-            #                          y_min=0.25, y_max=0.75, axes=ax)
             plt.title(' current transition candidate ')
             viz_utils.force_redraw()
         
@@ -204,71 +217,17 @@ class Model(object):
                          context_similarity[transition_match_indices]
 
             if verbose_flag == True:
-                label = 'matched transition, similarity ' + str(np.max(matching_transition_similarities))
+                label = 'current matched transition, similarity ' + str(np.max(matching_transition_similarities))
                 viz_utils.visualize_transition(self, np.argmax(matching_transition_similarities), 
                                                label=label)
 
             self.update_transition(np.argmax(matching_transition_similarities))           
 
+        if verbose_flag == True:
+            plt.show()
+            
         self.clean_library()
 
-        
-        '''def step(self, current_context, current_cause, new_effect, reward, verbose_flag=False):
-        
-        """ Take in current_context, current_cause and new_effect 
-        to train the model.
-        """
-        transition_match_indices, context_similarity = \
-                    self.find_transition_matches(current_context, current_cause)
-
-        if verbose_flag:
-            import viz_utils
-            import matplotlib.pyplot as plt
-            fig = plt.figure('new transition')
-            ax = fig.add_subplot(1,1,1)
-
-            viz_utils.visualize_state(current_cause, "current_cause",
-                                      y_min=1.25, y_max=1.75, axes=ax)
-            viz_utils.visualize_state(new_effect, "new_effect",
-                                      y_min=0.25, y_max=0.75, axes=ax)
-            viz_utils.visualize_state(current_context,  "current_context",
-                                      y_min=2.25, y_max=2.75, axes=ax)
-            plt.title(' current transition candidate ')
-            viz_utils.force_redraw()
-        
-        if len(transition_match_indices) == 0:             
-            
-            # debug
-            if verbose_flag == True:
-                print 'adding new transition--'
-
-            matching_transition_index, reward_update_rate = \
-                    self.add_new_transition(current_context, 
-                                            current_cause, 
-                                            new_effect)
-        else:            
-            matching_transition_index, reward_update_rate = \
-                    self.update_transition(context_similarity, 
-                                                     transition_match_indices,
-                                                     new_effect)
-
-            # debug
-            if verbose_flag == True:
-                print 'matching existing transition--'
-                    
-                viz_utils.visualize_transition(self, \
-                               matching_transition_index, label='Transition')
-                viz_utils.force_redraw()
-                    
-            
-        self.update_reward(reward_update_rate, matching_transition_index, 
-                           reward)               
-        
-        self.clean_library()
-        
-        return
-        '''
-        
     def find_transition_matches(self):
         """ Check to see whether the new entry is already in the model """ 
         """ TODO: make the similarity threshold a function of the count? 
@@ -332,38 +291,20 @@ class Model(object):
         novel. Add as a new transision in the model.
         """
         
-        matching_transition_index = self.n_transitions
+        #matching_transition_index = self.n_transitions
         new_context = copy.deepcopy(self.current_context)
         new_cause = copy.deepcopy(self.current_cause)
 
-        self.context.primitives[:, matching_transition_index] = \
-                                new_context.primitives.ravel()
-        self.cause.primitives[:, matching_transition_index] = \
-                                new_cause.primitives.ravel()
-        
-        self.context.action[:, matching_transition_index] = \
-                                new_context.action.ravel()
-        self.cause.action[:, matching_transition_index] = \
-                                new_cause.action.ravel()
-        
-        for group_index in range(self.n_feature_groups()):
-            self.context.features[group_index][:, matching_transition_index] = \
-                                new_context.features[group_index].ravel()
-            self.cause.features[group_index][:, matching_transition_index] = \
-                                new_cause.features[group_index].ravel()
-                                
-        self.count[matching_transition_index] =  1.
-        self.n_transitions += 1  
-
         """ Add a new entry in the new transition queue.
         Each entry is formatted as a tuple:
-        0) The current context
-        1) The current cause
-        2) A timer that counts down while the effect and reward 
+        0) A timer that counts down while the effect and reward 
         are being observed.
+        1) The current context
+        2) The current cause
         """        
-        timer = self.TRACE_LENGTH + 1
-        self.new_transition_q.append([timer, matching_transition_index])       
+        timer = self.TRACE_LENGTH
+        
+        self.new_transition_q.append([timer, new_context, new_cause])       
         return
     
     
@@ -371,27 +312,46 @@ class Model(object):
         """ If any new transitions are ready to be added, add them """
         graduates = []
         
-        """ Decrement the timers in the new transition queue """
-        for i in range(len(self.new_transition_q)):
-            self.new_transition_q[i][0] = self.new_transition_q[i][0] - 1
-            
+        """ Add the transitions on which the timer has counted down to 0 """
+        for i in range(len(self.new_transition_q)):       
             if self.new_transition_q[i][0] == 0:
                 graduates.append(i)
                     
-                matching_transition_index = self.new_transition_q[i][1]
-                new_effect = self.collapse(self.feature_activity_history)
-                reward = self.collapse(self.reward_history)
-                    
+                new_context = self.new_transition_q[i][1]
+                new_cause = self.new_transition_q[i][2]
+                new_effect = copy.deepcopy(self.current_effect)
+                new_reward = self.current_reward
+                matching_transition_index = self.n_transitions 
+                self.context.primitives[:, matching_transition_index] = \
+                                new_context.primitives.ravel()
+                self.cause.primitives[:, matching_transition_index] = \
+                                        new_cause.primitives.ravel()
                 self.effect.primitives[:, matching_transition_index] = \
                                         new_effect.primitives.ravel()
+                
+                self.context.action[:, matching_transition_index] = \
+                                        new_context.action.ravel()
+                self.cause.action[:, matching_transition_index] = \
+                                        new_cause.action.ravel()
                 self.effect.action[:, matching_transition_index] = \
                                         new_effect.action.ravel()
+                
                 for group_index in range(self.n_feature_groups()):
+                    self.context.features[group_index][:, matching_transition_index] = \
+                                        new_context.features[group_index].ravel()
+                    self.cause.features[group_index][:, matching_transition_index] = \
+                                        new_cause.features[group_index].ravel()
                     self.effect.features[group_index][:, matching_transition_index] = \
                                         new_effect.features[group_index].ravel()
+                                        
+                self.reward_value[matching_transition_index] = new_reward
                 
-                self.reward_value[matching_transition_index] = reward
+                self.count[matching_transition_index] =  1.
+                self.n_transitions += 1  
                 
+            """ Decrement the timers in the new transition queue """
+            self.new_transition_q[i][0] = self.new_transition_q[i][0] - 1
+
         """ Remove the transitions from the queue that were added.
         This was sliced a little fancy in order to ensure that the highest
         indexed transitions were removed first, so that as the iteration
@@ -403,52 +363,14 @@ class Model(object):
         return       
 
 
-        '''def add_new_transition(self, new_context, new_cause, new_effect):
-        """ If there is no match, the just-experienced transition is
-        novel. Add is a new transision in the model.
-        """
-        matching_transition_index = self.n_transitions
-
-        self.context.primitives[:, self.n_transitions] = \
-                                new_context.primitives.ravel()
-        self.cause.primitives[:, self.n_transitions] = \
-                                new_cause.primitives.ravel()
-        self.effect.primitives[:, self.n_transitions] = \
-                                new_effect.primitives.ravel()
-
-        self.context.action[:, self.n_transitions] = \
-                                new_context.action.ravel()
-        self.cause.action[:, self.n_transitions] = \
-                                new_cause.action.ravel()
-        self.effect.action[:, self.n_transitions] = \
-                                new_effect.action.ravel()
-    
-        for group_index in range(self.n_feature_groups()):
-            self.context.features[group_index][:, self.n_transitions] = \
-                                new_context.features[group_index].ravel()
-            self.cause.features[group_index][:, self.n_transitions] = \
-                                new_cause.features[group_index].ravel()
-            self.effect.features[group_index][:, self.n_transitions] = \
-                                new_effect.features[group_index].ravel()
-        
-        self.count[matching_transition_index] =  1.
-        reward_update_rate = 1.
-        self.n_transitions += 1  
-        
-        return matching_transition_index, reward_update_rate       
-        '''
-    
-    
     def update_transition(self, matching_transition_index,
                           update_strength=1.0, wait=False):
-        #debug
-        #def update_transition(self, matching_transition_index, 
-        #                  update_strength=1.0, wait=False):
         """ Add a new entry in the update queue.
         Each entry is formatted as a tuple:
         0) A timer that counts down while the effect and reward 
         are being observed.
         1) The index of the matching transition
+        2) The update strength
         """
         """ There are two cases when a transition can be updated: when it is
         observed and when it is used by the planner to choose an action. 
@@ -456,17 +378,12 @@ class Model(object):
         extra time step is necessary in order to allow the action
         to be executed first.
         """       
-        timer = self.TRACE_LENGTH + 1
+        timer = self.TRACE_LENGTH
         if wait:
             timer += 1
        
-        #debug    
-        #self.transition_update_q.append([timer, matching_transition_index, 
-        #                                 update_strength])
         self.transition_update_q.append([timer, matching_transition_index, 
-                                        update_strength, 
-                                        copy.deepcopy(self.current_context)])
-        
+                                         update_strength])
         return
     
     
@@ -483,79 +400,99 @@ class Model(object):
                 matching_transition_index = self.transition_update_q[i][1] 
                 update_strength = self.transition_update_q[i][2] 
                 
-                """ Calculate the current effect and the total reward """
-                #debug
-                new_context = self.transition_update_q[i][3] 
-                new_effect = self.collapse(self.feature_activity_history)
-                reward = self.collapse(self.reward_history)
+                """ Calculate states and values for the update """
+                new_effect = copy.deepcopy(self.current_effect)
+                new_reward = self.current_reward
 
-                #debug
-                #print 'matching_transition_index', matching_transition_index
+                reward_difference = np.abs(new_reward - \
+                           self.reward_value[matching_transition_index])
+
+                """ Calculate the absolute difference of the 
+                transition effect and the observation effect.
+                """
+                effect_difference = new_effect.zeros_like()
+                effect_difference.primitives = np.abs(new_effect.primitives[:,0] - 
+                       self.effect.primitives[:, matching_transition_index])
+                effect_difference.action = np.abs(new_effect.action[:,0] - 
+                       self.effect.action[:, matching_transition_index])
+                for group_index in range(self.n_feature_groups()):
+                    effect_difference.features[group_index] = \
+                            np.abs(new_effect.features[group_index][:,0] - \
+                            self.effect.features[group_index] \
+                            [:, matching_transition_index])
+                            
                 if verbose_flag:
                     import viz_utils
                     import matplotlib.pyplot as plt
                     print 'before change, update strength =', update_strength
-                    viz_utils.visualize_transition(self, matching_transition_index)
+                    label = 'About to update transition ' + str(matching_transition_index)
+
+                    viz_utils.visualize_transition(self, matching_transition_index, label=label)
                     viz_utils.visualize_state(new_effect, label='new effect')
-                    plt.show()
 
                 
                 self.count[matching_transition_index] += update_strength
                 
                 """ Modify the effect.
-                Making the update rate a function of count allows updates to occur
+                Making the update rate a function of count allows 
+                updates to occur 
                 more rapidly when there is little past experience 
                 to contradict them. This facilitates one-shot learning.
                 """
-                update_rate = (1 - self.UPDATE_RATE) / \
+                update_rate_raw = (1 - self.UPDATE_RATE) / \
                         self.count[matching_transition_index] + self.UPDATE_RATE
-                update_rate = min(1.0, update_rate) * update_strength
+                update_rate = min(1.0, update_rate_raw) * update_strength
                 
-                max_step_size = reward -  \
+                max_step_size = new_reward -  \
                                 self.reward_value[matching_transition_index]
 
                 self.reward_value[matching_transition_index] += \
                                             max_step_size * update_rate
-                
-                self.context.primitives[:, matching_transition_index] = \
-                        self.context.primitives[:, matching_transition_index] * \
-                        (1 - update_rate) + new_context.primitives[:,0] * \
-                        update_rate
+                self.reward_uncertainty[matching_transition_index] = \
+                        self.reward_uncertainty[matching_transition_index] * \
+                        (1. - update_rate) + \
+                        reward_difference * update_rate
+                    
                 self.effect.primitives[:, matching_transition_index] = \
                         self.effect.primitives[:, matching_transition_index] * \
-                        (1 - update_rate) + new_effect.primitives[:,0] * \
+                        (1. - update_rate) + new_effect.primitives[:,0] * \
                         update_rate
+                self.effect_uncertainty.primitives[:, matching_transition_index] = \
+                        self.effect_uncertainty.primitives[:, matching_transition_index] * \
+                        (1. - update_rate) + \
+                        effect_difference.primitives * update_rate
                 
-                self.context.action[:, matching_transition_index] = \
-                        self.context.action[:, matching_transition_index] * \
-                        (1 - update_rate) + new_context.action[:,0] * \
-                        update_rate
                 self.effect.action[:, matching_transition_index] = \
                         self.effect.action[:, matching_transition_index] * \
-                        (1 - update_rate) + new_effect.action[:,0] * \
+                        (1. - update_rate) + new_effect.action[:,0] * \
                         update_rate
+                self.effect_uncertainty.action[:, matching_transition_index] = \
+                        self.effect_uncertainty.action[:, matching_transition_index] * \
+                        (1. - update_rate) + \
+                        effect_difference.action * update_rate
                 
                 for group_index in range(self.n_feature_groups()):
-                    self.context.features[group_index] \
-                            [:, matching_transition_index] = \
-                            self.context.features[group_index] \
-                            [:, matching_transition_index] * \
-                            (1 - update_rate) + \
-                            new_context.features[group_index][:,0] * update_rate
                     self.effect.features[group_index] \
                             [:, matching_transition_index] = \
                             self.effect.features[group_index] \
                             [:, matching_transition_index] * \
-                            (1 - update_rate) + \
+                            (1. - update_rate) + \
                             new_effect.features[group_index][:,0] * update_rate
-                # TODO: update context as well?
+                    self.effect_uncertainty.features[group_index] \
+                            [:, matching_transition_index] = \
+                            self.effect_uncertainty.features[group_index] \
+                            [:, matching_transition_index] * \
+                            (1. - update_rate) + \
+                            effect_difference.features[group_index] * \
+                            update_rate
                 
                 #debug
                 if verbose_flag == True:
+                    viz_utils.visualize_state(effect_difference, label='effect_difference')
                     print 'after change'
-                    viz_utils.visualize_transition(self, matching_transition_index)
+                    label = 'Updated transition ' + str(matching_transition_index)
+                    viz_utils.visualize_transition(self, matching_transition_index, label=label)
                     plt.show()
-
                 
         """ Remove the transitions from the queue that were added.
         This was sliced a little fancy in order to ensure that the highest
@@ -566,89 +503,13 @@ class Model(object):
             self.transition_update_q.pop(i)
 
         return 
-        
 
-                         
-        '''def update_transition(self, context_similarity, 
-                                    transition_match_indices, new_effect):
-        """ Only consider matching transitions. Use transition_match_indices
-        as a mask for context_similarity.
-        """
-        transition_similarity = np.zeros(context_similarity.shape)
-        transition_similarity[transition_match_indices] = \
-                    context_similarity[transition_match_indices]
-                    
-        """ Increment the nearest entry """
-        matching_transition_index = np.argmax(transition_similarity)                    
-        self.count[matching_transition_index] += 1
         
-        """ Modify the effect.
-        Making the update rate a function of count allows updates to occur
-        more rapidly when there is little past experience 
-        to contradict them. This facilitates one-shot learning.
-        """
-        update_rate = (1 - self.UPDATE_RATE) / \
-                    self.count[matching_transition_index] + self.UPDATE_RATE
-        update_rate = min(1.0, update_rate)
-        
-        self.effect.primitives[:, matching_transition_index] = \
-                self.effect.primitives[:, matching_transition_index] * \
-                (1 - update_rate) + new_effect.primitives[:,0] * \
-                update_rate
-        
-        self.effect.action[:, matching_transition_index] = \
-                self.effect.action[:, matching_transition_index] * \
-                (1 - update_rate) + new_effect.action[:,0] * \
-                update_rate
-        
-        for group_index in range(self.n_feature_groups()):
-            self.effect.features[group_index] \
-                    [:, matching_transition_index] = \
-                    self.effect.features[group_index] \
-                    [:, matching_transition_index] * \
-                    (1 - update_rate) + \
-                    new_effect.features[group_index][:,0] * update_rate
-        # TODO: update context as well?
-        
-        return matching_transition_index, update_rate
-        '''
-    
-        '''def update_reward(self, update_rate, matching_transition_index, 
-                      reward):
-        """ Perform credit assignment on the trace """
-        """ Update the transition trace """
-        
-        self.trace_index = np.vstack((self.trace_index, 
-                            matching_transition_index * np.ones((1,1))))
-        self.trace_index = self.trace_index[1:,:]
-
-        """ Update the reward trace """
-        self.trace_reward = np.vstack((self.trace_reward, 
-                                       reward * np.ones((1,1))))
-        self.trace_reward = self.trace_reward[1:,:]
-
-        credit = self.trace_reward[0,0]
-        for trace_index in range(1, self.TRACE_LENGTH):
-            credit = utils.bounded_sum( credit, 
-                                self.trace_reward[trace_index,0] *  \
-                                (1 - self.TRACE_DECAY_RATE) ** trace_index)
-
-        """ Update the reward associated with the last entry in the trace """
-        update_index = self.trace_index[0,0]
-        max_step_size = credit - self.reward_value[update_index]
-
-        self.reward_value[update_index] += max_step_size * update_rate
-        '''
-     
     def get_cause(self, transition_index):
         transition_cause = self.next_context.zeros_like()       
         transition_cause.primitives = self.cause.primitives[:, transition_index]
         transition_cause.action = self.cause.action[:, transition_index]
         for group_index in range(self.n_feature_groups()):
-            #print 'group_index', group_index
-            #print 'len(transition_cause.features)', len(transition_cause.features)
-            #print 'transition_cause.features[group_index].shape', transition_cause.features[group_index].shape
-            #print 
             transition_cause.features[group_index] = self.cause.features[group_index] \
                                                 [:, transition_index]
         return transition_cause
@@ -694,22 +555,7 @@ class Model(object):
                                       self.n_transitions)
         return similarity
 
-        
-        '''def add_deliberate_action(self, deliberate_action):
-        """ When an action is made deliberately by the planner, 
-        make sure it is attended. This is a hack to override the 
-        salience-based attention for deliberate action.
-        """
-        attended_feature = self.attended_feature_history[-1].zeros_like()
-        attended_feature.action = deliberate_action
-        self.attended_feature_history[-1] = attended_feature
 
-        self.current_cause = self.attended_feature_history[-1]
-        self.next_context = self.collapse(self.attended_feature_history[::-1])
-
-        return
-        '''
-        
     def collapse(self, state_list):
         """ Collapse a list of scalars or States into a single one, 
         giving later members of the list lower weights.
@@ -749,6 +595,13 @@ class Model(object):
 
         if self.clean_count > self.CLEANING_PERIOD:
             print("Cleaning up model")
+    
+            """ Empty these queues. Deleting library entries will
+            corrupt the process of adding or updating transitions.
+            """        
+            self.new_transition_q = []
+            self.transition_update_q = []
+
             
             self.count[:self.n_transitions] -=  \
                                 1 / self.count[:self.n_transitions]
@@ -761,6 +614,9 @@ class Model(object):
                                               forget_indices, 1)
             self.effect.primitives = np.delete(self.effect.primitives, 
                                                forget_indices, 1)
+            self.effect_uncertainty.primitives = \
+                            np.delete(self.effect_uncertainty.primitives, 
+                            forget_indices, 1)
 
             self.context.action = np.delete(self.context.action, 
                                                 forget_indices, 1)
@@ -768,6 +624,9 @@ class Model(object):
                                               forget_indices, 1)
             self.effect.action = np.delete(self.effect.action, 
                                                forget_indices, 1)
+            self.effect_uncertainty.action = \
+                            np.delete(self.effect_uncertainty.action, 
+                            forget_indices, 1)
 
             for group_index in range(self.n_feature_groups()):
                 self.context.features[group_index] = np.delete(
@@ -779,10 +638,15 @@ class Model(object):
                 self.effect.features[group_index] = np.delete(
                                    self.effect.features[group_index], 
                                    forget_indices, 1)
+                self.effect_uncertainty.features[group_index] = np.delete(
+                                self.effect_uncertainty.features[group_index], 
+                                forget_indices, 1)
 
             self.count = np.delete(self.count, forget_indices)
             self.reward_value = np.delete(self.reward_value, forget_indices)
             self.goal_value = np.delete(self.goal_value, forget_indices)
+            self.reward_uncertainty = np.delete(self.reward_uncertainty, 
+                                                forget_indices)
 
             self.clean_count = 0
             self.n_transitions -= len(forget_indices)
@@ -809,6 +673,9 @@ class Model(object):
                                                 np.zeros(size)))
             self.effect.primitives = np.hstack((self.effect.primitives, 
                                                 np.zeros(size)))
+            self.effect_uncertainty.primitives = \
+                                np.hstack((self.effect_uncertainty.primitives, 
+                                np.zeros(size)))
 
             size = (self.effect.action.shape[0], self.MAX_ENTRIES)
             self.context.action = np.hstack((self.context.action, 
@@ -817,6 +684,9 @@ class Model(object):
                                              np.zeros(size)))
             self.effect.action = np.hstack((self.effect.action, 
                                              np.zeros(size)))
+            self.effect_uncertainty.action = \
+                                np.hstack((self.effect_uncertainty.action, 
+                                np.zeros(size)))
 
             for group_index in range(self.n_feature_groups()):
                 size = (self.effect.features[group_index].shape[0], 
@@ -827,11 +697,17 @@ class Model(object):
                         self.cause.features[group_index], np.zeros(size)))
                 self.effect.features[group_index] = np.hstack((
                         self.effect.features[group_index], np.zeros(size)))
+                self.effect_uncertainty.features[group_index] = np.hstack((
+                        self.effect_uncertainty.features[group_index], 
+                        np.zeros(size)))
 
   
             self.count = np.hstack((self.count, np.zeros(self.MAX_ENTRIES)))
             self.reward_value = np.hstack((self.reward_value, 
                                            np.zeros(self.MAX_ENTRIES)))
+            self.reward_uncertainty = np.hstack((self.reward_uncertainty, 
+                                           np.ones(self.MAX_ENTRIES) * \
+                                           self.INITIAL_UNCERTAINTY))
             self.goal_value = np.hstack((self.goal_value, 
                                            np.zeros(self.MAX_ENTRIES)))
 
@@ -843,6 +719,9 @@ class Model(object):
         self.context.features.append(np.zeros(size))
         self.cause.features.append(np.zeros(size))
         self.effect.features.append(np.zeros(size))
+        self.effect_uncertainty.features.append(np.ones(size)) \
+                                        * self.INITIAL_UNCERTAINTY
+                                        
         self.next_context.add_fixed_group(n_features)
         
         for group_index in range(len(self.attended_feature_history)):
@@ -854,54 +733,7 @@ class Model(object):
         for group_index in range(len(self.transition_update_q)):
             self.transition_update_q[group_index][3].\
                                                 add_fixed_group(n_features)
-
-
-        #for group_index in range(len(self.attended_feature_history)):
-        ##    print 'self.attended_feature_history[', group_index , '].n_feature_groups()', self.attended_feature_history[group_index].n_feature_groups()
-        #    print 'self.feature_activity_history[', group_index , '].n_feature_groups()', self.feature_activity_history[group_index].n_feature_groups()
         
-        '''
-        def add_group(self):
-        size = (0, self.cause.action.shape[1])
-        self.context.features.append(np.zeros(size))
-        self.cause.features.append(np.zeros(size))
-        self.effect.features.append(np.zeros(size))
-        '''
-
-        '''
-        def add_feature(self, nth_group):
-        """ Add a feature to the nth group of the model """
-        
-        self.context.features[nth_group] = \
-                    np.vstack((self.context.features[nth_group],  
-                    np.zeros(self.context.features[nth_group].shape[1])))
-        self.cause.features[nth_group]   = \
-                    np.vstack((self.cause.features[nth_group],  
-                    np.zeros(self.cause.features[nth_group].shape[1])))
-        self.effect.features[nth_group]  = \
-                    np.vstack((self.effect.features[nth_group], 
-                    np.zeros(self.effect.features[nth_group].shape[1])))
-        '''
-                  
                     
     def n_feature_groups(self):
         return len(self.context.features)
-
-                  
-    def size(self):
-        """ Determine the approximate number of elements being used by the
-        class and its members. Created to debug an apparently excessive 
-        use of memory.
-        """
-        total = 0
-        total += self.context.size()
-        total += self.cause.size()
-        total += self.effect.size()
-        total += self.count.size
-        total += self.reward_value.size
-        total += self.goal_value.size
-        total += self.trace_index.size
-        total += self.trace_reward.size
-
-        return total
-            

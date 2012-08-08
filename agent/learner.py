@@ -15,27 +15,11 @@ class Learner(object):
         num_sensors = 0
         
         self.SALIENCE_NOISE = 0.001        
-        #self.GOAL_DECAY_RATE = 0.05   # real, 0 < x <= 1
-        #self.STEP_DISCOUNT = 0.8      # real, 0 < x <= 1
-        
-        """ Rates at which the feature activity and working memory decay.
-        Setting these equal to 1 is the equivalent of making the Markovian 
-        assumption about the task--that all relevant information is captured 
-        adequately in the current state.
-        Also check out self.grouper.INPUT_DECAY_RATE, set in 
-        the grouper constructor
-        """
-        #self.WORKING_MEMORY_DECAY_RATE = 0.4      # real, 0 < x <= 1
-        #self.WORKING_MEMORY_DECAY_RATE = 1.      # real, 0 < x <= 1
         
         self.model = Model(num_primitives, num_actions)
         self.planner = Planner(num_actions)
 
-        #self.attended_feature = State(num_sensors, num_primitives, num_actions)
         self.goal = State(num_sensors, num_primitives, num_actions)
-        #self.previous_working_memory = State(num_sensors, num_primitives, 
-        #                                     num_actions)
-        #self.working_memory = State(num_sensors, num_primitives, num_actions)
         self.action = np.zeros((num_actions,1))
         self.deliberately_acted = False
         
@@ -48,12 +32,6 @@ class Learner(object):
         if np.random.random_sample() < 0.:#01:
             self.verbose_flag = True
             
-        if self.verbose_flag:
-            #viz_utils.visualize_state(feature_activity, label='feature_activity')
-            pass
-            
-        #self.previous_attended_feature = copy.deepcopy(self.attended_feature)
-
         #compare feature activity to predicted feature activity
         #update the transition used to make the prediction
         #both the expected value of the effect, and the expected error on
@@ -67,52 +45,16 @@ class Learner(object):
                                             self.deliberately_acted, 
                                             self.action)
         
-        """ Perform leaky integration on attended feature to get 
-        working memory.
-        """     
-        '''   
-        self.pre_previous_working_memory = \
-                    copy.deepcopy(self.previous_working_memory)
-        self.previous_working_memory = copy.deepcopy(self.working_memory)
-        
-        self.working_memory = self.previous_working_memory.integrate_state(
-                                           self.attended_feature, 
-                                           self.WORKING_MEMORY_DECAY_RATE)
-        ''' 
         """ Update the model """
-        #debug
-        '''self.model.step(self.pre_previous_working_memory, 
-                         self.previous_attended_feature, 
-                         feature_activity, reward, self.verbose_flag)
-        '''
         self.model.step( self.attended_feature, 
                          feature_activity, reward, self.verbose_flag)
 
         """ Decide on an action """
-        #debug
-        '''self.action, deliberately_acted = \
-                        self.planner.step(self.model, self.working_memory, 
-                        self.verbose_flag)
-        '''
         self.action, self.deliberately_acted = self.planner.step(self.model, 
                                                              self.verbose_flag)
         #prediction, confidence from planner (expected value, expected error)
         #planning and prediction are intertwined. 
         
-        """ If a deliberate action was made on this timestep,
-        force the agent to attend to it. This ensures that 
-        exploratory action will be attended.
-        """  
-        '''if deliberately_acted:
-            #self.attended_feature = self.attended_feature.zeros_like()
-            #self.attended_feature.action = self.action
-            #self.working_memory = self.previous_working_memory.integrate_state(
-            #                                   self.attended_feature, 
-            #                                   self.WORKING_MEMORY_DECAY_RATE)
-            
-            #self.model.add_deliberate_action(self.action)
-        '''       
-            
         """ debug: choose a random action """
         #self.action = np.zeros(self.goal.action.size, 1);
         #self.action[np.random.randint(self.goal.action.size), 0] = 1

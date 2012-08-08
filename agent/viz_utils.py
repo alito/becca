@@ -20,7 +20,9 @@ def visualize_grouper_coactivity(coactivity, size=0,
     if size == 0:
         size = coactivity.shape[0]
     fig = plt.figure("perceiver coactivity visualization")
-    plt.gray()
+    # Diane L. made the brilliant suggestion to leave this plot in color. 
+    # It looks much prettier.
+    #plt.gray()
     im = plt.imshow(coactivity[0:size, 0:size])
     im.set_interpolation('nearest')
     plt.title("Coactivity among inputs")
@@ -358,27 +360,37 @@ def visualize_transition(model, transition_index, save_eps=False,
     
     viz_axes = fig.add_subplot(1,1,1)
     
-    count = model.count[transition_index]
-    reward_value = model.reward_value[transition_index]
-    goal_value = model.goal_value[transition_index]
-    plt.title('Transition ' + str(transition_index)  + 
-              '  count: ' + str(count) + '  reward value: ' + 
-              str(reward_value) + '  goal value: ' + str(goal_value))
+    count = model.count[transition_index, 0]
+    reward_value = model.reward_value[transition_index, 0]
+    reward_uncertainty = model.reward_uncertainty[transition_index, 0]
+    goal_value = model.goal_value[transition_index, 0]
+    
+    plt.title('Transition {:}'.format(transition_index) + 
+              '  count: {:.2f}'.format(count)  + 
+              '  reward value: {:.2f}'.format(reward_value) + 
+              '  uncertainty: {:.2f}'.format(reward_uncertainty) + 
+              '  goal value: {:.2f}'.format(goal_value) )
     plt.xlabel(label)
     
     context = state.State()
     cause = state.State()
     effect = state.State()
+    effect_uncertainty = state.State()
     
     context.sensors = np.zeros((0,0))
     cause.sensors = np.zeros((0,0))
     effect.sensors = np.zeros((0,0))
+    effect_uncertainty.sensors = np.zeros((0,0))
+    
     context.primitives = model.context.primitives[:,transition_index]
     cause.primitives = model.cause.primitives[:,transition_index]
     effect.primitives = model.effect.primitives[:,transition_index]
+    effect_uncertainty.primitives = model.effect_uncertainty.primitives[:,transition_index]
+    
     context.action = model.context.action[:,transition_index]
     cause.action = model.cause.action[:,transition_index]
     effect.action = model.effect.action[:,transition_index]
+    effect_uncertainty.action = model.effect_uncertainty.action[:,transition_index]
     
     for group_index in range(len(model.context.features)):
         context.features.append(model.context.features \
@@ -387,10 +399,13 @@ def visualize_transition(model, transition_index, save_eps=False,
                               [group_index][:,transition_index])
         effect.features.append(model.effect.features \
                                [group_index][:,transition_index])
+        effect_uncertainty.features.append(model.effect_uncertainty.features \
+                               [group_index][:,transition_index])
         
-    visualize_state(context, y_max=2.75, y_min=2.25, axes=viz_axes)
-    visualize_state(cause, y_max=1.75, y_min=1.25, axes=viz_axes)
-    visualize_state(effect, y_max=0.75, y_min=0.25, axes=viz_axes)
+    visualize_state(context, y_max=3.75, y_min=3.25, axes=viz_axes)
+    visualize_state(cause, y_max=2.75, y_min=2.25, axes=viz_axes)
+    visualize_state(effect, y_max=1.75, y_min=1.25, axes=viz_axes)
+    visualize_state(effect_uncertainty, y_max=0.75, y_min=0.25, axes=viz_axes)
     
     """ This trick makes matplotlib recognize that it has something to plot.
     Everything else in the plot is patches and text, and for some reason

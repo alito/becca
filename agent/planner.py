@@ -27,6 +27,9 @@ class Planner(object):
     def step(self, model, verbose_flag=False):
         """ Choose an action at each time step """
         
+        #debug
+        verbose_flag = False
+        
         """ First, choose a reactive action """
         """ TODO: make reactive action habit based, not reward based
         also make reactive action general """
@@ -239,8 +242,8 @@ class Planner(object):
             #print 'count_weight.ravel()', count_weight.ravel()
             #print 'transition_vote', transition_vote
                             
-            print 'np.max(transition_vote)', np.max(transition_vote)
-            print 'max_transition_index', max_transition_index
+            print 'best plan transition_index', max_transition_index
+            print 'best plan vote', np.max(transition_vote)
             
             #viz_utils.visualize_state(working_memory, label='working_memory')
             #viz_utils.visualize_state(goal, label='goal')
@@ -255,21 +258,8 @@ class Planner(object):
                 transition_vote[best_transition_vote] = -10.
                 
             print 'action: ', action.ravel()
-
-            plt.show()
             
             
         #return a prediction
         return action, goal
     
-    
-    def size(self):
-        """ Determine the approximate number of elements being used by the
-        class and its members. Created to debug an apparently excessive 
-        use of memory.
-        """
-        total = 0
-        total += self.action.size
-
-        return total
-            

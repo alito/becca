@@ -409,11 +409,11 @@ class Perceiver(object):
         """ If the coactivity is high enough, create a new group """
         #debug
         #max_coactivity = np.max(self.coactivity)
-        symmetric_coactivity = self.coactivity[:self.n_inputs, 
+        mutual_coactivity = self.coactivity[:self.n_inputs, 
                                        :self.n_inputs] * \
                                        self.coactivity[:self.n_inputs, 
                                        :self.n_inputs].transpose()
-        max_coactivity = np.max(symmetric_coactivity)
+        max_coactivity = np.max(mutual_coactivity)
         #debug
         #if np.random.random_sample() < 0.01:
         #    print 'np.max(self.coactivity)', np.max(self.coactivity)
@@ -427,7 +427,7 @@ class Perceiver(object):
             #debug
             #indices1, indices2 = (self.coactivity ==
             #                      max_coactivity).nonzero()
-            indices1, indices2 = (symmetric_coactivity ==
+            indices1, indices2 = (mutual_coactivity ==
                                   max_coactivity).nonzero()
 
 
@@ -442,7 +442,7 @@ class Perceiver(object):
                 self.combination[element] = 0
 
                 #debug
-                symmetric_coactivity[element] = 0
+                mutual_coactivity[element] = 0
 
             """ Track the available elements with candidate_matches
             to add and the coactivity associated with each.
@@ -468,7 +468,7 @@ class Perceiver(object):
                 #debug
                 #candidate_coactivities = np.abs(self.coactivity *
                 #                                candidate_matches)
-                candidate_coactivities = np.abs(symmetric_coactivity *
+                candidate_coactivities = np.abs(mutual_coactivity *
                                                 candidate_matches)
 
                 #TODO symmetry allows either row or column strength to 
@@ -507,7 +507,7 @@ class Perceiver(object):
                     self.combination[element] = 0
                     
                     #debug
-                    symmetric_coactivity[element] = 0
+                    mutual_coactivity[element] = 0
 
                 candidate_matches[:,added_feature_indices] = 1
                 candidate_matches[added_feature_indices,:] = 1
@@ -705,9 +705,9 @@ class Perceiver(object):
             feature_index = \
                     np.argmax(self.feature_activity.features[group_index])
             
-            similarities = utils.similarity( 
-                self.feature_map.features[group_index][feature_index,:], 
-                self.feature_map.features[group_index].transpose())
+            #similarities = utils.similarity( 
+            #    self.feature_map.features[group_index][feature_index,:], 
+            #    self.feature_map.features[group_index].transpose())
 
             cos_theta = \
                     np.dot(self.feature_map.features \
