@@ -28,10 +28,6 @@ class Learner(object):
         
         self.maintain_state_size(feature_activity)
         
-        self.verbose_flag = False
-        if np.random.random_sample() < 0.:#01:
-            self.verbose_flag = True
-            
         #compare feature activity to predicted feature activity
         #update the transition used to make the prediction
         #both the expected value of the effect, and the expected error on
@@ -47,11 +43,10 @@ class Learner(object):
         
         """ Update the model """
         self.model.step( self.attended_feature, 
-                         feature_activity, reward, self.verbose_flag)
+                         feature_activity, reward)
 
         """ Decide on an action """
-        self.action, self.deliberately_acted = self.planner.step(self.model, 
-                                                             self.verbose_flag)
+        self.action, self.deliberately_acted = self.planner.step(self.model)
         #prediction, confidence from planner (expected value, expected error)
         #planning and prediction are intertwined. 
         

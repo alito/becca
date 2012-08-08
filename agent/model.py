@@ -673,8 +673,8 @@ class Model(object):
         self.context.features.append(np.zeros(size))
         self.cause.features.append(np.zeros(size))
         self.effect.features.append(np.zeros(size))
-        self.effect_uncertainty.features.append(np.ones(size)) \
-                                        * self.INITIAL_UNCERTAINTY
+        self.effect_uncertainty.features.append(np.ones(size) \
+                                        * self.INITIAL_UNCERTAINTY)
                                         
         self.next_context.add_group(n_features)
         
@@ -684,9 +684,9 @@ class Model(object):
             self.feature_activity_history[group_index].\
                                                 add_group(n_features)
             
-        for group_index in range(len(self.transition_update_q)):
-            self.transition_update_q[group_index][3].\
-                                                add_group(n_features)
+        for group_index in range(len(self.new_transition_q)):
+            self.new_transition_q[group_index][1].add_group(n_features)
+            self.new_transition_q[group_index][2].add_group(n_features)
         
                     
     def n_feature_groups(self):

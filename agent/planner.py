@@ -24,11 +24,8 @@ class Planner(object):
         self.action = np.zeros((num_actions,1))
 
 
-    def step(self, model, verbose_flag=False):
+    def step(self, model):
         """ Choose an action at each time step """
-        
-        #debug
-        verbose_flag = False
         
         """ First, choose a reactive action """
         """ TODO: make reactive action habit based, not reward based
@@ -46,22 +43,16 @@ class Planner(object):
             """ Occasionally explore when making a deliberate action """
             if np.random.random_sample() < self.EXPLORATION_FRACTION:
                 
-                if verbose_flag:
-                    print('exploring')
-                
                 self.action = self.explore()
                             
                 """ Attend to any deliberate action """
                 deliberately_acted = True
                 
             else:
-                if verbose_flag:
-                    print('deliberating')
-                
                 """ The rest of the time, deliberately choose an action.
                 Choose features as goals, in addition to action.
                 """
-                (self.action, goal) = self.deliberate(model, verbose_flag)
+                (self.action, goal) = self.deliberate(model)
 
                 """ Pass goal to model """ 
                 model.update_goal(goal)
@@ -152,7 +143,7 @@ class Planner(object):
         return action
         '''
 
-    def deliberate(self, model, verbose_flag):
+    def deliberate(self, model):
         """
         Deliberate, choosing goals based on the current working memory.
         Find the transition that is best suited based on:
@@ -183,18 +174,11 @@ class Planner(object):
         """ TODO: Raise similarity by some power to focus on more 
         similar transitions?
         """
-        """ TODO: Introduce the notion of reliability? That is, when 
-        a transition is used for planning, whether the intended plan 
-        is executed?
-        """
         """ TODO: Add recency? This is likely to be useful when 
         rewards change over time. 
         """
         #debug--have count be a factor?
         #transition_vote = value * similarity
-        #
-        #incorporate both the expected value of the reward+goal, as well as 
-        #the confidence (expected error) into the vote
         transition_vote = value.ravel() * similarity.ravel() * \
                             count_weight.ravel()
         
@@ -226,32 +210,6 @@ class Planner(object):
             action[goal.action > 0] = 1
             goal.action = np.zeros(np.size(goal.action))
 
-        if verbose_flag:
-            import viz_utils
-            import matplotlib.pyplot as plt
-            #print 'value.ravel()', value.ravel()
-            #print 'similarity.ravel()', similarity.ravel()
-            #print 'count_weight.ravel()', count_weight.ravel()
-            #print 'transition_vote', transition_vote
-                            
-            print 'best plan transition_index', max_transition_index
-            print 'best plan vote', np.max(transition_vote)
-            
-            #viz_utils.visualize_state(working_memory, label='working_memory')
-            #viz_utils.visualize_state(goal, label='goal')
-            for i in range(4):
-                best_transition_vote = np.argmax(transition_vote)
-                label = str(i) + 'th best transition: ' + str(best_transition_vote) + \
-                        ', similarity ' + str(similarity[best_transition_vote]) + \
-                        ', value ' + str(value[best_transition_vote]) + \
-                        ', count ' + str(count_weight[best_transition_vote])
-                viz_utils.visualize_transition(model, best_transition_vote, 
-                                               label=label)
-                transition_vote[best_transition_vote] = -10.
-                
-            print 'action: ', action.ravel()
-            
-            
         #return a prediction
         return action, goal
     

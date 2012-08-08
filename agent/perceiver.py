@@ -49,6 +49,13 @@ class Perceiver(object):
         """
         self.COACTIVITY_THRESHOLD_DECAY_RATE = 0.27 # real, 0 <= x < 1
         
+        """ The number of features to be added at the creation of every new
+        feature group. If 0, the number of features added will be the number
+        of inputs to the group plus 2.
+        Mostly used for debugging purposes.
+        """
+        self.N_GROUP_FEATURES = 0
+        
         """ Stop creating new groups, once this number of features 
         is nearly reached.
         """
@@ -407,29 +414,19 @@ class Perceiver(object):
                   % self.n_inputs)
 
         """ If the coactivity is high enough, create a new group """
-        #debug
-        #max_coactivity = np.max(self.coactivity)
         mutual_coactivity = self.coactivity[:self.n_inputs, 
                                        :self.n_inputs] * \
                                        self.coactivity[:self.n_inputs, 
                                        :self.n_inputs].transpose()
         max_coactivity = np.max(mutual_coactivity)
-        #debug
-        #if np.random.random_sample() < 0.01:
-        #    print 'np.max(self.coactivity)', np.max(self.coactivity)
-        #    print 'max_coactivity', max_coactivity
 
         if max_coactivity > self.NEW_GROUP_THRESHOLD:
             
             """ Nucleate a new group under the two elements for which 
             coactivity is a maximum.
             """
-            #debug
-            #indices1, indices2 = (self.coactivity ==
-            #                      max_coactivity).nonzero()
             indices1, indices2 = (mutual_coactivity ==
                                   max_coactivity).nonzero()
-
 
             which_index = np.random.random_integers(0, len(indices1)-1)
             index1 = indices1[which_index]
@@ -440,8 +437,6 @@ class Perceiver(object):
                                              added_feature_indices):
                 self.coactivity[element] = 0
                 self.combination[element] = 0
-
-                #debug
                 mutual_coactivity[element] = 0
 
             """ Track the available elements with candidate_matches
@@ -465,21 +460,12 @@ class Perceiver(object):
                 coactivity, these would be symmetric. In this 
                 coactivity, they are not. 
                 """
-                #debug
-                #candidate_coactivities = np.abs(self.coactivity *
-                #                                candidate_matches)
                 candidate_coactivities = np.abs(mutual_coactivity *
                                                 candidate_matches)
-
-                #TODO symmetry allows either row or column strength to 
-                # be calculated: they are identical
-                match_strength_col = np.sum(candidate_coactivities, axis=0)
-                match_strength_row = np.sum(candidate_coactivities, axis=1)
-                candidate_match_strength = match_strength_col + \
-                                match_strength_row.transpose()
-                candidate_match_strength = candidate_match_strength / \
-                                (2 * len(added_feature_indices))
-
+                candidate_match_strength = np.sum(
+                            candidate_coactivities, axis=0) / \
+                            len(added_feature_indices)
+                
                 """ Find the next most correlated feature and test 
                 whether its coactivity is high enough to add it to the
                 group.
@@ -505,8 +491,6 @@ class Perceiver(object):
                                                  added_feature_indices):
                     self.coactivity [element] = 0
                     self.combination[element] = 0
-                    
-                    #debug
                     mutual_coactivity[element] = 0
 
                 candidate_matches[:,added_feature_indices] = 1
@@ -520,105 +504,123 @@ class Perceiver(object):
                             self.COACTIVITY_THRESHOLD_DECAY_RATE * \
                             (self.NEW_GROUP_THRESHOLD - coactivity_threshold)
 
-            """ Add the newly-created group.
-            Update all the variables that need to grow to represent 
-            the new group.
-            """
-            added_feature_indices = np.sort(added_feature_indices)
-            self.groups_per_feature[added_feature_indices] += 1
-            
-            """ Add a fixed number of features all at once """
-            nth_group = self.feature_activity.n_feature_groups()
 
-            n_group_inputs = len(added_feature_indices)
-            n_group_features = n_group_inputs + 2
-            
-            self.feature_activity.add_group(n_group_features)
-            self.fatigue.add_group(n_group_features)
-            self.previous_input.add_group(n_group_features)
+            n_group_features = self.add_new_group(added_feature_indices)
+            self.enforce_disallowed_combinations(n_group_features)
 
-            new_coactivity_map_array = \
-                            np.cumsum(np.ones((n_group_features,1)), axis=0) \
-                            + self.n_inputs - 1
-            self.coactivity_map.add_group(n_group_features, \
-                            new_array=new_coactivity_map_array, dtype=np.int)
-
-            self.feature_map.add_group(n_group_features, n_group_inputs)
-
-            self.grouping_map_group.add_group(n_group_inputs,
-                new_array=self.inv_coactivity_map_group \
-                [added_feature_indices], dtype=np.int)
-            self.grouping_map_feature.add_group(n_group_inputs,
-                new_array=self.inv_coactivity_map_feature \
-                [added_feature_indices], dtype=np.int)
-
-            self.inv_coactivity_map_group[self.n_inputs: \
-                          self.n_inputs + n_group_features] =  nth_group
-            self.inv_coactivity_map_feature[self.n_inputs: \
-                          self.n_inputs + n_group_features] = \
-                          np.cumsum(np.ones((n_group_features,1)), axis=0) \
-                          - np.ones((n_group_features,1))
-            self.n_inputs += n_group_features
-
-            """ Calculate the disallowed cominations for the new group """
-            nth_group = self.feature_activity.n_feature_groups() - 1;
-            disallowed_elements = np.zeros((0,1), dtype=np.int)
-            for group_ctr in range(-3, nth_group):    
-                
-                """ Find the input features indices from group [group_ctr] that 
-                contribute to the nth_group.
-                """
-                matching_group_member_indices = (
-                         self.grouping_map_group.features[nth_group] == 
-                         group_ctr).nonzero()[0]
-    
-                matching_feature_members = \
-                      self.grouping_map_feature.features[nth_group] \
-                      [matching_group_member_indices]
-                      
-                """ Find the corresponding elements in the feature vector
-                and coactivity estimation matrix.
-                """
-                if group_ctr == -3:
-                    matching_element_indices = self.coactivity_map.sensors \
-                          [matching_feature_members]
-                elif group_ctr == -2:
-                    matching_element_indices = self.coactivity_map.primitives \
-                          [matching_feature_members]
-                elif group_ctr == -1:
-                    matching_element_indices = self.coactivity_map.action \
-                          [matching_feature_members]
-                else:
-                    
-                    if self.coactivity_map.features[group_ctr].size > 0:
-                        matching_element_indices = self.coactivity_map.features \
-                              [group_ctr][matching_feature_members,:]
-
-                    else:
-                        matching_element_indices = np.zeros((0,1))
-                        
-                """ Add these to the set of elements that are not allowed to 
-                be grouped with the new feature to create new groups.
-                """                
-                disallowed_elements = np.vstack((disallowed_elements, 
-                            matching_element_indices.ravel()[:,np.newaxis]))
-                
-            self.disallowed.append(disallowed_elements)
-            
-            """ Disallow building new groups out of members of the new feature
-            and any of its group's inputs.
-            """
-            self.combination[self.n_inputs - n_group_features:self.n_inputs, 
-                             self.disallowed[nth_group][:,0].astype(int)] = 0
-            self.combination[self.disallowed[nth_group][:,0].astype(int), 
-                             self.n_inputs - n_group_features:self.n_inputs] = 0
-            
             print 'adding group ', self.previous_input.n_feature_groups() - 1, \
                     ' with ', len(added_feature_indices), ' inputs'
-
         return 
 
+    
+    def add_new_group(self, added_feature_indices):
+        """ Add the newly-created group.
+        Update all the variables that need to grow to represent 
+        the new group.
+        """
+        added_feature_indices = np.sort(added_feature_indices)
+        self.groups_per_feature[added_feature_indices] += 1
+        
+        """ Add a fixed number of features all at once """
+        nth_group = self.feature_activity.n_feature_groups()
 
+        n_group_inputs = len(added_feature_indices)
+        
+        if self.N_GROUP_FEATURES == 0:
+            n_group_features = n_group_inputs + 2
+        else:
+            n_group_features = self.N_GROUP_FEATURES
+            
+        self.feature_activity.add_group(n_group_features)
+        self.fatigue.add_group(n_group_features)
+        self.previous_input.add_group(n_group_features)
+
+        new_coactivity_map_array = \
+                        np.cumsum(np.ones((n_group_features,1)), axis=0) \
+                        + self.n_inputs - 1
+        self.coactivity_map.add_group(n_group_features, \
+                        new_array=new_coactivity_map_array, dtype=np.int)
+
+        self.feature_map.add_group(n_group_features, n_group_inputs)
+
+        self.grouping_map_group.add_group(n_group_inputs,
+            new_array=self.inv_coactivity_map_group \
+            [added_feature_indices], dtype=np.int)
+        self.grouping_map_feature.add_group(n_group_inputs,
+            new_array=self.inv_coactivity_map_feature \
+            [added_feature_indices], dtype=np.int)
+
+        self.inv_coactivity_map_group[self.n_inputs: \
+                      self.n_inputs + n_group_features] =  nth_group
+        self.inv_coactivity_map_feature[self.n_inputs: \
+                      self.n_inputs + n_group_features] = \
+                      np.cumsum(np.ones((n_group_features,1)), axis=0) \
+                      - np.ones((n_group_features,1))
+        self.n_inputs += n_group_features
+        
+        return n_group_features
+    
+          
+    def enforce_disallowed_combinations(self, n_group_features):
+        """ Find the elements that cannot be grouped with the elements of
+        the nth_group to form new groups and explicitly prohibit them
+        from doing so.
+        """
+        nth_group = self.feature_activity.n_feature_groups() - 1
+        disallowed_elements = np.zeros((0,1), dtype=np.int)
+        for group_ctr in range(-3, nth_group):    
+            
+            """ Find the input features indices from group [group_ctr] that 
+            contribute to the nth_group.
+            """
+            matching_group_member_indices = (
+                     self.grouping_map_group.features[nth_group] == 
+                     group_ctr).nonzero()[0]
+
+            matching_feature_members = \
+                  self.grouping_map_feature.features[nth_group] \
+                  [matching_group_member_indices]
+                  
+            """ Find the corresponding elements in the feature vector
+            and coactivity estimation matrix.
+            """
+            if group_ctr == -3:
+                matching_element_indices = self.coactivity_map.sensors \
+                      [matching_feature_members]
+            elif group_ctr == -2:
+                matching_element_indices = self.coactivity_map.primitives \
+                      [matching_feature_members]
+            elif group_ctr == -1:
+                matching_element_indices = self.coactivity_map.action \
+                      [matching_feature_members]
+            else:
+                
+                if self.coactivity_map.features[group_ctr].size > 0:
+                    matching_element_indices = self.coactivity_map.features \
+                          [group_ctr][matching_feature_members,:]
+
+                else:
+                    matching_element_indices = np.zeros((0,1))
+                    
+            """ Add these to the set of elements that are not allowed to 
+            be grouped with the new feature to create new groups.
+            """                
+            disallowed_elements = np.vstack((disallowed_elements, 
+                        matching_element_indices.ravel()[:,np.newaxis]))
+            
+        self.disallowed.append(disallowed_elements)
+                
+        """ Disallow building new groups out of members of the new feature
+        and any of its group's inputs.
+        """
+        self.combination[self.n_inputs - n_group_features:self.n_inputs, 
+                         self.disallowed[nth_group][:,0].astype(int)] = 0
+        self.combination[self.disallowed[nth_group][:,0].astype(int), 
+                         self.n_inputs - n_group_features:self.n_inputs] = 0
+
+        return 
+    
+    
     def calculate_excitation(self, inputs):
         """ Find the excitation level for each feature """        
 
@@ -758,8 +760,8 @@ class Perceiver(object):
               np.linalg.norm(self.feature_map.features[group_index][winner,:])
               
         return
-       
-          
+   
+    
     def visualize(self, save_eps=False):
         symmetric_coactivity = self.coactivity[:self.n_inputs, 
                                :self.n_inputs] * \
