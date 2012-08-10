@@ -1,5 +1,5 @@
 """
-benchmark 0.4.0
+benchmark 0.4.1
 
 A suite of worlds to characterize the performance of Becca variants.
 Other agents may use this benchmark as well, as long as they have the 
@@ -12,7 +12,7 @@ than agents that perform a single task optimally and all others very poorly.
 In order to facilitate apples-to-apples comparisons between agents, the 
 benchmark will be version numbered.
 
-In 60 runs on the benchmark, Becca 0.4.0 averaged a score of 0.292
+In 10 runs on the benchmark, Becca 0.4.1 averaged a score of 0.262
 """
 
 """ Empirically, running this version of the benchmark multiple times
@@ -37,35 +37,42 @@ from worlds.grid_2D_dc import World as World_grid_2D_dc
 from worlds.image_1D import World as World_image_1D
 from worlds.image_2D import World as World_image_2D
 
-
 def main():
+
+    N_RUNS = 13
+    overall_performance = []
     
-    """ Tabulate the performance from each world """
-    performance = []
-    
-    world = World_grid_1D()
-    performance.append(test(world))
-    world = World_grid_1D_ms()
-    performance.append(test(world))
-    world = World_grid_1D_noise()
-    performance.append(test(world))
-    world = World_grid_2D()
-    performance.append(test(world))
-    world = World_grid_2D_dc()
-    performance.append(test(world))
-    world = World_image_1D()
-    performance.append(test(world))
-    world = World_image_2D()
-    performance.append(test(world))
-    
-    print "Individual benchmark scores: " , performance
-    
-    total = 0
-    for val in performance:
-        total += val
-    mean_performance = total / len(performance)
-    
-    print "Overall benchmark score: ", mean_performance 
+    for i in range(N_RUNS):
+        
+        """ Tabulate the performance from each world """
+        performance = []
+        
+        world = World_grid_1D()
+        performance.append(test(world))
+        world = World_grid_1D_ms()
+        performance.append(test(world))
+        world = World_grid_1D_noise()
+        performance.append(test(world))
+        world = World_grid_2D()
+        performance.append(test(world))
+        world = World_grid_2D_dc()
+        performance.append(test(world))
+        world = World_image_1D()
+        performance.append(test(world))
+        world = World_image_2D()
+        performance.append(test(world))
+        
+        print "Individual benchmark scores: " , performance
+        
+        total = 0
+        for val in performance:
+            total += val
+        mean_performance = total / len(performance)
+        overall_performance.append(mean_performance)
+        
+        print "Overall benchmark score, ", i , "th run: ", mean_performance 
+        
+    print "All overall benchmark scores: ", overall_performance 
     
     """ Block the program, displaying all plots.
     When the plot windows are closed, the program closes.
