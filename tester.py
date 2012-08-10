@@ -3,7 +3,6 @@ A main test harness for a general reinforcement learning agent.
 """
 
 import numpy as np
-
 from agent.agent import Agent
 from agent import viz_utils
         

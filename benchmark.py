@@ -15,15 +15,6 @@ benchmark will be version numbered.
 In 10 runs on the benchmark, Becca 0.4.1 averaged a score of 0.262
 """
 
-""" Empirically, running this version of the benchmark multiple times
-gives values with a standard deviation of about 0.013. If you want more
-accurate estimate of an agent's performance, run it 3 or 5 times 
-and take the average. 
-Or better yet, to help account for the fact that it is a somewhat non-Gaussian 
-process, (it has a short tail on the low side, almost none on the high side)
-run it 7 times, throw away the two highest and two lowest scores, 
-and average the rest.
-"""
 
 from agent.agent import Agent
 import numpy as np
@@ -39,7 +30,7 @@ from worlds.image_2D import World as World_image_2D
 
 def main():
 
-    N_RUNS = 13
+    N_RUNS = 7
     overall_performance = []
     
     for i in range(N_RUNS):
@@ -73,6 +64,39 @@ def main():
         print "Overall benchmark score, ", i , "th run: ", mean_performance 
         
     print "All overall benchmark scores: ", overall_performance 
+    
+    
+    """ Empirically, running version 0.4.0 of the benchmark multiple times
+    gave values with a standard deviation of about 0.013. So if you want a more
+    accurate estimate of an agent's performance, run it 3 or 5 times 
+    and take the average. 
+    Or better yet, to help account for the fact that it is a somewhat non-Gaussian 
+    process, (it has a short tail on the low side, almost none on the high side)
+    run it 7 times, throw away the two highest and two lowest scores, 
+    and average the rest. This benchmark will automatically throw away the 
+    2 highest and 2 lowest values if you choose N_RUNS to be 7 or more.
+    """
+    if N_RUNS >= 7:
+        for i in range(2):
+            highest_val = -10 ** 6
+            lowest_val = 10 ** 6
+            
+            for indx in range(len(overall_performance)):
+                if overall_performance[indx] > highest_val:
+                    highest_val = overall_performance[indx]
+                if overall_performance[indx] < lowest_val:
+                    lowest_val = overall_performance[indx]
+            overall_performance.remove(highest_val)
+            overall_performance.remove(lowest_val)
+
+    """ Find the average of what's left """
+    sum = 0.
+    for indx in range(len(overall_performance)):
+        sum += overall_performance[indx]
+        
+    typical_performance = sum / len(overall_performance)
+    
+    print "Typical performance score: ", typical_performance 
     
     """ Block the program, displaying all plots.
     When the plot windows are closed, the program closes.

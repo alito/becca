@@ -159,12 +159,6 @@ class World(BaseWorld):
     def calculate_reward(self):
         
         reward = 0
-        '''if (abs(self.column_position - self.TARGET_COLUMN) < 
-            self.REWARD_REGION_WIDTH / 2) \
-            & (abs(self.row_position - self.TARGET_ROW) < 
-               self.REWARD_REGION_WIDTH / 2):
-            reward = self.REWARD_MAGNITUDE
-        '''
         if abs(self.column_position - self.TARGET_COLUMN) < \
                 self.REWARD_REGION_WIDTH / 2: 
             reward += self.REWARD_MAGNITUDE / 2

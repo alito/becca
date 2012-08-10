@@ -200,17 +200,6 @@ def visualize_feature_spacing(grouper, save_eps=False,
                 fmap.features[group_index][feature_index,:], 
                 fmap.features[group_index].transpose())
             
-            #debug
-            '''smalls =  np.flatnonzero(np.logical_and(1-similarities < 0.1, 1-similarities > 0.00001))
-            if smalls.size > 0:
-                print '======'
-                print 'group ', group_index, 'feature ', feature_index, 
-                print fmap.features[group_index][feature_index,:]
-                print 'matches ', smalls
-                print fmap.features[group_index][smalls,:]
-                #print 'all features: '
-                #print fmap.features[group_index]
-            '''
             similarities = np.delete(similarities, [feature_index])
             similarities = similarities[:,np.newaxis]
             distances = np.concatenate((distances, 1-similarities))
@@ -385,7 +374,8 @@ def visualize_transition(model, transition_index, save_eps=False,
     context.primitives = model.context.primitives[:,transition_index]
     cause.primitives = model.cause.primitives[:,transition_index]
     effect.primitives = model.effect.primitives[:,transition_index]
-    effect_uncertainty.primitives = model.effect_uncertainty.primitives[:,transition_index]
+    effect_uncertainty.primitives = \
+                    model.effect_uncertainty.primitives[:,transition_index]
     
     context.action = model.context.action[:,transition_index]
     cause.action = model.cause.action[:,transition_index]

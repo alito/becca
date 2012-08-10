@@ -3,23 +3,6 @@ import state
 
 """ Utility functions """
 
-'''  not used now?
-class AutomaticList(list):
-    """ A list-like class that behaves like Matlab's arrays in 
-    automatically extending when an index beyond
-    its length is set
-    """
-    def __setitem__(self, key, value):
-        missing = key - len(self)
-        if missing < 0:
-            list.__setitem__(self, key, value)
-        else:
-            # set missing items to a null array
-            for i in range(missing):
-                self.append(empty_array())
-            self.append(value)
-'''               
-
 def bounded_sum(a, b):
     """ Perform a bounded sum.
     Sum the values A and B, which are assumed to fall on the interval

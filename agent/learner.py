@@ -28,15 +28,7 @@ class Learner(object):
         
         self.maintain_state_size(feature_activity)
         
-        #compare feature activity to predicted feature activity
-        #update the transition used to make the prediction
-        #both the expected value of the effect, and the expected error on
-        #those values
-        #the details of this should be taken care of by the model
-
         """ Attend to a single feature """
-        #use the prediction of the feature activity and the current feature 
-        #activity to help direct attention
         self.attended_feature = self.attend(feature_activity, 
                                             self.deliberately_acted, 
                                             self.action)
@@ -47,8 +39,6 @@ class Learner(object):
 
         """ Decide on an action """
         self.action, self.deliberately_acted = self.planner.step(self.model)
-        #prediction, confidence from planner (expected value, expected error)
-        #planning and prediction are intertwined. 
         
         """ debug: choose a random action """
         #self.action = np.zeros(self.goal.action.size, 1);
@@ -65,11 +55,7 @@ class Learner(object):
         n_learner_feature_groups = self.model.n_feature_groups()
         
         if n_learner_feature_groups < feature_activity.n_feature_groups():
-            n_features = feature_activity.features[-1].size
-                                           
-            #self.working_memory.add_group(n_features)
-            #self.previous_working_memory.add_group(n_features)
-            #self.attended_feature.add_group(n_features)
+            n_features = feature_activity.features[-1].size                                           
             self.goal.add_group(n_features)
             self.model.add_group(n_features)
         return
@@ -129,16 +115,6 @@ class Learner(object):
             self.attended_feature.features[max_salience_group] \
                                           [max_salience_index] = 1
 
-        # debug
-        '''
-        if np.random.random_sample(1) < 0.01:
-            print "attention report "
-            viz_utils.visualize_state(feature_activity, label='feature_activity')
-            viz_utils.force_redraw()
-            viz_utils.visualize_state(self.attended_feature, label='attended_feature')
-            viz_utils.force_redraw()
-        '''
-            
         if deliberately_acted:
             if np.count_nonzero(last_action):
                 self.attended_feature = feature_activity.zeros_like()
@@ -168,7 +144,7 @@ class Learner(object):
 
                    
     def visualize(self, save_eps=True):
-        #viz_utils.visualize_model(self.model, 10)
+        viz_utils.visualize_model(self.model, 10)
         viz_utils.force_redraw()
         
         return

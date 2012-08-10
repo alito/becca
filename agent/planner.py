@@ -14,12 +14,12 @@ class Planner(object):
         """ The approximate fraction of time steps on which the 
         planner intentionally does nothing so that the model can observe.
         """
-        self.OBSERVATION_FRACTION = 0.3    # real, 0 < x < 1
+        self.OBSERVATION_FRACTION = 0.3     # real, 0 < x < 1
 
         """ Add just a bit of noise to the vote.
         Serves to randomize selection among nearly equal votes.
         """
-        self.VOTE_NOISE = 1e-6            # real, 0 < x < 1, typically small
+        self.VOTE_NOISE = 1e-6              # real, 0 < x < 1, typically small
 
         self.action = np.zeros((num_actions,1))
 
@@ -210,6 +210,5 @@ class Planner(object):
             action[goal.action > 0] = 1
             goal.action = np.zeros(np.size(goal.action))
 
-        #return a prediction
         return action, goal
     

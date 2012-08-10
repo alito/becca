@@ -18,23 +18,23 @@ class Perceiver(object):
                  max_num_features):
 
         """ Control how rapidly previous inputs are forgotten """
-        self.INPUT_DECAY_RATE = 1.0 # real, 0 < x < 1
+        self.INPUT_DECAY_RATE = 1.0                 # real, 0 < x < 1
         
         """ Control how rapidly the coactivity update plasticity changes """
-        self.PLASTICITY_UPDATE_RATE = 10. ** (-3) # real, 0 < x < 1, small
+        self.PLASTICITY_UPDATE_RATE = 10. ** (-3)   # real, 0 < x < 1, small
         
         """ The maximum value of plasticity """
-        self.MAX_PLASTICITY = 0.1
+        self.MAX_PLASTICITY = 0.1                   # real, 0 < x < 1
         
         """ The feature actvity penalty associated with 
         prior membership in other groups. 
         """
-        self.GROUP_DISCOUNT = 0.5
+        self.GROUP_DISCOUNT = 0.5                   # real, 0 < x < 1
         
         """ Once a coactivity value exceeds this value, 
         nucleate a new group.
         """ 
-        self.NEW_GROUP_THRESHOLD = 0.1     # real,  x >= 0
+        self.NEW_GROUP_THRESHOLD = 0.1              # real,  x >= 0
         
         """ If the coactivity between the first two group members 
         and the next candidates 
@@ -68,18 +68,18 @@ class Perceiver(object):
         self.INHIBITION_STRENGTH_FACTOR = 1.
         
         """ The rate at which features adapt toward observed input data """
-        self.FEATURE_ADAPTATION_RATE = 10. ** -1
+        self.FEATURE_ADAPTATION_RATE = 10. ** -1   # real, 0 <= x, small
 
         """ The rate at which feature fatigue decays.
         0 means it never decays and 1 means it decays immediately--that
         there is no fatigue.
         """
-        self.FATIGUE_DECAY_RATE = 10. ** -2
+        self.FATIGUE_DECAY_RATE = 10. ** -2        # real, 0 <= x, small
         
         """ The strength of the influence that fatigue has on the
         features.
         """
-        self.FATIGUE_SUSCEPTIBILITY = 10. ** -1
+        self.FATIGUE_SUSCEPTIBILITY = 10. ** -1    # real, 0 <= x < 1
         
         """ To prevent normalization from giving a divide by zero """
         self.EPSILON = 1e-6
@@ -258,7 +258,6 @@ class Perceiver(object):
         as primitive inputs.
         """ 
         grouped_input.action = actions
-        #grouped_input.action = np.zeros(actions.shape)
         
         for group_index in range(self.grouping_map_group.n_feature_groups()):
             grouped_input.add_group(
@@ -295,23 +294,6 @@ class Perceiver(object):
         self.fatigue = self.fatigue.unbounded_sum(self.feature_activity)
         self.fatigue = self.fatigue.multiply(1 - self.FATIGUE_DECAY_RATE)
         
-        '''
-        #debug
-        if len(self.feature_map.features) > 0:
-            if np.random.random_sample() < .01:
-    
-                #self.make_history(inhibition.features[0], 
-                                   self.inhibition_history, 
-                                   label='inhibition history')
-                #self.make_history(self.fatigue.features[0], 
-                                   self.fatigue_history, 
-                                   label='fatigue history')
-                self.make_history(self.feature_map.features[0], 
-                                  self.feature_history, 
-                                  label='feature history')
-                viz_utils.force_redraw()
-        '''    
-
         return self.feature_activity
 
 
@@ -707,10 +689,6 @@ class Perceiver(object):
             feature_index = \
                     np.argmax(self.feature_activity.features[group_index])
             
-            #similarities = utils.similarity( 
-            #    self.feature_map.features[group_index][feature_index,:], 
-            #    self.feature_map.features[group_index].transpose())
-
             cos_theta = \
                     np.dot(self.feature_map.features \
                     [group_index][feature_index,:], \
@@ -768,8 +746,6 @@ class Perceiver(object):
                                self.coactivity[:self.n_inputs, 
                                :self.n_inputs].transpose()
 
-        #viz_utils.visualize_grouper_coactivity(self.coactivity, \
-        #                                  self.n_inputs, save_eps)
         viz_utils.visualize_grouper_coactivity(symmetric_coactivity, \
                                           self.n_inputs, save_eps)
         viz_utils.visualize_grouper_hierarchy(self, save_eps)

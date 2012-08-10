@@ -38,22 +38,22 @@ class ShellWorld(BaseWorld):
         #return sensors, primitives, reward
     
         
-	
+
     def set_agent_parameters(self, agent):
-	   pass
+        pass
         
         
     def display(self):
         """ Provide an intuitive display of the current state of the World 
         to the user.
         """
-	#...
+        #...
 
         
 
 
 #def step():
-	
+
 def init(numSensors, numPrimitives, numActions, numFeatures):
     global world, agent, actions
 
@@ -109,12 +109,12 @@ def plots():
 
 
 def act(sensors, reward):
-	global world, agent, actions
+    global world, agent, actions
         world.step()
         actions = agent.step(np.array(sensors), actions, reward)
-	#agent.report_performance()
-	#agent.show_reward_history()
-	return actions.tolist()
+    #agent.report_performance()
+    #agent.show_reward_history()
+    return actions.tolist()
 
 import SocketServer
 SocketServer.TCPServer.allow_reuse_address = True 
@@ -122,36 +122,36 @@ SocketServer.TCPServer.allow_reuse_address = True
 
 class MyTCPHandler(SocketServer.StreamRequestHandler):
     def setup(self):
-	self.connection = self.request
-	if self.timeout is not None:
-	    self.connection.settimeout(self.timeout)
-	if self.disable_nagle_algorithm:
-	    self.connection.setsockopt(socket.IPPROTO_TCP,
-		                           socket.TCP_NODELAY, True)
-	self.rfile = self.connection.makefile('rb', self.rbufsize)
-	self.wfile = self.connection.makefile('wb', self.wbufsize)
+        self.connection = self.request
+        if self.timeout is not None:
+            self.connection.settimeout(self.timeout)
+        if self.disable_nagle_algorithm:
+            self.connection.setsockopt(socket.IPPROTO_TCP,
+	                           socket.TCP_NODELAY, True)
+        self.rfile = self.connection.makefile('rb', self.rbufsize)
+        self.wfile = self.connection.makefile('wb', self.wbufsize)
 
     def handle(self):
-	#inputBufferSize = 1024*128 #in bytes
+        #inputBufferSize = 1024*128 #in bytes
 
         # self.request is the TCP socket connected to the client
         #self.data = self.request.recv(inputBufferSize).strip()
 
-	serving = True
-	while (serving):
-		self.data = self.rfile.readline().strip()
-		if (self.data == ""):
-			serving = False
-			break
-
-		#TODO Security - validate command to avoid allowing invocation of arbitrary commands
-		#either attached as an extra command with ':', or invoked via a parameter to these functions
-		c = self.data
-		if (c.startswith('act(') or c.startswith('init(') or c.startswith('plots(')):
-			v = eval(self.data)
-			self.wfile.write(str(v))
-			self.wfile.write('\n')
-			self.wfile.flush()
+        serving = True
+        while (serving):
+            self.data = self.rfile.readline().strip()
+            if (self.data == ""):
+                serving = False
+                break
+    
+        #TODO Security - validate command to avoid allowing invocation of arbitrary commands
+        #either attached as an extra command with ':', or invoked via a parameter to these functions
+        c = self.data
+        if (c.startswith('act(') or c.startswith('init(') or c.startswith('plots(')):
+            v = eval(self.data)
+            self.wfile.write(str(v))
+            self.wfile.write('\n')
+            self.wfile.flush()
 
 
 def serve():
@@ -167,5 +167,5 @@ def serve():
     server.serve_forever()
 
 if __name__ == "__main__":
-	serve()
+    serve()
 

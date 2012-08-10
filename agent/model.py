@@ -16,9 +16,7 @@ class Model(object):
     The model consists of a table of transitions. A transition
     describes an episode of the agent's experience. It mimics 
     the structure "In situation A, B happened, then C." Each 
-    transision consists of three states and three scalars: 
-    a context, a cause, an effect, a count, a reward_value,
-    and a goal_value. 
+    transision consists of four states and four scalars: 
     
     context: This state is a combination of several earlier
             attended features, each decayed according to its age
@@ -92,7 +90,7 @@ class Model(object):
         The trace is used to assign credit for transitions with deferred
         effects and rewards.
         """  
-        self.TRACE_LENGTH = 4               # integer, small
+        self.TRACE_LENGTH = 4                 # integer, small
         
         """ The factor by which the reward is decayed for each
         timestep between when it was received and the event to which
@@ -103,7 +101,7 @@ class Model(object):
         """ The factor by which goals are decayed for each
         timestep.
         """
-        self.GOAL_DECAY_RATE = 1.0           # real, 0 < x < 1
+        self.GOAL_DECAY_RATE = 1.0            # real, 0 < x < 1
         
         """ The initial value for uncertainty in the effect and the reward """
         self.INITIAL_UNCERTAINTY = 0.25
@@ -114,7 +112,8 @@ class Model(object):
         """ Counter tracking when to clean the model """
         self.clean_count = 0
 
-        """ Initialize the context, cause, effect, count, reward_value,
+        """ Initialize the context, cause, effect, 
+        effect_uncertainty, count, reward_value,
         and goal_value.
         Initialize a full model of zeros, so that all the memory is
         allocated on startup and the computer doesn't have to mess
@@ -230,7 +229,8 @@ class Model(object):
                
         """ Check for matches in features """
         for group_index in range(self.n_feature_groups()):
-            feature_match = self.current_cause.features[group_index].ravel().nonzero()[0]
+            feature_match = self.current_cause. \
+                            features[group_index].ravel().nonzero()[0]
             if feature_match.size > 0:
                 cause_group = group_index
                 cause_feature = feature_match
@@ -262,8 +262,6 @@ class Model(object):
         """ If there is no match, the just-experienced transition is
         novel. Add as a new transision in the model.
         """
-        
-        #matching_transition_index = self.n_transitions
         new_context = copy.deepcopy(self.current_context)
         new_cause = copy.deepcopy(self.current_cause)
 

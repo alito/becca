@@ -59,10 +59,6 @@ class Agent(object):
                                                      primitives, 
                                                      self.action)
         
-        '''viz_utils.visualize_state(feature_activity, label='feature_activity')
-        print self.timestep
-        viz_utils.force_redraw()
-        '''
         """
         Reinforcement learner
         ======================================================
@@ -84,7 +80,6 @@ class Agent(object):
             self.display()
             self.cumulative_reward = 0    
 
-
         if (self.timestep % self.BACKUP_PERIOD) == 0:
             self.save()    
 
@@ -94,9 +89,6 @@ class Agent(object):
             self.record_reward_history()
             self.show_reward_history(save_eps=True)
             print "agent is ", self.timestep ," timesteps old" 
-            #print self.perceiver.n_inputs , " inputs total"  
-            #print "Total size is about ", self.size() / 10 ** 6 , \
-            #        " million elements" 
             
             self.perceiver.visualize(save_eps=True)
             #self.learner.visualize()

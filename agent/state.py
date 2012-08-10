@@ -1,7 +1,7 @@
 import copy
 import numpy as np
 import utils
-# TODO: generalize State to handle an array of states, as in the model
+
 class State(object):
     """ A data structure for representing the internal state of the agent """ 
 
@@ -118,22 +118,4 @@ class State(object):
        
     def n_features_in_group(self, group_index):
         return self.features[group_index].size
-    
-    
-    def size(self):
-        """ Determine the approximate number of elements being used by the
-        class and its members. Created to debug an apparently excessive 
-        use of memory.
-        """
-        total = 0
-        total += self.sensors.size
-        total += self.primitives.size
-        total += self.action.size
-        for group_index in range(len(self.features)):
-            total += self.features[group_index].size
-
-        return total
-            
-            
-
     

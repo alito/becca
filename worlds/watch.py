@@ -33,7 +33,7 @@ class World(BaseWorld):
     distributed with Becca. You will have to fill this directory
     yourself in order to run this world. See
 
-    http://www.sandia.gov/~brrohre/doc/Rohrer11BiologicallyInspiredFeature.pdf
+    http://www.sandia.gov/rohrer/doc/Rohrer11BiologicallyInspiredFeature.pdf
 
     for a full writeup. 
     
@@ -116,7 +116,8 @@ class World(BaseWorld):
                                     self.image_data.shape[2]
             
         self.fov_height = np.minimum(self.image_data.shape[0], 
-                                     self.image_data.shape[1]) * self.FOV_FRACTION
+                                     self.image_data.shape[1]) * \
+                                     self.FOV_FRACTION
         self.fov_width = self.fov_height
 
         self.column_min = int(np.ceil( self.fov_width/2)) + 1
