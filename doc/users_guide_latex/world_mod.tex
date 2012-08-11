@@ -23,7 +23,7 @@ The architecture is modular. You can develop and run your own worlds without hav
 \item{The reward signal is real valued, equal to -1, 1, or something in between.}
 \end{itemize}
 
-Strictly speaking, \textsc{Becca} allows for two classes of observations, {\em sensors} and {\em primitives}. The only difference between the two is that the agent has to build sensors into features before it can use them, whereas it can use primitives as features immediately. Typically, observations that are likely to need some refining before they become useful (such as sets of pixel values) are passed in as sensors, and information that is more immediately useful (such as a contact sensor) are passed in as primitives. 
+Strictly speaking, \textsc{Becca} allows for two classes of observations, {\em sensors} and {\em primitives}. The only difference between the two is that the agent has to build sensors into features before it can use them, whereas it can use primitives as features immediately. Typically, observations that are likely to need some refining before they become useful (such as sets of pixel values) are passed in as sensors, and observations that are more immediately useful (such as a contact sensor) are passed in as primitives. 
 
 \section{How do I make a {\em hello} world?}
 
@@ -98,7 +98,7 @@ Advances the world by one time step. This is single most important method in a w
 Informs the executing loop when to stop. The top level execution loop (as implemented in \texttt{benchmark.py} and \texttt{tester.py} continues to run \textsc{Becca} through its agent-world-agent cycle until \texttt{is\_alive()} returns false.
 
 \subsection{\texttt{set\_agent\_parameters()}}
-Sets the the agent's internal parameters to values specific to the world. \textsc{Becca} has a quite a few constants that affect its operation, in the neoghborhood of 20 at last count. Most of these are set to values that seem to work for all worlds in the benchmark battery. But for development and troubleshooting, it has proven useful to be able to adjust some of \textsc{Becca}'s parameters manually. It is my hope that, in time, a single set of parameters will prove generally useful across a broad set of tasks. In the meantime this method provides a mechanism for world-specific knob-twiddling.
+Sets the the agent's internal parameters to values specific to the world. \textsc{Becca} has a quite a few constants that affect its operation, in the neighborhood of 20 at last count. Most of these are set to values that seem to work for all worlds in the benchmark battery. But for development and troubleshooting, it has proven useful to be able to adjust some of \textsc{Becca}'s parameters manually. It is my hope that, in time, a single set of parameters will prove generally useful across a broad set of tasks. In the meantime this method provides a mechanism for world-specific knob-twiddling.
 
 \subsection{\texttt{is\_time\_to\_display()}}
 Informs the executing loop when to display the feature set by returning \texttt{True}. This is for visualization purposes only and doesn't help \textsc{Becca} learn in any way. This method is optional. If it doesn't exist, the execution loop just moves on.
@@ -117,7 +117,7 @@ from .base_world import World as BaseWorld
 class World(BaseWorld):
 \end{verbatim}
 
-\texttt{hello.py} is actually a subclass of \texttt{base\_world.py},\footnote{If terms like {\em class}, {\em subclass}, {\em inheritance}, and {\em override} aren't familiar to you in this context, I'd highly recommend doing some quick reading on object-oriented (OO) programming. The concepts aren't that tricky, but they are extremely useful when discussing OO software, such as \textsc{Becca}.} which defines a generic \texttt{is\_alive()}. It also defines a generic \texttt{set\_agent\_parameters()} and \texttt{step()}, as well as default values for  \texttt{num\_sensors}, \texttt{num\_primitives}, and \texttt{num\_actions}. When you subclass it to create a new world you, only need to override those methods and variables that you want to change.
+\texttt{hello.py} is actually a subclass of \texttt{base\_world.py},\footnote{If terms like {\em class}, {\em subclass}, {\em inheritance}, and {\em override} aren't familiar to you in this context, I'd highly recommend doing some quick reading on object-oriented (OO) programming. The concepts aren't that tricky, but they are extremely useful when discussing OO software, like \textsc{Becca}.} which defines a generic \texttt{is\_alive()}. It also defines a generic \texttt{set\_agent\_parameters()} and \texttt{step()}, as well as default values for  \texttt{num\_sensors}, \texttt{num\_primitives}, and \texttt{num\_actions}. When you subclass it to create a new world you, only need to override those methods and variables that you want to change.
 
 
 \section{How do I run my world?}

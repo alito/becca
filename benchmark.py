@@ -30,7 +30,7 @@ from worlds.image_2D import World as World_image_2D
 
 def main():
 
-    N_RUNS = 7
+    N_RUNS = 1
     overall_performance = []
     
     for i in range(N_RUNS):
