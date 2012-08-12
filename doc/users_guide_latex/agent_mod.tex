@@ -4,7 +4,7 @@ This section is to help you get started hacking your own version of the \textsc{
 
 \section{How is the agent code structured?}
 
-I haven't finished writing up the justification and theory behind every part of the agent. This section will give just an overview of the structure so that you have some idea about where to start making changes. A more thorough description definitely belongs in this guide, and I plan to include it in later versions. For now, the best I can do is refer you to some previously published descriptions: ~\cite{rohrer11b,rohrer11c}. These are no longer entirely accurate, unfortunately, but give a pretty good ideal about what is going on.
+I haven't finished writing up the justification and theory behind every part of the agent. This section will give just an overview of the structure so that you have some idea about where to start making changes. A more thorough description definitely belongs in this guide, and I plan to include it in later versions. For now, the best I can do is refer you to Appendix~\ref{perceiver_chapter}, describing the perceiver in detail, and some previously published descriptions: ~\cite{rohrer11b,rohrer11c}. These last are no longer entirely accurate, unfortunately, but give a pretty good ideal about what is going on.
 
 Figure~\ref{class_structure} shows the major classes and some of their important members. In the code, each class is contained in a module with a lowercase version of the same name. A brief description of the major functions of each class is given below.
 
@@ -23,10 +23,10 @@ Figure~\ref{class_structure} shows the major classes and some of their important
 \subsection{\texttt{Agent}}
 \begin{itemize}
 \item Performs executive functions, such as saving and reporting.
-\item Calls \texttt{Grouper.step()} and  \texttt{Learner.step()} at each time step.
+\item Calls \texttt{Perceiver.step()} and  \texttt{Learner.step()} at each time step.
 \end{itemize}
 
-\subsection{\texttt{Grouper}}
+\subsection{\texttt{Perceiver} (was \texttt{Grouper} )}
 \begin{itemize}
 \item Forms inputs into groups.
 \item Finds features in each of those groups.
@@ -42,13 +42,12 @@ Figure~\ref{class_structure} shows the major classes and some of their important
 \subsection{\texttt{Learner}}
 \begin{itemize}
 \item Chooses which feature to attend to.
-\item Maintains working memory using attended features.
 \item Calls \texttt{Model.step()} and  \texttt{Planner.step()} at each time step.
 \end{itemize}
 
 \subsection{\texttt{Model}}
 \begin{itemize}
-\item Contains a library of \texttt{transition}s, each consisting of three \texttt{State}s: a \texttt{context}, a \texttt{cause}, and an \texttt{effect}. \texttt{transition}s are conceptual only, and are not actually member variables.
+\item Contains a library of \texttt{transition}s, each consisting of four \texttt{State}s: a \texttt{context}, a \texttt{cause}, an \texttt{effect}, and an effect uncertainty. \texttt{transition}s are conceptual only, and are not actually member variables.
 \item Finds similar transitions in a library.
 \item Records new transitions in the library.
 \end{itemize}

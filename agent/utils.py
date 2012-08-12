@@ -3,23 +3,6 @@ import state
 
 """ Utility functions """
 
-'''  not used now?
-class AutomaticList(list):
-    """ A list-like class that behaves like Matlab's arrays in 
-    automatically extending when an index beyond
-    its length is set
-    """
-    def __setitem__(self, key, value):
-        missing = key - len(self)
-        if missing < 0:
-            list.__setitem__(self, key, value)
-        else:
-            # set missing items to a null array
-            for i in range(missing):
-                self.append(empty_array())
-            self.append(value)
-'''               
-
 def bounded_sum(a, b):
     """ Perform a bounded sum.
     Sum the values A and B, which are assumed to fall on the interval
@@ -126,6 +109,7 @@ def bounded_sum_unmap(a_prime):
 
 
 def similarity(point, point_set, max_index=None):
+    
     """
     Calculates the similarity between a point and a set of points.
     The variable 'point' may either be a numpy array, or a state. 
@@ -168,6 +152,7 @@ def similarity(point, point_set, max_index=None):
         max_index = point_set.shape[1]
 
     if not isinstance(point, state.State):
+        
         """ First handle the non-list case, comparing 
         an array to each column in a 2D array.
         """
@@ -224,11 +209,11 @@ def similarity(point, point_set, max_index=None):
             sum_sq_point += weight * np.sum(point_mat ** 2, axis=0)
             sum_sq_set += weight * np.sum(set_mat ** 2, axis=0)
 
-        """ Second take care of actions in the same way """
-        if point.actions.size > 0:
-            weight = point.actions.size
-            point_mat = np.tile(point.actions, (1, max_index))
-            set_mat = point_set.actions[:,:max_index]
+        """ Second take care of action in the same way """
+        if point.action.size > 0:
+            weight = point.action.size
+            point_mat = np.tile(point.action, (1, max_index))
+            set_mat = point_set.action[:,:max_index]
             inner_product += weight * np.sum((point_mat * set_mat), axis=0)
             sum_sq_point += weight * np.sum(point_mat ** 2, axis=0)
             sum_sq_set += weight * np.sum(set_mat ** 2, axis=0)

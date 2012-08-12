@@ -1,5 +1,18 @@
 \chapter{Revision history}
 
+\section{Version 0.4.1, August 17, 2012}
+
+\begin{itemize}
+\item Nearly all numpy 1D arrays were converted to 2D arrays for consistency   
+\item Coactivity has been modified to be symmetric.
+\item Model transitions' effects are updated with each observation or use. That is, they are updated both when they are observed and when they are used by planner as a basis for selecting an action.
+\item Model transitions now include an effect uncertainty and a reward uncertainty. 
+\item All the features in a group are now created when the group is created. They evolve over time based on the inputs observed.
+\item Feature activity is driven both by excitation and fatigue.
+\item Feature evolution is driven both by activity and inhibition.
+\end{itemize}
+
+
 \section{Version 0.4.0, June 8, 2012}
 
 \begin{itemize}
@@ -14,3 +27,4 @@
 \item Becca now works on all battery worlds, but with much room for improvement.
 \item Users Guide added. 
 \end{itemize}
+

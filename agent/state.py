@@ -1,7 +1,7 @@
 import copy
 import numpy as np
 import utils
-# TODO: generalize State to handle an array of states, as in the model
+
 class State(object):
     """ A data structure for representing the internal state of the agent """ 
 
@@ -10,7 +10,7 @@ class State(object):
         
         self.sensors = np.zeros((num_sensors,1))
         self.primitives = np.zeros((num_primitives,1))
-        self.actions = np.zeros((num_actions,1))
+        self.action = np.zeros((num_actions,1))
         self.features = []
         
         
@@ -22,14 +22,14 @@ class State(object):
         zero_state = copy.deepcopy(self)
         zero_state.sensors = np.zeros_like(self.sensors, dtype=state_type)
         zero_state.primitives = np.zeros_like(self.primitives, dtype=state_type)
-        zero_state.actions = np.zeros_like(self.actions, dtype=state_type)
+        zero_state.action = np.zeros_like(self.action, dtype=state_type)
         
         zero_state.features = [np.zeros_like(f, dtype=state_type) 
                                for f in self.features]
         return zero_state
         
 
-    def add_fixed_group(self, num_features, new_array=None, dtype=np.float):
+    def add_group(self, num_features, new_array=None, dtype=np.float):
         """ Add a group with a known number of features """
         group_type = dtype
         if new_array == None:
@@ -40,24 +40,6 @@ class State(object):
         return None
         
         
-        """ def add_group(self, new_array=None, dtype=np.float):
-        group_type = dtype
-        if new_array == None:
-            self.features.append(np.zeros((0,1), dtype=group_type))
-        else:
-            self.features.append(new_array)
-            
-        return None
-        """
-        
-        """def add_feature(self, nth_group, value=0):
-                    
-        self.features[nth_group] = np.vstack((self.features[nth_group], 
-                                              value * np.ones((1,1))))
-        return None
-        """
-
-
     def unbounded_sum(self, other_state):
         """ Add another State to this State. 
         Values of individual features may have a magnitude greater than 1.
@@ -66,7 +48,7 @@ class State(object):
         
         new_state.sensors = self.sensors + other_state.sensors
         new_state.primitives = self.primitives + other_state.primitives
-        new_state.actions = self.actions + other_state.actions
+        new_state.action = self.action + other_state.action
         
         for i in range(self.n_feature_groups()):
             new_state.features[i] = self.features[i] + other_state.features[i]
@@ -83,8 +65,8 @@ class State(object):
                                               other_state.sensors)
         new_state.primitives = utils.bounded_sum(self.primitives, 
                                                  other_state.primitives)
-        new_state.actions = utils.bounded_sum(self.actions, 
-                                              other_state.actions)
+        new_state.action = utils.bounded_sum(self.action, 
+                                              other_state.action)
         
         for i in range(self.n_feature_groups()):
             new_state.features[i] = utils.bounded_sum(self.features[i], 
@@ -98,7 +80,7 @@ class State(object):
         
         new_state.sensors = self.sensors * multiplier
         new_state.primitives = self.primitives * multiplier
-        new_state.actions = self.actions * multiplier
+        new_state.action = self.action * multiplier
         
         for i in range(self.n_feature_groups()):
             new_state.features[i] = self.features[i] * multiplier
@@ -118,9 +100,9 @@ class State(object):
         integrated_state.primitives = utils.bounded_sum(
                                     self.primitives * (1 - decay_rate), 
                                     new_state.primitives)
-        integrated_state.actions = utils.bounded_sum(
-                                    self.actions * (1 - decay_rate), 
-                                    new_state.actions)
+        integrated_state.action = utils.bounded_sum(
+                                    self.action * (1 - decay_rate), 
+                                    new_state.action)
 
         for index in range(self.n_feature_groups()):
             integrated_state.features[index] = utils.bounded_sum(
@@ -130,40 +112,10 @@ class State(object):
         return integrated_state
             
             
-    def decay(self, factor):
-        """ Decay all values of the state by a constant factor.
-        Assumes factor is a scalar 0 <= factor < 1
-        """
-        self.sensors *= factor
-        self.primitives *= factor
-        self.actions *= factor
-
-        for i in range(len(self.features)):
-            self.features[i] *= factor 
-
-               
     def n_feature_groups(self):
         return len(self.features)
     
        
     def n_features_in_group(self, group_index):
         return self.features[group_index].size
-    
-    
-    def size(self):
-        """ Determine the approximate number of elements being used by the
-        class and its members. Created to debug an apparently excessive 
-        use of memory.
-        """
-        total = 0
-        total += self.sensors.size
-        total += self.primitives.size
-        total += self.actions.size
-        for group_index in range(len(self.features)):
-            total += self.features[group_index].size
-
-        return total
-            
-            
-
     
