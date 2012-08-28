@@ -186,7 +186,8 @@ class Model(object):
         """ Find transitions in the library that are similar to 
         the current situation. 
         """                
-        transition_match_indices, context_similarity = self.find_transition_matches()
+        transition_match_indices, context_similarity = \
+                                        self.find_transition_matches()
 
         if len(transition_match_indices) == 0:             
             self.add_new_transition()
@@ -476,6 +477,9 @@ class Model(object):
         if new_goal != None:
             self.goal_value *= (1 - self.GOAL_DECAY_RATE)
         
+        """ TODO: Add the new goal to the existing goal_value
+        before decaying it. 
+        """
         """ TODO: Increment the goal value of all transitions based on 
         the similarity of their effects with the goal.
         """

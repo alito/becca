@@ -130,7 +130,7 @@ def similarity(point, point_set, max_index=None):
     It has several desirable properties:
     If the similarity between two points is s(a,b)
     1) s(a,b) = s(b,a), transitive
-    2) s(a,b) is on [0,1] if all elements of a and b are on [0,1]
+    2) s(a,b) is on [0,1]
     3) if a and b share no nonzero elements, s(a,b) = 0;
     4) s(a,b) = 1 iff a = b * c, where c is a constant > 0
     """
