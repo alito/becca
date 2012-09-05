@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 from worlds.base_world import World as BaseWorld
+import worlds.world_utils as world_utils
 
 """ Import the Python Imaging Library if it can be found.
 If not, carry on.
@@ -55,7 +56,7 @@ class World(BaseWorld):
         self.timestep = 0
         self.sample_counter = 0
 
-        self.fov_span = 7
+        self.fov_span = 5
         
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 1
@@ -115,17 +116,16 @@ class World(BaseWorld):
                 self.image_data = np.sum(self.image_data, axis=2) / \
                                     self.image_data.shape[2]
             
-        self.fov_height = np.minimum(self.image_data.shape[0], 
-                                     self.image_data.shape[1]) * \
-                                     self.FOV_FRACTION
+        (im_height, im_width) = self.image_data.shape
+        im_size = np.minimum(im_height, im_width)
+        
+        self.fov_height = im_size * self.FOV_FRACTION
         self.fov_width = self.fov_height
 
         self.column_min = int(np.ceil( self.fov_width/2)) + 1
-        self.column_max = self.image_data.shape[1] - \
-                            int(np.ceil( self.fov_width/2)) - 1
+        self.column_max = im_width - int(np.ceil( self.fov_width/2)) - 1
         self.row_min = int(np.ceil( self.fov_height/2)) + 1
-        self.row_max = self.image_data.shape[0] - \
-                            int(np.ceil( self.fov_height/2)) - 1
+        self.row_max = im_height - int(np.ceil( self.fov_height/2)) - 1
 
         self.block_width = int(np.floor(self.fov_width/ (self.fov_span + 2)))
         self.block_height = int(np.floor(self.fov_height/ (self.fov_span + 2)))
@@ -189,7 +189,7 @@ class World(BaseWorld):
                         int(self.column_position - self.fov_width / 2): 
                         int(self.column_position + self.fov_width / 2)]
         
-        sensors = np.zeros(self.num_sensors / 2)
+        '''sensors = np.zeros(self.num_sensors / 2)
 
         for row in range(self.fov_span):
             for column in range(self.fov_span):
@@ -204,6 +204,11 @@ class World(BaseWorld):
         #reshape(task.sensory_input,[task.fov_span + 2 task.fov_span + 2]))))/2;
 
         sensors = sensors.ravel()
+        '''
+        center_surround_pixels = world_utils.center_surround( \
+                        fov, self.fov_span, self.block_width, self.block_width)
+
+        sensors = center_surround_pixels.ravel()
         sensors = np.concatenate((sensors, 1 - sensors))
         
         reward = self.calculate_reward()               
@@ -226,8 +231,8 @@ class World(BaseWorld):
         """ Build more tightly co-active groups """
         #agent.perceiver.MIN_SIG_COACTIVITY = 0.29
         #agent.perceiver.MIN_SIG_COACTIVITY = 0.1
-        agent.perceiver.MIN_SIG_COACTIVITY = 0.001
-        agent.perceiver.NEW_GROUP_THRESHOLD = 0.01
+        #agent.perceiver.MIN_SIG_COACTIVITY = 0.001
+        #agent.perceiver.NEW_GROUP_THRESHOLD = 0.01
         
         """ Nucleate groups more rapidly """
         #agent.perceiver.PLASTICITY_UPDATE_RATE = 2 * 10 ** (-2) # debug

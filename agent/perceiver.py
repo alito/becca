@@ -396,12 +396,18 @@ class Perceiver(object):
                   % self.n_inputs)
 
         """ If the coactivity is high enough, create a new group """
-        mutual_coactivity = self.coactivity[:self.n_inputs, 
+        '''mutual_coactivity = self.coactivity[:self.n_inputs, 
                                        :self.n_inputs] * \
                                        self.coactivity[:self.n_inputs, 
                                        :self.n_inputs].transpose()
+        '''                               
+        mutual_coactivity = np.minimum(self.coactivity[:self.n_inputs, 
+                                       :self.n_inputs], \
+                                       self.coactivity[:self.n_inputs, 
+                                       :self.n_inputs].transpose())
+        
         max_coactivity = np.max(mutual_coactivity)
-
+        
         if max_coactivity > self.NEW_GROUP_THRESHOLD:
             
             """ Nucleate a new group under the two elements for which 

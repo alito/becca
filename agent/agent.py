@@ -135,8 +135,7 @@ class Agent(object):
         Any terminating activities or reports should be included
         in this method too.
         """
-        tail_length = int(np.ceil(len(self.reward_history) / 4))
-        performance = np.mean(self.reward_history[-tail_length:])
+        performance = np.mean(self.reward_history)
         print("Final performance is %f" % performance)
         
         self.perceiver.visualize(save_eps=True)
