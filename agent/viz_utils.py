@@ -482,24 +482,25 @@ def reduce_state(full_state, perceiver):
                             lower level parent features.
                             propagation_strength is the amount that
                             each input to the group contributes
-                            to the feature being reduced. The square
-                            root is included to offset the squaring that
-                            occurs during the upward voting process. (See
-                            perceiver.update_feature_map()) 
+                            to the feature being reduced. 
                             """
-                            propagation_strength = np.sqrt( 
-                                   perceiver.feature_map.\
+                            #debug
+                            '''
+                            propagation_strength = perceiver.feature_map.\
                                    features[group_index] \
-                                   [feature_index, \
-                                    match_indices])
+                                   [feature_index, match_indices]
+                            '''
+                            propagation_strength = perceiver.feature_map. \
+                                    get_receptive_field(group_index, 
+                                                    feature_index) \
+                                                    [match_indices]
     
                             """ propagated_activation is the propagation
                             strength scaled by the activity of the
                             feature being reduced.
                             """
-                            propagated_activation = \
-                                    this_feature_activity * \
-                                    propagation_strength.transpose()[:,np.newaxis]
+                            propagated_activation = this_feature_activity * \
+                                propagation_strength.transpose()[:,np.newaxis]
                                     
     
                             """ The lower-level feature is incremented 

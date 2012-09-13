@@ -26,7 +26,7 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.REPORTING_PERIOD = 10 ** 3       
-        self.LIFESPAN = 2 * 10 ** 4
+        self.LIFESPAN = 2 * 10 ** 6
         self.REWARD_MAGNITUDE = 0.5
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
@@ -185,6 +185,14 @@ class World(BaseWorld):
         #agent.perceiver.COACTIVITY_THRESHOLD_DECAY_RATE = 0.0 
         #agent.perceiver.MIN_SIG_COACTIVITY = 0.0
         #agent.perceiver.N_GROUP_FEATURES = 20
+        
+        agent.perceiver.MIN_SIG_COACTIVITY = 0.02
+        agent.perceiver.NEW_GROUP_THRESHOLD = 0.04
+        agent.perceiver.MAX_PLASTICITY = 0.3
+        
+        agent.perceiver.COACTIVITY_THRESHOLD_DECAY_RATE = 0.07
+        
+
     
         pass
     

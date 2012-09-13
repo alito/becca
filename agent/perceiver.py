@@ -50,11 +50,9 @@ class Perceiver(object):
         self.COACTIVITY_THRESHOLD_DECAY_RATE = 0.27 # real, 0 <= x < 1
         
         """ The number of features to be added at the creation of every new
-        feature group. If 0, the number of features added will be the number
-        of inputs to the group plus 2.
-        Mostly used for debugging purposes.
+        feature group as a fraction of the group's total number of inputs. 
         """
-        self.N_GROUP_FEATURES = 0
+        self.N_GROUP_FEATURES_FRACTION = 0.33
         
         """ Stop creating new groups, once this number of features 
         is nearly reached.
@@ -232,7 +230,9 @@ class Perceiver(object):
         new_input.primitives = primitives
         
         """ It's not yet clear whether this should be included or not """
-        new_input.action = actions
+        #debug
+        #new_input.action = actions
+        new_input.action = np.zeros(actions.shape)
         
         """ Decay previous input and combine it with the new input """
         self.previous_input = self.previous_input.multiply(1 - 
@@ -513,11 +513,8 @@ class Perceiver(object):
         nth_group = self.feature_activity.n_feature_groups()
 
         n_group_inputs = len(added_feature_indices)
-        
-        if self.N_GROUP_FEATURES == 0:
-            n_group_features = n_group_inputs + 2
-        else:
-            n_group_features = self.N_GROUP_FEATURES
+        n_group_features = np.ceil(n_group_inputs * self.N_GROUP_FEATURES_FRACTION)
+        n_group_features = n_group_features.astype('int')
             
         self.feature_activity.add_group(n_group_features)
         self.fatigue.add_group(n_group_features)
@@ -647,7 +644,7 @@ class Perceiver(object):
         
     def calculate_activity(self, excitation):
         """ Find the activity of each feature, after excitation and 
-        inhibition. This includes
+        fatigue. This includes
         1) figuring out which feature wins and
         2) figuring out what the activity magnitude is--for now it's just
         the excitation
@@ -762,8 +759,28 @@ class Perceiver(object):
         return
     
     
-    def make_history(self, recordable_array, array_history, label=None):
+        '''def make_history(self, recordable_array, array_history, label=None):
         array_history.append(copy.deepcopy(recordable_array))
         
         if np.random.random_sample() < 1.:
             viz_utils.visualize_array_list(array_history, label)
+        '''
+
+        '''def find_receptive_fields(self, sensor_tests, primitive_tests)  :  
+        """ Each feature will probably be the 'winner' for at least 
+        a few of the tests. Of all those that it wins, find the one
+        for which the next closest feature is farthest. This should
+        give a representative receptive field.
+        Return the index of the winning test for each feature.
+        """
+        winning_index = self.feature_activity.zeros_like()
+        greatest_margin = self.feature_activity.zeros_like()
+        
+        for i in range(sensor_tests.shape[1]):
+            
+            
+
+        
+
+        return
+        '''
