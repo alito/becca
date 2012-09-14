@@ -26,6 +26,7 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.REPORTING_PERIOD = 10 ** 4       
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
         #self.LIFESPAN = 2 * 10 ** 4
         self.LIFESPAN = 2 * 10 ** 6
         self.REWARD_MAGNITUDE = 0.5
@@ -177,3 +178,21 @@ class World(BaseWorld):
                 viz_utils.force_redraw()
                             
             return
+        
+    
+    def is_time_to_display(self):
+        if (self.timestep % self.FEATURE_DISPLAY_INTERVAL == 0):
+            return True
+        else:
+            return False
+        
+    
+    def vizualize_feature_set(self, feature_set):
+        """ Provide an intuitive display of the features created by the 
+        agent. 
+        """
+        save_eps = True
+        epsfilename = 'log/feature_set_image_2D.eps'
+        world_utils.vizualize_pixel_array_feature_set(feature_set, 
+                                                      save_eps, epsfilename)
+    

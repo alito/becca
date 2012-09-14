@@ -22,7 +22,8 @@ def visualize_grouper_coactivity(coactivity, size=0,
     fig = plt.figure("perceiver coactivity visualization")
     # Diane L. made the brilliant suggestion to leave this plot in color. 
     # It looks much prettier.
-    #plt.gray()
+    plt.summer()
+    #plt.hot()
     im = plt.imshow(coactivity[0:size, 0:size])
     im.set_interpolation('nearest')
     plt.title("Coactivity among inputs")

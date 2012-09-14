@@ -25,7 +25,8 @@ class World(BaseWorld):
     def __init__(self):
         super(World, self).__init__()
 
-        self.REPORTING_PERIOD = 10 ** 3       
+        self.REPORTING_PERIOD = 10 ** 3   
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
         self.LIFESPAN = 2 * 10 ** 6
         self.REWARD_MAGNITUDE = 0.5
         self.ANIMATE_PERIOD = 10 ** 2
@@ -181,7 +182,7 @@ class World(BaseWorld):
     def set_agent_parameters(self, agent):
         
         """ Force all the inputs to be added as one group """
-        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10. ** (-2)
+        agent.perceiver.PLASTICITY_UPDATE_RATE = 10. ** (-4)
         #agent.perceiver.COACTIVITY_THRESHOLD_DECAY_RATE = 0.0 
         #agent.perceiver.MIN_SIG_COACTIVITY = 0.0
         #agent.perceiver.N_GROUP_FEATURES = 20
@@ -221,3 +222,21 @@ class World(BaseWorld):
                 viz_utils.force_redraw()
                             
             return
+        
+    
+    def is_time_to_display(self):
+        if (self.timestep % self.FEATURE_DISPLAY_INTERVAL == 0):
+            return True
+        else:
+            return False
+        
+    
+    def vizualize_feature_set(self, feature_set):
+        """ Provide an intuitive display of the features created by the 
+        agent. 
+        """
+        save_eps = True
+        epsfilename = 'log/feature_set_image_2D.eps'
+        world_utils.vizualize_pixel_array_feature_set(feature_set, 
+                                                      save_eps, epsfilename)
+    

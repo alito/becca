@@ -16,9 +16,9 @@ One of these import lines should be uncommented.
 #from worlds.grid_2D import World
 #from worlds.grid_2D_dc import World
 #from worlds.image_1D import World
-#from worlds.image_2D import World
+from worlds.image_2D import World
 
-from worlds.watch import World
+#from worlds.watch import World
 
 def main():
     
@@ -56,7 +56,9 @@ def main():
         """
         try:
             if world.is_time_to_display():
-                display_world_features(agent,world)
+                world.vizualize_feature_set(
+                  viz_utils.reduce_feature_set(agent.perceiver))
+                viz_utils.force_redraw()
         except AttributeError:
             pass
     
@@ -65,36 +67,6 @@ def main():
     agent.show_reward_history()
     
     return
-
-
-def display_world_features(agent, world):
-    
-    '''""" Generate the feature_set, so that the constituent inputs of
-    each group can be identified.
-    feature_set is a list of lists of State objects """
-    feature_set = viz_utils.reduce_feature_set(agent.perceiver)
-    
-    """ If no features have been created yet, 
-    then there's nothing to do here.                
-    """
-    if len(feature_set) == 0:
-        return
-
-    (sensor_tests, primitive_tests) = world.get_test_inputs(1000)
-
-    """ Find the test that most strongly represents each feature """
-    winning_tests = agent.perceiver.find_receptive_fields(sensor_tests, 
-                                                          primitive_tests)
-
-    """ Display the winning receptive fields """
-    world.vizualize_receptive_fields(winning_tests, sensor_tests, 
-                                     primitive_tests, feature_set, 
-                                     save_eps=True)
-    
-    '''
-    world.vizualize_feature_set(
-        viz_utils.reduce_feature_set(agent.perceiver), save_eps=True)
-    viz_utils.force_redraw()
     
     
 if __name__ == '__main__':
