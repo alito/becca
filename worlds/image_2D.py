@@ -182,19 +182,13 @@ class World(BaseWorld):
     def set_agent_parameters(self, agent):
         
         """ Force all the inputs to be added as one group """
-        agent.perceiver.PLASTICITY_UPDATE_RATE = 10. ** (-4)
         #agent.perceiver.COACTIVITY_THRESHOLD_DECAY_RATE = 0.0 
         #agent.perceiver.MIN_SIG_COACTIVITY = 0.0
         #agent.perceiver.N_GROUP_FEATURES = 20
         
-        agent.perceiver.MIN_SIG_COACTIVITY = 0.02
-        agent.perceiver.NEW_GROUP_THRESHOLD = 0.04
-        agent.perceiver.MAX_PLASTICITY = 0.3
-        
-        agent.perceiver.COACTIVITY_THRESHOLD_DECAY_RATE = 0.07
-        
+        """ Nucleate groups more rapidly """
+        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-4) # debug
 
-    
         pass
     
         
@@ -235,8 +229,8 @@ class World(BaseWorld):
         """ Provide an intuitive display of the features created by the 
         agent. 
         """
-        save_eps = True
-        epsfilename = 'log/feature_set_image_2D.eps'
         world_utils.vizualize_pixel_array_feature_set(feature_set, 
-                                                      save_eps, epsfilename)
+                                                      world_name='image_2D',
+                                                      save_eps=True, 
+                                                      save_jpg=True)
     

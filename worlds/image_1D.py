@@ -27,16 +27,15 @@ class World(BaseWorld):
 
         self.REPORTING_PERIOD = 10 ** 4       
         self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
-        #self.LIFESPAN = 2 * 10 ** 4
-        self.LIFESPAN = 2 * 10 ** 6
+        self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 0.5
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
         self.graphing = True
         
         self.step_counter = 0
-        self.fov_span = 5 
-        #self.fov_span = 10 
+        #self.fov_span = 5 
+        self.fov_span = 10 
 
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 1
@@ -152,11 +151,11 @@ class World(BaseWorld):
 
     def set_agent_parameters(self, agent):
         """ Force all the inputs to be added as one group """
-        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10. ** (-2)
         #agent.perceiver.COACTIVITY_THRESHOLD_DECAY_RATE = 0.0 
         #agent.perceiver.MIN_SIG_COACTIVITY = 0.0
         #agent.perceiver.N_GROUP_FEATURES = 20
         
+        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10. ** (-3)
         pass
             
          
@@ -191,8 +190,8 @@ class World(BaseWorld):
         """ Provide an intuitive display of the features created by the 
         agent. 
         """
-        save_eps = True
-        epsfilename = 'log/feature_set_image_2D.eps'
         world_utils.vizualize_pixel_array_feature_set(feature_set, 
-                                                      save_eps, epsfilename)
+                                                      world_name='image_1D',
+                                                      save_eps=True, 
+                                                      save_jpg=True)
     

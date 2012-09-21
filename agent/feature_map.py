@@ -35,7 +35,7 @@ class FeatureMap(object):
         i.e. until one component becomes zero. At least one component of 
         the rotation direction vector should be negative.
         """
-        rotation_amount_candidates = -feature / rotation_direction
+        rotation_amount_candidates = -feature / (rotation_direction + 10 ** -6)
         
         """ Only consider positive amounts. These are away from the 
         centroid, rather than toward it.
@@ -44,9 +44,12 @@ class FeatureMap(object):
                     np.extract(rotation_amount_candidates >= 0, 
                                rotation_amount_candidates)
         
-        rotation_amount = np.min(rotation_amount_candidates)
-        receptive_field_unscaled = feature + rotation_direction * rotation_amount
-        receptive_field = receptive_field_unscaled / \
-                        np.max(receptive_field_unscaled)
-                        
-        return(receptive_field)
+        if rotation_amount_candidates.size == 0:
+            return feature
+        else:
+            rotation_amount = np.min(rotation_amount_candidates)
+            receptive_field_unscaled = feature + rotation_direction * rotation_amount
+            receptive_field = receptive_field_unscaled / \
+                            np.max(receptive_field_unscaled)
+                            
+            return(receptive_field)

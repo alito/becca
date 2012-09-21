@@ -485,12 +485,22 @@ def reduce_state(full_state, perceiver):
                             each input to the group contributes
                             to the feature being reduced. 
                             """
-                            #debug
-                            '''
-                            propagation_strength = perceiver.feature_map.\
-                                   features[group_index] \
-                                   [feature_index, match_indices]
-                            '''
+                            """ Use this variant to propogate straight 
+                            feature representations. It makes accurate,
+                            but sometimes uninteresting feature displays,
+                            because feature representations tend to cluster
+                            toward the middle of the group space.
+                            """
+                            #
+                            #propagation_strength = perceiver.feature_map.\
+                            #       features[group_index] \
+                            #       [feature_index, match_indices]
+                            
+                            """ This variant, using get_perceptive_field,
+                            emphasizes the differences between features.
+                            It makes for prettier and more informative
+                            displays of feature sets.
+                            """
                             propagation_strength = perceiver.feature_map. \
                                     get_receptive_field(group_index, 
                                                     feature_index) \

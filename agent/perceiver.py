@@ -21,11 +21,11 @@ class Perceiver(object):
         self.INPUT_DECAY_RATE = 1.0                 # real, 0 < x < 1
         
         """ Control how rapidly the coactivity update plasticity changes """
-        self.PLASTICITY_UPDATE_RATE = 10. ** (-3)   # real, 0 < x < 1, small
+        self.PLASTICITY_UPDATE_RATE = 10. ** (-4)   # real, 0 < x < 1, small
         
         """ The maximum value of plasticity """
-        self.MAX_PLASTICITY = 0.1                   # real, 0 < x < 1
-        
+        self.MAX_PLASTICITY = 0.3                   # real, 0 < x < 1
+                
         """ The feature actvity penalty associated with 
         prior membership in other groups. 
         """
@@ -34,7 +34,7 @@ class Perceiver(object):
         """ Once a coactivity value exceeds this value, 
         nucleate a new group.
         """ 
-        self.NEW_GROUP_THRESHOLD = 0.1              # real,  x >= 0
+        self.NEW_GROUP_THRESHOLD = 0.04              # real,  x >= 0
         
         """ If the coactivity between the first two group members 
         and the next candidates 
@@ -43,11 +43,11 @@ class Perceiver(object):
         See create_new_group() below.
         """
         self.MIN_SIG_COACTIVITY = 0.03  # real,  x >= self.NEW_GROUP_THRESHOLD
-        
+
         """ The rate that threshold coactivity for adding new
         inputs to the group decays as new inputs are added.
         """
-        self.COACTIVITY_THRESHOLD_DECAY_RATE = 0.27 # real, 0 <= x < 1
+        self.COACTIVITY_THRESHOLD_DECAY_RATE = 0.12 # real, 0 <= x < 1
         
         """ The number of features to be added at the creation of every new
         feature group as a fraction of the group's total number of inputs. 

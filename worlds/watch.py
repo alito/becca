@@ -56,7 +56,7 @@ class World(BaseWorld):
         self.timestep = 0
         self.sample_counter = 0
 
-        self.fov_span = 5
+        self.fov_span = 10
         
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 1
@@ -189,22 +189,6 @@ class World(BaseWorld):
                         int(self.column_position - self.fov_width / 2): 
                         int(self.column_position + self.fov_width / 2)]
         
-        '''sensors = np.zeros(self.num_sensors / 2)
-
-        for row in range(self.fov_span):
-            for column in range(self.fov_span):
-
-                sensors[row + self.fov_span * column] = \
-                    np.mean( fov[row * self.block_height: (row + 1) * \
-                                 self.block_height, 
-                                 column * self.block_width: (column + 1) * \
-                                 self.block_width ])
-        """ TODO: Implement a center-surround filter """
-        #self.sensory_input = (1 +  util_sigm( 10 * util_center_surround(...
-        #reshape(task.sensory_input,[task.fov_span + 2 task.fov_span + 2]))))/2;
-
-        sensors = sensors.ravel()
-        '''
         center_surround_pixels = world_utils.center_surround( \
                         fov, self.fov_span, self.block_width, self.block_width)
 
@@ -228,15 +212,8 @@ class World(BaseWorld):
         agent.learner.planner.EXPLORATION_FRACTION = 1.0
         agent.learner.planner.OBSERVATION_FRACTION = 0.0
         
-        """ Build more tightly co-active groups """
-        #agent.perceiver.MIN_SIG_COACTIVITY = 0.29
-        #agent.perceiver.MIN_SIG_COACTIVITY = 0.1
-        agent.perceiver.MIN_SIG_COACTIVITY = 0.004
-        agent.perceiver.NEW_GROUP_THRESHOLD = 0.04
-        agent.perceiver.MAX_PLASTICITY = 0.3
-        
         """ Nucleate groups more rapidly """
-        #agent.perceiver.PLASTICITY_UPDATE_RATE = 2 * 10 ** (-2) # debug
+        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-5) # debug
 
         """ Don't create a model """
         agent.learner.model.MAX_ENTRIES = 10 ** 2
@@ -254,8 +231,8 @@ class World(BaseWorld):
         """ Provide an intuitive display of the features created by the 
         agent. 
         """
-        save_eps = True
-        epsfilename = 'log/feature_set_watch.eps'
         world_utils.vizualize_pixel_array_feature_set(feature_set, 
-                                                      save_eps, epsfilename)
+                                                      world_name='watch',
+                                                      save_eps=True, 
+                                                      save_jpg=True)
     
