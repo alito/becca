@@ -213,7 +213,7 @@ class World(BaseWorld):
         agent.learner.planner.OBSERVATION_FRACTION = 0.0
         
         """ Nucleate groups more rapidly """
-        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-5) # debug
+        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-3) # debug
 
         """ Don't create a model """
         agent.learner.model.MAX_ENTRIES = 10 ** 2
