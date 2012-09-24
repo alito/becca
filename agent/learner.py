@@ -1,10 +1,11 @@
 
-import copy
-import numpy as np
 from model import Model
 from planner import Planner
 from state import State
 import viz_utils
+
+import numpy as np
+
 
 class Learner(object):
     """ The reinforcement learner portion of the Becca agent """

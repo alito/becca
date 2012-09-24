@@ -1,5 +1,5 @@
 """
-benchmark 0.4.1
+benchmark 0.4.2
 
 A suite of worlds to characterize the performance of Becca variants.
 Other agents may use this benchmark as well, as long as they have the 
@@ -30,7 +30,7 @@ from worlds.image_2D import World as World_image_2D
 
 def main():
 
-    N_RUNS = 1
+    N_RUNS = 7
     overall_performance = []
     
     for i in range(N_RUNS):

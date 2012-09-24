@@ -27,10 +27,10 @@ where $\kappa(A,B)$ is the co-activity of channel A with channel B, and $p(b|a)$
 
 Co-activity between input channels can be described as a fully connected directed graph, which is most conveniently represented as a fully-populated matrix. The graph must be directed, because the co-activity of channel A with B is not in general equal to the co-activity of channel B with A. For instance, if channel A is fully active all the time and channel B is fully active only ten percent of the time, staying inactive the rest of the time, then from Equation~\ref{coactivity_def}, $\kappa(A,B) = 1$ but $\kappa(B,A) = 0.1$. Co-activity is estimated statistically, and the co-activity graph is updated incrementally at each time step. 
 
-The co-activity of A with B,  $\kappa(A,B) $,  and the co-activity of B with A, $\kappa(B,A) $, can be combined to form the {\em mutual co-activity},  $\kappa_M(A,B) $ by multiplying them together:
+The co-activity of A with B,  $\kappa(A,B) $,  and the co-activity of B with A, $\kappa(B,A) $, can be combined to form the {\em mutual co-activity},  $\kappa_M(A,B) $ by taking the minimum of the two:
 
 \begin{equation}
-\kappa_M(A,B)   = \kappa(A,B) \kappa(B,A) 
+\kappa_M(A,B)   = \min(\kappa(A,B), \kappa(B,A)) 
 \end{equation}
 
 While co-activity is asymmetric, the mutual co-activity will always be symmetric. Mutual co-activity between input channels can be described as a fully connected, {\em un}directed graph. Mutual co-activity represents the extent to which two inputs are active at the same time, but does so in a way that does not overestimate the co-activity with very active inputs.
@@ -51,7 +51,7 @@ Once a group has been formed, features can be created and evolved within it. \te
 
 To be more precise, each input channel can be interpreted as a separate dimension in an $n$-dimensional input space, where $n$ is the total number of input channels. Groups then form $m$-dimensional subspaces of the input space, where $m$ is the number of input channels in a given group. At any time step, the input values to a group can be represented as a single point in that group's subspace. 
 
-Features provide a way to coarsely discretize the inputs. \textsc{Becca} represents features as points on a unit sphere in a group's subspace. That is, a feature is a vector of the group's inputs, constrained to have a magnitude of one. In a group with $m$ inputs, empirical results suggest that $m + 2$ is a useful number of features to create. Many more than this creates an unnecessarily large feature set, increasing learning times, and many fewer than this does not provide a sufficiently rich feature set to allow high-performance learning. 
+Features provide a way to coarsely discretize the inputs. \textsc{Becca} represents features as points on a unit sphere in a group's subspace. That is, a feature is a vector of the group's inputs, constrained to have a magnitude of one. In a group with $m$ inputs, empirical results suggest that $m/3$ (rounded upward) is a useful number of features to create. Many more than this creates an unnecessarily large feature set, increasing learning times, and many fewer than this does not provide a sufficiently rich feature set to allow high-performance learning. 
 
 Before comparing it with features, the input is scaled:
 

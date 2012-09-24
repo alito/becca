@@ -4,6 +4,7 @@ import numpy as np
 import state
 import utils
 
+
 class Model(object):
     """ Contains the agent's model of transitions between states.
     The agent uses this to make predictions about what is likely

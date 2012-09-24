@@ -5,7 +5,6 @@ as part of pyplot. This allows the loading and interpreting of .jpgs
 import matplotlib.pyplot as plt
 import numpy as np
 import agent.viz_utils as viz_utils
-#import agent.utils as utils
 from worlds.base_world import World as BaseWorld
 import worlds.world_utils as world_utils
 
@@ -60,8 +59,7 @@ class World(BaseWorld):
         image_width = self.data.shape[1]
         self.MAX_STEP_SIZE = image_width / 2
         self.TARGET_COLUMN = image_width / 2
-        #debug
-        #self.REWARD_REGION_WIDTH = image_width / 16
+
         self.REWARD_REGION_WIDTH = image_width / 8
         self.NOISE_MAGNITUDE = 0.1
         

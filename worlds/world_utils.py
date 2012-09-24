@@ -93,23 +93,11 @@ def vizualize_pixel_array_feature_set(feature_set, world_name=None,
         for feature_index in range(len(feature_set[group_index])):
             sensors = feature_set[group_index][feature_index].sensors
             
-            """ make sure the sensors have as high contrast as possible """
-            #sensors = (sensors - np.min(sensors)) / \
-            #    (np.max(sensors) - np.min(sensors) + 10**-6)
-                     
             pixel_values = ((sensors[0:n_pixels] - \
                              sensors[n_pixels:2 * n_pixels]) \
                              + 1.0) / 2.0
-            """ make sure the pixels have as high contrast as possible """
-            #pixel_values = (pixel_values - np.min(pixel_values)) / \
-            #                (np.max(pixel_values) - 
-            #                 np.min(pixel_values) + 10**-6)
             
             feature_pixels = pixel_values.reshape(fov_span, fov_span)
-            '''feature_image_first_row = group_index * \
-                        (gap + 2 * border + fov_span) + gap + border 
-            feature_image_last_row = feature_image_first_row + fov_span
-            '''
             feature_image_first_row = gap + border 
             feature_image_last_row = feature_image_first_row + fov_span
             
@@ -170,14 +158,4 @@ def vizualize_pixel_array_feature_set(feature_set, world_name=None,
         if not(show_image):
             plt.close()
         
-    '''
-    fig = plt.figure(world_name + " world features")
-    plt.gray()
-    img = plt.imshow(feature_image, vmin=0.0, vmax=1.0)
-    img.set_interpolation('nearest')
-    plt.title("Features created while in the " + world_name + " world")
-    plt.draw()
-    if save_image:
-        fig.savefig(epsfilename, format='eps')
-    '''
     return

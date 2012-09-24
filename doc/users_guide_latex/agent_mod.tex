@@ -26,7 +26,7 @@ Figure~\ref{class_structure} shows the major classes and some of their important
 \item Calls \texttt{Perceiver.step()} and  \texttt{Learner.step()} at each time step.
 \end{itemize}
 
-\subsection{\texttt{Perceiver} (was \texttt{Grouper} )}
+\subsection{\texttt{Perceiver}}
 \begin{itemize}
 \item Forms inputs into groups.
 \item Finds features in each of those groups.
@@ -143,3 +143,9 @@ This world is similar in many ways to the one dimensional version, just extended
 \subsection{\texttt{watch.py}}
 
 The watch world is not yet part of the battery. Right now it's a debugging tool. In it, the agent is exposed to image segments taken from a library of natural images, and it builds groups and feature representations from those image segments. It's helping to work out the kinks in the feature creation heuristic, although I hope to integrate it into a task for future versions of the benchmark.
+
+
+\subsection{\texttt{world\_utils.py}}
+
+There are some jobs that crop up repeatedly in multiple worlds. This module is a common toolbox where functionality can be shared. So far this is limited to image processing functions, including center-difference filtering and visualizing features in image data.
+

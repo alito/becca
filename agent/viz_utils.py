@@ -20,10 +20,12 @@ def visualize_grouper_coactivity(coactivity, size=0,
     if size == 0:
         size = coactivity.shape[0]
     fig = plt.figure("perceiver coactivity visualization")
-    # Diane L. made the brilliant suggestion to leave this plot in color. 
-    # It looks much prettier.
+    
+    """ Diane L. made the brilliant suggestion to leave this plot in color. 
+    It looks much prettier.
+    """
     plt.summer()
-    #plt.hot()
+
     im = plt.imshow(coactivity[0:size, 0:size])
     im.set_interpolation('nearest')
     plt.title("Coactivity among inputs")
@@ -552,12 +554,6 @@ def reduce_state(full_state, perceiver):
                                         [parent_feature_indices.ravel()], \
                                         propagated_activation)
     
-            """ Eliminate the original representation of 
-            the reduced feature, now that it is expressed in terms 
-            of its lower level parent features.
-            """
-            #state.features[group_index] = \
-            #        np.zeros(state.features[group_index].shape)
     state.features = []
     return state
 

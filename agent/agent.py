@@ -1,6 +1,6 @@
 
-from perceiver import Perceiver
 from learner import Learner
+from perceiver import Perceiver
 import viz_utils
 
 import cPickle as pickle

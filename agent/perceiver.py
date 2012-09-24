@@ -3,7 +3,6 @@ from feature_map import FeatureMap
 import itertools
 import numpy as np
 import state
-import utils
 import viz_utils
 
 class Perceiver(object):
@@ -513,7 +512,8 @@ class Perceiver(object):
         nth_group = self.feature_activity.n_feature_groups()
 
         n_group_inputs = len(added_feature_indices)
-        n_group_features = np.ceil(n_group_inputs * self.N_GROUP_FEATURES_FRACTION)
+        n_group_features = np.ceil(n_group_inputs * \
+                                   self.N_GROUP_FEATURES_FRACTION)
         n_group_features = n_group_features.astype('int')
             
         self.feature_activity.add_group(n_group_features)
@@ -758,29 +758,3 @@ class Perceiver(object):
         viz_utils.force_redraw()
         return
     
-    
-        '''def make_history(self, recordable_array, array_history, label=None):
-        array_history.append(copy.deepcopy(recordable_array))
-        
-        if np.random.random_sample() < 1.:
-            viz_utils.visualize_array_list(array_history, label)
-        '''
-
-        '''def find_receptive_fields(self, sensor_tests, primitive_tests)  :  
-        """ Each feature will probably be the 'winner' for at least 
-        a few of the tests. Of all those that it wins, find the one
-        for which the next closest feature is farthest. This should
-        give a representative receptive field.
-        Return the index of the winning test for each feature.
-        """
-        winning_index = self.feature_activity.zeros_like()
-        greatest_margin = self.feature_activity.zeros_like()
-        
-        for i in range(sensor_tests.shape[1]):
-            
-            
-
-        
-
-        return
-        '''

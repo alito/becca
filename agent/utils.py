@@ -247,13 +247,6 @@ def similarity(point, point_set, max_index=None):
     return result
 
 
-    '''
-    depracated: duplicated by map_inf_to_one
-    def sigmoid(a):
-
-    return (np.sign(a) * 2 / (1 + np.exp(-2 * np.abs(a)))) - 1
-    '''
-
 def empty_array():
     return np.zeros((0,0))
 
