@@ -1,6 +1,6 @@
 
-from perceiver import Perceiver
 from learner import Learner
+from perceiver import Perceiver
 import viz_utils
 
 import cPickle as pickle
@@ -21,7 +21,7 @@ class Agent(object):
         self.pickle_filename ="log/" + agent_name + "_agent.pickle"
         
         self.REPORTING_PERIOD = 10 ** 3
-        self.BACKUP_PERIOD = 10 ** 8
+        self.BACKUP_PERIOD = 3 * 10 ** 4
 
         self.num_sensors = num_sensors
         self.num_primitives = num_primitives
@@ -116,18 +116,6 @@ class Agent(object):
                 plt.show()
     
     
-    def size(self):
-        """ Determine the approximate number of elements being used by the
-        class and its members. Created to debug an apparently excessive 
-        use of memory.
-        """
-        total = 0
-        total += self.perceiver.size()
-        total += self.learner.size()
-        
-        return total
-            
-        
     def report_performance(self, show=True):
         """ When the world terminates, this returns the performance 
         of the agent, a real value between -1 and 1. Before reaching
@@ -135,8 +123,7 @@ class Agent(object):
         Any terminating activities or reports should be included
         in this method too.
         """
-        tail_length = int(np.ceil(len(self.reward_history) / 4))
-        performance = np.mean(self.reward_history[-tail_length:])
+        performance = np.mean(self.reward_history)
         print("Final performance is %f" % performance)
         
         self.perceiver.visualize(save_eps=True)

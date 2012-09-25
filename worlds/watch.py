@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 from worlds.base_world import World as BaseWorld
+import worlds.world_utils as world_utils
 
 """ Import the Python Imaging Library if it can be found.
 If not, carry on.
@@ -48,14 +49,14 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.TASK_DURATION = 10 ** 2
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 4
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
         self.LIFESPAN = 10 ** 8
         self.FOV_FRACTION = 0.2
         
         self.timestep = 0
         self.sample_counter = 0
 
-        self.fov_span = 7
+        self.fov_span = 10
         
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 1
@@ -115,17 +116,16 @@ class World(BaseWorld):
                 self.image_data = np.sum(self.image_data, axis=2) / \
                                     self.image_data.shape[2]
             
-        self.fov_height = np.minimum(self.image_data.shape[0], 
-                                     self.image_data.shape[1]) * \
-                                     self.FOV_FRACTION
+        (im_height, im_width) = self.image_data.shape
+        im_size = np.minimum(im_height, im_width)
+        
+        self.fov_height = im_size * self.FOV_FRACTION
         self.fov_width = self.fov_height
 
         self.column_min = int(np.ceil( self.fov_width/2)) + 1
-        self.column_max = self.image_data.shape[1] - \
-                            int(np.ceil( self.fov_width/2)) - 1
+        self.column_max = im_width - int(np.ceil( self.fov_width/2)) - 1
         self.row_min = int(np.ceil( self.fov_height/2)) + 1
-        self.row_max = self.image_data.shape[0] - \
-                            int(np.ceil( self.fov_height/2)) - 1
+        self.row_max = im_height - int(np.ceil( self.fov_height/2)) - 1
 
         self.block_width = int(np.floor(self.fov_width/ (self.fov_span + 2)))
         self.block_height = int(np.floor(self.fov_height/ (self.fov_span + 2)))
@@ -189,21 +189,10 @@ class World(BaseWorld):
                         int(self.column_position - self.fov_width / 2): 
                         int(self.column_position + self.fov_width / 2)]
         
-        sensors = np.zeros(self.num_sensors / 2)
+        center_surround_pixels = world_utils.center_surround( \
+                        fov, self.fov_span, self.block_width, self.block_width)
 
-        for row in range(self.fov_span):
-            for column in range(self.fov_span):
-
-                sensors[row + self.fov_span * column] = \
-                    np.mean( fov[row * self.block_height: (row + 1) * \
-                                 self.block_height, 
-                                 column * self.block_width: (column + 1) * \
-                                 self.block_width ])
-        """ TODO: Implement a center-surround filter """
-        #self.sensory_input = (1 +  util_sigm( 10 * util_center_surround(...
-        #reshape(task.sensory_input,[task.fov_span + 2 task.fov_span + 2]))))/2;
-
-        sensors = sensors.ravel()
+        sensors = center_surround_pixels.ravel()
         sensors = np.concatenate((sensors, 1 - sensors))
         
         reward = self.calculate_reward()               
@@ -223,14 +212,8 @@ class World(BaseWorld):
         agent.learner.planner.EXPLORATION_FRACTION = 1.0
         agent.learner.planner.OBSERVATION_FRACTION = 0.0
         
-        """ Build more tightly co-active groups """
-        #agent.perceiver.MIN_SIG_COACTIVITY = 0.29
-        #agent.perceiver.MIN_SIG_COACTIVITY = 0.1
-        agent.perceiver.MIN_SIG_COACTIVITY = 0.001
-        agent.perceiver.NEW_GROUP_THRESHOLD = 0.01
-        
         """ Nucleate groups more rapidly """
-        #agent.perceiver.PLASTICITY_UPDATE_RATE = 2 * 10 ** (-2) # debug
+        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-3) # debug
 
         """ Don't create a model """
         agent.learner.model.MAX_ENTRIES = 10 ** 2
@@ -244,90 +227,12 @@ class World(BaseWorld):
             return False
         
     
-    def vizualize_feature_set(self, feature_set, save_eps=False, 
-                              epsfilename='log/feature_set_watch.eps'):
+    def vizualize_feature_set(self, feature_set):
         """ Provide an intuitive display of the features created by the 
         agent. 
         """
-        """ feature_set is a list of lists of State objects """
-        if len(feature_set) == 0:
-            return
- 
-        """ Calculate the number of pixels that span the field of view """
-        n_pixels = feature_set[0][0].sensors.size / 2
-        fov_span = np.sqrt(n_pixels)
-
-        """ The number of black pixels surrounding each feature """
-        border = 1
-        
-        """ The number of gray pixels between all features """
-        gap = 3
-        
-        """ The contrast factor. 1 is unchanged. 2 is high contrast. """
-        contrast = 1.
-        
-        """ Find the size of the overall image_data """
-        n_groups = len(feature_set)
-        n_features_max = 0
-        for group_index in range(n_groups):
-            if len(feature_set[group_index]) > n_features_max:
-                n_features_max = len(feature_set[group_index])
-
-        n_pixel_columns = n_features_max * (gap + 2 * border + fov_span) + gap
-        n_pixel_rows = n_groups * (gap + 2 * border + fov_span) + gap
-        feature_image = 0.8 * np.ones((n_pixel_rows, n_pixel_columns))
-
-        """ Populate each feature in the feature image_data """
-        for group_index in range(n_groups):
-            for feature_index in range(len(feature_set[group_index])):
-                sensors = feature_set[group_index][feature_index].sensors
-                sensors = sensors * contrast
-                pixel_values = ((sensors[0:n_pixels] - \
-                                 sensors[n_pixels:2 * n_pixels]) \
-                                 + 1.0) / 2.0
-                feature_pixels = pixel_values.reshape(fov_span, fov_span)
-                feature_image_first_row = group_index * \
-                            (gap + 2 * border + fov_span) + gap + border 
-                feature_image_last_row = feature_image_first_row + fov_span
-                feature_image_first_column = feature_index * \
-                            (gap + 2 * border + fov_span) + gap + border 
-                feature_image_last_column = feature_image_first_column + \
-                                            fov_span
-                feature_image[feature_image_first_row:
-                              feature_image_last_row,
-                              feature_image_first_column:
-                              feature_image_last_column] = feature_pixels
-                              
-                """ Write North border """
-                feature_image[feature_image_first_row - border:
-                              feature_image_first_row,
-                              feature_image_first_column - border:
-                              feature_image_last_column + border] = 0
-                """ Write South border """
-                feature_image[feature_image_last_row:
-                              feature_image_last_row + border,
-                              feature_image_first_column - border:
-                              feature_image_last_column + border] = 0
-                """ Write East border """
-                feature_image[feature_image_first_row - border:
-                              feature_image_last_row + border,
-                              feature_image_first_column - border:
-                              feature_image_first_column] = 0
-                """ Write West border """
-                feature_image[feature_image_first_row - border:
-                              feature_image_last_row + border,
-                              feature_image_last_column:
-                              feature_image_last_column + border] = 0
-                
-        fig = plt.figure("watch world features")
-        plt.gray()
-        img = plt.imshow(feature_image, vmin=0.0, vmax=1.0)
-        img.set_interpolation('nearest')
-        plt.title("Features created while in the watch world")
-        plt.draw()
-
-        if save_eps:
-            fig.savefig(epsfilename, format='eps')
-            
-        return
-        
+        world_utils.vizualize_pixel_array_feature_set(feature_set, 
+                                                      world_name='watch',
+                                                      save_eps=True, 
+                                                      save_jpg=True)
+    

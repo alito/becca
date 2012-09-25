@@ -1,0 +1,229 @@
+\chapter{How \textsc{Becca}'s reinforcement learner works}
+\label{learner_chapter}
+
+
+\textsc{Becca}'s reinforcement learner starts with the set of feature activities passed from the feature creator at each time step. (See Figure~\ref{becca_reinforcement_learner}.) It attends to one of the features, passes the attended feature together with the full feature activities and reward to the model, and chooses an action to pass to the world. Each of these steps is described in detail below  
+
+\begin{figure}
+\centering
+\includegraphics[height=11cm]{figs/becca_reinforcement_learner.eps}
+\caption{Block diagram of \textsc{Becca}'s reinforcement learner.}
+\label{becca_reinforcement_learner}
+\end{figure}
+
+\section{Attention}
+Each of the feature primitives, the actions, and the features in the created feature groups is eligible for attention. The most salient feature in this set is attended at each time step. In practice, this means that in the array representing attention, the attended feature value is set to one and all others are set to zero. The criteria for salience are still under heavy development, and are likely to change in future versions of \textsc{Becca}, but currently they are simple. The most salient feature is the one with the largest magnitude, unless a deliberate action was taken on the previous time step, in which case that action is attended. A small amount of random noise is added to the feature activities (typically 1/20 of one percent) to act as a tie breaker between features that may be active at exactly the same level. This condition occurs commonly when working with simulated worlds.
+
+Future candidates for salience calculation include:
+
+\begin{itemize}
+\item {\bf Recency}  Recently attended features would be penalized. Rarely observed features would be more salient.
+\item {\bf Surprise} Expected features would be less likely to be attended. Unexpected ones would be more salient.
+\item {\bf Goal relevance} Features that have been selected as intermediate goals would be more salient.
+\end{itemize}
+
+
+\section{Model}
+The model is the core of the reinforcement learner. It contains snippets of the agent's experience in the form of {\em transitions}. The collection of transitions constitutes the whole of the agent's experience. Each is a small piece of memory. Taken together, the set of transitions is a distillation of the agent's interactions with its world. On the agent's first time step, the model is empty, but as it gathers experience it gradually populates its model, increasing the fidelity of its representation of the world. 
+
+\subsection{Transition structure}
+
+Each transition is of the form (\texttt{context}, \texttt{cause}, \texttt{reward}, \texttt{effect}) and captures a short sequence of events. (See Figure~\ref{transition_structure}.) Contexts, causes, and effects may contain state or action information or both.
+
+\begin{figure}
+\centering
+\includegraphics[height=4cm]{figs/transition.eps}
+\caption{The structure of a transition in the model.}
+\label{transition_structure}
+\end{figure}
+
+Transitions also contain a quantification of the uncertainty in both effects and rewards. \texttt{context}--\texttt{cause} pairs uniquely define a transition. The effect and reward that results from a given context and cause may vary a great deal each time the transition is observed. Rewards and effects are the expected value of starting in a given context and executing a given cause. The reward uncertainty and effect uncertainty are the expected error on those predictions.
+
+ 
+\subsubsection{Context}
+Context is a combination of the several most recent attended features. It captures the agent's recent history of attention, summarizing the most salient parts of its world.
+Specifically, if the current time step is labeled $t_{0}$, the context includes the attended features from $t_{-D_1}$ to $t_{-1}$, where $D_1$ is a user-defined integer, typically small. The attended features are decayed according to their age, as follows:
+
+\begin{equation}
+\tilde{\alpha}_{-i} =  \alpha_{-i} D_2^{i-1}
+\end{equation}
+
+where $ \alpha_i $ is the magnitude of the attended feature at time step $i$ (always 1 in the current implementation), $\tilde{\alpha}_{i}$ is the decayed magnitude of the attended feature, and $D_2$ is a user-selected real value between zero and one.
+
+The context is the the combination of all the decayed attended features. In the case where the same feature has been attended more than once within the last $D_1$ time steps, the decayed magnitudes are added in a nonlinear way, such that the resulting magnitude is guaranteed to be less than or equal to one. This is done by mapping the two values to be summed, which are known to fall on the interval $[0,1]$ to the interval $[0, \infty)$ as follows:
+
+\begin{equation}
+a' = \frac{1}{a} - 1
+\label{bounded_sum_map}
+\end{equation}
+
+Then the two operands are added normally. The result, which also lies on $[0, \infty)$ is then mapped back to $[0,1]$ using the inverse operation:
+
+\begin{equation}
+a = 1 - \frac{1}{a' + 1} 
+\label{bounded_sum_unmap}
+\end{equation}
+
+The result is a bounded sum operation that ensures the magnitude of the result will always lie between zero and one, give that its operands did.
+
+
+\subsubsection{Cause}
+The cause is simply the attended feature at the current time step, $t_0$. It may be an action, in which case the \texttt{context}--\texttt{cause}--\texttt{effect} sequence resembles a state--action--state tuple. But it can also be a basic feature or constructed feature, in which case the transition represents an observed sequence of features, rather than a record of the agent's interaction with the world
+
+\subsubsection{Effect}
+The effect is the combination of the feature activities from $t_1$ through $t_{D_1}$. These are decayed and summed the same way attended features are decayed and summed to produce contexts, only in the opposite time direction, with immediate feature activity being undecayed and future feature activities increasingly decayed. 
+
+Effects are composed of feature activities, rather than attended features because they contain a more complete picture of the effects of a given context and cause. Since the transition is identified by the uniqueness of the context and cause alone, the effect can contain a lot of information without making the transition overly specific. 
+
+\subsubsection{Effect uncertainty}
+Each time a transition is observed, the effect is updated to reflect the result. It can be the case that a wide variety of effects may result from the same context and cause. The effect captures something resembling the average of these effects. The effect uncertainty provides an estimate of the expected difference between the effect and effects that will result from future encounters with the same context and cause. 
+
+The effect uncertainty is useful in making predictions. Particularly when the uncertainty is low, deviations from expected effects can be flagged as highly salient.
+
+\subsubsection{Reward}
+The reward that results from each observation of the transition is used to update an estimate of the transition's expected reward. This quantity explicitly describes the desirability of the transition, a value made use of in planning.
+
+The reward associated with a transition combines reward signal received over the next several time steps, decayed and summed in the same way as the effect. This produces a trace which allows the transition to represent outcomes of the context and cause that are desirable but may be slightly delayed. 
+
+Since reward may be either positive or negative, the bounded summation described in equations~\ref{bounded_sum_map} and~\ref{bounded_sum_unmap} must be slightly extended. When both operands are negative, this is done by inverting the signs before summing them, then reversing the sign again afterward; the operation is symmetric with respect to sign. When the two operands are of opposite signs, they are simply added. Since they are both assumed to have an absolute value less than one, the resulting absolute value can only be less than or equal to absolute values of the operands. Thus, the result will still fall on [-1, 1].
+
+\subsubsection{Reward uncertainty}
+As with the effect, the reward uncertainty is the expected value of the difference between the expected reward and future observations of reward. It is a quantification of confidence in the reward estimate.
+
+\subsubsection{Count}
+The count is a reflection of the number of times a transition has been observed or has been used in planning. It determines the update rate for transitions and whether and when they are forgotten.
+
+\subsection{Adding transitions}
+At each time step, the model compares the current context and cause to that of all of its existing transitions.
+A matching transition is one that has both 
+\begin{enumerate}
+\item the same cause and 
+\item a sufficiently similar context.
+\end{enumerate}
+
+Context similarity is determined by treating all the features (including basic features and actions) as dimensions of the same space. Both the current context and the transition context are vectors in that space. The similarity measure, $\sigma$, is based on the angle between two vectors. If $\sigma(\mathbf{a},\mathbf{b})$ is the similarity between two vectors $\mathbf{a}$ and $\mathbf{b}$, then:
+
+\begin{equation}    
+\sigma(\mathbf{a},\mathbf{b}) = 1 - \frac{\theta}{\pi/2}
+\label{similarity}
+\end{equation}
+
+This similarity measure has several desirable properties:
+\begin{enumerate}
+\item $\sigma(\mathbf{a},\mathbf{b}) = \sigma(\mathbf{b},\mathbf{a})$ It is symmetric.
+\item $\sigma(\mathbf{a},\mathbf{b})$ is on $[0,1]$
+\item If $\mathbf{a}$ and $\mathbf{b}$ share no nonzero elements, $\sigma(\mathbf{a},\mathbf{b}) = 0$
+\item $\sigma(\mathbf{a},\mathbf{b}) = 1$ if and only if $\mathbf{a} = c \mathbf{b}$, where $c$ is a constant greater than 0, that is, if $\mathbf{a}$ and $\mathbf{b}$ are pointing in exactly the same direction.
+\end{enumerate}
+
+Two contexts $\mathbf{a}$ and $\mathbf{b}$ are considered sufficiently similar if $\sigma(\mathbf{a},\mathbf{b}) > D_3$, where $D_3$ is a user selected real value between 0 and 1, typically closer to 1 than 0.
+
+If more than one matching transition is in the library, the one with the highest similarity wins. If no matching transitions are in the library, the new transition is added. This requires waiting until the full effect and reward has been observed, so there is a delay of several time steps before new transitions are added to the model.
+
+\subsection{Modifying transitions}
+In instances where the current context and cause do match an existing transition, the effect, reward, and their uncertainties are updated based on the new observation.
+
+When a transition is updated, the following events occur:
+\begin{itemize}
+\item The count is increased by one.
+\item The effect is modified to incorporate the newly observed effect.
+\item The effect uncertainty is modified to incorporate the difference between the effect and the newly observed effect.
+\item The reward is modified to incorporate the newly observed reward.
+\item The reward uncertainty is modified to incorporate the difference between the reward and the newly observed reward.
+\end{itemize}
+
+In order to perform the updates, an update rate, $\mu$ is first calculated:
+
+\begin{equation}
+\mu = \min(1.0, D_4+ \frac{1 - D_4}{\nu})
+\end{equation}
+
+where $\nu$ is the count of the transition being updated and $D_4$ is a user selected real value between zero and one. For large values of $\nu$, $\mu$ approaches $D_4$. It can be considered a lower bound on the update rate. For values of $D_4$ close to zero, transitions cease to change significantly after they have been observed many times. For higher values of $D_4$, they remain malleable throughout their lifetimes.
+
+Each feature in the effect is updated, shifted toward the newly observed value by a fraction, $\mu$, of the way. For an effect feature value, $f$, and a new effect observation $\hat{f}$ the updated feature value, $f'$ is given by:
+
+\begin{eqnarray}
+\Delta f &= &\hat{f}  - f \\
+f' &=& f + \mu \Delta f
+\end{eqnarray}
+
+By the same mechanism, the effect uncertainty features, $f_\epsilon$, are updated using $\Delta f$:
+
+\begin{eqnarray}
+\Delta f_\epsilon &=& \Delta f  - f_\epsilon\\
+f_\epsilon' &=& f_\epsilon + \mu \Delta f_\epsilon
+\end{eqnarray}
+
+Reward, $\rho$, and reward uncertainty, $\rho_\epsilon$ are updated using the same mechanism as well, with the same update rate:
+
+\begin{eqnarray}
+\Delta \rho &= &\hat{\rho} - \rho \\
+\rho' &=& \rho + \mu \Delta \rho \\
+\Delta \rho_\epsilon &=&\Delta \rho -  \rho_\epsilon \\
+\rho_\epsilon' &=& \rho_\epsilon + \mu \Delta \rho_\epsilon
+\end{eqnarray}
+
+\subsection{Forgetting}
+Every new transition encountered is stored in the model, but many transitions are observed only rarely and result in neither reward nor punishment. These are periodically removed from the model in order to keep \textsc{Becca}'s processing speed up and its space requirements modest. Two events can trigger forgetting: when the number of transitions in the model exceeds a user defined value, $D_5$, or when the number of time steps since the last forgetting episode exceeds a user defined value, $D_6$.
+
+During forgetting, the count values of all transitions in the model are first decremented. Transition counts gradually decay over time. After every $D_6$ time steps  the count of every transition is aged according to the relation:
+
+\begin{equation}
+\nu' = \nu - 1/\nu
+\end{equation}
+
+where $\nu'$ is the decayed count. The nonlinear nature of the decay is such that count values above 5 or 10 will decay very slowly, but low count values will decay more quickly. This is designed to retain repeatedly-observed transitions, even if they haven't been seen in some time.This formulation for memory degradation is intended to degrade rarely-observed transitions more rapidly than those that have been observed several times.  To complete forgetting, all transitions with count values lower than zero are removed. This frees up the memory they occupied for storing new transitions, and speeds up operations that require comparisons across the whole model.
+
+
+\section{Planner}
+The planner is the portion of the reinforcement learner that selects an action at each time step. There are several options available to the planner: observation, exploration, deliberation, and reaction.
+
+\subsection{Observation}
+When observing, the planner chooses no action. Observation is necessary for learning, because when a deliberate action is chosen, it is attended. If deliberate actions are made at every time step, the agent will never attend to its environment and will have no way to learn the features that result from its actions.
+
+In its current implementation, the agent chooses each time step whether to observe or make a deliberate action by generating a random number between 0 and 1 and checking whether it is less than a user selected value, $D_7$. This is a naive mechanism. A more sophisticated mechanism would take into account the extent to which the agent is able to make accurately predictions, and it would perhaps include information about the agent's recent reward history. These may be incorporated in future versions of \textsc{Becca}.
+
+\subsection{Exploration}
+On time steps where the agent determines that it will make a deliberate action, a certain fraction of these are exploratory. In its current implementation, exploratory actions are taken whenever a deliberate action has been called for, and a random number between 0 and 1 is less than a user selected vale $D_8$---the same mechanism used to decide when to observe. It is naive in this instance as well, and it could be improved in the similar ways. 
+
+Significant attention has been given to exploration in learning research. Also termed ``instrinsic motivation'', ``active learning'', ``goal exploration'', and ``directed exploration'',  exploration can be driven by the how well the agent can predict the results of its actions and the behavior of its environment. Specifically it can:
+
+\begin{enumerate}
+\item Search out unpredictable transitions.
+\item Search out {\em somewhat} unpredictable transitions. Look for experiences that it can  predict approximately, but not perfectly.
+\item Search out transitions where new experiences most rapidly decrease their unpredictability.
+\end{enumerate}
+
+These are all candidates for implementation in future versions of \textsc{Becca}.
+
+
+\subsection{Deliberation}
+In the cases were the agent decides not to observe and not to explore, it deliberatively makes a plan that it deems likely to lead to the highest reward. Deliberation is the process of choosing one transition to pursue. In order to do this, all transitions are assigned a fitness, $\phi$, given by:
+
+\begin{equation}
+\phi = \sigma(\mathbf{a},\mathbf{b})  \rho \phi_\nu
+\end{equation}
+
+where
+\begin{itemize}
+\item $\mathbf{a}$ is the current context
+\item $\mathbf{b}$ is the context of the transition
+\item $\sigma(\mathbf{a},\mathbf{b}) $ is the similarity between the current context and the context of the transition, as defined in Equation~\ref{similarity}
+\item $\rho$ is the expected reward associated with the transition
+\item $\phi_\nu$ is the a fitness factor determined by the transition's count, and is given by:
+\begin{equation}
+\phi_\nu = \frac{2}{1 + e^{-2 \frac{\log(\nu) + 1}{3}}} - 1
+\end{equation}
+which, despite its complicated appearance, is just a mapping of count, $\nu$, onto $[0,1)$, weighting more heavily transitions that have been seen more often.
+\end{itemize}
+
+The transition with the highest fitness is chosen as the deliberative plan for the time step. If the cause associated with the transition is an action, that action is selected and passed on to the world. It is also flagged to be attended on the following time step, making sure that it is acknowledged by the model and that any changes in the world that result from it are appropriately attributed to it.
+
+Transitions selected as plans are also updated in the model. The updating mechanism is the same as for transitions that have been previously observed by the model with one exception. The update rate $\mu$ is scaled by the similarity of the selected transition, $\sigma(\mathbf{a},\mathbf{b})$, and the count is incremented by $\sigma(\mathbf{a},\mathbf{b})$, rather than one. This causes selected transitions with close matches to the current context to be updated more aggressively than transitions that are less similar. Updating transitions when they are used in planning has proven to be an important aspect of learning, particularly in stochastic environments. However, when the transition chosen as a plan is only a distant match to the current transition, this updating is less justified.
+
+When the selected transition does not have an action for the cause, no action is selected. A mechanism exists within \textsc{Becca} to take whatever the cause is and make it an intermediate goal. This makes it possible to use high-level abstract transitions to make abstract plans, and then expand those to low-level implementations appropriate to the specific circumstances of the agent. However, the current set of benchmark tasks haven't demanded this functionality, so in an exercise of engineering discipline, this capability has not yet been activated. As the benchmark expands to include more challenging tasks, it is likely that this decision will be reconsidered.
+
+\subsection{Reaction}
+In some cases it may be desirable to have the agent choose actions without having to deliberate. In some worlds, in some situations, actions may be so predictably rewarding that they should be executed every time without deliberation. Pulling fingers away from a hot stove or eating jelly beans are two such behaviors commonly observed in humans, for instance. Reactive actions provide a mechanism for this. The entire set of feature activities are passed to the model and could potentially be used to identify matching transitions without invoking attention. Highly rewarding transitions may be instigated without deliberation, unless actively suppressed. 
+
+Although not implemented in the current version of \textsc{Becca}, reactive actions have been implemented in previous versions. Reworking of the model and the planner led them to be removed, as they were made unnecessary. But it is likely that in future versions as the benchmark tasks become more challenging, they will become implemented again.

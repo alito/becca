@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import agent.viz_utils as viz_utils
 from worlds.base_world import World as BaseWorld
+import worlds.world_utils as world_utils
 
 class World(BaseWorld):
     """ Image_1D
@@ -24,15 +25,16 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.REPORTING_PERIOD = 10 ** 4       
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
         self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 0.5
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
-        self.graphing = False
+        self.graphing = True
         
         self.step_counter = 0
-        self.fov_span = 10
-
+        self.fov_span = 5 
+        
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 1
         self.num_actions = 9
@@ -54,9 +56,11 @@ class World(BaseWorld):
         its range of allowable positions,
         and its initial position.
         """
-        self.MAX_STEP_SIZE = self.data.shape[1] / 2
-        self.TARGET_COLUMN = self.MAX_STEP_SIZE
-        self.REWARD_REGION_WIDTH = self.MAX_STEP_SIZE / 8
+        image_width = self.data.shape[1]
+        self.MAX_STEP_SIZE = image_width / 2
+        self.TARGET_COLUMN = image_width / 2
+
+        self.REWARD_REGION_WIDTH = image_width / 8
         self.NOISE_MAGNITUDE = 0.1
         
         self.fov_height = self.data.shape[0]
@@ -66,7 +70,7 @@ class World(BaseWorld):
         self.column_position = np.random.random_integers(self.column_min, 
                                                          self.column_max)
 
-        self.block_width = self.fov_width / self.fov_span
+        self.block_width = self.fov_width / (self.fov_span + 2)
 
         self.sensors = np.zeros(self.num_sensors)
         self.primitives = np.zeros(self.num_primitives)
@@ -102,19 +106,12 @@ class World(BaseWorld):
         """ Create the sensory input vector """
         fov = self.data[:, self.column_position - self.fov_width / 2: 
                         self.column_position + self.fov_width / 2]
+        
+        center_surround_pixels = world_utils.center_surround( \
+                        fov, self.fov_span, self.block_width, self.block_width)
 
-        sensors = np.zeros(self.num_sensors / 2)
+        sensors = center_surround_pixels.ravel()
 
-        for row in range(self.fov_span):
-            for column in range(self.fov_span):
-
-                sensors[row + self.fov_span * column] = \
-                    np.mean( fov[row * self.block_width: (row + 1) * \
-                                 self.block_width , 
-                                 column * self.block_width: (column + 1) * \
-                                 self.block_width ])
-
-        sensors = sensors.ravel()
         sensors = np.concatenate((sensors, 1 - sensors))
 
         reward = self.calculate_reward()               
@@ -151,10 +148,11 @@ class World(BaseWorld):
 
     def set_agent_parameters(self, agent):
         """ Force all the inputs to be added as one group """
-        agent.perceiver.PLASTICITY_UPDATE_RATE = 10. ** (-2)
-        agent.perceiver.COACTIVITY_THRESHOLD_DECAY_RATE = 0.0 
-        agent.perceiver.MIN_SIG_COACTIVITY = 0.0
+        #agent.perceiver.COACTIVITY_THRESHOLD_DECAY_RATE = 0.0 
+        #agent.perceiver.MIN_SIG_COACTIVITY = 0.0
         #agent.perceiver.N_GROUP_FEATURES = 20
+        
+        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10. ** (-3)
         pass
             
          
@@ -176,3 +174,21 @@ class World(BaseWorld):
                 viz_utils.force_redraw()
                             
             return
+        
+    
+    def is_time_to_display(self):
+        if (self.timestep % self.FEATURE_DISPLAY_INTERVAL == 0):
+            return True
+        else:
+            return False
+        
+    
+    def vizualize_feature_set(self, feature_set):
+        """ Provide an intuitive display of the features created by the 
+        agent. 
+        """
+        world_utils.vizualize_pixel_array_feature_set(feature_set, 
+                                                      world_name='image_1D',
+                                                      save_eps=True, 
+                                                      save_jpg=True)
+    

@@ -4,6 +4,7 @@ import numpy as np
 import agent.viz_utils as viz_utils
 
 from worlds.base_world import World as BaseWorld
+import worlds.world_utils as world_utils
 
 class World(BaseWorld):
     """ Image_2D
@@ -24,12 +25,13 @@ class World(BaseWorld):
     def __init__(self):
         super(World, self).__init__()
 
-        self.REPORTING_PERIOD = 10 ** 3       
+        self.REPORTING_PERIOD = 10 ** 3   
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
         self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 0.5
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
-        self.graphing = False
+        self.graphing = True
         
         self.step_counter = 0
 
@@ -57,11 +59,11 @@ class World(BaseWorld):
         its range of allowable positions,
         and its initial position.
         """
-        im_size = np.minimum(self.image_data.shape[0], 
-                                     self.image_data.shape[1])
+        (im_height, im_width) = self.image_data.shape
+        im_size = np.minimum(im_height, im_width)
         self.MAX_STEP_SIZE = im_size / 2
-        self.TARGET_COLUMN = im_size / 2
-        self.TARGET_ROW = im_size / 2
+        self.TARGET_COLUMN = im_width / 2
+        self.TARGET_ROW = im_height / 2
         self.REWARD_REGION_WIDTH = im_size / 8
         self.NOISE_MAGNITUDE = 0.1
 
@@ -69,16 +71,16 @@ class World(BaseWorld):
         self.fov_height =  im_size * self.FIELD_OF_VIEW_FRACTION
         self.fov_width = self.fov_height
         self.column_min = np.ceil(self.fov_width / 2)
-        self.column_max = np.floor(self.image_data.shape[1] - self.column_min)
+        self.column_max = np.floor(im_width - self.column_min)
         self.row_min = np.ceil(self.fov_height / 2)
-        self.row_max = np.floor(self.image_data.shape[0] - self.row_min)
+        self.row_max = np.floor(im_height - self.row_min)
         self.column_position = np.random.random_integers(self.column_min, 
                                                          self.column_max)
         self.row_position = np.random.random_integers(self.row_min, 
                                                       self.row_max)
 
-        self.block_width = np.round(self.fov_width / self.fov_span)
-        self.block_height = np.round(self.fov_height / self.fov_span)
+        self.block_width = np.round(self.fov_width / (self.fov_span + 2))
+        self.block_height = np.round(self.fov_height / (self.fov_span + 2))
 
         self.sensors = np.zeros(self.num_sensors)
         self.primitives = np.zeros(self.num_primitives)
@@ -135,18 +137,10 @@ class World(BaseWorld):
                         self.column_position - self.fov_width / 2: 
                         self.column_position + self.fov_width / 2]
 
-        sensors = np.zeros(self.num_sensors / 2)
+        center_surround_pixels = world_utils.center_surround( \
+                        fov, self.fov_span, self.block_width, self.block_width)
 
-        for row in range(self.fov_span):
-            for column in range(self.fov_span):
-
-                sensors[row + self.fov_span * column] = \
-                    np.mean( fov[row * self.block_height: \
-                                 (row + 1) * self.block_height, \
-                                 column * self.block_width: \
-                                 (column + 1) * self.block_width ])
-
-        sensors = sensors.ravel()
+        sensors = center_surround_pixels.ravel()
         sensors = np.concatenate((sensors, 1 - sensors))
 
         reward = self.calculate_reward()               
@@ -188,11 +182,15 @@ class World(BaseWorld):
     def set_agent_parameters(self, agent):
         
         """ Force all the inputs to be added as one group """
-        agent.perceiver.PLASTICITY_UPDATE_RATE = 10. ** (-2)
-        agent.perceiver.COACTIVITY_THRESHOLD_DECAY_RATE = 0.0 
-        agent.perceiver.MIN_SIG_COACTIVITY = 0.0
-        agent.perceiver.N_GROUP_FEATURES = 20
+        #agent.perceiver.COACTIVITY_THRESHOLD_DECAY_RATE = 0.0 
+        #agent.perceiver.MIN_SIG_COACTIVITY = 0.0
+        #agent.perceiver.N_GROUP_FEATURES = 20
         
+        """ Nucleate groups more rapidly """
+        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-4) # debug
+
+        pass
+    
         
     def display(self):
         """ Provide an intuitive display of the current state of the World 
@@ -218,3 +216,21 @@ class World(BaseWorld):
                 viz_utils.force_redraw()
                             
             return
+        
+    
+    def is_time_to_display(self):
+        if (self.timestep % self.FEATURE_DISPLAY_INTERVAL == 0):
+            return True
+        else:
+            return False
+        
+    
+    def vizualize_feature_set(self, feature_set):
+        """ Provide an intuitive display of the features created by the 
+        agent. 
+        """
+        world_utils.vizualize_pixel_array_feature_set(feature_set, 
+                                                      world_name='image_2D',
+                                                      save_eps=True, 
+                                                      save_jpg=True)
+    

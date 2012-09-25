@@ -82,9 +82,9 @@ def bounded_sum(a, b):
     """ Map [0,1]  onto [0,Inf) and  maps [-1,0] onto (-Inf,0] 
     Then map back after dum is completed.
     """
-    a_prime = bounded_sum_map(a[same_sign_indices])
-    b_prime = bounded_sum_map(b[same_sign_indices])
-    c_same_sign = bounded_sum_unmap(a_prime + b_prime) 
+    a_prime = map_one_to_inf(a[same_sign_indices])
+    b_prime = map_one_to_inf(b[same_sign_indices])
+    c_same_sign = map_inf_to_one(a_prime + b_prime) 
     
     """ Compile the results """
     result[same_sign_indices] = c_same_sign
@@ -97,13 +97,19 @@ def bounded_sum(a, b):
         return result
     
     
-def bounded_sum_map(a):
+def map_one_to_inf(a):
+    """ Map values from [0, 1] onto [0, inf) and 
+    map values from [-1, 0] onto (-inf, 0].
+    """
     eps = np.finfo(np.double).eps
     a_prime = np.sign(a) / (1 - np.abs(a) + eps) - np.sign(a)
     return a_prime
 
 
-def bounded_sum_unmap(a_prime):
+def map_inf_to_one(a_prime):
+    """ Map values from [0, inf) onto [0, 1] and 
+    map values from  (-inf, 0] onto [-1, 0].
+    """
     a = np.sign(a_prime) * (1 - 1 / (np.abs(a_prime) + 1))
     return a
 
@@ -130,7 +136,7 @@ def similarity(point, point_set, max_index=None):
     It has several desirable properties:
     If the similarity between two points is s(a,b)
     1) s(a,b) = s(b,a), transitive
-    2) s(a,b) is on [0,1] if all elements of a and b are on [0,1]
+    2) s(a,b) is on [0,1]
     3) if a and b share no nonzero elements, s(a,b) = 0;
     4) s(a,b) = 1 iff a = b * c, where c is a constant > 0
     """
@@ -239,10 +245,6 @@ def similarity(point, point_set, max_index=None):
         result = 1 - theta / ( np.pi/2)
 
     return result
-
-
-def sigmoid(a):
-    return (2 / (1 + np.exp(-2 * a))) - 1
 
 
 def empty_array():

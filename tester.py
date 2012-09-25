@@ -15,8 +15,8 @@ One of these import lines should be uncommented.
 #from worlds.grid_1D_noise import World
 #from worlds.grid_2D import World
 #from worlds.grid_2D_dc import World
-#from worlds.image_1D import World
-from worlds.image_2D import World
+from worlds.image_1D import World
+#from worlds.image_2D import World
 
 #from worlds.watch import World
 
@@ -57,7 +57,7 @@ def main():
         try:
             if world.is_time_to_display():
                 world.vizualize_feature_set(
-                    viz_utils.reduce_feature_set(agent.perceiver), save_eps=True)
+                  viz_utils.reduce_feature_set(agent.perceiver))
                 viz_utils.force_redraw()
         except AttributeError:
             pass
@@ -67,7 +67,7 @@ def main():
     agent.show_reward_history()
     
     return
-
+    
     
 if __name__ == '__main__':
     main()

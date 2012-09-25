@@ -166,7 +166,7 @@ class Planner(object):
         """ Each transition's count and its similarity to the working memory 
         also factor in to its vote.
         """
-        count_weight = utils.sigmoid(np.log(model.count
+        count_weight = utils.map_inf_to_one(np.log(model.count
                 [:model.n_transitions] + 1) / 3)
 
         similarity = model.get_context_similarities_for_planning()

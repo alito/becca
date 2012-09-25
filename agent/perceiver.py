@@ -3,7 +3,6 @@ from feature_map import FeatureMap
 import itertools
 import numpy as np
 import state
-import utils
 import viz_utils
 
 class Perceiver(object):
@@ -21,11 +20,11 @@ class Perceiver(object):
         self.INPUT_DECAY_RATE = 1.0                 # real, 0 < x < 1
         
         """ Control how rapidly the coactivity update plasticity changes """
-        self.PLASTICITY_UPDATE_RATE = 10. ** (-3)   # real, 0 < x < 1, small
+        self.PLASTICITY_UPDATE_RATE = 10. ** (-4)   # real, 0 < x < 1, small
         
         """ The maximum value of plasticity """
-        self.MAX_PLASTICITY = 0.1                   # real, 0 < x < 1
-        
+        self.MAX_PLASTICITY = 0.3                   # real, 0 < x < 1
+                
         """ The feature actvity penalty associated with 
         prior membership in other groups. 
         """
@@ -34,7 +33,7 @@ class Perceiver(object):
         """ Once a coactivity value exceeds this value, 
         nucleate a new group.
         """ 
-        self.NEW_GROUP_THRESHOLD = 0.1              # real,  x >= 0
+        self.NEW_GROUP_THRESHOLD = 0.04              # real,  x >= 0
         
         """ If the coactivity between the first two group members 
         and the next candidates 
@@ -43,18 +42,16 @@ class Perceiver(object):
         See create_new_group() below.
         """
         self.MIN_SIG_COACTIVITY = 0.03  # real,  x >= self.NEW_GROUP_THRESHOLD
-        
+
         """ The rate that threshold coactivity for adding new
         inputs to the group decays as new inputs are added.
         """
-        self.COACTIVITY_THRESHOLD_DECAY_RATE = 0.27 # real, 0 <= x < 1
+        self.COACTIVITY_THRESHOLD_DECAY_RATE = 0.12 # real, 0 <= x < 1
         
         """ The number of features to be added at the creation of every new
-        feature group. If 0, the number of features added will be the number
-        of inputs to the group plus 2.
-        Mostly used for debugging purposes.
+        feature group as a fraction of the group's total number of inputs. 
         """
-        self.N_GROUP_FEATURES = 0
+        self.N_GROUP_FEATURES_FRACTION = 0.33
         
         """ Stop creating new groups, once this number of features 
         is nearly reached.
@@ -232,7 +229,9 @@ class Perceiver(object):
         new_input.primitives = primitives
         
         """ It's not yet clear whether this should be included or not """
-        new_input.action = actions
+        #debug
+        #new_input.action = actions
+        new_input.action = np.zeros(actions.shape)
         
         """ Decay previous input and combine it with the new input """
         self.previous_input = self.previous_input.multiply(1 - 
@@ -396,12 +395,18 @@ class Perceiver(object):
                   % self.n_inputs)
 
         """ If the coactivity is high enough, create a new group """
-        mutual_coactivity = self.coactivity[:self.n_inputs, 
+        '''mutual_coactivity = self.coactivity[:self.n_inputs, 
                                        :self.n_inputs] * \
                                        self.coactivity[:self.n_inputs, 
                                        :self.n_inputs].transpose()
+        '''                               
+        mutual_coactivity = np.minimum(self.coactivity[:self.n_inputs, 
+                                       :self.n_inputs], \
+                                       self.coactivity[:self.n_inputs, 
+                                       :self.n_inputs].transpose())
+        
         max_coactivity = np.max(mutual_coactivity)
-
+        
         if max_coactivity > self.NEW_GROUP_THRESHOLD:
             
             """ Nucleate a new group under the two elements for which 
@@ -507,11 +512,9 @@ class Perceiver(object):
         nth_group = self.feature_activity.n_feature_groups()
 
         n_group_inputs = len(added_feature_indices)
-        
-        if self.N_GROUP_FEATURES == 0:
-            n_group_features = n_group_inputs + 2
-        else:
-            n_group_features = self.N_GROUP_FEATURES
+        n_group_features = np.ceil(n_group_inputs * \
+                                   self.N_GROUP_FEATURES_FRACTION)
+        n_group_features = n_group_features.astype('int')
             
         self.feature_activity.add_group(n_group_features)
         self.fatigue.add_group(n_group_features)
@@ -641,7 +644,7 @@ class Perceiver(object):
         
     def calculate_activity(self, excitation):
         """ Find the activity of each feature, after excitation and 
-        inhibition. This includes
+        fatigue. This includes
         1) figuring out which feature wins and
         2) figuring out what the activity magnitude is--for now it's just
         the excitation
@@ -755,9 +758,3 @@ class Perceiver(object):
         viz_utils.force_redraw()
         return
     
-    
-    def make_history(self, recordable_array, array_history, label=None):
-        array_history.append(copy.deepcopy(recordable_array))
-        
-        if np.random.random_sample() < 1.:
-            viz_utils.visualize_array_list(array_history, label)

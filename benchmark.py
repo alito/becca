@@ -1,5 +1,5 @@
 """
-benchmark 0.4.1
+benchmark 0.4.2
 
 A suite of worlds to characterize the performance of Becca variants.
 Other agents may use this benchmark as well, as long as they have the 
@@ -12,7 +12,7 @@ than agents that perform a single task optimally and all others very poorly.
 In order to facilitate apples-to-apples comparisons between agents, the 
 benchmark will be version numbered.
 
-In 10 runs on the benchmark, Becca 0.4.1 averaged a score of 0.262
+For N_RUNS = 7, Becca 0.4.2 scored 0.237
 """
 
 
@@ -30,7 +30,7 @@ from worlds.image_2D import World as World_image_2D
 
 def main():
 
-    N_RUNS = 1
+    N_RUNS = 7
     overall_performance = []
     
     for i in range(N_RUNS):

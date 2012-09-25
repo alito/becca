@@ -20,9 +20,12 @@ def visualize_grouper_coactivity(coactivity, size=0,
     if size == 0:
         size = coactivity.shape[0]
     fig = plt.figure("perceiver coactivity visualization")
-    # Diane L. made the brilliant suggestion to leave this plot in color. 
-    # It looks much prettier.
-    #plt.gray()
+    
+    """ Diane L. made the brilliant suggestion to leave this plot in color. 
+    It looks much prettier.
+    """
+    plt.summer()
+
     im = plt.imshow(coactivity[0:size, 0:size])
     im.set_interpolation('nearest')
     plt.title("Coactivity among inputs")
@@ -482,24 +485,35 @@ def reduce_state(full_state, perceiver):
                             lower level parent features.
                             propagation_strength is the amount that
                             each input to the group contributes
-                            to the feature being reduced. The square
-                            root is included to offset the squaring that
-                            occurs during the upward voting process. (See
-                            perceiver.update_feature_map()) 
+                            to the feature being reduced. 
                             """
-                            propagation_strength = np.sqrt( 
-                                   perceiver.feature_map.\
-                                   features[group_index] \
-                                   [feature_index, \
-                                    match_indices])
+                            """ Use this variant to propogate straight 
+                            feature representations. It makes accurate,
+                            but sometimes uninteresting feature displays,
+                            because feature representations tend to cluster
+                            toward the middle of the group space.
+                            """
+                            #
+                            #propagation_strength = perceiver.feature_map.\
+                            #       features[group_index] \
+                            #       [feature_index, match_indices]
+                            
+                            """ This variant, using get_perceptive_field,
+                            emphasizes the differences between features.
+                            It makes for prettier and more informative
+                            displays of feature sets.
+                            """
+                            propagation_strength = perceiver.feature_map. \
+                                    get_receptive_field(group_index, 
+                                                    feature_index) \
+                                                    [match_indices]
     
                             """ propagated_activation is the propagation
                             strength scaled by the activity of the
                             feature being reduced.
                             """
-                            propagated_activation = \
-                                    this_feature_activity * \
-                                    propagation_strength.transpose()[:,np.newaxis]
+                            propagated_activation = this_feature_activity * \
+                                propagation_strength.transpose()[:,np.newaxis]
                                     
     
                             """ The lower-level feature is incremented 
@@ -540,12 +554,6 @@ def reduce_state(full_state, perceiver):
                                         [parent_feature_indices.ravel()], \
                                         propagated_activation)
     
-            """ Eliminate the original representation of 
-            the reduced feature, now that it is expressed in terms 
-            of its lower level parent features.
-            """
-            #state.features[group_index] = \
-            #        np.zeros(state.features[group_index].shape)
     state.features = []
     return state
 
