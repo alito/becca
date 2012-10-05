@@ -192,10 +192,11 @@ def similarity(point, point_set, max_index=None):
         result = 1 - theta / ( np.pi/2)
         
     else:
+        print("Don't pass the full state here.")
         """ Handle the state case, for example comparing full 
         feature activities to contexts in the model.
         """
-        num_groups = point.n_feature_groups()
+        '''num_groups = point.n_feature_groups()
         inner_product = np.zeros(max_index)
         sum_sq_point = np.zeros(max_index)
         sum_sq_set = np.zeros(max_index)
@@ -243,7 +244,7 @@ def similarity(point, point_set, max_index=None):
         cos_theta = np.minimum(cos_theta, 1)
         theta = np.arccos(cos_theta)
         result = 1 - theta / ( np.pi/2)
-
+        '''
     return result
 
 

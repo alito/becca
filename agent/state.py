@@ -5,13 +5,19 @@ import utils
 class State(object):
     """ A data structure for representing the internal state of the agent """ 
 
-    def __init__(self, num_sensors=1, num_primitives=1, num_actions=1):
+    def __init__(self, 
+                 num_primitives=0, 
+                 num_actions=0, 
+                 num_total_features=0,
+                 width=1):
         """ Constructor from scratch """
-        
-        self.sensors = np.zeros((num_sensors,1))
-        self.primitives = np.zeros((num_primitives,1))
-        self.action = np.zeros((num_actions,1))
-        self.features = []
+        self.num_primitives = num_primitives
+        self.num_actions = num_actions
+        """ Handle the case where num_total_features is not assinged """
+        if num_total_features == 0:
+            num_total_features = num_primitives + num_actions
+            
+        self.features = np.zeros((num_total_features, width))
         
         
     def zeros_like(self, dtype=np.float):
@@ -20,70 +26,87 @@ class State(object):
         """
         state_type = dtype
         zero_state = copy.deepcopy(self)
-        zero_state.sensors = np.zeros_like(self.sensors, dtype=state_type)
-        zero_state.primitives = np.zeros_like(self.primitives, dtype=state_type)
-        zero_state.action = np.zeros_like(self.action, dtype=state_type)
+        zero_state.features = np.zeros_like(self.features, dtype=state_type)
         
-        zero_state.features = [np.zeros_like(f, dtype=state_type) 
-                               for f in self.features]
         return zero_state
         
-
-    def add_group(self, num_features, new_array=None, dtype=np.float):
-        """ Add a group with a known number of features """
-        group_type = dtype
-        if new_array == None:
-            self.features.append(np.zeros((num_features,1), dtype=group_type))
+        
+    def ones_like(self, dtype=np.float):
+        """  Create a new state instance the same size as old_state, 
+        but all ones
+        """
+        state_type = dtype
+        ones_state = copy.deepcopy(self)
+        ones_state.features = np.ones_like(self.features, dtype=state_type)
+        
+        return ones_state
+        
+        
+    def set_primitives(self, primitives):
+        if primitives.size != self.num_primitives:
+            print('You tried to assign the wrong number of primitives to a state.')
+        else: 
+            #if primitives.ndim == 1:
+            #        primitives = primitives[:,np.newaxis]
+            self.features[0:self.num_primitives, 0] = primitives.ravel()
+        
+        
+    def set_actions(self, actions):
+        if actions.size != self.num_actions:
+            print('You tried to assign the wrong number of actions to a state.')
         else:
-            self.features.append(new_array)
+            #if actions.ndim == 1:
+            #        actions = actions[:,np.newaxis]
+            self.features[self.num_primitives:
+                  self.num_primitives + self.num_actions, 0] = actions.ravel()
+    
+    
+    def get_actions(self):
+        return (self.features[self.num_primitives:
+                  self.num_primitives + self.num_actions,:])
+        
+        
+    def set_features(self, features):
+        if features.ndim == 1:
+            features = features[:,np.newaxis]
             
-        return None
+        self.features = features
         
         
     def unbounded_sum(self, other_state):
         """ Add another State to this State. 
         Values of individual features may have a magnitude greater than 1.
         """
-        new_state = other_state.zeros_like()
-        
-        new_state.sensors = self.sensors + other_state.sensors
-        new_state.primitives = self.primitives + other_state.primitives
-        new_state.action = self.action + other_state.action
-        
-        for i in range(self.n_feature_groups()):
-            new_state.features[i] = self.features[i] + other_state.features[i]
-            
+        new_state = other_state.zeros_like()        
+        new_state.features = self.features + other_state.features
+                
         return new_state
         
 
     def bounded_sum(self, other_state):
         """ Add another State to this State, 
         ensuring that no value has a magnitude greater than one """
-        new_state = other_state.zeros_like()
+        new_state = other_state.zeros_like()        
         
-        new_state.sensors = utils.bounded_sum(self.sensors, 
-                                              other_state.sensors)
-        new_state.primitives = utils.bounded_sum(self.primitives, 
-                                                 other_state.primitives)
-        new_state.action = utils.bounded_sum(self.action, 
-                                              other_state.action)
+        """ Check whether the two states are the same size and 
+        pad them if not.
+        """
+        min_size = np.minimum(new_state.features.size, self.n_features())
+        max_size = np.maximum(new_state.features.size, self.n_features())
         
-        for i in range(self.n_feature_groups()):
-            new_state.features[i] = utils.bounded_sum(self.features[i], 
-                                                      other_state.features[i])
+        new_features = utils.bounded_sum(self.features[:min_size,:], 
+                                         other_state.features[:min_size,:])
+        padded_features = np.zeros((max_size,1))
+        padded_features[:min_size,:] = new_features
+        new_state.set_features(padded_features)
+
         return new_state
 
     
     def multiply(self, multiplier):
         """ Multiply this State by a scalar """
         new_state = self.zeros_like()
-        
-        new_state.sensors = self.sensors * multiplier
-        new_state.primitives = self.primitives * multiplier
-        new_state.action = self.action * multiplier
-        
-        for i in range(self.n_feature_groups()):
-            new_state.features[i] = self.features[i] * multiplier
+        new_state.features = self.features * multiplier
             
         return new_state
 
@@ -94,28 +117,20 @@ class State(object):
         """
     
         integrated_state = new_state.zeros_like()
-        integrated_state.sensors = utils.bounded_sum(
-                                    self.sensors * (1 - decay_rate), 
-                                    new_state.sensors)
-        integrated_state.primitives = utils.bounded_sum(
-                                    self.primitives * (1 - decay_rate), 
-                                    new_state.primitives)
-        integrated_state.action = utils.bounded_sum(
-                                    self.action * (1 - decay_rate), 
-                                    new_state.action)
-
-        for index in range(self.n_feature_groups()):
-            integrated_state.features[index] = utils.bounded_sum(
-                                    self.features[index] * (1 - decay_rate), 
-                                    new_state.features[index])
+        integrated_state.features = utils.bounded_sum(
+                                self.features * (1 - decay_rate), 
+                                new_state.features)
                     
         return integrated_state
             
             
-    def n_feature_groups(self):
-        return len(self.features)
-    
-       
-    def n_features_in_group(self, group_index):
-        return self.features[group_index].size
-    
+    def prepend(self, array):
+        """ Return the entire state with array tacked on 
+        to the beginning of it. 
+        """ 
+        return(np.concatenate((array, copy.deepcopy(self.features))))
+        
+        
+    def n_features(self):
+        return self.features.size
+        

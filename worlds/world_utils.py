@@ -49,6 +49,56 @@ def center_surround(fov, fov_span, block_heigth, block_width):
 
 
 def vizualize_pixel_array_feature_set(feature_set, world_name=None,
+                                  show_image=False,
+                                  save_eps=False, save_jpg=False,
+                                  filename='log/feature_set'):
+    
+    if feature_set.size == 0:
+        return
+
+    """ Calculate the number of pixels that span the field of view """
+    n_pixels = feature_set.shape[1]/ 2
+    fov_span = np.sqrt(n_pixels)
+    
+    for feature_index in range(feature_set.shape[0]):
+        pixel_values = ((feature_set[feature_index, 0:n_pixels] - \
+                         feature_set[feature_index, n_pixels:2 * n_pixels]) \
+                         + 1.0) / 2.0
+                         
+        feature_pixels = pixel_values.reshape(fov_span, fov_span)
+        
+        #print feature_set[feature_index, :]
+        #print feature_pixels
+                
+        """ Pad the group number with leading zeros out to three digits """
+        feature_str = str(feature_index).zfill(3)
+        fig = plt.figure(world_name + " world features, feature " + 
+                          feature_str)
+        plt.gray()
+        img = plt.imshow(feature_pixels, vmin=0.0, vmax=1.0)
+        img.set_interpolation('nearest')
+        plt.title("Feature " + feature_str + " from " + world_name)
+    
+        """ Save each group's features separately in its own image """
+        if save_eps:
+            epsfilename = filename + '_' + world_name  + '_' + \
+                    feature_str + '.eps'
+            fig.savefig(epsfilename, format='eps')
+    
+        if save_jpg:
+            try:
+                jpgfilename = filename + '_' + world_name  + '_' + \
+                        feature_str + '.jpg'
+                fig.savefig(jpgfilename, format='jpg')
+            except:
+                print("I think you need to have PIL installed to print in .jpg format.")
+                
+        if not(show_image):
+            plt.close()
+   
+    return
+    
+    '''def vizualize_pixel_array_feature_set(feature_set, world_name=None,
                                       show_image=False,
                                       save_eps=False, save_jpg=False,
                                       filename='log/feature_set'):
@@ -70,17 +120,17 @@ def vizualize_pixel_array_feature_set(feature_set, world_name=None,
     gap = 3
     
     n_groups = len(feature_set)
-    '''
+    
     """ Find the size of the overall image_data """
-    n_features_max = 0
-    for group_index in range(n_groups):
-        if len(feature_set[group_index]) > n_features_max:
-            n_features_max = len(feature_set[group_index])
+    #n_features_max = 0
+    #for group_index in range(n_groups):
+    #    if len(feature_set[group_index]) > n_features_max:
+    #        n_features_max = len(feature_set[group_index])
 
-    n_pixel_columns = n_features_max * (gap + 2 * border + fov_span) + gap
-    n_pixel_rows = n_groups * (gap + 2 * border + fov_span) + gap
-    feature_image = 0.8 * np.ones((n_pixel_rows, n_pixel_columns))
-    '''
+    #n_pixel_columns = n_features_max * (gap + 2 * border + fov_span) + gap
+    #n_pixel_rows = n_groups * (gap + 2 * border + fov_span) + gap
+    #feature_image = 0.8 * np.ones((n_pixel_rows, n_pixel_columns))
+    
     """ Populate each feature in the feature image_data """
     for group_index in range(n_groups):
         
@@ -132,25 +182,25 @@ def vizualize_pixel_array_feature_set(feature_set, world_name=None,
                               feature_image_last_column + border] = 0
                 
         """ Pad the group number with leading zeros out to three digits """
-        group_str = str(group_index).zfill(3)
+        feature_str = str(group_index).zfill(3)
         fig = plt.figure(world_name + " world features, group " + 
-                          group_str)
+                          feature_str)
         plt.gray()
         img = plt.imshow(feature_image, vmin=0.0, vmax=1.0)
         img.set_interpolation('nearest')
         plt.title("Features created while in the " + world_name + 
-                  ", group " + group_str)
+                  ", group " + feature_str)
 
         """ Save each group's features separately in its own image """
         if save_eps:
             epsfilename = filename + '_' + world_name  + '_' + \
-                    group_str + '.eps'
+                    feature_str + '.eps'
             fig.savefig(epsfilename, format='eps')
 
         if save_jpg:
             try:
                 jpgfilename = filename + '_' + world_name  + '_' + \
-                        group_str + '.jpg'
+                        feature_str + '.jpg'
                 fig.savefig(jpgfilename, format='jpg')
             except:
                 print("I think you need to have PIL installed to print in .jpg format.")
@@ -159,3 +209,4 @@ def vizualize_pixel_array_feature_set(feature_set, world_name=None,
             plt.close()
         
     return
+    '''

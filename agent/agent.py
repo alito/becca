@@ -39,7 +39,7 @@ class Agent(object):
         
         self.perceiver = Perceiver(num_sensors, num_primitives, num_actions, 
                                 max_num_features)
-        self.learner = Learner(num_primitives, num_actions)
+        self.learner = Learner(num_primitives, num_actions, max_num_features)
  
         
     def step(self, sensors, primitives, reward):

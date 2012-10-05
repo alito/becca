@@ -27,7 +27,7 @@ class World(BaseWorld):
 
         self.REPORTING_PERIOD = 10 ** 3   
         self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
-        self.LIFESPAN = 2 * 10 ** 4
+        self.LIFESPAN = 2 * 10 ** 6
         self.REWARD_MAGNITUDE = 0.5
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
@@ -181,13 +181,12 @@ class World(BaseWorld):
  
     def set_agent_parameters(self, agent):
         
-        """ Force all the inputs to be added as one group """
-        #agent.perceiver.COACTIVITY_THRESHOLD_DECAY_RATE = 0.0 
-        #agent.perceiver.MIN_SIG_COACTIVITY = 0.0
-        #agent.perceiver.N_GROUP_FEATURES = 20
+        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.01
+        agent.perceiver.MIN_SIG_COACTIVITY = 0.008
+
         
         """ Nucleate groups more rapidly """
-        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-4) # debug
+        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-3) # debug
 
         pass
     

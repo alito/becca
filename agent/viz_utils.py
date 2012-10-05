@@ -12,7 +12,7 @@ world-specific interpretation of Becca's information. That should be
 taken care of by individual worlds.  
 """
 
-def visualize_grouper_coactivity(coactivity, size=0, 
+def visualize_coactivity(coactivity, size=0, 
                                     save_eps=False, 
                                     epsfilename='log/coactivity.eps'):
     """ Produce a visual representation of the coactivity matrix """
@@ -36,7 +36,20 @@ def visualize_grouper_coactivity(coactivity, size=0,
         
     return
   
+ 
+def visualize_feature_map(feature_map):
+    plt.figure("feature map visualization")
     
+    """ Diane L. made the brilliant suggestion to leave this plot in color. 
+    It looks much prettier.
+    """
+    plt.summer()
+    im = plt.imshow(feature_map)
+    im.set_interpolation('nearest')
+    plt.title("Feature map")
+    plt.draw()
+        
+ 
 def visualize_grouper_hierarchy(perceiver, save_eps=False, 
                                   epsfilename='log/hierarchy.eps'):
     """ Produce a visual representation of the feature group 
@@ -252,8 +265,19 @@ def visualize_feature(grouper, group, feature, label=None):
     
     return
   
-      
-def reduce_feature_set(perceiver):
+  
+def reduce_feature_set(perceiver, n_primitives, n_actions):
+    first_feature_index = perceiver.n_sensors + n_primitives + n_actions
+    last_feature_index = perceiver.n_sensors + perceiver.n_features
+    expanded_feature_set = 1 - perceiver.combination[ \
+             first_feature_index:last_feature_index,:perceiver.n_sensors]
+    
+    #for row in range(expanded_feature_set.shape[0]):
+    #    print expanded_feature_set[row,:].ravel()
+        
+    return expanded_feature_set
+    
+    '''def reduce_feature_set(perceiver):
     """ Reduce the entire feature set (every feature from every group) 
     to their low-level constituents in terms of sensors, primitives, 
     and action.
@@ -277,16 +301,16 @@ def reduce_feature_set(perceiver):
         reduced_features.append(reduced_features_this_group)
                             
     return reduced_features
-        
+    '''    
         
 def visualize_model(model, n=None):
     """ Visualize some of the transitions in the model """
     if n == None:
-        n = model.n_inputs
+        n = model.n_features
         
-    n = np.minimum(n, model.n_inputs)
+    n = np.minimum(n, model.n_features)
         
-    print "The model has a total of ", model.n_inputs, \
+    print "The model has a total of ", model.n_features, \
             " transitions."
     
     '''
@@ -294,7 +318,7 @@ def visualize_model(model, n=None):
     highest count.
     NOTE: argsort returns indices of sort in *ascending* order. 
     """
-    index_by_rank = np.argsort(model.count[:model.n_inputs])
+    index_by_rank = np.argsort(model.count[:model.n_features])
     
     for index in range(n):
         print "Showing the " + str(index) + \
@@ -307,7 +331,7 @@ def visualize_model(model, n=None):
         plt.show()
         
     """ Show the n transitions from the model that have the highest reward """
-    index_by_rank = np.argsort(model.reward_value[:model.n_inputs])
+    index_by_rank = np.argsort(model.reward_value[:model.n_features])
     
     for index in range(n):
         print "Showing the " + str(index) + \
@@ -323,9 +347,9 @@ def visualize_model(model, n=None):
     highest impact.
     NOTE: argsort returns indices of sort in *ascending* order. 
     """
-    index_by_rank = np.argsort(model.count[:model.n_inputs] * \
-                        (np.log(model.reward_value[:model.n_inputs] + \
-                                np.ones(model.n_inputs))))
+    index_by_rank = np.argsort(model.count[:model.n_features] * \
+                        (np.log(model.reward_value[:model.n_features] + \
+                                np.ones(model.n_features))))
     
     for index in range(n):
         print "Showing the " + str(index) + \

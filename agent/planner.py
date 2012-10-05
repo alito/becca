@@ -204,11 +204,11 @@ class Planner(object):
                 
         """ Separate action goals from the rest of the goal """
         action = np.zeros(self.action.shape)
-        if np.size((goal.action > 0).nonzero()):
+        if np.size((goal.get_actions() > 0).nonzero()):
             self.deliberately_acted = True
 
-            action[goal.action > 0] = 1
-            goal.action = np.zeros(np.size(goal.action))
+            action[goal.get_actions() > 0] = 1
+            goal.set_actions(np.zeros(np.size(goal.get_actions())))
 
         return action, goal
     
