@@ -276,8 +276,9 @@ class Perceiver(object):
             print 'weighted_feature_activities'
             print weighted_feature_activities
 
-        coactivity_inputs = new_input * \
-                            2 ** (-combined_activations[:, np.newaxis])
+        coactivity_inputs = new_input
+        #coactivity_inputs = new_input * \
+        #                    2 ** (-combined_activations[:, np.newaxis])
                                  
         #self.feature_activity.set_features(weighted_feature_activities
         #                                   [:self.n_features])

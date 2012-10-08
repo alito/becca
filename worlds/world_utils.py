@@ -52,7 +52,6 @@ def vizualize_pixel_array_feature_set(feature_set, world_name=None,
                                   show_image=False,
                                   save_eps=False, save_jpg=False,
                                   filename='log/feature_set'):
-    
     if feature_set.size == 0:
         return
 
@@ -61,15 +60,18 @@ def vizualize_pixel_array_feature_set(feature_set, world_name=None,
     fov_span = np.sqrt(n_pixels)
     
     for feature_index in range(feature_set.shape[0]):
-        pixel_values = ((feature_set[feature_index, 0:n_pixels] - \
-                         feature_set[feature_index, n_pixels:2 * n_pixels]) \
+        
+        feature_sensors = feature_set[feature_index, 0:2 * n_pixels]
+ 
+        """ Maximize contrast """
+        feature_sensors *= 1 / (np.max(feature_sensors) + 10**-6)
+        
+        pixel_values = ((feature_sensors[ 0:n_pixels] - \
+                         feature_sensors[n_pixels:2 * n_pixels]) \
                          + 1.0) / 2.0
                          
         feature_pixels = pixel_values.reshape(fov_span, fov_span)
-        
-        #print feature_set[feature_index, :]
-        #print feature_pixels
-                
+                        
         """ Pad the group number with leading zeros out to three digits """
         feature_str = str(feature_index).zfill(3)
         fig = plt.figure(world_name + " world features, feature " + 
@@ -98,115 +100,3 @@ def vizualize_pixel_array_feature_set(feature_set, world_name=None,
    
     return
     
-    '''def vizualize_pixel_array_feature_set(feature_set, world_name=None,
-                                      show_image=False,
-                                      save_eps=False, save_jpg=False,
-                                      filename='log/feature_set'):
-    """ Provide an intuitive display of the features created by the 
-    agent. 
-    """
-    """ feature_set is a list of lists of State objects """
-    if len(feature_set) == 0:
-        return
-
-    """ Calculate the number of pixels that span the field of view """
-    n_pixels = feature_set[0][0].sensors.size / 2
-    fov_span = np.sqrt(n_pixels)
-
-    """ The number of black pixels surrounding each feature """
-    border = 1
-    
-    """ The number of gray pixels between all features """
-    gap = 3
-    
-    n_groups = len(feature_set)
-    
-    """ Find the size of the overall image_data """
-    #n_features_max = 0
-    #for group_index in range(n_groups):
-    #    if len(feature_set[group_index]) > n_features_max:
-    #        n_features_max = len(feature_set[group_index])
-
-    #n_pixel_columns = n_features_max * (gap + 2 * border + fov_span) + gap
-    #n_pixel_rows = n_groups * (gap + 2 * border + fov_span) + gap
-    #feature_image = 0.8 * np.ones((n_pixel_rows, n_pixel_columns))
-    
-    """ Populate each feature in the feature image_data """
-    for group_index in range(n_groups):
-        
-        """ Find the size of the image for this group """
-        n_features = len(feature_set[group_index])
-        n_pixel_columns = n_features * (gap + 2 * border + fov_span) + gap
-        n_pixel_rows = (gap + 2 * border + fov_span) + gap
-        feature_image = 0.8 * np.ones((n_pixel_rows, n_pixel_columns))
-    
-        for feature_index in range(len(feature_set[group_index])):
-            sensors = feature_set[group_index][feature_index].sensors
-            
-            pixel_values = ((sensors[0:n_pixels] - \
-                             sensors[n_pixels:2 * n_pixels]) \
-                             + 1.0) / 2.0
-            
-            feature_pixels = pixel_values.reshape(fov_span, fov_span)
-            feature_image_first_row = gap + border 
-            feature_image_last_row = feature_image_first_row + fov_span
-            
-            feature_image_first_column = feature_index * \
-                        (gap + 2 * border + fov_span) + gap + border 
-            feature_image_last_column = feature_image_first_column + \
-                                        fov_span
-            feature_image[feature_image_first_row:
-                          feature_image_last_row,
-                          feature_image_first_column:
-                          feature_image_last_column] = feature_pixels
-                          
-            """ Write North border """
-            feature_image[feature_image_first_row - border:
-                          feature_image_first_row,
-                          feature_image_first_column - border:
-                          feature_image_last_column + border] = 0
-            """ Write South border """
-            feature_image[feature_image_last_row:
-                          feature_image_last_row + border,
-                          feature_image_first_column - border:
-                          feature_image_last_column + border] = 0
-            """ Write East border """
-            feature_image[feature_image_first_row - border:
-                          feature_image_last_row + border,
-                          feature_image_first_column - border:
-                          feature_image_first_column] = 0
-            """ Write West border """
-            feature_image[feature_image_first_row - border:
-                              feature_image_last_row + border,
-                              feature_image_last_column:
-                              feature_image_last_column + border] = 0
-                
-        """ Pad the group number with leading zeros out to three digits """
-        feature_str = str(group_index).zfill(3)
-        fig = plt.figure(world_name + " world features, group " + 
-                          feature_str)
-        plt.gray()
-        img = plt.imshow(feature_image, vmin=0.0, vmax=1.0)
-        img.set_interpolation('nearest')
-        plt.title("Features created while in the " + world_name + 
-                  ", group " + feature_str)
-
-        """ Save each group's features separately in its own image """
-        if save_eps:
-            epsfilename = filename + '_' + world_name  + '_' + \
-                    feature_str + '.eps'
-            fig.savefig(epsfilename, format='eps')
-
-        if save_jpg:
-            try:
-                jpgfilename = filename + '_' + world_name  + '_' + \
-                        feature_str + '.jpg'
-                fig.savefig(jpgfilename, format='jpg')
-            except:
-                print("I think you need to have PIL installed to print in .jpg format.")
-                
-        if not(show_image):
-            plt.close()
-        
-    return
-    '''

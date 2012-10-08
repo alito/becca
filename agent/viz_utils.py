@@ -267,42 +267,80 @@ def visualize_feature(grouper, group, feature, label=None):
   
   
 def reduce_feature_set(perceiver, n_primitives, n_actions):
-    first_feature_index = perceiver.n_sensors + n_primitives + n_actions
-    last_feature_index = perceiver.n_sensors + perceiver.n_features
-    expanded_feature_set = 1 - perceiver.combination[ \
-             first_feature_index:last_feature_index,:perceiver.n_sensors]
-    
-    #for row in range(expanded_feature_set.shape[0]):
-    #    print expanded_feature_set[row,:].ravel()
-        
-    return expanded_feature_set
-    
-    '''def reduce_feature_set(perceiver):
-    """ Reduce the entire feature set (every feature from every group) 
-    to their low-level constituents in terms of sensors, primitives, 
-    and action.
-    Returns a list of lists of State objects.
+    """ Take in the feature map and express each feature in terms of 
+    the lowest level inputs (sensors, primitives, and actions)
+    that excite them.
     """
+    """ Each row of the feature map represents a single feature's composition.
+    Expand each row until it is represented only in terms of low level
+    inputs. Start at the highest non-zero column and work from 
+    right to left.  
+    """
+    """ The highest nonzero column will not be more than the number
+    of sensors plus the number of features, which includes
+    primitives, actions, and created features, modified to account for 
+    python's indexing and range behavior.
+    """
+    first_feature_index = perceiver.n_sensors + perceiver.n_features -1
     
-    n_feature_groups = perceiver.previous_input.n_feature_groups()    
-    reduced_features = []
+    """ The last feature to be expanded will be the first created 
+    feature, i.e. the number of sensors plus 
+    the number of primitives and actions, modified to account for 
+    python's indexing and range behavior.
+    """
+    last_feature_index = perceiver.n_sensors + n_primitives + n_actions - 1
+    
+    reduced_feature_set = copy.deepcopy(
+                            perceiver.feature_map[:perceiver.n_features, 
+                                                  :first_feature_index + 1])
+    
+    #print 'first', first_feature_index, 'last', last_feature_index
+    
+    for column_index in range(first_feature_index, last_feature_index, -1):
+        #print 'column_index', column_index
 
-    for group_index in range(n_feature_groups):
-        current_group = perceiver.previous_input.features[group_index]
-        n_features = current_group.size
-        reduced_features_this_group = []
+        features_that_have_this_feature_as_input = \
+            np.nonzero(reduced_feature_set[:,column_index])[0]
+            
+        #print 'features_that_have_this_feature_as_input', features_that_have_this_feature_as_input
+        #print 'shape', features_that_have_this_feature_as_input.shape
+        
+        if features_that_have_this_feature_as_input.size > 0:
+            
+            input_magnitudes = reduced_feature_set[
+                       features_that_have_this_feature_as_input, column_index]
+            
+            #print 'input_magnitudes', input_magnitudes
+            
+            feature_index = column_index - perceiver.n_sensors
+            
+            """ Add the contribution from the features in terms of its lower level 
+            representation.
+            """
+            #print 'reduced_feature_set before', reduced_feature_set[features_that_have_this_feature_as_input,:] 
+            #print 'shape', reduced_feature_set[features_that_have_this_feature_as_input,:].shape
+            #print 'reduced_feature_set[feature_index,:]', reduced_feature_set[feature_index,:]
+            #print 'shape', reduced_feature_set[feature_index,:].shape
+            
+            this_feature = reduced_feature_set[feature_index,:]
+            
+            #print 'this_feature[:, np.newaxis].shape'
+            #print this_feature[:, np.newaxis].shape
+            #print 'input_magnitudes[np.newaxis, :].shape'
+            #print input_magnitudes[np.newaxis, :].shape
+
+            reduced_feature_set[features_that_have_this_feature_as_input,:] += \
+                np.dot(input_magnitudes[:,np.newaxis], this_feature[np.newaxis,:], )
+                
+            #print 'reduced_feature_set after', reduced_feature_set[features_that_have_this_feature_as_input,:] 
     
-        for feature_index in range(n_features):
-            current_feature_state = perceiver.previous_input.zeros_like()            
-            current_feature_state.features[group_index][feature_index] = 1.0           
-            reduced_state = reduce_state(current_feature_state, perceiver)
-            reduced_features_this_group.append(reduced_state)   
-        
-        reduced_features.append(reduced_features_this_group)
-                            
-    return reduced_features
-    '''    
-        
+            """ Remove the high level representation, just to clean up """
+            reduced_feature_set[features_that_have_this_feature_as_input,column_index] = 0
+            
+            #print 'reduced_feature_set cleanup', reduced_feature_set[features_that_have_this_feature_as_input,:] 
+    return reduced_feature_set[n_primitives + n_actions:,:perceiver.n_sensors]
+
+    
 def visualize_model(model, n=None):
     """ Visualize some of the transitions in the model """
     if n == None:
@@ -438,7 +476,7 @@ def visualize_transition(model, transition_index, save_eps=False,
     return
   
                     
-def reduce_state(full_state, perceiver):
+    '''def reduce_state(full_state, perceiver):
     """ Reduce a state, projecting it down to a representation in only
     sensors, primitives, and action. 
     Returns a state, the same size as the input state, in which 
@@ -580,6 +618,7 @@ def reduce_state(full_state, perceiver):
     
     state.features = []
     return state
+    '''
 
 
 def visualize_state(state, label='state', y_min=0.25, y_max=0.75, 

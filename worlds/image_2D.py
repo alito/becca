@@ -38,7 +38,7 @@ class World(BaseWorld):
         self.fov_span = 5
 
         self.num_sensors = 2 * self.fov_span ** 2
-        self.num_primitives = 1
+        self.num_primitives = 0
         self.num_actions = 17
 
         self.column_history = []
@@ -186,7 +186,7 @@ class World(BaseWorld):
 
         
         """ Nucleate groups more rapidly """
-        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-3) # debug
+        agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-5) # debug
 
         pass
     
