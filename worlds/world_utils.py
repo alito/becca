@@ -1,10 +1,13 @@
+
 import agent.utils as utils
+import copy
 import matplotlib.pyplot as plt
 import numpy as np
+import agent.viz_utils as viz_utils
 
 """ preprocessing utilities """ 
 
-def center_surround(fov, fov_span, block_heigth, block_width):
+def center_surround(fov, fov_span, block_heigth, block_width, verbose=False):
     super_pixels = np.zeros((fov_span + 2, fov_span + 2))
     center_surround_pixels = np.zeros((fov_span, fov_span))
     
@@ -18,6 +21,16 @@ def center_surround(fov, fov_span, block_heigth, block_width):
                              column * block_width: (column + 1) * \
                              block_width ])
                 
+    '''
+    """ no center surround """
+    # debug
+    center_surround_pixels = copy.deepcopy(super_pixels[1:-1,1:-1])
+    min_val = np.min(np.abs(center_surround_pixels))
+    center_surround_pixels -= min_val
+    max_val = np.max(np.abs(center_surround_pixels))
+    center_surround_pixels /= max_val + utils.EPSILON
+    
+    '''
     for row in range(fov_span):
         for column in range(fov_span):
             
@@ -36,15 +49,39 @@ def center_surround(fov, fov_span, block_heigth, block_width):
                 super_pixels[row    ][column + 2] / 12 - \
                 super_pixels[row + 2][column + 2] / 12
                 
-            """ Normalize to scale up small values and to ensure that 
-            it falls between 0 and 1.
-            """
-            center_surround_pixels[row][column] *= 10
-            center_surround_pixels[row][column] = \
-                utils.map_inf_to_one(center_surround_pixels[row][column])
-            center_surround_pixels[row][column] = (1 + \
-                center_surround_pixels[row][column]) / 2
-
+    """ Adjust to get maximum contrast and
+    normalize to scale up small values and to ensure that 
+    it falls between 0 and 1.
+    """
+    max_val = np.max(np.abs(center_surround_pixels))
+    center_surround_pixels *= 1 / (max_val + utils.EPSILON)
+    center_surround_pixels += 1
+    center_surround_pixels *= 0.5
+    
+    if verbose:
+        plt.figure("fov")
+        plt.gray()
+        im = plt.imshow(fov)
+        im.set_interpolation('nearest')
+        plt.title("field of view")
+        plt.draw() 
+        
+        plt.figure("super_pixels")
+        plt.gray()
+        im = plt.imshow(super_pixels)
+        im.set_interpolation('nearest')
+        plt.title("super pixels")
+        plt.draw() 
+        
+        plt.figure("center_surround_pixels")
+        plt.gray()
+        im = plt.imshow(center_surround_pixels)
+        im.set_interpolation('nearest')
+        plt.title("center surround pixels")
+        plt.draw() 
+        
+        viz_utils.force_redraw()
+        
     return center_surround_pixels
 
 

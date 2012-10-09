@@ -184,9 +184,8 @@ class World(BaseWorld):
         agent.perceiver.NEW_FEATURE_THRESHOLD = 0.01
         agent.perceiver.MIN_SIG_COACTIVITY = 0.008
 
-        
         """ Nucleate groups more rapidly """
-        agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-5) # debug
+        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-5) # debug
 
         pass
     

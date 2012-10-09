@@ -1,6 +1,9 @@
 import numpy as np
 import state
 
+""" Shared constants """
+EPSILON = 10e-9
+
 """ Utility functions """
 
 def bounded_sum(a, b):

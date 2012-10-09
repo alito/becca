@@ -48,7 +48,7 @@ class World(BaseWorld):
     def __init__(self):
         super(World, self).__init__()
 
-        self.TASK_DURATION = 10 ** 2
+        self.TASK_DURATION = 10 ** 1
         self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
         self.LIFESPAN = 10 ** 8
         self.FOV_FRACTION = 0.2
@@ -56,7 +56,7 @@ class World(BaseWorld):
         self.timestep = 0
         self.sample_counter = 0
 
-        self.fov_span = 10
+        self.fov_span = 5
         
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 1
@@ -190,7 +190,8 @@ class World(BaseWorld):
                         int(self.column_position + self.fov_width / 2)]
         
         center_surround_pixels = world_utils.center_surround( \
-                        fov, self.fov_span, self.block_width, self.block_width)
+                        fov, self.fov_span, self.block_width, 
+                        self.block_width, verbose=False)
 
         sensors = center_surround_pixels.ravel()
         sensors = np.concatenate((sensors, 1 - sensors))
@@ -213,7 +214,11 @@ class World(BaseWorld):
         agent.learner.planner.OBSERVATION_FRACTION = 0.0
         
         """ Nucleate groups more rapidly """
-        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-3) # debug
+        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-5) # debug
+        
+        """ These work well for straight pixel values """
+        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.03
+        agent.perceiver.MIN_SIG_COACTIVITY = 0.0295
 
         """ Don't create a model """
         agent.learner.model.MAX_ENTRIES = 10 ** 2

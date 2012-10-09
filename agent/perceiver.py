@@ -2,6 +2,7 @@ import copy
 import itertools
 import numpy as np
 import state
+import utils
 import viz_utils
 
 class Perceiver(object):
@@ -27,7 +28,7 @@ class Perceiver(object):
         """ The exponent used in dividing inputs' energy between the 
         features that they activate.
         """
-        self.ACTIVATION_WEIGHTING_EXPONENT = 12      # real, 1 < x 
+        self.ACTIVATION_WEIGHTING_EXPONENT = 6      # real, 1 < x 
                 
         """ The feature actvity penalty associated with 
         prior membership in other groups. 
@@ -81,9 +82,6 @@ class Perceiver(object):
         features.
         """
         #self.FATIGUE_SUSCEPTIBILITY = 10. ** -1    # real, 0 <= x < 1
-        
-        """ To prevent normalization from giving a divide by zero """
-        self.EPSILON = 1e-6
         
         """ A flag determining whether to stop creating new groups """
         self.features_full = False
@@ -182,9 +180,12 @@ class Perceiver(object):
         self.previous_input = copy.deepcopy(new_feature_input)
         
         new_input = new_feature_input.prepend(sensors)
+        
+        """ Truncate to currently-used features """
+        new_input = new_input[:self.n_sensors + self.n_features,:]
 
         coactivity_inputs = self.calculate_feature_activities(new_input)
-        
+         
         """ As appropriate, update the coactivity estimate and 
         create new groups.
         """                 
@@ -193,7 +194,7 @@ class Perceiver(object):
             self.create_new_feature()
 
         return self.feature_activity
-
+        
 
     def calculate_feature_activities(self, new_input):
         """ Figure out what the feature activities are """
@@ -201,12 +202,12 @@ class Perceiver(object):
         multiplying across the feature map.
         """
         verbose = False
-        if np.random.random_sample() < 10**(-7):
+        if np.random.random_sample() < 10**(-3):
             verbose = True
             
         if verbose:
             print 'new_input'
-            print new_input
+            print new_input.ravel()
             
         if verbose:
             print 'feature_map'
@@ -216,7 +217,7 @@ class Perceiver(object):
                                 [:self.n_features, :new_input.size], new_input)
         if verbose:
             print 'current_feature_activities'
-            print current_feature_activities
+            print current_feature_activities.ravel()
 
         """ Find the activity levels of the features contributed to by each
         input.
@@ -228,17 +229,25 @@ class Perceiver(object):
             print 'feature_contribution_map'
             print feature_contribution_map
         
-        activated_feature_map = feature_contribution_map * \
-                    np.tile(current_feature_activities, (1, new_input.size))
+        activated_feature_map = current_feature_activities * \
+                                            feature_contribution_map
         if verbose:
             print 'activated_feature_map'
             print activated_feature_map
         
-        combined_activations = np.sum(activated_feature_map, axis=0) + \
-                                self.EPSILON
+        combined_activations = np.max(activated_feature_map, axis=0) + \
+                                utils.EPSILON
+        #combined_activations = np.sum(activated_feature_map, axis=0) + \
+        #                        utils.EPSILON
         if verbose:
             print 'combined_activations'
             print combined_activations
+        
+        inhibited_activations = activated_feature_map / combined_activations
+        
+        if verbose:
+            print 'inhibited_activations'
+            print inhibited_activations
         
         """ Divide the energy that each input contributes to each feature, 
         based on an exponential weighting. More active features take
@@ -247,24 +256,30 @@ class Perceiver(object):
         happens. If it's infinite, then this degenerates to 
         winner-take-all.
         """
-        weighted_feature_map = activated_feature_map ** \
-                                self.ACTIVATION_WEIGHTING_EXPONENT
+        weighted_feature_map = np.power(inhibited_activations, 
+                                        self.ACTIVATION_WEIGHTING_EXPONENT)
+        
         if verbose:
             print 'weighted_feature_map'
             print weighted_feature_map
         
-        combined_weights = np.sum(weighted_feature_map, axis=0) + self.EPSILON
-        if verbose:
-            print 'combined_weights'
-            print combined_weights
+        #combined_weights = np.max(weighted_feature_map, axis=0) + utils.EPSILON
+        combined_weights = np.sum(weighted_feature_map, axis=0) + utils.EPSILON
+        #combined_weights = np.power(combined_weights, 
+        #                            1 / self.ACTIVATION_WEIGHTING_EXPONENT)
         
-        energy_feature_map = weighted_feature_map / np.tile(combined_weights, 
-                                                        (self.n_features, 1))
-        if verbose:
-            print 'energy_feature_map'
-            print energy_feature_map
+        #if verbose:
+        #    print 'combined_weights'
+        #    print combined_weights
         
-        split_inputs = energy_feature_map * new_input.transpose()
+        #energy_feature_map = weighted_feature_map / \
+        #                            combined_weights[np.newaxis,:]
+        #if verbose:
+        #    print 'energy_feature_map'
+        #    print energy_feature_map
+        
+        #split_inputs = energy_feature_map * new_input.transpose()
+        split_inputs = weighted_feature_map * new_input.transpose()
         
         if verbose:
             print 'split_inputs'
@@ -272,23 +287,27 @@ class Perceiver(object):
             
         weighted_feature_activities = np.sum( self.feature_map \
                    [:self.n_features, :new_input.size] * split_inputs, axis=1)
+        #weighted_feature_activities = np.dot(weighted_feature_map, new_input)
+        
         if verbose:
             print 'weighted_feature_activities'
-            print weighted_feature_activities
+            print weighted_feature_activities.ravel()
+            print 'change'
+            print weighted_feature_activities.ravel() - current_feature_activities.ravel()
 
-        coactivity_inputs = new_input
         #coactivity_inputs = new_input * \
-        #                    2 ** (-combined_activations[:, np.newaxis])
+        #                    2 ** (-combined_activations[:, np.newaxis] * 0.3)
+        coactivity_inputs = new_input * \
+                            2 ** (-combined_weights[:, np.newaxis])
                                  
-        #self.feature_activity.set_features(weighted_feature_activities
-        #                                   [:self.n_features])
-        self.feature_activity.set_features(coactivity_inputs[:self.n_features])
+        self.feature_activity.set_features(weighted_feature_activities
+                                           [:self.n_features])
         
         if verbose:
             print 'coactivity_inputs'
-            print coactivity_inputs
+            print coactivity_inputs.ravel()
             
-        if verbose:
+        if False: #if verbose:
             show_feature = self.n_features - 1
             print 'show_feature'
             print show_feature
@@ -317,7 +336,6 @@ class Perceiver(object):
             print 'coactivity_inputs'
             print coactivity_inputs[show_feature, :]
             
-
         return coactivity_inputs
 
 
@@ -418,7 +436,8 @@ class Perceiver(object):
         nucleate new features. They can, however, be agglomerated onto 
         those features after they are nucleated.
         """
-        mutual_coactivity_nuclei = mutual_coactivity * self.combination[:n_inputs, :n_inputs] * \
+        mutual_coactivity_nuclei = mutual_coactivity * \
+                            self.combination[:n_inputs, :n_inputs] * \
                             self.combination[:n_inputs, :n_inputs].transpose()
 
         max_coactivity = np.max(mutual_coactivity_nuclei)
