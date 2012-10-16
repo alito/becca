@@ -27,7 +27,7 @@ class World(BaseWorld):
 
         self.REPORTING_PERIOD = 10 ** 3   
         self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
-        self.LIFESPAN = 2 * 10 ** 6
+        self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 0.5
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
@@ -181,9 +181,11 @@ class World(BaseWorld):
  
     def set_agent_parameters(self, agent):
         
-        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.01
-        agent.perceiver.MIN_SIG_COACTIVITY = 0.008
+        #agent.perceiver.NEW_FEATURE_THRESHOLD = 0.01
+        #agent.perceiver.MIN_SIG_COACTIVITY = 0.008
 
+        agent.perceiver.DISSIPATION_FACTOR = 1.0               # real, 0 < x 
+        
         """ Nucleate groups more rapidly """
         #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-5) # debug
 

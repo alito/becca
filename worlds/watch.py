@@ -49,14 +49,14 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.TASK_DURATION = 10 ** 1
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 4
         self.LIFESPAN = 10 ** 8
         self.FOV_FRACTION = 0.2
         
         self.timestep = 0
         self.sample_counter = 0
 
-        self.fov_span = 5
+        self.fov_span = 10
         
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 1
@@ -214,11 +214,11 @@ class World(BaseWorld):
         agent.learner.planner.OBSERVATION_FRACTION = 0.0
         
         """ Nucleate groups more rapidly """
-        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-5) # debug
+        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-3) # debug
         
         """ These work well for straight pixel values """
-        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.03
-        agent.perceiver.MIN_SIG_COACTIVITY = 0.0295
+        #agent.perceiver.NEW_FEATURE_THRESHOLD = 0.1
+        #agent.perceiver.MIN_SIG_COACTIVITY = 0.98 * agent.perceiver.NEW_FEATURE_THRESHOLD
 
         """ Don't create a model """
         agent.learner.model.MAX_ENTRIES = 10 ** 2

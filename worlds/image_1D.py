@@ -26,7 +26,7 @@ class World(BaseWorld):
 
         self.REPORTING_PERIOD = 10 ** 4       
         self.FEATURE_DISPLAY_INTERVAL = 10 ** 4
-        self.LIFESPAN = 2 * 10 ** 6
+        self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 0.5
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
@@ -60,7 +60,7 @@ class World(BaseWorld):
         self.MAX_STEP_SIZE = image_width / 2
         self.TARGET_COLUMN = image_width / 2
 
-        self.REWARD_REGION_WIDTH = image_width / 8
+        self.REWARD_REGION_WIDTH = image_width / 16
         self.NOISE_MAGNITUDE = 0.1
         
         self.fov_height = np.min(self.data.shape)
@@ -147,10 +147,9 @@ class World(BaseWorld):
 
 
     def set_agent_parameters(self, agent):
-        #agent.perceiver.NEW_FEATURE_THRESHOLD = 0.1
-        #agent.perceiver.MIN_SIG_COACTIVITY = 0.09
-        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.03
-        agent.perceiver.MIN_SIG_COACTIVITY = 0.027
+        #agent.perceiver.NEW_FEATURE_THRESHOLD = 0.03
+        #agent.perceiver.MIN_SIG_COACTIVITY = 0.027
+        agent.perceiver.DISSIPATION_FACTOR = 1.0               # real, 0 < x 
         
         #agent.perceiver.PLASTICITY_UPDATE_RATE = 10. ** (-3)
         pass

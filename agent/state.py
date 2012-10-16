@@ -46,31 +46,92 @@ class State(object):
         if primitives.size != self.num_primitives:
             print('You tried to assign the wrong number of primitives to a state.')
         else: 
-            #if primitives.ndim == 1:
-            #        primitives = primitives[:,np.newaxis]
-            self.features[0:self.num_primitives, 0] = primitives.ravel()
+            self.features[0:self.num_primitives, 0] = \
+                            np.copy(primitives).ravel()
+        return
+
+    
+    def get_primitives(self):
+        return (np.copy(self.features[:self.num_primitives, :]))
         
         
     def set_actions(self, actions):
         if actions.size != self.num_actions:
             print('You tried to assign the wrong number of actions to a state.')
         else:
-            #if actions.ndim == 1:
-            #        actions = actions[:,np.newaxis]
+            if actions.ndim == 1:
+                actions = actions[:,np.newaxis]
             self.features[self.num_primitives:
-                  self.num_primitives + self.num_actions, 0] = actions.ravel()
+                  self.num_primitives + self.num_actions, 0] = \
+                                  np.copy(actions).ravel()
     
     
     def get_actions(self):
-        return (self.features[self.num_primitives:
-                  self.num_primitives + self.num_actions,:])
+        return (np.copy(self.features[self.num_primitives:
+                  self.num_primitives + self.num_actions,:]))
         
         
     def set_features(self, features):
         if features.ndim == 1:
             features = features[:,np.newaxis]
+        self.features = np.copy(features)
+        
+        
+    def is_shaped_like(self, other_state):
+        is_like =True
+        
+        if self.num_primitives != other_state.num_primitives:
+            is_like = False
+            return is_like
             
-        self.features = features
+        if self.num_actions != other_state.num_actions:
+            is_like = False
+            return is_like
+
+            
+        if self.hi_element() != other_state.hi_element():
+            is_like = False
+            return is_like
+            
+        return is_like
+    
+    
+    def equals(self, other_state):
+        """ Test whether two states are in practice equal """
+        is_equal = True
+        
+        is_like = self.is_shaped_like(other_state)
+        
+        if not is_like:
+            is_equal = False
+            return is_equal
+        
+        if self.hi_element() > 0:
+            if np.max(self.features[:self.hi_element()] - 
+                  other_state.features[:self.hi_element()]) > utils.EPSILON:
+                is_equal = False
+                return is_equal
+        
+        return is_equal
+    
+    
+    def is_close(self, other_state, similarity_threshold):
+        """ Test whether two states are similar to each other """
+        is_close = True
+        
+        is_like = self.is_shaped_like(other_state)
+        if not is_like:
+            is_close = False
+            return is_close
+        
+        if self.hi_element() > 0:
+            if utils.similarity(self.features[:self.hi_element()], 
+                                other_state.features[:self.hi_element()]) \
+                                > similarity_threshold:
+                is_close = False
+                return is_close
+            
+        return is_close
         
         
     def unbounded_sum(self, other_state):
@@ -105,10 +166,8 @@ class State(object):
     
     def multiply(self, multiplier):
         """ Multiply this State by a scalar """
-        new_state = self.zeros_like()
-        new_state.features = self.features * multiplier
-            
-        return new_state
+        self.features *= multiplier
+        return
 
     
     def integrate_state(self, new_state, decay_rate):
@@ -133,4 +192,15 @@ class State(object):
         
     def n_features(self):
         return self.features.size
+    
+    
+    def hi_element(self):
+        """ Return the index of the largest significantly non-zero feature """
+        nonzero_indices = self.features.ravel().nonzero()[0]
+        if nonzero_indices.size != 0:
+            hi_element = np.max(nonzero_indices)
+        else:
+            hi_element = 0
+            
+        return hi_element
         

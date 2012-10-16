@@ -21,14 +21,14 @@ class Agent(object):
         self.pickle_filename ="log/" + agent_name + "_agent.pickle"
         
         self.REPORTING_PERIOD = 10 ** 3
-        self.BACKUP_PERIOD = 3 * 10 ** 4
+        self.BACKUP_PERIOD = 3 * 10 ** 7
 
         self.num_sensors = num_sensors
         self.num_primitives = num_primitives
         self.num_actions = num_actions
 
         self.reward = 0
-        self.action = np.zeros(self.num_actions)
+        self.action = np.zeros((self.num_actions,1))
         
         self.timestep = 0
         self.graphing = True
@@ -55,15 +55,15 @@ class Agent(object):
         Feature creator
         ======================================================
         """
-        feature_activity = self.perceiver.step(sensors, 
-                                                     primitives, 
-                                                     self.action)
+        feature_activity, n_features = self.perceiver.step(sensors, 
+                                                           primitives, 
+                                                           self.action)
         
         """
         Reinforcement learner
         ======================================================
         """
-        self.action = self.learner.step(feature_activity, reward) 
+        self.action = self.learner.step(feature_activity, reward, n_features) 
         
         self.log()
 

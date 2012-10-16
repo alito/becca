@@ -23,9 +23,10 @@ class Learner(object):
         self.deliberately_acted = False
         
 
-    def step(self, feature_activity, reward):
+    def step(self, feature_activity, reward, n_features):
         
         self.feature_activity = feature_activity
+        self.model.n_features = n_features
         
         """ Attend to a single feature """
         self.attended_feature = self.attend(self.deliberately_acted, 
@@ -79,6 +80,6 @@ class Learner(object):
                  
     def visualize(self, save_eps=True):
         #viz_utils.visualize_model(self.model, 10)
-        viz_utils.force_redraw()
+        #viz_utils.force_redraw()
         
         return

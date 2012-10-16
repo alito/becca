@@ -344,11 +344,11 @@ def reduce_feature_set(perceiver, n_primitives, n_actions):
 def visualize_model(model, n=None):
     """ Visualize some of the transitions in the model """
     if n == None:
-        n = model.n_features
+        n = model.n_transitions
         
-    n = np.minimum(n, model.n_features)
+    n = np.minimum(n, model.n_transitions)
         
-    print "The model has a total of ", model.n_features, \
+    print "The model has a total of ", model.n_transitions, \
             " transitions."
     
     '''
@@ -356,7 +356,7 @@ def visualize_model(model, n=None):
     highest count.
     NOTE: argsort returns indices of sort in *ascending* order. 
     """
-    index_by_rank = np.argsort(model.count[:model.n_features])
+    index_by_rank = np.argsort(model.count[:model.n_transitions])
     
     for index in range(n):
         print "Showing the " + str(index) + \
@@ -369,7 +369,7 @@ def visualize_model(model, n=None):
         plt.show()
         
     """ Show the n transitions from the model that have the highest reward """
-    index_by_rank = np.argsort(model.reward_value[:model.n_features])
+    index_by_rank = np.argsort(model.reward_value[:model.n_transitions])
     
     for index in range(n):
         print "Showing the " + str(index) + \
@@ -385,14 +385,13 @@ def visualize_model(model, n=None):
     highest impact.
     NOTE: argsort returns indices of sort in *ascending* order. 
     """
-    index_by_rank = np.argsort(model.count[:model.n_features] * \
-                        (np.log(model.reward_value[:model.n_features] + \
-                                np.ones(model.n_features))))
+    index_by_rank = np.argsort(model.reward_value[:model.n_transitions] * \
+            (np.log(model.count[:model.n_transitions] + 1)), axis=0).ravel()
     
     for index in range(n):
         print "Showing the " + str(index) + \
                     "th most impact."
-        
+                    
         visualize_transition(model, index_by_rank[-(index+1)])
         """ Hold the plot, blocking the program until the user closes
         the figure window.
@@ -407,6 +406,8 @@ def visualize_transition(model, transition_index, save_eps=False,
     """ Visualize a single model transition """
     if label==None:
         label = 'Transition ' + str(transition_index)
+        
+    n_features = model.n_features
         
     fig = plt.figure(label)
     fig.clf()
@@ -426,37 +427,23 @@ def visualize_transition(model, transition_index, save_eps=False,
               '  goal value: {:.2f}'.format(goal_value) )
     plt.xlabel(label)
     
-    context = state.State()
-    cause = state.State()
-    effect = state.State()
-    effect_uncertainty = state.State()
+    n_primitives = model.context.num_primitives
+    n_actions = model.context.num_actions
     
-    context.sensors = np.zeros((0,0))
-    cause.sensors = np.zeros((0,0))
-    effect.sensors = np.zeros((0,0))
-    effect_uncertainty.sensors = np.zeros((0,0))
-    
-    context.primitives = model.context.primitives[:,transition_index]
-    cause.primitives = model.cause.primitives[:,transition_index]
-    effect.primitives = model.effect.primitives[:,transition_index]
-    effect_uncertainty.primitives = \
-                    model.effect_uncertainty.primitives[:,transition_index]
-    
-    context.action = model.context.action[:,transition_index]
-    cause.action = model.cause.action[:,transition_index]
-    effect.action = model.effect.action[:,transition_index]
-    effect_uncertainty.action = model.effect_uncertainty.action[:,transition_index]
-    
-    for group_index in range(len(model.context.features)):
-        context.features.append(model.context.features \
-                                [group_index][:,transition_index])
-        cause.features.append(model.cause.features \
-                              [group_index][:,transition_index])
-        effect.features.append(model.effect.features \
-                               [group_index][:,transition_index])
-        effect_uncertainty.features.append(model.effect_uncertainty.features \
-                               [group_index][:,transition_index])
-        
+    context = state.State(n_primitives, n_actions, n_features)
+    cause = state.State(n_primitives, n_actions, n_features)
+    effect = state.State(n_primitives, n_actions, n_features)
+    effect_uncertainty = state.State(n_primitives, n_actions, n_features)
+
+    context.features = copy.deepcopy(model.context. \
+                        features[:n_features, transition_index, np.newaxis])
+    cause.features = copy.deepcopy(model.cause. \
+                        features[:n_features, transition_index, np.newaxis])
+    effect.features = copy.deepcopy(model.effect. \
+                        features[:n_features, transition_index, np.newaxis])
+    effect_uncertainty.features = copy.deepcopy(model.effect_uncertainty. \
+                        features[:n_features, transition_index, np.newaxis])
+
     visualize_state(context, y_max=3.75, y_min=3.25, axes=viz_axes)
     visualize_state(cause, y_max=2.75, y_min=2.25, axes=viz_axes)
     visualize_state(effect, y_max=1.75, y_min=1.25, axes=viz_axes)
@@ -475,152 +462,7 @@ def visualize_transition(model, transition_index, save_eps=False,
         
     return
   
-                    
-    '''def reduce_state(full_state, perceiver):
-    """ Reduce a state, projecting it down to a representation in only
-    sensors, primitives, and action. 
-    Returns a state, the same size as the input state, in which 
-    only the sensors, primitives, and action have non-zero elements.
-    """
-    
-    """ Expand any active features, group by group, starting at the
-    highest-numbered group and counting down. 
-    Features from higher numbered groups always reduce into lower numbered
-    groups. Counting down allows for a cascading expansion of high-level
-    features into their lower level component parts, until they are
-    completely broken down into sensors, primitives, and action.
-    
-    Lower numbered feature groups that contribute features as inputs
-    to higher numbered feature groups are considered their parents.
-    The sensors, primitives, and action groups are the original parents 
-    of all other features.
-    """
-    state = copy.deepcopy(full_state)
-    for group_index in range(state.n_feature_groups() - 1, -1, -1):
-        """ Check whether there are any nonzero elements in 
-        each group that need to be expanded.
-        """
-        if np.count_nonzero(state.features[group_index]):
-            """ Find contributions of all lower groups to the 
-            current group, again counting down to allow for 
-            cascading downward projections. parent_group_index 
-            is a group counter variable, specific to propogating 
-            downward projections. 
-            """
-            for parent_group_index in range(group_index-1, -4, -1):
-                match_indices = \
-                        (perceiver.grouping_map_group.features[group_index] == 
-                         parent_group_index).nonzero()[0]
-                """print 'match_indices for group ', group_index, \
-                        ' in group ', parent_group_index, ' ', \
-                         match_indices
-                """
-                parent_feature_indices = \
-                         perceiver.grouping_map_feature.features[group_index] \
-                         [match_indices,:]
-                """print 'parent_feature_indices for group ', group_index, \
-                        ' in group ', parent_group_index, ' ', \
-                         parent_feature_indices
-                """
-    
-                """ Check whether the parent group is actually a
-                parent of the group being reduced.
-                """
-                if parent_feature_indices.size:
-    
-                    """ Expand each relevant feature from the
-                    group being reduced down to the lower level features 
-                    in each parent group.
-                    """
-                    for feature_index in range \
-                            (state.features[group_index].size):
-    
-                        """ Check whether the feature to reduce  
-                        is nonzero. This check saves a lot of 
-                        unnecessary computation.
-                        """
-                        this_feature_activity = \
-                                state.features[group_index][feature_index]
-                        if this_feature_activity != 0:
-                                    
-                            """ Translate the feature activity to its 
-                            lower level parent features.
-                            propagation_strength is the amount that
-                            each input to the group contributes
-                            to the feature being reduced. 
-                            """
-                            """ Use this variant to propogate straight 
-                            feature representations. It makes accurate,
-                            but sometimes uninteresting feature displays,
-                            because feature representations tend to cluster
-                            toward the middle of the group space.
-                            """
-                            #
-                            #propagation_strength = perceiver.feature_map.\
-                            #       features[group_index] \
-                            #       [feature_index, match_indices]
-                            
-                            """ This variant, using get_perceptive_field,
-                            emphasizes the differences between features.
-                            It makes for prettier and more informative
-                            displays of feature sets.
-                            """
-                            propagation_strength = perceiver.feature_map. \
-                                    get_receptive_field(group_index, 
-                                                    feature_index) \
-                                                    [match_indices]
-    
-                            """ propagated_activation is the propagation
-                            strength scaled by the activity of the
-                            feature being reduced.
-                            """
-                            propagated_activation = this_feature_activity * \
-                                propagation_strength.transpose()[:,np.newaxis]
-                                    
-    
-                            """ The lower-level feature is incremented 
-                            according to the propagated_activation. The
-                            incrementing is done nonlinearly to ensure
-                            that the activity of the lower level features
-                            never exceeds 1.
-                            """
-                            """ Handle sensors, primitives, and action
-                            separately.
-                            """
-                            if parent_group_index == -3:
-                                state.sensors \
-                                        [parent_feature_indices.ravel()] = \
-                                        utils.bounded_sum( \
-                                        state.sensors \
-                                        [parent_feature_indices.ravel()], \
-                                        propagated_activation)
-                            elif parent_group_index == -2:
-                                state.primitives \
-                                        [parent_feature_indices.ravel()] = \
-                                        utils.bounded_sum( \
-                                        state.primitives \
-                                        [parent_feature_indices.ravel()], \
-                                        propagated_activation)
-                            elif parent_group_index == -1:
-                                state.action \
-                                        [parent_feature_indices.ravel()] = \
-                                        utils.bounded_sum( \
-                                        state.action \
-                                        [parent_feature_indices.ravel()], \
-                                        propagated_activation)
-                            else:
-                                state.features[parent_group_index] \
-                                        [parent_feature_indices.ravel()] = \
-                                        utils.bounded_sum( \
-                                        state.features[parent_group_index] \
-                                        [parent_feature_indices.ravel()], \
-                                        propagated_activation)
-    
-    state.features = []
-    return state
-    '''
-
-
+  
 def visualize_state(state, label='state', y_min=0.25, y_max=0.75, 
                       save_eps=False, epsfilename='log/state.eps', 
                       axes=None):
@@ -635,47 +477,42 @@ def visualize_state(state, label='state', y_min=0.25, y_max=0.75,
         # TODO: make background color light gray
         plt.title(label)
         axes.set_ylim(0.0, 1.0)
+     
+    """ The number of blank features in between groups """
+    x_spacer_width = 3 
+    total_width = 0
 
-    x_spacer_width = 3 # number of blank features in between groups
-
-    """ Handle the case when the sensors group is None """
-    if state.sensors == None:
-        state.sensors = np.zeros((0,0))
-        
-    total_width = state.sensors.size
-    total_width += x_spacer_width
-    total_width += state.primitives.size
-    total_width += x_spacer_width
-    total_width += state.action.size
+    primitives = state.get_primitives()
+    actions = state.get_actions()
+    features = state.features[primitives.size + actions.size:]
     
-    for indx in range(state.n_feature_groups()):
-        total_width += x_spacer_width
-        total_width += state.features[indx].size
-            
+    #print 'primitives', primitives.ravel()
+    #print 'actions', actions.ravel()
+    #print 'features', features.ravel()
+    
+    total_width += primitives.size
+    total_width += x_spacer_width
+    total_width += actions.size
+    total_width += x_spacer_width
+    total_width += features.size
+    
     axes.set_xlim(-x_spacer_width, total_width + x_spacer_width)
         
     x = 0
-    for indx in range(state.sensors.size):
-        rectPatch(x, x + 1, y_min, y_max, state.sensors[indx], axes)
+    for indx in range(primitives.size):
+        rectPatch(x, x + 1, y_min, y_max, primitives[indx], axes)
         x += 1
         
     x += x_spacer_width
-    for indx in range(state.primitives.size):
-        rectPatch(x, x + 1, y_min, y_max, state.primitives[indx], axes)
-        x += 1
-        
-    x += x_spacer_width
-    for indx in range(state.action.size):
-        rectPatch(x, x + 1, y_min, y_max, state.action[indx], axes)
+    for indx in range(actions.size):
+        rectPatch(x, x + 1, y_min, y_max, actions[indx], axes)
         x += 1
     
-    for feature_group_indx in range(state.n_feature_groups()):    
-        x += x_spacer_width
-        for indx in range(state.features[feature_group_indx].size):
-            rectPatch(x, x + 1, y_min, y_max,
-                           state.features[feature_group_indx][indx], axes)
-            x += 1
-     
+    x += x_spacer_width
+    for indx in range(features.size):
+        rectPatch(x, x + 1, y_min, y_max, features[indx], axes)
+        x += 1
+    
     """ Get the figure to recognize that it has something to plot.
     A blatant hack.  """       
     plt.plot(0, 0, color='black') 

@@ -1,6 +1,7 @@
 
 import numpy as np
 import utils
+import viz_utils
 
 class Planner(object):
 
@@ -45,6 +46,9 @@ class Planner(object):
                 
                 self.action = self.explore()
                             
+                # debug
+                #print '            Exploring'
+                
                 """ Attend to any deliberate action """
                 deliberately_acted = True
                 
@@ -54,6 +58,9 @@ class Planner(object):
                 """
                 (self.action, goal) = self.deliberate(model)
 
+                # debug
+                #print '            Deliberating'
+                
                 """ Pass goal to model """ 
                 model.update_goal(goal)
                 
@@ -63,7 +70,10 @@ class Planner(object):
         
         else:
             self.action = np.zeros( self.action.shape)
-                
+            
+            # debug
+            #print '            Observing'
+                        
         return self.action, deliberately_acted
             
 
@@ -84,8 +94,110 @@ class Planner(object):
         
         return action
 
-    '''
-    def select_action(self, model, current_state):
+
+    def deliberate(self, model):
+        """
+        Deliberate, choosing goals based on the current working memory.
+        Find the transition that is best suited based on:
+          1) similarity
+          2) count
+          3) expected reward
+          4) not already having a strong goal that matches the cause
+        Choose the cause of the winning transition as the goal for 
+        the timestep.
+        """
+        """ Combine the goal-based and reward-based value, for all
+        transisions, bounded by one.
+        """
+        """ TODO: query model, so I don't have to probe 
+        its members directly. 
+        """
+        value = utils.bounded_sum(model.goal_value[:model.n_transitions], 
+                                  model.reward_value[:model.n_transitions])
+
+        """ Each transition's count and its similarity to the working memory 
+        also factor in to its vote.
+        """
+        count_weight = utils.map_inf_to_one(np.log(model.count
+                [:model.n_transitions] + 1) / 3)
+
+        similarity = model.get_context_similarities_for_planning()
+
+        """ TODO: Raise similarity by some power to focus on more 
+        similar transitions?
+        """
+        """ TODO: Add recency? This is likely to be useful when 
+        rewards change over time. 
+        """
+        #debug--have count be a factor?
+        transition_vote = value.ravel()  * similarity.ravel() 
+        #transition_vote = value.ravel() * similarity.ravel() * \
+        #                    count_weight.ravel()
+        
+        if transition_vote.size == 0:
+            action = np.zeros(self.action.shape)
+            goal = None
+            return action, goal
+
+        transition_vote += np.random.random_sample(transition_vote.shape) * \
+                            self.VOTE_NOISE
+        
+        max_transition_index = np.argmax(transition_vote)
+        
+        #debug
+        if np.random.random_sample() < 0.0:
+            import matplotlib.pyplot as plt
+            import viz_utils
+            viz_utils.visualize_transition(model, max_transition_index)
+            print 'winning transition_vote of ', transition_vote[max_transition_index], \
+                'at transition_index', max_transition_index
+            print 'value =',    value.ravel()[max_transition_index]
+            print 'similarity =', similarity.ravel()[max_transition_index]
+            print 'count weight =', count_weight.ravel()[max_transition_index]
+            plt.show()
+            '''
+            n = 3
+            #print 'transition_vote', transition_vote
+            index_by_rank = np.argsort(transition_vote).ravel()
+    
+            for index in range(n):
+                next_transition_index = index_by_rank[-(index+1)]
+                print "Showing the " + str(index) + \
+                            "th highest vote of ", transition_vote[next_transition_index], \
+                'at transition_index', next_transition_index
+                #print 'value =',    value.ravel()[next_transition_index]
+                #print 'similarity =', similarity.ravel()[next_transition_index]
+                #print 'count weight =', count_weight.ravel()[next_transition_index]
+
+                viz_utils.visualize_transition(model, next_transition_index)
+                """ Hold the plot, blocking the program until the user closes
+                the figure window.
+                """
+                plt.show()
+            '''
+        
+        """ Update the transition used to select this action. 
+        Setting wait to True allows one extra time step for the 
+        action to be executed.
+        """
+        model.update_transition(max_transition_index, 
+                            update_strength=similarity[max_transition_index], 
+                            wait=True)
+        
+        goal = model.get_cause(max_transition_index)
+                
+        """ Separate action goals from the rest of the goal """
+        action = np.zeros(self.action.shape)
+        if np.size((goal.get_actions() > 0).nonzero()):
+            self.deliberately_acted = True
+
+            action[goal.get_actions() > 0] = 1
+            goal.set_actions(np.zeros(np.size(goal.get_actions())))
+
+        return action, goal
+    
+        '''
+        def select_action(self, model, current_state):
         """
         Choose a reactive action based on the current feature activities.
         This is analogous to automatic action
@@ -143,72 +255,4 @@ class Planner(object):
         return action
         '''
 
-    def deliberate(self, model):
-        """
-        Deliberate, choosing goals based on the current working memory.
-        Find the transition that is best suited based on:
-          1) similarity
-          2) count
-          3) expected reward
-          4) not already having a strong goal that matches the cause
-        Choose the cause of the winning transition as the goal for 
-        the timestep.
-        """
-        """ Combine the goal-based and reward-based value, for all
-        transisions, bounded by one.
-        """
-        """ TODO: query model, so I don't have to probe 
-        its members directly. 
-        """
-        value = utils.bounded_sum(model.goal_value[:model.n_transitions], 
-                                  model.reward_value[:model.n_transitions])
-
-        """ Each transition's count and its similarity to the working memory 
-        also factor in to its vote.
-        """
-        count_weight = utils.map_inf_to_one(np.log(model.count
-                [:model.n_transitions] + 1) / 3)
-
-        similarity = model.get_context_similarities_for_planning()
-
-        """ TODO: Raise similarity by some power to focus on more 
-        similar transitions?
-        """
-        """ TODO: Add recency? This is likely to be useful when 
-        rewards change over time. 
-        """
-        #debug--have count be a factor?
-        #transition_vote = value * similarity
-        transition_vote = value.ravel() * similarity.ravel() * \
-                            count_weight.ravel()
-        
-        if transition_vote.size == 0:
-            action = np.zeros(self.action.shape)
-            goal = None
-            return action, goal
-
-        transition_vote += np.random.random_sample(transition_vote.shape) * \
-                            self.VOTE_NOISE
-        
-        max_transition_index = np.argmax(transition_vote)
-        
-        """ Update the transition used to select this action. 
-        Setting wait to True allows one extra time step for the 
-        action to be executed.
-        """
-        model.update_transition(max_transition_index, 
-                            update_strength=similarity[max_transition_index], 
-                            wait=True)
-        
-        goal = model.get_cause(max_transition_index)
-                
-        """ Separate action goals from the rest of the goal """
-        action = np.zeros(self.action.shape)
-        if np.size((goal.get_actions() > 0).nonzero()):
-            self.deliberately_acted = True
-
-            action[goal.get_actions() > 0] = 1
-            goal.set_actions(np.zeros(np.size(goal.get_actions())))
-
-        return action, goal
     

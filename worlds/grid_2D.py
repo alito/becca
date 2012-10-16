@@ -29,7 +29,7 @@ class World(BaseWorld):
         self.ENERGY_COST = 0.05
         self.display_state = False
 
-        self.num_sensors = 1
+        self.num_sensors = 0
         self.num_actions = 9            
         self.world_size = 5
         self.num_primitives = self.world_size ** 2

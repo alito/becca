@@ -115,6 +115,9 @@ class Model(object):
         """ The total number of transitions in the model """
         self.n_transitions = 0
         
+        """ The total number of features in the model """
+        self.n_features = 0
+        
         """ Counter tracking when to clean the model """
         self.clean_count = 0
 
@@ -133,7 +136,7 @@ class Model(object):
 
         self.effect_uncertainty = self.context.ones_like()
         self.effect_uncertainty.multiply(self.INITIAL_UNCERTAINTY)
-
+        
         self.count = np.zeros((2*self.MAX_ENTRIES,1))
         self.reward_value = np.zeros((2*self.MAX_ENTRIES,1))
         self.reward_uncertainty = np.ones((2*self.MAX_ENTRIES,1)) * \
@@ -198,6 +201,16 @@ class Model(object):
 
         self.clean_library()
         
+        #debug
+        if np.random.random_sample() < 0:
+            import matplotlib.pyplot as plt
+            import viz_utils
+            viz_utils.visualize_model(self, 20)
+            viz_utils.force_redraw()
+            plt.show()
+
+        return
+        
 
     def find_transition_matches(self):
         """ Check to see whether the new entry is already in the model """ 
@@ -227,22 +240,35 @@ class Model(object):
     
     
     def add_new_transition(self):
-        """ If there is no match, the just-experienced transition is
-        novel. Add as a new transision in the model.
-        """
-        new_context = copy.deepcopy(self.current_context)
-        new_cause = copy.deepcopy(self.current_cause)
-
-        """ Add a new entry in the new transition queue.
-        Each entry is formatted as a tuple:
-        0) A timer that counts down while the effect and reward 
-        are being observed.
-        1) The current context
-        2) The current cause
-        """        
-        timer = self.TRACE_LENGTH
         
-        self.new_transition_q.append([timer, new_context, new_cause])       
+        is_new = True
+        
+        for i in range((len(self.new_transition_q))):
+            q_context = self.new_transition_q[i][1]
+            q_cause = self.new_transition_q[i][2]
+            
+            if (self.current_cause.equals(q_cause) & 
+                    self.current_context.is_close(q_context, 
+                                                  self.SIMILARITY_THRESHOLD)):
+                is_new = False
+            
+        if is_new:
+            """ If there is no match, the just-experienced transition is
+            novel. Add as a new transision in the model.
+            """
+            new_context = copy.deepcopy(self.current_context)
+            new_cause = copy.deepcopy(self.current_cause)
+    
+            """ Add a new entry in the new transition queue.
+            Each entry is formatted as a tuple:
+            0) A timer that counts down while the effect and reward 
+            are being observed.
+            1) The current context
+            2) The current cause
+            """        
+            timer = self.TRACE_LENGTH
+            
+            self.new_transition_q.append([timer, new_context, new_cause])       
         return
     
     
@@ -250,8 +276,12 @@ class Model(object):
         """ If any new transitions are ready to be added, add them """
         graduates = []
         
-        """ Add the transitions on which the timer has counted down to 0 """
-        for i in range(len(self.new_transition_q)):       
+        for i in range(len(self.new_transition_q)):
+
+            """ Decrement the timers in the new transition queue """
+            self.new_transition_q[i][0] = self.new_transition_q[i][0] - 1
+       
+            """ Add the transitions on which the timer has counted down """
             if self.new_transition_q[i][0] == 0:
                 graduates.append(i)
                     
@@ -275,8 +305,14 @@ class Model(object):
                 self.count[matching_transition_index] =  1.
                 self.n_transitions += 1  
                 
-            """ Decrement the timers in the new transition queue """
-            self.new_transition_q[i][0] = self.new_transition_q[i][0] - 1
+                #debug
+                if np.random.random_sample() < 0:
+                    import matplotlib.pyplot as plt
+                    import viz_utils
+                    viz_utils.visualize_transition(self, matching_transition_index)
+                    viz_utils.force_redraw()
+                    print "New transition added at", matching_transition_index
+                    plt.show()
 
         """ Remove the transitions from the queue that were added.
         This was sliced a little fancy in order to ensure that the highest
@@ -326,6 +362,17 @@ class Model(object):
                 matching_transition_index = self.transition_update_q[i][1] 
                 update_strength = self.transition_update_q[i][2] 
                 
+                #debug
+                if np.random.random_sample() < 0:
+                    import matplotlib.pyplot as plt
+                    import viz_utils
+                    viz_utils.visualize_transition(self, matching_transition_index)
+                    viz_utils.force_redraw()
+                    print "Updating transition", matching_transition_index, \
+                        "with update strength", update_strength
+                    plt.show()
+
+
                 """ Calculate states and values for the update """
                 new_effect = copy.deepcopy(self.current_effect)
                 new_reward = self.current_reward
@@ -377,6 +424,17 @@ class Model(object):
                         (1. - update_rate) + \
                         effect_difference.features.ravel() * update_rate
                 
+                #debug
+                if np.random.random_sample() < 0:
+                    import matplotlib.pyplot as plt
+                    import viz_utils
+                    viz_utils.visualize_transition(self, matching_transition_index)
+                    viz_utils.force_redraw()
+                    print "Done: Updated transition", matching_transition_index, \
+                        "with update strength", update_strength
+                    plt.show()
+
+
         """ Remove the transitions from the queue that were added.
         This was sliced a little fancy in order to ensure that the highest
         indexed transitions were removed first, so that as the iteration
@@ -461,8 +519,8 @@ class Model(object):
             collapsed_state = copy.deepcopy(state_list[0])
             
             for i in range(1,len(state_list)):            
-                decayed_state = copy.deepcopy(state_list[i]). \
-                                multiply((1. - self.TRACE_DECAY_RATE) ** i)
+                decayed_state = copy.deepcopy(state_list[i])
+                decayed_state.multiply((1. - self.TRACE_DECAY_RATE) ** i)
                 collapsed_state = collapsed_state.bounded_sum(decayed_state)
 
             return collapsed_state
@@ -547,11 +605,5 @@ class Model(object):
                                            np.zeros(self.MAX_ENTRIES)))
 
         return
-    
 
-    def n_features(self, new_n_features=None):
         
-        if new_n_features is not None:
-            self.n_features = new_n_features
-            
-        return self.n_features
