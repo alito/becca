@@ -1,10 +1,11 @@
 
-import matplotlib.pyplot as plt
-import numpy as np
 import agent.viz_utils as viz_utils
-
 from worlds.base_world import World as BaseWorld
 import worlds.world_utils as world_utils
+
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 class World(BaseWorld):
     """ Image_2D

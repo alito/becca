@@ -1,9 +1,9 @@
 
-import copy
-import numpy as np
 import state
 import utils
 
+import copy
+import numpy as np
 
 class Model(object):
     """ Contains the agent's model of transitions between states.
@@ -14,7 +14,7 @@ class Model(object):
     attention processes by tagging feature activity patterns that 
     are unexpected.
     
-    The model consists of a table of transitions. A transition
+    The model consists of a set of transitions. A transition
     describes an episode of the agent's experience. It mimics 
     the structure "In situation A, B happened, then C." Each 
     transision consists of four states and four scalars: 
@@ -66,7 +66,8 @@ class Model(object):
     
     """
 
-    def __init__(self, num_primitives, num_actions, max_num_features, graphs=True):
+    def __init__(self, num_primitives, num_actions, max_num_features, 
+                 graphs=True):
 
         """ The threshold above which two states are similar enough
         to be considered a match.
@@ -305,15 +306,6 @@ class Model(object):
                 self.count[matching_transition_index] =  1.
                 self.n_transitions += 1  
                 
-                #debug
-                if np.random.random_sample() < 0:
-                    import matplotlib.pyplot as plt
-                    import viz_utils
-                    viz_utils.visualize_transition(self, matching_transition_index)
-                    viz_utils.force_redraw()
-                    print "New transition added at", matching_transition_index
-                    plt.show()
-
         """ Remove the transitions from the queue that were added.
         This was sliced a little fancy in order to ensure that the highest
         indexed transitions were removed first, so that as the iteration
@@ -362,17 +354,6 @@ class Model(object):
                 matching_transition_index = self.transition_update_q[i][1] 
                 update_strength = self.transition_update_q[i][2] 
                 
-                #debug
-                if np.random.random_sample() < 0:
-                    import matplotlib.pyplot as plt
-                    import viz_utils
-                    viz_utils.visualize_transition(self, matching_transition_index)
-                    viz_utils.force_redraw()
-                    print "Updating transition", matching_transition_index, \
-                        "with update strength", update_strength
-                    plt.show()
-
-
                 """ Calculate states and values for the update """
                 new_effect = copy.deepcopy(self.current_effect)
                 new_reward = self.current_reward
@@ -384,7 +365,7 @@ class Model(object):
                 transition effect and the observation effect.
                 """
                 effect_difference = new_effect.zeros_like()
-                effect_difference.set_features(np.abs(new_effect.features[:,0] - 
+                effect_difference.set_features(np.abs(new_effect.features[:,0]- 
                        self.effect.features[:new_effect.features.size, 
                                             matching_transition_index]))
                             
@@ -397,7 +378,7 @@ class Model(object):
                 to contradict them. This facilitates one-shot learning.
                 """
                 update_rate_raw = (1 - self.UPDATE_RATE) / \
-                        self.count[matching_transition_index] + self.UPDATE_RATE
+                    self.count[matching_transition_index] + self.UPDATE_RATE
                 update_rate = min(1.0, update_rate_raw) * update_strength
                 
                 max_step_size = new_reward -  \
@@ -417,24 +398,13 @@ class Model(object):
                         (1. - update_rate) + new_effect.features[:,0] * \
                         update_rate
                         
-                self.effect_uncertainty.features[:new_effect.features.size, 
-                                                 matching_transition_index] = \
-                        self.effect_uncertainty.features[:new_effect.features.size, 
-                                                 matching_transition_index] * \
-                        (1. - update_rate) + \
-                        effect_difference.features.ravel() * update_rate
+                self.effect_uncertainty.features[
+                    :new_effect.features.size, matching_transition_index] = \
+                    self.effect_uncertainty.features[ 
+                    :new_effect.features.size, matching_transition_index] * \
+                    (1. - update_rate) + \
+                    effect_difference.features.ravel() * update_rate
                 
-                #debug
-                if np.random.random_sample() < 0:
-                    import matplotlib.pyplot as plt
-                    import viz_utils
-                    viz_utils.visualize_transition(self, matching_transition_index)
-                    viz_utils.force_redraw()
-                    print "Done: Updated transition", matching_transition_index, \
-                        "with update strength", update_strength
-                    plt.show()
-
-
         """ Remove the transitions from the queue that were added.
         This was sliced a little fancy in order to ensure that the highest
         indexed transitions were removed first, so that as the iteration
@@ -467,38 +437,34 @@ class Model(object):
         """ TODO: Increment the goal value of all transitions based on 
         the similarity of their effects with the goal.
         """
-
         return
 
 
-    def get_context_similarities(self):
+    def get_context_similarities(self, planning=False):
         """ Return an array of similarities the same size as the 
         library, indicating the similarities between the current 
         context and the context of each transition. This format
         is useful for identifying previously seen transitions and
         for making predictions.
-        """
-        n_features = self.current_context.features.size
-        similarity = utils.similarity(self.current_context.features, 
-                                      self.context.features[:n_features,:], 
-                                      self.n_transitions)
-        return similarity
-    
-    
-    def get_context_similarities_for_planning(self):
-        """ Return an array of similarities the same size as the 
+        
+        If planning, return an array of similarities the same size as the 
         library, indicating the similarities between the *next* 
         context and the context of each transition.
         This format is useful for planning where an intermediate
         goal, including action, must be chosen.
         """
-        n_features = self.next_context.features.size
-        similarity = utils.similarity(self.next_context.features, 
+        if planning:
+            context =  self.next_context
+        else:
+            context = self.current_context
+            
+        n_features = context.features.size
+        similarity = utils.similarity(context.features, 
                                       self.context.features[:n_features,:], 
                                       self.n_transitions)
         return similarity
-
-
+    
+    
     def collapse(self, state_list):
         """ Collapse a list of scalars or States into a single one, 
         giving later members of the list lower weights.

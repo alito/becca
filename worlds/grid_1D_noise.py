@@ -1,6 +1,7 @@
 
-import numpy as np
 from .base_world import World as BaseWorld
+
+import numpy as np
 
 class World(BaseWorld):
     """ grid_1D_noise.World

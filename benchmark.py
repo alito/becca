@@ -12,14 +12,11 @@ than agents that perform a single task optimally and all others very poorly.
 In order to facilitate apples-to-apples comparisons between agents, the 
 benchmark will be version numbered.
 
-For N_RUNS = 7, Becca 0.4.3 scored 0.
+For N_RUNS = 77, Becca 0.4.3 scored 0.253
 """
 
 
 from agent.agent import Agent
-import numpy as np
-import matplotlib.pyplot as plt
-
 from worlds.grid_1D import World as World_grid_1D
 from worlds.grid_1D_ms import World as World_grid_1D_ms
 from worlds.grid_1D_noise import World as World_grid_1D_noise
@@ -27,6 +24,10 @@ from worlds.grid_2D import World as World_grid_2D
 from worlds.grid_2D_dc import World as World_grid_2D_dc
 from worlds.image_1D import World as World_image_1D
 from worlds.image_2D import World as World_image_2D
+
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 def main():
 
@@ -69,9 +70,9 @@ def main():
     """ Empirically, running version 0.4.0 of the benchmark multiple times
     gave values with a standard deviation of about 0.013. So if you want a more
     accurate estimate of an agent's performance, run it 3 or 5 times 
-    and take the average. 
-    Or better yet, to help account for the fact that it is a somewhat non-Gaussian 
-    process, (it has a short tail on the low side, almost none on the high side)
+    and take the average. Or better yet, to help account for the fact 
+    that it is a somewhat non-Gaussian process, (it has a short tail 
+    on the low side, almost none on the high side)
     run it 7 times, throw away the two highest and two lowest scores, 
     and average the rest. This benchmark will automatically throw away the 
     2 highest and 2 lowest values if you choose N_RUNS to be 7 or more.
@@ -106,7 +107,7 @@ def main():
     
 def test(world):
     
-    MAX_NUM_FEATURES = 1000
+    MAX_NUM_FEATURES = 300
     agent = Agent(world.num_sensors, world.num_primitives, 
                   world.num_actions, MAX_NUM_FEATURES)
     

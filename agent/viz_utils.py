@@ -1,10 +1,12 @@
+
+import state
+import utils
+
 import copy 
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
 import matplotlib.patches as patches
 import numpy as np
-import state
-import utils
 
 """ A set of methods for visualizing aspects of the Becca's internal state and
 operations. Not for visualizing world-specific information, or 
@@ -40,120 +42,13 @@ def visualize_coactivity(coactivity, size=0,
 def visualize_feature_map(feature_map):
     plt.figure("feature map visualization")
     
-    """ Diane L. made the brilliant suggestion to leave this plot in color. 
-    It looks much prettier.
-    """
+    """ This one looks prettier in color too """
     plt.summer()
     im = plt.imshow(feature_map)
     im.set_interpolation('nearest')
     plt.title("Feature map")
     plt.draw()
         
- 
-def visualize_grouper_hierarchy(perceiver, save_eps=False, 
-                                  epsfilename='log/hierarchy.eps'):
-    """ Produce a visual representation of the feature group 
-    inheritance hierarchy. 
-    """
-    
-    """ Radial distance of the text labels from the center of the 
-    circle, assuming a radius of 1.0
-    """
-    text_distance = 1.2
-    
-    """ Assign x,y locations for the nodes representing each 
-    feature group. A circular arrangement gives every node
-    a line-of-sight to all the other nodes. This is appropriate since
-    any feature group may have inputs coming from any lower-numbered 
-    feature group.
-    """
-    n_nodes = perceiver.grouping_map_group.n_feature_groups() + 3
-    delta_angle = 2. * np.pi / float(n_nodes)
-    nodes = np.zeros((n_nodes,2))
-    node_text = []
-    
-    """ Start at South, and work clockwise around the circle in 
-    equal increments.
-    """
-    for node_index in range(n_nodes):
-        angle = delta_angle * float(node_index)
-        nodes[node_index,0] = -np.sin(angle)
-        nodes[node_index,1] = -np.cos(angle)
-        """ node n represents feature group n - 3 """
-        node_text.append(str(node_index - 3))   
-        
-    """ node 0 represents the sensors group """
-    node_text[0] = 's'  
-    """ node 1 represents the primitives group """
-    node_text[1] = 'p'  
-    """ node 2 represents the action group """
-    node_text[2] = 'a'  
-    
-    """ Display the nodes """   
-    """ Prepare the plot """         
-    fig = plt.figure("perceiver hierarchy visualization")
-    fig.clf()
-    axes = fig.add_subplot(1,1,1)
-    axes.set_aspect('equal')
-    axes.set_xlim(-(text_distance ** 2), text_distance ** 2)
-    axes.set_ylim(-(text_distance ** 2), text_distance ** 2)
-    axes.hold(True)
-    
-    """ Draw the lines linking groups with the feauture groups 
-    they are composed of.
-    """
-    """ Find the line weight.
-    The weight of each line is the count of the number of features
-    from one group that are inputs to the other.
-    """
-    line_weight = np.zeros((n_nodes - 3, n_nodes), 'float')
-    for group_index in range(n_nodes - 3):
-        for member_index in range(perceiver.\
-                          grouping_map_group.features[group_index].size):
-            node_index =  perceiver.grouping_map_group.features[group_index] \
-                                          [member_index] + 3
-            line_weight[group_index, node_index] += 1
-            
-    """ Draw the lines between group nodes. 
-    The line width is a function of the line weight.
-    """
-    for group_index in range(n_nodes - 3):
-        for node_index in range(n_nodes):
-            weight = np.log2(1. +line_weight[group_index, node_index])
-            if weight > 0:
-                plt.plot((nodes[group_index + 3, 0] , \
-                          nodes[node_index     , 0]), \
-                         (nodes[group_index + 3, 1] , \
-                          nodes[node_index     , 1]), \
-                         color='black', linewidth=weight, \
-                         solid_capstyle='butt')
-                
-    """ Draw markers representing each group, and give each
-    its appropriate label.
-    """ 
-    for node_index in range(n_nodes):
-        plt.plot(nodes[node_index, 0], nodes[node_index, 1], marker='o',\
-                 color='black', markersize=20)
-        plt.plot(nodes[node_index, 0], nodes[node_index, 1], marker='o',\
-                 color='white', markersize=12)
-        plt.plot(nodes[node_index, 0], nodes[node_index, 1], marker='o',\
-                 color='black', markersize=6)
-        plt.text(nodes[node_index, 0] * text_distance, \
-                 nodes[node_index, 1] * text_distance, \
-                 node_text[node_index], \
-                 horizontalalignment='center', \
-                 verticalalignment='center', \
-                 size='x-large')        
-    
-    plt.title("Group hierarchy")
-    plt.draw()
-    
-    if save_eps:
-        fig.savefig(epsfilename, format='eps')
-        
-    return            
-        
-
 def visualize_feature_set(grouper, save_eps=False, 
                           epsfilename='log/features.eps'):
     """ Visualize all the groups in all the features """
@@ -230,52 +125,17 @@ def visualize_feature_spacing(grouper, save_eps=False,
     return
   
       
-def visualize_feature(grouper, group, feature, label=None):
-    """ Visualize a feature or list of features """
-    
-    if len(group) != len(feature):
-        print "error in Visualizer.visualize_feature()"
-        print "Length of group and feature lists must be the same."
-        print "The group list has ", len(group), \
-                " elements and the feature list has ", len(feature)
-                
-    """ Create a state with the listed features active, 
-    then visualize that.
-    """
-    group_state = perceiver.previous_input.zeros_like()
-    
-    for feature_index in range(len(feature)):
-        if group[feature_index] == -3:
-            group_state.sensors[feature[feature_index]] = 1
-        elif group[feature_index] == -2:
-            group_state.primitives[feature[feature_index]] = 1
-        elif group[feature_index] == -1:
-            group_state.action[feature[feature_index]] = 1
-        else:
-            group_state.features[group[feature_index]] \
-                              [feature[feature_index]] = 1
-                              
-    reduced_group_state = reduce_state(group_state, grouper)
-    
-    if label == None:
-        label = "inputs projecting onto group"
-        
-    visualize_state(reduced_group_state, label)
-    force_redraw()
-    
-    return
-  
-  
 def reduce_feature_set(perceiver, n_primitives, n_actions):
     """ Take in the feature map and express each feature in terms of 
     the lowest level inputs (sensors, primitives, and actions)
     that excite them.
-    """
-    """ Each row of the feature map represents a single feature's composition.
+
+    Each row of the feature map represents a single feature's composition.
     Expand each row until it is represented only in terms of low level
     inputs. Start at the highest non-zero column and work from 
     right to left.  
     """
+    
     """ The highest nonzero column will not be more than the number
     of sensors plus the number of features, which includes
     primitives, actions, and created features, modified to account for 
@@ -294,50 +154,27 @@ def reduce_feature_set(perceiver, n_primitives, n_actions):
                             perceiver.feature_map[:perceiver.n_features, 
                                                   :first_feature_index + 1])
     
-    #print 'first', first_feature_index, 'last', last_feature_index
-    
     for column_index in range(first_feature_index, last_feature_index, -1):
-        #print 'column_index', column_index
-
         features_that_have_this_feature_as_input = \
             np.nonzero(reduced_feature_set[:,column_index])[0]
-            
-        #print 'features_that_have_this_feature_as_input', features_that_have_this_feature_as_input
-        #print 'shape', features_that_have_this_feature_as_input.shape
         
         if features_that_have_this_feature_as_input.size > 0:
-            
             input_magnitudes = reduced_feature_set[
                        features_that_have_this_feature_as_input, column_index]
-            
-            #print 'input_magnitudes', input_magnitudes
-            
             feature_index = column_index - perceiver.n_sensors
             
-            """ Add the contribution from the features in terms of its lower level 
-            representation.
+            """ Add the contribution from the features in terms of 
+            its lower level representation.
             """
-            #print 'reduced_feature_set before', reduced_feature_set[features_that_have_this_feature_as_input,:] 
-            #print 'shape', reduced_feature_set[features_that_have_this_feature_as_input,:].shape
-            #print 'reduced_feature_set[feature_index,:]', reduced_feature_set[feature_index,:]
-            #print 'shape', reduced_feature_set[feature_index,:].shape
-            
             this_feature = reduced_feature_set[feature_index,:]
-            
-            #print 'this_feature[:, np.newaxis].shape'
-            #print this_feature[:, np.newaxis].shape
-            #print 'input_magnitudes[np.newaxis, :].shape'
-            #print input_magnitudes[np.newaxis, :].shape
-
             reduced_feature_set[features_that_have_this_feature_as_input,:] += \
-                np.dot(input_magnitudes[:,np.newaxis], this_feature[np.newaxis,:], )
-                
-            #print 'reduced_feature_set after', reduced_feature_set[features_that_have_this_feature_as_input,:] 
+                np.dot(input_magnitudes[:,np.newaxis], 
+                       this_feature[np.newaxis,:], )
     
             """ Remove the high level representation, just to clean up """
-            reduced_feature_set[features_that_have_this_feature_as_input,column_index] = 0
+            reduced_feature_set[features_that_have_this_feature_as_input,
+                                column_index] = 0
             
-            #print 'reduced_feature_set cleanup', reduced_feature_set[features_that_have_this_feature_as_input,:] 
     return reduced_feature_set[n_primitives + n_actions:,:perceiver.n_sensors]
 
     

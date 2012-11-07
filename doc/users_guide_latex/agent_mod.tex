@@ -4,42 +4,36 @@ This section is to help you get started hacking your own version of the \textsc{
 
 \section{How is the agent code structured?}
 
-I haven't finished writing up the justification and theory behind every part of the agent. This section will give just an overview of the structure so that you have some idea about where to start making changes. A more thorough description definitely belongs in this guide, and I plan to include it in later versions. For now, the best I can do is refer you to Appendix~\ref{perceiver_chapter}, describing the perceiver in detail, and some previously published descriptions: ~\cite{rohrer11b,rohrer11c}. These last are no longer entirely accurate, unfortunately, but give a pretty good ideal about what is going on.
+This section will give just an overview of the structure so that you have some idea about where to start making changes. A thorough description is included in Appendices~\ref{perceiver_chapter} and~\ref{actor_chapter}. 
 
-Figure~\ref{class_structure} shows the major classes and some of their important members. In the code, each class is contained in a module with a lowercase version of the same name. A brief description of the major functions of each class is given below.
+Figure~\ref{class_structure} shows the major classes. In the code, each class is contained in a module with a lowercase version of the same name. A brief description of the major functions of each class is given below.
 
 \begin{figure}
 \centering
-\includegraphics[height=12.7cm]{figs/class_structure.eps}
+\includegraphics[height=6cm]{figs/class_structure.eps}
 \caption{The class structure of \textsc{Becca}'s agent code.}
 \label{class_structure}
 \end{figure}
 
 \subsection{\texttt{State}}
 \begin{itemize}
-\item Represents the activity of inputs, features, and actions at a point in time. These are captured in the member variables \texttt{sensors}, \texttt{primitives}, \texttt{actions}, and \texttt{features}, all of which are numpy arrays, except for \texttt{features}, which is a list of numpy arrays. 
+\item Represents the activity of primitives, features, and actions at a point in time. These are captured in the member variables \texttt{features}, which us a numpy array. 
 \end{itemize}
 
 \subsection{\texttt{Agent}}
 \begin{itemize}
 \item Performs executive functions, such as saving and reporting.
-\item Calls \texttt{Perceiver.step()} and  \texttt{Learner.step()} at each time step.
+\item Calls \texttt{Perceiver.step()} and  \texttt{Actor.step()} at each time step.
 \end{itemize}
 
 \subsection{\texttt{Perceiver}}
 \begin{itemize}
-\item Forms inputs into groups.
-\item Finds features in each of those groups.
+\item Forms inputs into features.
 \item Determines which features are active at each time step.
 \item Feeds those features back as additional inputs.
 \end{itemize}
 
-\subsection{\texttt{FeatureMap}}
-\begin{itemize}
-\item Lists the inputs that contribute to each feature.
-\end{itemize}
-
-\subsection{\texttt{Learner}}
+\subsection{\texttt{Actor}}
 \begin{itemize}
 \item Chooses which feature to attend to.
 \item Calls \texttt{Model.step()} and  \texttt{Planner.step()} at each time step.
@@ -47,9 +41,10 @@ Figure~\ref{class_structure} shows the major classes and some of their important
 
 \subsection{\texttt{Model}}
 \begin{itemize}
-\item Contains a library of \texttt{transition}s, each consisting of four \texttt{State}s: a \texttt{context}, a \texttt{cause}, an \texttt{effect}, and an effect uncertainty. \texttt{transition}s are conceptual only, and are not actually member variables.
+\item Contains a library of \texttt{transition}s, each consisting of four \texttt{State}s: a \texttt{context}, a \texttt{cause}, an \texttt{effect}, and an \texttt{effect\_uncertainty}. \texttt{transition}s are conceptual only, and are not actually member variables.
 \item Finds similar transitions in a library.
 \item Records new transitions in the library.
+\item Updates transitions in the library.
 \end{itemize}
 
 \subsection{\texttt{Planner}}
@@ -91,7 +86,7 @@ The \texttt{ms} stands for `multi-step'. This world is identical to the \texttt{
 
 \subsection{\texttt{grid\_1D\_noise.py}}
 
-The \texttt{noise} refers to the fact that the primitives reported by this world include a number of noise elements, whose values are randomly generated at each time step. Other than that, it is identical to the  \texttt{grid\_1D.py} world. Many reinforcement learning algorithms do not have a mechanism for handling noise or irrelevant data and this world poses a challenge to them. (\textsc{Becca} of course handles them comfortably.)
+The \texttt{noise} refers to the fact that the primitives reported by this world include a number of noise elements, whose values are randomly generated at each time step. Other than that, it is identical to the  \texttt{grid\_1D.py} world. Many reinforcement learning algorithms do not have a mechanism for handling noise or irrelevant data and this world poses a challenge to them. 
 
 \subsection{\texttt{grid\_2D.py}}
 
@@ -128,6 +123,8 @@ The agent can move in increments of 1/4, 1/8, 1/16, and 1/32 of the mural width 
 \label{image_1D}
 \end{figure}
 
+It's worth noting that a naive $\mathcal{Q}$-learning approach to this problem would require creating a $2^203$-element state table. The global information storage capacity is currently on the order of $2^70$ bytes.
+
 \subsection{\texttt{image\_2D.py}}
 
 This world is similar in many ways to the one dimensional version, just extended to a second dimension. In it, the agent must center its gaze both horizontally and vertically to receive the full reward. One difference is that it pixelizes its world into a 5 $\times$ 5 grid (resulting in a sensor array of 50 elements). A second difference is that the agent receives a reward of 1/4 if its gaze is centered horizontally and an additional reward of 1/4 if its gaze is centered vertically. 
@@ -142,7 +139,7 @@ This world is similar in many ways to the one dimensional version, just extended
 
 \subsection{\texttt{watch.py}}
 
-The watch world is not yet part of the battery. Right now it's a debugging tool. In it, the agent is exposed to image segments taken from a library of natural images, and it builds groups and feature representations from those image segments. It's helping to work out the kinks in the feature creation heuristic, although I hope to integrate it into a task for future versions of the benchmark.
+The watch world is not yet part of the battery. Right now it's a debugging tool. In it, the agent is exposed to image segments taken from a library of natural images, and it builds groups and feature representations from those image segments. It's helping to work out the kinks in the feature extraction heuristic, although I hope to integrate it into a task for future versions of the benchmark.
 
 
 \subsection{\texttt{world\_utils.py}}

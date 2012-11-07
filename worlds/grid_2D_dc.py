@@ -1,6 +1,7 @@
-\
-import numpy as np
+
 from .base_world import World as BaseWorld
+
+import numpy as np
 
 class World(BaseWorld):
     """ grid_2D_dc.World
@@ -33,7 +34,7 @@ class World(BaseWorld):
         self.REWARD_MAGNITUDE = 0.5
         self.display_state = False
 
-        self.num_sensors = 1
+        self.num_sensors = 0
         self.num_actions = 9            
         self.world_size = 5
         self.num_primitives = self.world_size * 2

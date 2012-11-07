@@ -1,5 +1,13 @@
 \chapter{Revision history}
 
+\section*{Version 0.4.3, November 9, 2012}
+
+\begin{itemize}
+\item {\bf Major change} Groups are eliminated. Features are created directly now using the old group-creation algorithm. This in turn spawned a large number of minor changes to support it. The end result is that features in the higher-levels of the hierarchy tend to be created more gracefully, make more sense to a human user, and naturally terminate. The number of user-selected parameters in \textsc{Becca} also went down a bit.
+\item The maximum possible size for large variables (the co-activity estimate and the model) is allocated on startup. This helps prevent running out of memory mid-run.
+\item The \texttt{learner} was renamed \texttt{actor} to more accurately reflect its function and to provide symmetry with \texttt{perceiver} in the sense of ``perception-action loops". 
+\end{itemize}
+
 \section*{Version 0.4.2, September 28, 2012}
 
 \begin{itemize}
@@ -7,7 +15,7 @@
 \item The image-based tasks all implement center-surround filtering as a preprocessing step.
 \item Perceiver parameters have been adjusted to produce more intuitive features in the image-based tasks.
 \item Features in the image-based tasks are displayed as receptive fields, resulting in a higher-contrast format.
-\item Mutual coactivity has been modified to be the minimum, rather than the product, of two coactivities.
+\item Mutual co-activity has been modified to be the minimum, rather than the product, of two co-activities.
 \end{itemize}
 
 
@@ -15,7 +23,7 @@
 
 \begin{itemize}
 \item Nearly all numpy 1D arrays were converted to 2D arrays for consistency   
-\item Coactivity has been modified to be symmetric.
+\item Co-activity has been modified to be symmetric.
 \item Model transitions' effects are updated with each observation or use. That is, they are updated both when they are observed and when they are used by planner as a basis for selecting an action.
 \item Model transitions now include an effect uncertainty and a reward uncertainty. 
 \item All the features in a group are now created when the group is created. They evolve over time based on the inputs observed.

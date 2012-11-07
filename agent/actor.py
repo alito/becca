@@ -7,7 +7,7 @@ import viz_utils
 import numpy as np
 
 
-class Learner(object):
+class Actor(object):
     """ The reinforcement learner portion of the Becca agent """
 
     def __init__(self, num_primitives, num_actions, max_num_features):
@@ -38,7 +38,9 @@ class Learner(object):
         """ Decide on an action """
         self.action, self.deliberately_acted = self.planner.step(self.model)
         
-        """ debug: choose a random action """
+        """ debug
+        Uncomment these two lines to choose a random action at each time step.
+        """
         #self.action = np.zeros(self.goal.action.size, 1);
         #self.action[np.random.randint(self.goal.action.size), 0] = 1
 

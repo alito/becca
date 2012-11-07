@@ -1,5 +1,5 @@
 
-from learner import Learner
+from actor import Actor
 from perceiver import Perceiver
 import viz_utils
 
@@ -39,11 +39,11 @@ class Agent(object):
         
         self.perceiver = Perceiver(num_sensors, num_primitives, num_actions, 
                                 max_num_features)
-        self.learner = Learner(num_primitives, num_actions, max_num_features)
+        self.actor = Actor(num_primitives, num_actions, max_num_features)
  
         
     def step(self, sensors, primitives, reward):
-        """ Advances the agent's operation by one time step """
+        """ Advance the agent's operation by one time step """
         
         self.timestep += 1
 
@@ -52,7 +52,7 @@ class Agent(object):
         self.reward = reward
 
         """
-        Feature creator
+        Feature extractor
         ======================================================
         """
         feature_activity, n_features = self.perceiver.step(sensors, 
@@ -63,7 +63,7 @@ class Agent(object):
         Reinforcement learner
         ======================================================
         """
-        self.action = self.learner.step(feature_activity, reward, n_features) 
+        self.action = self.actor.step(feature_activity, reward, n_features) 
         
         self.log()
 
@@ -91,7 +91,7 @@ class Agent(object):
             print "agent is ", self.timestep ," timesteps old" 
             
             self.perceiver.visualize(save_eps=True)
-            #self.learner.visualize()
+            #self.actor.visualize()
  
     
     def record_reward_history(self):
@@ -117,17 +117,11 @@ class Agent(object):
     
     
     def report_performance(self, show=True):
-        """ When the world terminates, this returns the performance 
-        of the agent, a real value between -1 and 1. Before reaching
-        the termination condition, it returns a value less than -1.
-        Any terminating activities or reports should be included
-        in this method too.
-        """
         performance = np.mean(self.reward_history)
         print("Final performance is %f" % performance)
         
         self.perceiver.visualize(save_eps=True)
-        self.learner.visualize(save_eps=True)
+        self.actor.visualize(save_eps=True)
         self.show_reward_history(save_eps=True)
 
         if show:
@@ -186,5 +180,3 @@ class Agent(object):
             print("Error unpickling world: %s" % e)
 
         return restored_agent
-
-

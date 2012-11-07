@@ -1,9 +1,11 @@
 
+from worlds.base_world import World as BaseWorld
+import worlds.world_utils as world_utils
+
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from worlds.base_world import World as BaseWorld
-import worlds.world_utils as world_utils
+
 
 """ Import the Python Imaging Library if it can be found.
 If not, carry on.
@@ -20,13 +22,13 @@ except ImportError:
 
 class World(BaseWorld):
     """ watch
-    visual feature creation
+    visual feature extraction
 
-    In this world, Becca's feature creator creates visual    
+    In this world, Becca's feature extractor creates visual    
     features from portions of images in the
-    Caltech-256 image_data dataset. The reinforcement learner serves no
+    Caltech-256 image_data dataset. The reinforcement actor serves no
     vital purpose in this world--it is intended to showcase the
-    feature creator.
+    feature extractor.
     
     By default, this world pulls images from the collection at 
     ./images/lib . This directory is specifically excluded from 
@@ -43,7 +45,7 @@ class World(BaseWorld):
     to run it on Mac. It ran on Ubuntu Linux 12.04 right out of the box.
     
     For fastest running of this task, comment out the line that calls the 
-    learner in the step() method of agent.py.
+    actor in the step() method of agent.py.
     """
     def __init__(self):
         super(World, self).__init__()
@@ -210,8 +212,8 @@ class World(BaseWorld):
     def set_agent_parameters(self, agent):
 
         """ Explore on every time step """
-        agent.learner.planner.EXPLORATION_FRACTION = 1.0
-        agent.learner.planner.OBSERVATION_FRACTION = 0.0
+        agent.actor.planner.EXPLORATION_FRACTION = 1.0
+        agent.actor.planner.OBSERVATION_FRACTION = 0.0
         
         """ Nucleate groups more rapidly """
         #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-3) # debug
@@ -221,8 +223,8 @@ class World(BaseWorld):
         #agent.perceiver.MIN_SIG_COACTIVITY = 0.98 * agent.perceiver.NEW_FEATURE_THRESHOLD
 
         """ Don't create a model """
-        agent.learner.model.MAX_ENTRIES = 10 ** 2
-        agent.learner.model.SIMILARITY_THRESHOLD = 0.
+        agent.actor.model.MAX_ENTRIES = 10 ** 2
+        agent.actor.model.SIMILARITY_THRESHOLD = 0.
         
     
     def is_time_to_display(self):

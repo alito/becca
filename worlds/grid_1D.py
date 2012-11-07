@@ -1,6 +1,7 @@
 
-import numpy as np
 from .base_world import World as BaseWorld
+
+import numpy as np
 
 class World(BaseWorld):
     """ grid_1D.World
@@ -97,8 +98,8 @@ class World(BaseWorld):
         """ Prevent the agent from forming any groups """
         agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
         
-        agent.learner.model.TRACE_LENGTH = 3
-        #agent.learner.model.TRACE_DECAY_RATE = 0.7
+        agent.actor.model.TRACE_LENGTH = 3
+        #agent.actor.model.TRACE_DECAY_RATE = 0.7
 
         
         

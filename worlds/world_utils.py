@@ -1,11 +1,10 @@
 
 import agent.utils as utils
-import copy
-import matplotlib.pyplot as plt
-import numpy as np
 import agent.viz_utils as viz_utils
 
-""" preprocessing utilities """ 
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 def center_surround(fov, fov_span, block_heigth, block_width, verbose=False):
     super_pixels = np.zeros((fov_span + 2, fov_span + 2))

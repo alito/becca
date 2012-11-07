@@ -1,12 +1,14 @@
 
+import agent.viz_utils as viz_utils
+from worlds.base_world import World as BaseWorld
+import worlds.world_utils as world_utils
+
 """ The Python Image Library, required by this world, installed
 as part of pyplot. This allows the loading and interpreting of .jpgs
 """
 import matplotlib.pyplot as plt
 import numpy as np
-import agent.viz_utils as viz_utils
-from worlds.base_world import World as BaseWorld
-import worlds.world_utils as world_utils
+
 
 class World(BaseWorld):
     """ Image_1D

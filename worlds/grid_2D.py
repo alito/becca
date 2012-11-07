@@ -1,5 +1,7 @@
-import numpy as np
+
 from .base_world import World as BaseWorld
+
+import numpy as np
 
 class World(BaseWorld):
     """ grid_2D.World

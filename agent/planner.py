@@ -1,7 +1,8 @@
 
-import numpy as np
 import utils
 import viz_utils
+
+import numpy as np
 
 class Planner(object):
 
@@ -121,7 +122,7 @@ class Planner(object):
         count_weight = utils.map_inf_to_one(np.log(model.count
                 [:model.n_transitions] + 1) / 3)
 
-        similarity = model.get_context_similarities_for_planning()
+        similarity = model.get_context_similarities(planning=True)
 
         """ TODO: Raise similarity by some power to focus on more 
         similar transitions?
@@ -144,38 +145,6 @@ class Planner(object):
         
         max_transition_index = np.argmax(transition_vote)
         
-        #debug
-        if np.random.random_sample() < 0.0:
-            import matplotlib.pyplot as plt
-            import viz_utils
-            viz_utils.visualize_transition(model, max_transition_index)
-            print 'winning transition_vote of ', transition_vote[max_transition_index], \
-                'at transition_index', max_transition_index
-            print 'value =',    value.ravel()[max_transition_index]
-            print 'similarity =', similarity.ravel()[max_transition_index]
-            print 'count weight =', count_weight.ravel()[max_transition_index]
-            plt.show()
-            '''
-            n = 3
-            #print 'transition_vote', transition_vote
-            index_by_rank = np.argsort(transition_vote).ravel()
-    
-            for index in range(n):
-                next_transition_index = index_by_rank[-(index+1)]
-                print "Showing the " + str(index) + \
-                            "th highest vote of ", transition_vote[next_transition_index], \
-                'at transition_index', next_transition_index
-                #print 'value =',    value.ravel()[next_transition_index]
-                #print 'similarity =', similarity.ravel()[next_transition_index]
-                #print 'count weight =', count_weight.ravel()[next_transition_index]
-
-                viz_utils.visualize_transition(model, next_transition_index)
-                """ Hold the plot, blocking the program until the user closes
-                the figure window.
-                """
-                plt.show()
-            '''
-        
         """ Update the transition used to select this action. 
         Setting wait to True allows one extra time step for the 
         action to be executed.
@@ -195,64 +164,5 @@ class Planner(object):
             goal.set_actions(np.zeros(np.size(goal.get_actions())))
 
         return action, goal
-    
-        '''
-        def select_action(self, model, current_state):
-        """
-        Choose a reactive action based on the current feature activities.
-        This is analogous to automatic action
-        Finds the weighted expected reward for the action across all model 
-        transitions. Then executes the action with a magnitude that 
-        is a function of the expected reward associated with each.
-        
-        It's a low-level all-to-all planner, capable of executing many plans in
-        parallel. Even conflicting ones.
-        """
-
-        eps = np.finfo(np.double).eps 
-        
-        """ When goals are implemented, combine the reward value 
-        associated with each model
-        entry with the goal value associated with it. 
-        """
-        effect_values = model.reward_value[:model.n_transitions]
-
-        """ Create a shorthand for the variables to keep the code readable """
-        model_actions = model.cause.action[:, :model.n_transitions]
-        count_weight = np.log(model.count[:model.n_transitions] + 1)
-        value = effect_values
-        similarity = utils.similarity(current_state, model.cause, model.n_transitions)
-
-        # The reactive action is a weighted average of all action. Actions 
-        # that are expected to result in a high value state and action that are
-        # similar to the current state are weighted more heavily. All action 
-        # computed in this way will be <= 1.
-        weights = count_weight * value * similarity
-
-        # debug
-        # Picks closest weight only.
-        max_indices = np.argmax(weights)
-        max_index = max_indices[np.random.random_integers(0, len(max_indices)-1)]
-
-        weights = np.zeros(np.size(weights))
-        weights[max_index] = 1
-
-        positive_weights = weights > 0
-        negative_weights = weights < 0
-
-        sizer = np.ones(model_actions.shape[1])
-        weight_mat = np.dot(sizer, weights)
-        action_positive = np.sum(model_actions[:,positive_weights] * weight_mat[:,positive_weights], 1) / \
-                    (np.sum(weight_mat[:,positive_weights], 1) + eps)
-        action_negative = np.sum( model_actions[:,negative_weights] * weight_mat[:,negative_weights], 1) / \
-                    (np.sum( weight_mat[:,negative_weights], 1) + eps)
-
-        action = action_positive - action_negative
-
-        # Sets a floor for action magnitudes. Negative action are not defined.
-        action = np.maximum(action, 0)
-
-        return action
-        '''
 
     

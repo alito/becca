@@ -1,9 +1,11 @@
-import copy
-import itertools
-import numpy as np
+
 import state
 import utils
 import viz_utils
+
+import copy
+import itertools
+import numpy as np
 
 class Perceiver(object):
     """ The object responsible for feature extraction. 
@@ -146,7 +148,7 @@ class Perceiver(object):
         """ Make a first pass at the feature activation levels by 
         multiplying across the feature map.
         """
-        current_feature_activities = np.dot(self.feature_map \
+        initial_feature_activities = np.dot(self.feature_map \
                                 [:self.n_features, :new_input.size], new_input)
 
         """ Find the activity levels of the features contributed to by each
@@ -155,7 +157,7 @@ class Perceiver(object):
         feature_contribution_map = np.zeros((self.n_features, new_input.size))
         feature_contribution_map[np.nonzero(self.feature_map
                                 [:self.n_features, :new_input.size])] = 1.
-        activated_feature_map = current_feature_activities * \
+        activated_feature_map = initial_feature_activities * \
                                             feature_contribution_map
         
         """ Find the largest feature activity that each input 
@@ -194,7 +196,13 @@ class Perceiver(object):
         self-limiting process in which inputs contribute to a limited 
         number of features.
         """
+        # TODO: rather than input_inhibition_map, use 
+        # initial_feature_activities or some other quantity here?
         combined_weights = np.sum(input_inhibition_map, axis=0) + utils.EPSILON
+        
+        # TODO: make this (combined weights - 1) * DISSIPATION_FACTOR
+        # to account for the fact that combined_weights will always be
+        # at least 1
         coactivity_inputs = new_input * \
                             2 ** (-combined_weights[:, np.newaxis] * 
                                   self.DISSIPATION_FACTOR)
@@ -261,10 +269,6 @@ class Perceiver(object):
             index2 = indices2[which_index]
             added_feature_indices = [index1, index2]
             
-            #debug
-            print 'new feature nucleated with indices ', index1, 'and', index2, \
-                    'with a co-activity of', max_coactivity
-            
             for element in itertools.product(added_feature_indices, 
                                              added_feature_indices):
                 mutual_coactivity[element] = 0
@@ -310,9 +314,10 @@ class Perceiver(object):
             self.disallow_generation_crossing(added_feature_indices)
             
             #debug
-            print 'adding feature', self.n_features, 'in position', \
+            '''print 'adding feature', self.n_features, 'in position', \
                     self.n_features + self.n_sensors - 1, 'with inputs', \
                         added_feature_indices
+            '''
                        
             """ Check to see whether the capacity to store and update features
             has been reached.
