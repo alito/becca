@@ -196,13 +196,8 @@ class Perceiver(object):
         self-limiting process in which inputs contribute to a limited 
         number of features.
         """
-        # TODO: rather than input_inhibition_map, use 
-        # initial_feature_activities or some other quantity here?
-        combined_weights = np.sum(input_inhibition_map, axis=0) + utils.EPSILON
+        combined_weights = np.sum(activated_feature_map, axis=0) + utils.EPSILON
         
-        # TODO: make this (combined weights - 1) * DISSIPATION_FACTOR
-        # to account for the fact that combined_weights will always be
-        # at least 1
         coactivity_inputs = new_input * \
                             2 ** (-combined_weights[:, np.newaxis] * 
                                   self.DISSIPATION_FACTOR)

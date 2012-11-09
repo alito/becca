@@ -115,6 +115,12 @@ class Planner(object):
         """
         value = utils.bounded_sum(model.goal_value[:model.n_transitions], 
                                   model.reward_value[:model.n_transitions])
+        
+        """ Raise all of the elements in value so that they are >= 0.
+        This helps ensure that the best value is selected, even if
+        it's negative.
+        """
+        value += 1
 
         """ Each transition's count and its similarity to the working memory 
         also factor in to its vote.
