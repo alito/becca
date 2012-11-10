@@ -15,8 +15,16 @@ class Planner(object):
         
         """ The approximate fraction of time steps on which the 
         planner intentionally does nothing so that the model can observe.
+        Because BECCA attends to every deliberate action and exploration,
+        OBSERVATION_FRACTION should be nonzero. If it's zero, BECCA will 
+        always attend its own actions, but never pay attention to their
+        results.
         """
         self.OBSERVATION_FRACTION = 0.3     # real, 0 < x < 1
+        
+        self.OBSERVE = True
+        self.OBSERVE_STEPS = 3
+        self.observe_steps_left = self.OBSERVE_STEPS 
 
         """ Add just a bit of noise to the vote.
         Serves to randomize selection among nearly equal votes.
@@ -40,8 +48,11 @@ class Planner(object):
         
         """ Second, choose a deliberate action (or non-action) """
         """ Only act deliberately on a fraction of the time steps """
-        if np.random.random_sample() > self.OBSERVATION_FRACTION:
-            
+        #if np.random.random_sample() > self.OBSERVATION_FRACTION:
+        if not self.OBSERVE:
+            self.OBSERVE = True
+            self.observe_steps_left = self.OBSERVE_STEPS
+                
             """ Occasionally explore when making a deliberate action """
             if np.random.random_sample() < self.EXPLORATION_FRACTION:
                 
@@ -70,6 +81,10 @@ class Planner(object):
                     deliberately_acted = True
         
         else:
+            self.observe_steps_left -= 1
+            if self.observe_steps_left <= 0:
+                self.OBSERVE = False
+                
             self.action = np.zeros( self.action.shape)
             
             # debug
