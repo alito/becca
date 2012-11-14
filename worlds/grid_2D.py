@@ -30,6 +30,9 @@ class World(BaseWorld):
         self.REWARD_MAGNITUDE = 0.5
         self.ENERGY_COST = 0.05
         self.display_state = False
+        self.name = 'two dimensional grid world'
+        self.announce()
+
 
         self.num_sensors = 0
         self.num_actions = 9            

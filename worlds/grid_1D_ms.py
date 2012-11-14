@@ -29,6 +29,8 @@ class World(BaseWorld):
         self.ENERGY_COST = 0.01
         self.JUMP_FRACTION = 0.10
         self.display_state = False
+        self.name = 'multi-step one dimensional grid world'
+        self.announce()
         
         self.num_sensors = 0
         self.num_primitives = 9

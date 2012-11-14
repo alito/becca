@@ -23,11 +23,12 @@ class World(object):
 
         self.timestep = 0
         self.LIFESPAN = 10 ** 4
+        self.name = 'abstract base world'
 
         """ These will likely be overridden in any subclass."""
-        self.num_sensors = 1
-        self.num_primitives = 1
-        self.num_actions = 1
+        self.num_sensors = 0
+        self.num_primitives = 0
+        self.num_actions = 0
         
 
     def step(self, action):
@@ -60,6 +61,9 @@ class World(object):
             return True
         else:
             return False
+        
+    def announce(self):
+        print "Entering", self.name
         
     
     

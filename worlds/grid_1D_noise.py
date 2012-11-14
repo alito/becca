@@ -23,13 +23,16 @@ class World(BaseWorld):
         self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 0.5
         self.ENERGY_COST = 0.1      
-        self.display_state = False  
+        self.display_state = True  
+        self.name = 'noisy one dimensional grid world'
+        self.announce()
+
 
         """ Number of primitives that have no basis in the world. These
         are noise meant to distract. """
         self.num_sensors = 0
         self.num_real_primitives = 3
-        self.num_noise_primitives = 3
+        self.num_noise_primitives = 6
         self.num_primitives = self.num_noise_primitives + \
                                 self.num_real_primitives
         self.num_actions = 3

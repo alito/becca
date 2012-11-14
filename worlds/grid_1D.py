@@ -30,6 +30,9 @@ class World(BaseWorld):
         self.REWARD_MAGNITUDE = 0.5
         self.ENERGY_COST = 0.01
         self.display_state = False
+        self.name = 'one dimensional grid world'
+        self.announce()
+
 
         self.num_sensors = 0
         self.num_primitives = 9
@@ -97,10 +100,6 @@ class World(BaseWorld):
     def set_agent_parameters(self, agent):
         """ Prevent the agent from forming any groups """
         agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
-        
-        agent.actor.model.TRACE_LENGTH = 3
-        #agent.actor.model.TRACE_DECAY_RATE = 0.7
-
         
         
     def display(self, action):

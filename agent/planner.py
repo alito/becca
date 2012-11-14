@@ -59,7 +59,7 @@ class Planner(object):
                 self.action = self.explore()
                             
                 # debug
-                #print '            Exploring'
+                print '            Exploring'
                 
                 """ Attend to any deliberate action """
                 deliberately_acted = True
@@ -71,7 +71,7 @@ class Planner(object):
                 (self.action, goal) = self.deliberate(model)
 
                 # debug
-                #print '            Deliberating'
+                print '            Deliberating'
                 
                 """ Pass goal to model """ 
                 model.update_goal(goal)
@@ -88,7 +88,7 @@ class Planner(object):
             self.action = np.zeros( self.action.shape)
             
             # debug
-            #print '            Observing'
+            print '            Observing'
                         
         return self.action, deliberately_acted
             
@@ -130,13 +130,8 @@ class Planner(object):
         """
         value = utils.bounded_sum(model.goal_value[:model.n_transitions], 
                                   model.reward_value[:model.n_transitions])
+        #value_uncertainty = model.reward_uncertainty[:model.n_transitions]
         
-        """ Raise all of the elements in value so that they are >= 0.
-        This helps ensure that the best value is selected, even if
-        it's negative.
-        """
-        value += 1
-
         """ Each transition's count and its similarity to the working memory 
         also factor in to its vote.
         """
@@ -151,16 +146,23 @@ class Planner(object):
         """ TODO: Add recency? This is likely to be useful when 
         rewards change over time. 
         """
+        #transition_vote = value.ravel()  * similarity.ravel() 
+        
         #debug--have count be a factor?
-        transition_vote = value.ravel()  * similarity.ravel() 
         #transition_vote = value.ravel() * similarity.ravel() * \
         #                    count_weight.ravel()
+        
+        #debug--penalize uncertainty
+        transition_vote = value.ravel()  + similarity.ravel() 
         
         if transition_vote.size == 0:
             action = np.zeros(self.action.shape)
             goal = None
             return action, goal
 
+        """ Add a small amount of noise to the votes to encourage
+        variation in closely-matched options.
+        """
         transition_vote += np.random.random_sample(transition_vote.shape) * \
                             self.VOTE_NOISE
         

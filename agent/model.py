@@ -504,7 +504,7 @@ class Model(object):
 
         if self.clean_count > self.CLEANING_PERIOD:
             print("Cleaning up model")
-    
+            
             """ Empty these queues. Deleting library entries will
             corrupt the process of adding or updating transitions.
             """        

@@ -33,6 +33,9 @@ class World(BaseWorld):
         self.ENERGY_COST = 0.05
         self.REWARD_MAGNITUDE = 0.5
         self.display_state = False
+        self.name = 'decoupled two dimensional grid world'
+        self.announce()
+
 
         self.num_sensors = 0
         self.num_actions = 9            
@@ -96,8 +99,9 @@ class World(BaseWorld):
     def set_agent_parameters(self, agent):
         """ Prevent the agent from forming any groups """
         #agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
-        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.05
-        
+        #agent.perceiver.NEW_FEATURE_THRESHOLD = 0.05
+        pass
+    
 
     def display(self):
         """ Provide an intuitive display of the current state of the World 

@@ -33,6 +33,9 @@ class World(BaseWorld):
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
         self.graphing = True
+        self.name = 'one dimensional visual world'
+        self.announce()
+
         
         self.step_counter = 0
         self.fov_span = 10 
@@ -149,11 +152,7 @@ class World(BaseWorld):
 
 
     def set_agent_parameters(self, agent):
-        #agent.perceiver.NEW_FEATURE_THRESHOLD = 0.03
-        #agent.perceiver.MIN_SIG_COACTIVITY = 0.027
-        agent.perceiver.DISSIPATION_FACTOR = 1.0               # real, 0 < x 
-        
-        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10. ** (-3)
+        #agent.perceiver.DISSIPATION_FACTOR = 1.0               # real, 0 < x 
         pass
             
          

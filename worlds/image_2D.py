@@ -33,6 +33,9 @@ class World(BaseWorld):
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
         self.graphing = True
+        self.name = 'two dimensional visual world'
+        self.announce()
+
         
         self.step_counter = 0
 
@@ -181,15 +184,7 @@ class World(BaseWorld):
 
  
     def set_agent_parameters(self, agent):
-        
-        #agent.perceiver.NEW_FEATURE_THRESHOLD = 0.01
-        #agent.perceiver.MIN_SIG_COACTIVITY = 0.008
-
-        agent.perceiver.DISSIPATION_FACTOR = 1.0               # real, 0 < x 
-        
-        """ Nucleate groups more rapidly """
-        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-5) # debug
-
+        #agent.perceiver.DISSIPATION_FACTOR = 1.0
         pass
     
         

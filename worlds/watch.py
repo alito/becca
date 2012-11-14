@@ -54,6 +54,9 @@ class World(BaseWorld):
         self.FEATURE_DISPLAY_INTERVAL = 10 ** 4
         self.LIFESPAN = 10 ** 8
         self.FOV_FRACTION = 0.2
+        self.name = 'watch world'
+        self.announce()
+
         
         self.timestep = 0
         self.sample_counter = 0
@@ -61,7 +64,7 @@ class World(BaseWorld):
         self.fov_span = 10
         
         self.num_sensors = 2 * self.fov_span ** 2
-        self.num_primitives = 1
+        self.num_primitives = 0
         self.num_actions = 16
 
         self.image_filenames = []
@@ -215,13 +218,6 @@ class World(BaseWorld):
         agent.actor.planner.EXPLORATION_FRACTION = 1.0
         agent.actor.planner.OBSERVATION_FRACTION = 0.0
         
-        """ Nucleate groups more rapidly """
-        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-3) # debug
-        
-        """ These work well for straight pixel values """
-        #agent.perceiver.NEW_FEATURE_THRESHOLD = 0.1
-        #agent.perceiver.MIN_SIG_COACTIVITY = 0.98 * agent.perceiver.NEW_FEATURE_THRESHOLD
-
         """ Don't create a model """
         agent.actor.model.MAX_ENTRIES = 10 ** 2
         agent.actor.model.SIMILARITY_THRESHOLD = 0.
