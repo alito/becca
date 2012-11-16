@@ -1,6 +1,7 @@
 
-import numpy as np
 from .base_world import World as BaseWorld
+
+import numpy as np
 
 class World(BaseWorld):
     """ grid_1D.World
@@ -30,7 +31,7 @@ class World(BaseWorld):
         self.ENERGY_COST = 0.01
         self.display_state = False
 
-        self.num_sensors = 1
+        self.num_sensors = 0
         self.num_primitives = 9
         self.num_actions = 9
 
@@ -88,23 +89,32 @@ class World(BaseWorld):
         reward -= energy  * self.ENERGY_COST
         reward = np.max(reward, -1)
         
-        self.display()
+        self.display(action)
         
         return sensors, primitives, reward
     
         
     def set_agent_parameters(self, agent):
         """ Prevent the agent from forming any groups """
-        agent.perceiver.NEW_GROUP_THRESHOLD = 1.0
+        agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
+        
+        agent.actor.model.TRACE_LENGTH = 3
+        #agent.actor.model.TRACE_DECAY_RATE = 0.7
+
         
         
-    def display(self):
+    def display(self, action):
         """ Provide an intuitive display of the current state of the World 
         to the user.
         """
         if (self.display_state):
-            state_image = ['.'] * self.num_primitives
+            
+            state_image = ['.'] * (self.num_primitives + self.num_actions + 2)
             state_image[self.simple_state] = 'O'
+            state_image[self.num_primitives:self.num_primitives + 2] = '||'
+            action_index = np.nonzero(action)[0]
+            if action_index.size > 0:
+                state_image[self.num_primitives + 2 + action_index[0]] = 'x'
             print(''.join(state_image))
             
         if (self.timestep % self.REPORTING_PERIOD) == 0:

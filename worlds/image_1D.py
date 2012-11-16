@@ -1,12 +1,14 @@
 
+import agent.viz_utils as viz_utils
+from worlds.base_world import World as BaseWorld
+import worlds.world_utils as world_utils
+
 """ The Python Image Library, required by this world, installed
 as part of pyplot. This allows the loading and interpreting of .jpgs
 """
 import matplotlib.pyplot as plt
 import numpy as np
-import agent.viz_utils as viz_utils
-from worlds.base_world import World as BaseWorld
-import worlds.world_utils as world_utils
+
 
 class World(BaseWorld):
     """ Image_1D
@@ -25,7 +27,7 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.REPORTING_PERIOD = 10 ** 4       
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 4
         self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 0.5
         self.ANIMATE_PERIOD = 10 ** 2
@@ -33,10 +35,10 @@ class World(BaseWorld):
         self.graphing = True
         
         self.step_counter = 0
-        self.fov_span = 5 
+        self.fov_span = 10 
         
         self.num_sensors = 2 * self.fov_span ** 2
-        self.num_primitives = 1
+        self.num_primitives = 0
         self.num_actions = 9
 
         self.column_history = []
@@ -60,11 +62,11 @@ class World(BaseWorld):
         self.MAX_STEP_SIZE = image_width / 2
         self.TARGET_COLUMN = image_width / 2
 
-        self.REWARD_REGION_WIDTH = image_width / 8
+        self.REWARD_REGION_WIDTH = image_width / 16
         self.NOISE_MAGNITUDE = 0.1
         
-        self.fov_height = self.data.shape[0]
-        self.fov_width = self.data.shape[0]
+        self.fov_height = np.min(self.data.shape)
+        self.fov_width = self.fov_height
         self.column_min = np.ceil(self.fov_width / 2)
         self.column_max = np.floor(self.data.shape[1] - self.column_min)
         self.column_position = np.random.random_integers(self.column_min, 
@@ -147,10 +149,9 @@ class World(BaseWorld):
 
 
     def set_agent_parameters(self, agent):
-        """ Force all the inputs to be added as one group """
-        #agent.perceiver.COACTIVITY_THRESHOLD_DECAY_RATE = 0.0 
-        #agent.perceiver.MIN_SIG_COACTIVITY = 0.0
-        #agent.perceiver.N_GROUP_FEATURES = 20
+        #agent.perceiver.NEW_FEATURE_THRESHOLD = 0.03
+        #agent.perceiver.MIN_SIG_COACTIVITY = 0.027
+        agent.perceiver.DISSIPATION_FACTOR = 1.0               # real, 0 < x 
         
         #agent.perceiver.PLASTICITY_UPDATE_RATE = 10. ** (-3)
         pass

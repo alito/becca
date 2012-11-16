@@ -74,12 +74,12 @@ def init(numSensors, numPrimitives, numActions, numFeatures):
     agent.perceiver.INPUT_DECAY_RATE = 0.5 # real, 0 < x < 1
 
     """ Control how rapidly the coactivity update platicity changes """
-    agent.perceiver.PLASTICITY_UPDATE_RATE = 4 * 10 ** (-1) # real, 0 < x < 1, small
+    agent.perceiver.PLASTICITY_UPDATE_RATE = 4 * 10 ** (-1)
 
     agent.perceiver.NEW_GROUP_THRESHOLD = 0.25
     agent.perceiver.MAX_PLASTICITY = 0.1
 
-    agent.learner.WORKING_MEMORY_DECAY_RATE = 0.5      # real, 0 < x <= 1
+    agent.actor.WORKING_MEMORY_DECAY_RATE = 0.5      # real, 0 < x <= 1
 
     """ If uncommented, try to restore the agent from saved data.
     If commented out, start fresh each time.
@@ -105,7 +105,7 @@ def plots():
     agent.record_reward_history()
     agent.show_reward_history()
     agent.perceiver.visualize()
-    agent.learner.visualize()
+    agent.actor.visualize()
 
 
 def act(sensors, reward):

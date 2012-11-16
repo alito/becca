@@ -1,10 +1,11 @@
 
-import matplotlib.pyplot as plt
-import numpy as np
 import agent.viz_utils as viz_utils
-
 from worlds.base_world import World as BaseWorld
 import worlds.world_utils as world_utils
+
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 class World(BaseWorld):
     """ Image_2D
@@ -38,7 +39,7 @@ class World(BaseWorld):
         self.fov_span = 5
 
         self.num_sensors = 2 * self.fov_span ** 2
-        self.num_primitives = 1
+        self.num_primitives = 0
         self.num_actions = 17
 
         self.column_history = []
@@ -181,13 +182,13 @@ class World(BaseWorld):
  
     def set_agent_parameters(self, agent):
         
-        """ Force all the inputs to be added as one group """
-        #agent.perceiver.COACTIVITY_THRESHOLD_DECAY_RATE = 0.0 
-        #agent.perceiver.MIN_SIG_COACTIVITY = 0.0
-        #agent.perceiver.N_GROUP_FEATURES = 20
+        #agent.perceiver.NEW_FEATURE_THRESHOLD = 0.01
+        #agent.perceiver.MIN_SIG_COACTIVITY = 0.008
+
+        agent.perceiver.DISSIPATION_FACTOR = 1.0               # real, 0 < x 
         
         """ Nucleate groups more rapidly """
-        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-4) # debug
+        #agent.perceiver.PLASTICITY_UPDATE_RATE = 10 ** (-5) # debug
 
         pass
     

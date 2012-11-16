@@ -89,7 +89,7 @@ Specifies the number elements in the array of sensor information that is passed 
 Specifies the number elements in the array of feature primitives that is passed to the agent at each time step.
 
 \subsection{\texttt{num\_actions}}
-Specifies the number elements in the array of actions that it expects to receive from the agent at each time step. Together, these three variables define the interface between the agent and the world. They may be different for each world, but they must remain constant within a single world. \footnote{In this version of \textsc{Becca}, each of these variables must be at least 1. \textsc{Becca} doesn't yet know how to handle empty sensory or primitive arrays. Worlds that have no sensors or primitives can pass a single zero value at every time step to achieve this.}
+Specifies the number elements in the array of actions that it expects to receive from the agent at each time step. Together, these three variables define the interface between the agent and the world. They may be different for each world, but they must remain constant within a single world. 
 
 \subsection{\texttt{step()}}
 Advances the world by one time step. This is single most important method in a world. It defines how the world will respond to the agent. It accepts an array of actions and returns an array of sensors, an array of primitives, and a reward value. \textsc{Becca} places no constraints on the complexity or the execution time of the \texttt{step()} method. It can incrementally advance a simulation, pass and receive network packets, or provide an interface to physical robot. The agent will wait until \texttt{step()} finishes and returns its observation and reward information before advancing to the next time step.
@@ -98,7 +98,7 @@ Advances the world by one time step. This is single most important method in a w
 Informs the executing loop when to stop. The top level execution loop (as implemented in \texttt{benchmark.py} and \texttt{tester.py} continues to run \textsc{Becca} through its agent-world-agent cycle until \texttt{is\_alive()} returns false.
 
 \subsection{\texttt{set\_agent\_parameters()}}
-Sets the the agent's internal parameters to values specific to the world. \textsc{Becca} has a quite a few constants that affect its operation, in the neighborhood of 20 at last count. Most of these are set to values that seem to work for all worlds in the benchmark battery. But for development and troubleshooting, it has proven useful to be able to adjust some of \textsc{Becca}'s parameters manually. It is my hope that, in time, a single set of parameters will prove generally useful across a broad set of tasks. In the meantime this method provides a mechanism for world-specific knob-twiddling.
+Sets the the agent's internal parameters to values specific to the world. \textsc{Becca} has a quite a few constants that affect its operation, 14 is this version. Most of these are set to values that seem to work for all worlds in the benchmark battery. But for development and troubleshooting, it has proven useful to be able to adjust some of \textsc{Becca}'s parameters manually. It is my hope that, in time, a single set of parameters will prove generally useful across a broad set of tasks. In the meantime this method provides a mechanism for world-specific knob-twiddling.
 
 \subsection{\texttt{is\_time\_to\_display()}}
 Informs the executing loop when to display the feature set by returning \texttt{True}. This is for visualization purposes only and doesn't help \textsc{Becca} learn in any way. This method is optional. If it doesn't exist, the execution loop just moves on.
@@ -141,7 +141,7 @@ def main():
     world = World()
     
     agent_name = "test";
-    MAX_NUM_FEATURES = 3000
+    MAX_NUM_FEATURES = 1000
     agent = Agent(world.num_sensors, 
                   world.num_primitives, 
                   world.num_actions, 

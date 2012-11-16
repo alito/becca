@@ -1,8 +1,8 @@
 \chapter{How \textsc{Becca}'s reinforcement learner works}
-\label{learner_chapter}
+\label{actor_chapter}
 
 
-\textsc{Becca}'s reinforcement learner starts with the set of feature activities passed from the feature creator at each time step. (See Figure~\ref{becca_reinforcement_learner}.) It attends to one of the features, passes the attended feature together with the full feature activities and reward to the model, and chooses an action to pass to the world. Each of these steps is described in detail below  
+\textsc{Becca}'s reinforcement learner starts with the set of feature activities passed from the feature extractor at each time step. (See Figure~\ref{becca_reinforcement_learner}.) It attends to one of the features, passes the attended feature together with the full feature activities and reward to the model, and chooses an action to pass to the world. Each of these steps is described in detail below  
 
 \begin{figure}
 \centering
@@ -12,7 +12,7 @@
 \end{figure}
 
 \section{Attention}
-Each of the feature primitives, the actions, and the features in the created feature groups is eligible for attention. The most salient feature in this set is attended at each time step. In practice, this means that in the array representing attention, the attended feature value is set to one and all others are set to zero. The criteria for salience are still under heavy development, and are likely to change in future versions of \textsc{Becca}, but currently they are simple. The most salient feature is the one with the largest magnitude, unless a deliberate action was taken on the previous time step, in which case that action is attended. A small amount of random noise is added to the feature activities (typically 1/20 of one percent) to act as a tie breaker between features that may be active at exactly the same level. This condition occurs commonly when working with simulated worlds.
+Each of the feature primitives, the actions, and the created features is eligible for attention. The most salient feature in this set is attended at each time step. In practice, this means that in the array representing attention, the attended feature value is set to one and all others are set to zero. The criteria for salience are still under heavy development, and are likely to change in future versions of \textsc{Becca}, but currently they are simple. The most salient feature is the one with the largest magnitude, unless a deliberate action was taken on the previous time step, in which case that action is attended. A small amount of random noise is added to the feature activities (typically 1/20 of one percent) to act as a tie breaker between features that may be active at exactly the same level. This condition occurs commonly when working with simulated worlds.
 
 Future candidates for salience calculation include:
 
@@ -45,10 +45,10 @@ Context is a combination of the several most recent attended features. It captur
 Specifically, if the current time step is labeled $t_{0}$, the context includes the attended features from $t_{-D_1}$ to $t_{-1}$, where $D_1$ is a user-defined integer, typically small. The attended features are decayed according to their age, as follows:
 
 \begin{equation}
-\tilde{\alpha}_{-i} =  \alpha_{-i} D_2^{i-1}
+\tilde{\alpha}_{-i} =  \alpha_{-i} D_2^{i-1}, \mbox{  for } i = 1, 2, ..., D_1  
 \end{equation}
 
-where $ \alpha_i $ is the magnitude of the attended feature at time step $i$ (always 1 in the current implementation), $\tilde{\alpha}_{i}$ is the decayed magnitude of the attended feature, and $D_2$ is a user-selected real value between zero and one.
+where $ \alpha_{-i} $ is the magnitude of the attended feature at time step $-i$ (always 1 in the current implementation), $\tilde{\alpha}_{-i}$ is the decayed magnitude of the attended feature, and $D_2$ is a user-selected real value between zero and one.
 
 The context is the the combination of all the decayed attended features. In the case where the same feature has been attended more than once within the last $D_1$ time steps, the decayed magnitudes are added in a nonlinear way, such that the resulting magnitude is guaranteed to be less than or equal to one. This is done by mapping the two values to be summed, which are known to fall on the interval $[0,1]$ to the interval $[0, \infty)$ as follows:
 
@@ -64,11 +64,11 @@ a = 1 - \frac{1}{a' + 1}
 \label{bounded_sum_unmap}
 \end{equation}
 
-The result is a bounded sum operation that ensures the magnitude of the result will always lie between zero and one, give that its operands did.
+The result is a bounded sum operation that ensures the magnitude of the result will always lie between zero and one, given that its operands did.
 
 
 \subsubsection{Cause}
-The cause is simply the attended feature at the current time step, $t_0$. It may be an action, in which case the \texttt{context}--\texttt{cause}--\texttt{effect} sequence resembles a state--action--state tuple. But it can also be a basic feature or constructed feature, in which case the transition represents an observed sequence of features, rather than a record of the agent's interaction with the world
+The cause is simply the attended feature at the current time step, $t_0$. It may be an action, in which case the \texttt{context}--\texttt{cause}--\texttt{effect} sequence resembles a state--action--state tuple. But it can also be a primitive feature or created feature, in which case the transition represents an observed sequence of features, rather than a record of the agent's interaction with the world
 
 \subsubsection{Effect}
 The effect is the combination of the feature activities from $t_1$ through $t_{D_1}$. These are decayed and summed the same way attended features are decayed and summed to produce contexts, only in the opposite time direction, with immediate feature activity being undecayed and future feature activities increasingly decayed. 
@@ -101,7 +101,7 @@ A matching transition is one that has both
 \item a sufficiently similar context.
 \end{enumerate}
 
-Context similarity is determined by treating all the features (including basic features and actions) as dimensions of the same space. Both the current context and the transition context are vectors in that space. The similarity measure, $\sigma$, is based on the angle between two vectors. If $\sigma(\mathbf{a},\mathbf{b})$ is the similarity between two vectors $\mathbf{a}$ and $\mathbf{b}$, then:
+Context similarity is determined by treating all the features (including basic features and actions) as dimensions of the same space. Both the current context and the transition context are vectors in that space. The similarity measure, $\sigma$, is based on the angle, $\theta$, between two vectors. If $\sigma(\mathbf{a},\mathbf{b})$ is the similarity between two vectors $\mathbf{a}$ and $\mathbf{b}$, then:
 
 \begin{equation}    
 \sigma(\mathbf{a},\mathbf{b}) = 1 - \frac{\theta}{\pi/2}
@@ -118,7 +118,7 @@ This similarity measure has several desirable properties:
 
 Two contexts $\mathbf{a}$ and $\mathbf{b}$ are considered sufficiently similar if $\sigma(\mathbf{a},\mathbf{b}) > D_3$, where $D_3$ is a user selected real value between 0 and 1, typically closer to 1 than 0.
 
-If more than one matching transition is in the library, the one with the highest similarity wins. If no matching transitions are in the library, the new transition is added. This requires waiting until the full effect and reward has been observed, so there is a delay of several time steps before new transitions are added to the model.
+If more than one matching transition is in the library, the one with the highest similarity wins. If no matching transitions are in the library, the new transition is added. This requires waiting until the full effect and reward has been observed, so there is a delay of $D_1$ time steps before new transitions are added to the model.
 
 \subsection{Modifying transitions}
 In instances where the current context and cause do match an existing transition, the effect, reward, and their uncertainties are updated based on the new observation.

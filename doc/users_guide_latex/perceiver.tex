@@ -1,20 +1,20 @@
-\chapter{How \textsc{Becca}'s feature creator works}
+\chapter{How \textsc{Becca}'s feature extractor works}
 \label{perceiver_chapter}
 
-A paper from the 2012 AAAI Spring Symposium on intelligent robots~\cite{rohrer12b} gives a full technical overview of \textsc{Becca}'s operation, but does not provide enough mathematical detail to fully describe its implementation. This section has those details, but only for the feature creator. A detailed mathematical description of the reinforcement learner is forthcoming
+This appendix provides enough mathematical detail to fully describe the implementation of the feature extractor. Appendix~\ref{learner_chapter} contains a detailed description of the reinforcement learner.
 
-\textsc{Becca} creates features by 1) forming commonly co-active inputs into groups and 2) identifying observed patterns of activity within those groups. (See Figure~\ref{becca_feature_creator}.) For example, in prior work with image data \textsc{Becca} has formed nearby pixels (which are likely to be active at the same time more often than distant pixels) into groups and has chosen features within those pixels corresponding to oriented line segments and center-surround patterns.~\cite{rohrer11c} \textsc{Becca} requires no prior knowledge about the environment it is in, the nature of the experiences it is likely to have or the sensors that provide its input data. The one constraint it places on the world is that its inputs be real valued between zero and one, a constraint that is well suited to representing pixel values.
+\textsc{Becca} extracts features by greedily gathering commonly co-active inputs. (See Figure~\ref{becca_feature_extractor}.)  \textsc{Becca} requires no prior knowledge about the environment it is in, the nature of the experiences it is likely to have, or the sensors that provide its input data. The one constraint it places on the world is that its inputs be real valued between zero and one, a constraint that is well suited to representing pixel values. \textsc{Becca} interprets each input as a fuzzy binary value, indicating the degree of presence of an attribute or the degree of activation of a sensor.
 
 \begin{figure}
 \centering
-\includegraphics[height=7cm]{figs/becca_feature_creator.eps}
-\caption{Block diagram of \textsc{Becca}'s feature creator.}
-\label{becca_feature_creator}
+\includegraphics[height=7cm]{figs/becca_feature_extractor.eps}
+\caption{Block diagram of \textsc{Becca}'s feature extractor.}
+\label{becca_feature_extractor}
 \end{figure}
 
 
-\section{Grouping}
-The separation of input channels into groups is driven by how often each channel is co-active with each of the other channels. The goal of grouping is to find groups of input channels that tend to be mutually co-active. By virtue of their co-occurrence, activity in these channels is assumed to be not entirely independent.
+\section{Co-activity based feature extraction}
+The extraction of new features is driven by how often each input channel is co-active with each of the other channels. The process of feature extraction finds sets of input channels that tend to be mutually co-active. Sets of commonly co-occurring inputs represent pieces of observed structure in the world.
 
 When two channels are co-active, both have a value close to 1. Co-activity is conceptually similar to correlation, except that correlation is also influenced by co-{\em in}activity. Co-activity of channel A with channel B is defined as the probability that A is active, given that B is active. For binary inputs, this can be expressed as follows:
 
@@ -35,112 +35,53 @@ The co-activity of A with B,  $\kappa(A,B) $,  and the co-activity of B with A, 
 
 While co-activity is asymmetric, the mutual co-activity will always be symmetric. Mutual co-activity between input channels can be described as a fully connected, {\em un}directed graph. Mutual co-activity represents the extent to which two inputs are active at the same time, but does so in a way that does not overestimate the co-activity with very active inputs.
 
-The process of grouping input channels can then be described as finding strongly interconnected subgraphs within the mutual co-activity graph. \textsc{Becca} does this using a greedy subgraph construction heuristic. Subgraph construction begins when one graph edge (the mutual co-activity of some input channel with another) exceeds a threshold, $C_1$. Those two input channels, say A and B, are added to the new group. Then, the channel with the highest average mutual co-activity with existing group members, $N_m$, is added:
+The process of selecting a set of input channels can then be described as finding strongly interconnected subgraphs within the mutual co-activity graph. \textsc{Becca} does this using a greedy subgraph construction heuristic. Subgraph construction begins when one graph edge (the mutual co-activity of some input channel with another) exceeds a threshold, $C_1$. Those two input channels, say A and B, are added to the new feature. Then, the channel with the highest minimum mutual co-activity with existing feature members, $N_m$, is added:
 
 \begin{equation}
-N_m = \mbox{argmax}_{N}  \frac{\kappa_M(A,N) + \kappa_M(B, N)}{ 2}
+N_m = \mbox{argmax}_{N}  \min(\kappa_M(A,N), \kappa_M(B, N))
 \end{equation}
 
-This agglomeration process continues until the mutual co-activity with the next candidate does not exceed another threshold, $C_2$.
-Each time an input channel is added to a new group, its co-activity with all other channels is penalized by a factor of $e^{-C_3}$ from that point forward. This serves to limit the number of groups that a single channel can join. 
+This agglomeration process continues until the mutual co-activity with the next candidate does not exceed another threshold, $C_2$.  The inputs that contribute to a feature may be considered its parents (although there ay be many more than two.) An input may be collected during the extraction processes of several different features, becoming a parent several times over. 
 
-\section{Features}
-Once a group has been formed, features can be created and evolved within it. \textsc{Becca} does this by randomly selecting features to start with, then incrementally modifying the features depending upon the patterns of activation observed within the group.
+Some input pairs are not allowed to be the initial nucleus around which a feature is agglomerated. Inputs are prohibited from forming a nucleus with any of their co-parents from another feature, and also with all of their co-parents' parents and ancestors. However, once a valid nucleus has been created, co-parents may join the new feature. Disallowing certain nucleations prevents inbreeding in feature extraction in which similar features are created over and over again. 
 
-\subsection{Feature activity}
+\subsection{Feature map}
 
-To be more precise, each input channel can be interpreted as a separate dimension in an $n$-dimensional input space, where $n$ is the total number of input channels. Groups then form $m$-dimensional subspaces of the input space, where $m$ is the number of input channels in a given group. At any time step, the input values to a group can be represented as a single point in that group's subspace. 
+Features created by this process consist simply of a set of inputs. They are sparse in the sense that a limited number of inputs contribute to each feature. More specifically, the features are $l_0$ sparse, meaning that the number of contributing inputs is low, rather than the sum of their contributions ($l_1$ sparsity) or the square of their contributions ($l_2$ sparsity).
 
-Features provide a way to coarsely discretize the inputs. \textsc{Becca} represents features as points on a unit sphere in a group's subspace. That is, a feature is a vector of the group's inputs, constrained to have a magnitude of one. In a group with $m$ inputs, empirical results suggest that $m/3$ (rounded upward) is a useful number of features to create. Many more than this creates an unnecessarily large feature set, increasing learning times, and many fewer than this does not provide a sufficiently rich feature set to allow high-performance learning. 
+After a feature is created, it is added to the feature map. The feature map specifies which inputs are averaged to give the initial activation, $a$, for the feature. It acts like a mask on the input set. Because each input represents the graded output of a binary-type sensor or primitive, all inputs to a feature contribute equally.
 
-Before comparing it with features, the input is scaled:
+\section{Feature activity}
 
-\begin{equation}
-\hat{s} = s  \frac{\max(s)} {|| s ||}
-\end{equation}
- 
-This scaling gives the input two desirable properties: 
-\begin{enumerate}
-\item Assuming no component of the input is greater than 1, the scaled output will not be greater than 1.
-\item The value of $\hat{s}$ will only be maximal (equal to 1) if one of one of its inputs is maximal. If this were not the case, inputs of many different magnitudes could produce the same scaled input.
-\end{enumerate} 
-
-In order to determine whether a scaled input is similar to existing features, a similarity metric is required. \textsc{Becca} uses the square of the magnitude of the projection of the scaled input onto a feature to determine its similarity. Because the feature magnitude is already known to be of magnitude 1, the similarity between input $s$ and feature $f$ can be calculated as follows:
-
-\begin{equation}
-\beta(\hat{s}, f) = (s \cdot f)^2
-\end{equation}
-
-The similarity, $\beta$, of an input with each feature in a group represents the {\em excitation} of each feature, the extent to which that input tends to excite activity within it. The similarity is treated like a vote. The feature receiving the highest vote is activated. However, the excitation of each feature is modulated by a fatigue factor, $\phi$, in the following way:
-
-\begin{equation}
-v =  \beta e^{-C_4 \phi}
-\end{equation}
-
-where $v$ is the vote of the input for the feature in question and $C_4$ is a user-selected constant with $0 < C_4 < 1$. 
-
-The activity of each feature in the group, $a$, is determined by the votes:
-
-\begin{eqnarray}
-a_i& = &\beta_i  \qquad \mbox{for } i = \mbox{argmax}(v) \\
-&= &0 \qquad \mbox{for all other } i
-\end{eqnarray}
-
-$\phi$ is an incrementally updated function of each feature's recent activity given by the following:
-
-\begin{equation}
-\phi_{t+1} = C_5 ( \phi_{t} + a_{t})
-\end{equation}
-
-where $C_5$ is a user selected constant between 0 and 1. When a feature is active, its fatigue factor increases, diminishing its tendency to be activated in subsequent time steps. When a feature is inactive, its fatigue factor decays over time, making it increasingly likely to be activated.
-
-By holding most feature activities to zero, the group's features provide a sparse representation of its input subspace. The feature activities from all groups are combined to form the feature creator's output.
-
-\subsection{Feature evolution}
-
-At each time step features are also incrementally updated. The nature of the the updates is such that features evolve over time to represent the most commonly observed patterns in a group's inputs.
-
-The active feature in each group is updated to resemble the set of inputs that resulted in its selection. The size of the update is determined by the feature activity and inhibition, $\gamma$, that the feature receives. Inhibition in turn is determined by the excitation of nearby features, and their similarity to the winning feature:
-
-\begin{equation}
-\gamma = e^{\sum_{j \neq i}{\beta(f_i, f_j)\beta(\hat{s}, f_j) C_6}}
-\end{equation} 
-
-where $f_i$ is the winning (active) feature, $\beta(f_i, f_j)$ is the similarity between the winning feature and each of the others, $\beta(\hat{s}, f_j) $ is the excitation of each of the other features, and $C_6$ is a user-selected constant with $0 < C_6 < 1$. 
-
-The inhibition scales the update magnitude:
-
-\begin{equation}
-f_{i \mbox{ new}} = f_i + (f_i - \hat{s}) a_i \gamma C_7
-\end{equation}
-
-where $a_i$ is the feature activity of the winning feature, calculated above, and $C_7$ is a user-selected constant with $0 < C_7 < 1$. The newly adapted feature is then renormalized to ensure that it maintains a magnitude of 1:
-
-\begin{equation}
- f_{i \mbox{ new}} = \frac{f_{i \mbox{ new}}}{|f_{i \mbox{ new}}|}
- \end{equation}
- 
- Updating features in this way favors large updates when the winning feature is: 
- 
- \begin{enumerate}
- \item far from other features
- \item far from the input that excited it
- \item strongly active
- \end{enumerate}
- 
- Figure~\ref{feature_operation} summarizes the life of a feature set in pictorial form.
+Features compete for the contributions of their inputs in a process resembling lateral inhibition. (See Figure~\ref{competitive_activation}.) Features with an initial activation, $\hat{a}$, that is high suppress their inputs' contributions to other features. This helps prevent ambiguity in feature activations and provides a soft winner-take-all behavior among features that share several inputs.
 
 \begin{figure}
 \centering
-\includegraphics[height=9cm]{figs/feature_operation.eps}
-\caption{The creation, operation, and evolution of features. In this example, a new group is created out of just two inputs, $s_1$ and $s_2$. Three initial features are chosen randomly from the set of positive unit vectors in the group space. On each subsequent time step, the values of $s_1$ and $s_2$ make a sensor input vector. Each time it is normalized, my the maximum possible magnitude of an input vector in the same direction. Then, it excites each of the features, according to its magnitude and its distance from them. The most excited feature is considered active for that time step, and the others are not. Finally, the winning feature migrates slightly toward the input that excited it.}
-\label{feature_operation}
+\includegraphics[height=7cm]{figs/competitive_activation.eps}
+\caption{An example of competitive feature activation. {\bf a)} Inputs activate the features to their initial activity levels, $\hat{a}$. {\bf b)} The $\hat{a}$ values are fed back to the inputs. The feature with the highest $\hat{a}$ for a given input suppresses that input's contributions to all other features. {\bf c)} As a result of this suppression (with $C_3 = 1$ in Equation~\ref{feedback_calculation}), the final activities, $a$, of competing features are weakened.}
+\label{competitive_activation}
 \end{figure}
 
+To be more precise, feature activities interact as follows. For an input that contributes to several different features, its contribution to feature $i$ will be inhibited by $\gamma_i$, given by:
 
-\subsection{Computational requirements}
+\begin{equation}
+\gamma_i = \left( \frac{\hat{a}_i}{\hat{a}_{\max}}\right ) ^ {C_3}
+\label{feedback_calculation}
+\end{equation}
 
-An important difference between \textsc{Becca} and other feature creation methods is that \textsc{Becca}'s feature creation and feature calculation operations occur on small subspaces of the input, rather than operating on the entire input space at once, as for instance principal components analysis does. This gives \textsc{Becca} the advantage of lower-order computational complexity for these operations: it is linear in the size of the input space rather than polynomial or exponential. This allows \textsc{Becca} to circumvent the curse of dimensionality to some extent and bodes well for its scalability to large problems. 
+This formulation weakens all the contributions of the input except for the one to the most active feature, the one with $\hat{a}_{\max}$.
+
+\subsection{Input energy}
+
+The input magnitudes used to calculate co-activity can be lower than the original input magnitudes. Conceptually this is analogous to inputs having limited energy. If an input excites a feature strongly, then it has less energy available to build up new features with other inputs. But if an input excites no features, then it has plenty of energy available to establish co-activity with other inputs.
+
+The fraction of its magnitude that an input devotes to co-activity is given by $\gamma_\kappa$:
+
+\begin{equation}
+\gamma_\kappa = 2 ^ { - C_4\sum \gamma_i}
+\end{equation}
+
+When an input excites more features, $\sum \gamma_i$ gets larger, forcing $\gamma_\kappa$ smaller. This in effect creates a soft limit on the number of features an input can contribute to. 
 
 \section{Hierarchy, time, and domain knowledge} 
 
@@ -153,12 +94,12 @@ Three additional details of \textsc{Becca}'s operation are necessary to achieve 
 \item The second detail is the temporal decay of inputs. After an input is active, its channel retains some residual activity on subsequent time steps, even if it is not externally stimulated. This decay is of a geometric nature, resulting in an exponential decay curve: 
 
 \begin{equation}
-s_{t+1} = C_8 s_t \mbox{,   \hspace{0.2in}  } 0 < C_8 < 1
+s_{t+1} = C_5 s_t \mbox{,   \hspace{0.2in}  } 0 < C_5 < 1
 \end{equation}
 
 The result of this decay is that temporal aspects of data can be captured in the features. For instance, if input B is always active following input A, but never at the same time, retaining a decayed ghost of A's activity allows it to be correctly correlated with that of B to form a feature with temporal structure.
 
-\item The third detail is the direct injection of user-created features to capture domain knowledge. As presented so far, \textsc{Becca} insists of deriving its own representation of the data from scratch. But in most applications, designers already have a pretty good guess about which features are likely to be informative in solving a given problem. \textsc{Becca} has a mechanism for incorporating engineered features as well. It looks for a vector of user-created feature primitives at each time step, in addition to raw sensor data. It handles the primitives differently that other inputs, concatenating them with the feature activities of all the created groups. As such, the primitives are both fed back as inputs, and included with the feature creator's output. The only constraint on primitives is that they also be real valued between zero and one. \textsc{Becca} handles both raw sensor inputs and feature primitives as fuzzy binary inputs, each indicating the graded presence of a certain attribute.
+\item The third detail is the direct injection of user-created features to capture domain knowledge. As presented so far, \textsc{Becca} insists of deriving its own representation of the data from scratch. But in most applications, designers already have a pretty good guess about which features are likely to be informative in solving a given problem. \textsc{Becca} has a mechanism for incorporating engineered features as well. It looks for a vector of user-created feature primitives at each time step, in addition to raw sensor data. It handles the primitives differently that other inputs, concatenating them with the feature activities of all the created groups. As such, the primitives are both fed back as inputs, and included with the feature extractor's output. The only constraint on primitives is that they also be real valued between zero and one. \textsc{Becca} handles both raw sensor inputs and feature primitives as fuzzy binary inputs, each indicating the graded presence of a certain attribute.
 
 \end{enumerate}
 
@@ -168,7 +109,7 @@ The result of this decay is that temporal aspects of data can be captured in the
 \textsc{Becca}'s co-activity calculation is incremental, with the update method for real valued inputs given by the following:
 
 \begin{equation}
-\Delta\kappa(A, B) = C_9 a ( a b - \kappa(A, B) ) \mbox{,  \hspace{0.2in}  } 0 < C_9 < 1		
+\Delta\kappa(A, B) = C_6 a ( a b - \kappa(A, B) ) \mbox{,  \hspace{0.2in}  } 0 < C_6 < 1		
 \label{coactivity_update}
 \end{equation}
 
@@ -184,16 +125,16 @@ Another instructive case is that of binary and stochastic inputs. Consider the i
 
 \begin{eqnarray}
 A &|& p(a = 1) = 0.5 \mbox{, \hspace{0.2in}  } p(a = 0) = 0.5\\
-B &|& p(b = 1) = 0.1 \mbox{, \hspace{0.2in}  } p(a = 0) = 0.9 	
+B &|& p(b = 1) = 0.1 \mbox{, \hspace{0.2in}  } p(b = 0) = 0.9 	
 \end{eqnarray}
 
-The structure of the update rule guarantees that $\Delta\kappa(A, B) = 0$ when $a = 0$ , meaning that $\kappa(A, B)$ will not be modified in any way. It will only be updated when $a = 1$. The steady state value for $\kappa(A, B)$ can then be calculated by observing that when $a = 1$, the update rule reduces to 
+The structure of the update rule guarantees that $\Delta\kappa(A, B) = 0$ when $a = 0$ , meaning that $\kappa(A, B)$ will not be modified in any way. It will only be updated when $a = 1$. The steady state value for $\kappa(A, B)$ can then be calculated by observing that when $a = 1$ the update rule reduces to 
 
 \begin{equation}
 \Delta \kappa(A, B) = b - \kappa(A, B)  
 \end{equation}
 
-The fact that B is independent from A implies that $\kappa(A, B)$ will converge to the mean of $b$, 0.1 . Following a similar set of calculations, it can be shown that $\kappa(B, A)$ converges to 0.5 . This illustrates the effect of asymmetry in the update rule on non-constant input values. The results can be verbalized as �Channel A is co-active with Channel B ten percent of the time, but Channel B is co-active with Channel A fifty percent of the time.� An intuitive metaphor is that of restless kindergarteners at nap time. The teacher has told all the children to lay still and close their eyes, but unable to help themselves, some of the children occasionally peek. $\kappa(A, B)$ is the probability that, when child A peeks, she will see child B's eyes open and vice versa.
+The fact that B is independent from A implies that $\kappa(A, B)$ will converge to the mean of $b=0.1$. Following a similar set of calculations, it can be shown that $\kappa(B, A)$ converges to 0.5 . This illustrates the effect of asymmetry in the update rule on non-constant input values. The results can be verbalized as ``Channel A is co-active with Channel B ten percent of the time, but Channel B is co-active with Channel A fifty percent of the time." An intuitive metaphor is that of restless kindergarteners at nap time. The teacher has told all the children to lay still and close their eyes, but unable to help themselves, some of the children occasionally peek. $\kappa(A, B)$ is the probability that, when child A peeks, she will see child B's eyes open and vice versa.
 
 One final observation about $\kappa(A, B)$ is that it is bounded both above and below by the product of $a$ and $b$. Since $0 \leq a \leq 1$ and $0 \leq b \leq 1$ ,  it follows that 
 
