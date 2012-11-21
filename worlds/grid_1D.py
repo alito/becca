@@ -92,6 +92,9 @@ class World(BaseWorld):
         reward -= energy  * self.ENERGY_COST
         reward = np.max(reward, -1)
         
+        reward *= 10 
+        reward -= 100
+        
         self.display(action)
         
         return sensors, primitives, reward

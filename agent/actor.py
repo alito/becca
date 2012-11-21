@@ -27,10 +27,10 @@ class Actor(object):
         and distribution of reward, so that typical rewards can be mapped 
         onto (-1,1) in a meaningful way.
         """
-        self.reward_average = 0
-        self.reward_deviation = 1
-        self.REWARD_AVERAGE_DECAY_RATE = 0.01
-        self.REWARD_DEVIATION_DECAY_RATE = 0.01
+        self.reward_average = 0.
+        self.reward_deviation = 1.
+        self.REWARD_AVERAGE_DECAY_RATE = 3 * 10. ** -3
+        self.REWARD_DEVIATION_DECAY_RATE = 3 * 10. ** -3
         
         """ Reward offset is a 'life is good' constant. It introduces
         a baseline of contentment to the agent.
@@ -44,8 +44,8 @@ class Actor(object):
         self.model.n_features = n_features
         
         #debug
-        #reward = self.process_reward(raw_reward)
-        reward = raw_reward
+        reward = self.process_reward(raw_reward)
+        #reward = raw_reward
         
         """ Attend to a single feature """
         self.attended_feature = self.attend(self.deliberately_acted, 
@@ -68,9 +68,13 @@ class Actor(object):
 
     def process_reward(self, raw_reward):
         
-        #print 'before', 'self.reward_average', self.reward_average,  \
-        #            'self.reward_deviation', self.reward_deviation, \
-        #            'raw_reward', raw_reward
+        debug = False
+        if np.random.random_sample() < 0.01:
+            debug = True
+        if debug:
+            print 'before', 'self.reward_average', self.reward_average,  \
+                    'self.reward_deviation', self.reward_deviation, \
+                    'raw_reward', raw_reward
                     
         """ Map raw reward onto subjective reward """
         self.reward_average = self.reward_average * \
@@ -84,10 +88,11 @@ class Actor(object):
         
         reward = utils.map_inf_to_one((raw_reward - self.reward_average) / \
                                 self.reward_deviation) + self.REWARD_OFFSET
-                                
-        #print 'before', 'self.reward_average', self.reward_average,  \
-        #            'self.reward_deviation', self.reward_deviation, \
-        #            'reward', reward
+         
+        if debug:                       
+            print 'after', 'self.reward_average', self.reward_average,  \
+                    'self.reward_deviation', self.reward_deviation, \
+                    'reward', reward
 
         return reward
     
