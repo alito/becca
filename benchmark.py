@@ -91,11 +91,11 @@ def main():
             overall_performance.remove(lowest_val)
 
     """ Find the average of what's left """
-    sum = 0.
+    sum_so_far = 0.
     for indx in range(len(overall_performance)):
-        sum += overall_performance[indx]
+        sum_so_far += overall_performance[indx]
         
-    typical_performance = sum / len(overall_performance)
+    typical_performance = sum_so_far / len(overall_performance)
     
     print "Typical performance score: ", typical_performance 
     
