@@ -113,6 +113,11 @@ class Model(object):
         """ The initial value for uncertainty in the effect and the reward """
         self.INITIAL_UNCERTAINTY = 0.25
 
+        """ The rate at which the reward associated with individual features
+        decays toward the average value.
+        """
+        self.FEATURE_REWARD_DECAY_RATE = 0.01
+        
         """ The total number of transitions in the model """
         self.n_transitions = 0
         
@@ -146,18 +151,20 @@ class Model(object):
 
         """ Maintain a history of the attended features and feature activity"""
         self.zero_state = state.State(num_primitives, 
-                                      num_actions, self.MAX_NUM_FEATURES)
+                                 num_actions, self.MAX_NUM_FEATURES)
         self.attended_feature_history = [copy.deepcopy(self.zero_state)] * \
                                         (self.TRACE_LENGTH)
         self.feature_activity_history = [copy.deepcopy(self.zero_state)] * \
                                         (self.TRACE_LENGTH)
         self.next_context = copy.deepcopy(self.zero_state)
         self.reward_history = [0] * (self.TRACE_LENGTH)
+        self.feature_reward = copy.deepcopy(self.zero_state)
         
         """ Hold on to transitions to be added or updated until their 
         future effects and rewards can be determined """
         self.new_transition_q = []
         self.transition_update_q = []
+        self.feature_reward_q = []
         
 
     def step(self, attended_feature, feature_activity, reward):
@@ -181,7 +188,15 @@ class Model(object):
         self.current_cause = self.attended_feature_history[-1]
         self.current_effect = self.collapse(self.feature_activity_history)
         self.current_reward = self.collapse(self.reward_history)
+        
+        """ A collapsed collection of recent features for use in 
+        associating reward.
+        """
+        self.feature_context = self.collapse(
+                                     self.feature_activity_history[::-1])
                  
+        #self.associate_reward_with_features()     
+
         self.process_new_transitions()
         self.process_transition_updates()
         
@@ -213,6 +228,55 @@ class Model(object):
         return
         
 
+    def associate_reward_with_features(self):
+        """ If any feature sets are waiting to be associated, add them """
+        graduates = []
+        
+        print 'len(self.feature_reward_q)', len(self.feature_reward_q)
+        
+        for i in range(len(self.feature_reward_q)):
+
+            """ Decrement the timers in the new transition queue """
+            self.feature_reward_q[i][0] = self.feature_reward_q[i][0] - 1
+       
+            print 'i', i, 'self.feature_reward_q[i][0]', self.feature_reward_q[i][0]
+            
+            """ Add the transitions on which the timer has counted down """
+            if self.feature_reward_q[i][0] == 0:
+                graduates.append(i)
+                    
+                features = self.feature_reward_q[i][1].features
+                new_reward = self.current_reward
+
+                print 'i',i, 'features.shape', features.shape, 'new_reward', new_reward, \
+                    'self.feature_reward.features.shape ', self.feature_reward.features.shape 
+
+                self.feature_reward.features = \
+                                 self.feature_reward.features * (1. - \
+                                 self.FEATURE_REWARD_DECAY_RATE * features) + \
+                                 self.FEATURE_REWARD_DECAY_RATE * features * \
+                                 new_reward
+                
+        """ Remove the feature arrays from the queue that were processed.
+        This was sliced a little fancy in order to ensure that the highest
+        indexed transitions were removed first, so that as the iteration
+        continued the lower indices would still be accuarate.
+        """
+        for i in graduates[::-1]:
+            self.feature_reward_q.pop(i)
+                
+        """ Add the next feature array to the queue """
+        timer = self.TRACE_LENGTH
+        new_features = self.zero_state
+        new_features.features[:self.feature_context.features.size] = \
+                copy.deepcopy(self.feature_context.features)
+        self.feature_reward_q.append([timer, new_features])
+        
+        print 'timer', timer, 'new_features.features.shape', new_features.features.shape
+        
+        return 
+        
+        
     def find_transition_matches(self):
         """ Check to see whether the new entry is already in the model """ 
         """ TODO: make the similarity threshold a function of the count? 

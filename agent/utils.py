@@ -99,6 +99,18 @@ def bounded_sum(a, b):
         return result
     
     
+def bounded_array_sum(arr, dim=0):
+    """ Perform a bounded sum on a 2D array on dimension dim.
+    """
+    
+    """ Map [-1,1]  onto (-Inf,Inf)
+    Then map back after dum is completed.
+    """
+    arr_prime = map_one_to_inf(arr)
+    sum_prime = np.sum(arr_prime, dim)
+    return map_inf_to_one(sum_prime)
+    
+    
 def map_one_to_inf(a):
     """ Map values from [0, 1] onto [0, inf) and 
     map values from [-1, 0] onto (-inf, 0].
@@ -117,6 +129,55 @@ def map_inf_to_one(a_prime):
 
 
 def similarity(point, point_set, max_index=None):
+    """ This similarity measure is based on a modified l_0 (Manhattan) distance
+    between two vectors.  It is very simple and cheap to compute. 
+    Developed during a conversation with David Follett.
+    """
+
+    """ Check to see whether either input is empty """
+    if not (point_set.size > 0) or not (point.size > 0):
+        print "Warning: utils.similarity()-inputs must " + \
+              "both be of non-zero size. "
+        print "    point_set:"
+        print point_set
+        print "    point:"
+        print point
+        return None
+
+    eps = np.finfo(np.double).eps
+
+    """ If there is no maximum transitionindex,
+    set it to the length of the set.
+    """
+    if max_index is None:
+        max_index = point_set.shape[1]
+
+    """ Make sure point is a 2D numpy column array """
+    if len(point.shape) == 1:
+        point = point[:,np.newaxis]
+    if point.shape[0] == 1:
+        point = point.transpose()
+
+    if point.shape[0] != point_set.shape[0]:
+        print "Error in utils.similarity(): point must have the same number"
+        print "elements as the 0th dimension of point_set. "
+        print "Got ", point.shape[0] ,' and ', point_set.shape[0]
+        raise ValueError
+
+    """ Expand the point array to a 2D array the same size
+    as the point_set.
+    """
+    point_mat = np.tile(point, (1, max_index))
+    set_mat = point_set[:,:max_index]
+
+    delta = abs(point_mat - set_mat)
+    distance = np.minimum(1, np.sum(delta, axis=0))
+    result = 1 - distance
+
+    return result
+
+
+def similarity_by_angle(point, point_set, max_index=None):
     
     """
     Calculate the similarity between a point (an array) and a set of points.

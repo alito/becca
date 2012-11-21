@@ -32,6 +32,8 @@ class Planner(object):
         self.VOTE_NOISE = 1e-6              # real, 0 < x < 1, typically small
 
         self.action = np.zeros((num_actions,1))
+        
+        self.debug = False
 
 
     def step(self, model):
@@ -59,7 +61,8 @@ class Planner(object):
                 self.action = self.explore()
                             
                 # debug
-                print '            Exploring'
+                if self.debug:
+                    print '            Exploring'
                 
                 """ Attend to any deliberate action """
                 deliberately_acted = True
@@ -71,7 +74,8 @@ class Planner(object):
                 (self.action, goal) = self.deliberate(model)
 
                 # debug
-                print '            Deliberating'
+                if self.debug:
+                    print '            Deliberating'
                 
                 """ Pass goal to model """ 
                 model.update_goal(goal)
@@ -88,7 +92,8 @@ class Planner(object):
             self.action = np.zeros( self.action.shape)
             
             # debug
-            print '            Observing'
+            if self.debug:
+                print '            Observing'
                         
         return self.action, deliberately_acted
             

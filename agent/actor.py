@@ -2,6 +2,7 @@
 from model import Model
 from planner import Planner
 from state import State
+import utils
 import viz_utils
 
 import numpy as np
@@ -22,11 +23,29 @@ class Actor(object):
         self.action = np.zeros((num_actions,1))
         self.deliberately_acted = False
         
+        """ These constants are used to adaptively track the mean 
+        and distribution of reward, so that typical rewards can be mapped 
+        onto (-1,1) in a meaningful way.
+        """
+        self.reward_average = 0
+        self.reward_deviation = 1
+        self.REWARD_AVERAGE_DECAY_RATE = 0.01
+        self.REWARD_DEVIATION_DECAY_RATE = 0.01
+        
+        """ Reward offset is a 'life is good' constant. It introduces
+        a baseline of contentment to the agent.
+        """
+        self.REWARD_OFFSET = 0.1
+        
 
-    def step(self, feature_activity, reward, n_features):
+    def step(self, feature_activity, raw_reward, n_features):
         
         self.feature_activity = feature_activity
         self.model.n_features = n_features
+        
+        #debug
+        #reward = self.process_reward(raw_reward)
+        reward = raw_reward
         
         """ Attend to a single feature """
         self.attended_feature = self.attend(self.deliberately_acted, 
@@ -47,6 +66,32 @@ class Actor(object):
         return self.action
 
 
+    def process_reward(self, raw_reward):
+        
+        #print 'before', 'self.reward_average', self.reward_average,  \
+        #            'self.reward_deviation', self.reward_deviation, \
+        #            'raw_reward', raw_reward
+                    
+        """ Map raw reward onto subjective reward """
+        self.reward_average = self.reward_average * \
+                (1. - self.REWARD_AVERAGE_DECAY_RATE) \
+                + self.REWARD_AVERAGE_DECAY_RATE * raw_reward
+        
+        self.reward_deviation = self.reward_deviation * \
+                (1. - self.REWARD_DEVIATION_DECAY_RATE) \
+                + self.REWARD_DEVIATION_DECAY_RATE * \
+                np.abs(raw_reward - self.reward_average)
+        
+        reward = utils.map_inf_to_one((raw_reward - self.reward_average) / \
+                                self.reward_deviation) + self.REWARD_OFFSET
+                                
+        #print 'before', 'self.reward_average', self.reward_average,  \
+        #            'self.reward_deviation', self.reward_deviation, \
+        #            'reward', reward
+
+        return reward
+    
+    
     def attend(self, deliberately_acted, last_action=None):
         """ Selects a feature from feature_activity to attend to """
 
@@ -57,11 +102,67 @@ class Actor(object):
             
         else:
             """ Salience is a combination of feature activity magnitude, 
-            goal magnitude, and a small amount of noise.
+            reward magnitude, goal magnitude, and a small amount of noise.
             """    
             current_feature_activity = self.feature_activity.features
             n_features = current_feature_activity.size
-            current_goal = self.goal.features[:n_features,:]
+            current_goal = self.goal.features[n_features,:]
+            
+            #context_feature_values = self.model.context.features[
+            #           :n_features,:self.model.n_transitions] * \
+            #    self.model.reward_value[
+            #           :self.model.n_transitions,:].transpose()
+                       
+            '''context_feature_totals = self.model.context.features[
+                       :n_features,:self.model.n_transitions] * \
+                abs(self.model.reward_value[
+                       :self.model.n_transitions,:].transpose()) * \
+                self.model.count[
+                       :self.model.n_transitions,:].transpose()
+                       
+            context_feature_counts = self.model.context.features[
+                       :n_features,:self.model.n_transitions] * 
+                self.model.count[
+                       :self.model.n_transitions,:].transpose()
+                       
+            context_feature_values = context_feature_totals / \
+                                    context_feature_counts
+            '''                       
+            #context_feature_value_uncertainty = self.model.context.features[
+            #           :n_features,:self.model.n_transitions] * \
+            #    self.model.reward_uncertainty[
+            #           :self.model.n_transitions,:].transpose()
+                       
+            '''print '---'
+            print self.model.context.features[
+                       :n_features,:self.model.n_transitions] .transpose()
+            print self.model.reward_value[
+                       :self.model.n_transitions,:].transpose()
+            print (self.model.context.features[
+                       :n_features,:self.model.n_transitions] * \
+                self.model.reward_value[
+                       :self.model.n_transitions,:].transpose()).transpose()
+            '''
+            #feature_values = utils.bounded_array_sum(
+            #        context_feature_values, dim=1) 
+            #feature_values = np.sum(context_feature_values, axis=1)
+            
+            #if context_feature_values.size > 0:
+            #    feature_values = np.amax(context_feature_values, axis=1)
+            #else:
+            #    feature_values =    context_feature_values
+            '''
+            if context_feature_value_uncertainty.size > 0:
+                feature_values = np.amax(1-context_feature_value_uncertainty, axis=1)
+            else:
+                feature_values =    context_feature_value_uncertainty
+            '''                 
+            
+            #debug
+            #if np.random.random_sample() < 0.01:
+            #    print context_feature_values
+            #    print feature_values
+            
             salience = np.zeros_like(current_feature_activity)
             
             salience = self.SALIENCE_NOISE * \
