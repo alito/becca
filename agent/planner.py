@@ -20,7 +20,7 @@ class Planner(object):
         always attend its own actions, but never pay attention to their
         results.
         """
-        self.OBSERVATION_FRACTION = 0.3     # real, 0 < x < 1
+        #self.OBSERVATION_FRACTION = 0.3     # real, 0 < x < 1
         
         self.OBSERVE = True
         self.OBSERVE_STEPS = 3

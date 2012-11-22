@@ -97,13 +97,13 @@ class Model(object):
         The trace is used to assign credit for transitions with deferred
         effects and rewards.
         """  
-        self.TRACE_LENGTH = 4                 # integer, small
+        self.TRACE_LENGTH = 12                 # integer, small
         
         """ The factor by which the reward is decayed for each
         timestep between when it was received and the event to which
         it is assigned.
         """
-        self.TRACE_DECAY_RATE = 0.7           # real, 0 < x < 1
+        self.TRACE_DECAY_RATE = 0.6           # real, 0 < x < 1
 
         """ The factor by which goals are decayed for each
         timestep.
@@ -195,7 +195,7 @@ class Model(object):
         self.feature_context = self.collapse(
                                      self.feature_activity_history[::-1])
                  
-        #self.associate_reward_with_features()     
+        self.associate_reward_with_features()     
 
         self.process_new_transitions()
         self.process_transition_updates()
@@ -232,15 +232,11 @@ class Model(object):
         """ If any feature sets are waiting to be associated, add them """
         graduates = []
         
-        print 'len(self.feature_reward_q)', len(self.feature_reward_q)
-        
         for i in range(len(self.feature_reward_q)):
 
             """ Decrement the timers in the new transition queue """
             self.feature_reward_q[i][0] = self.feature_reward_q[i][0] - 1
        
-            print 'i', i, 'self.feature_reward_q[i][0]', self.feature_reward_q[i][0]
-            
             """ Add the transitions on which the timer has counted down """
             if self.feature_reward_q[i][0] == 0:
                 graduates.append(i)
@@ -248,8 +244,10 @@ class Model(object):
                 features = self.feature_reward_q[i][1].features
                 new_reward = self.current_reward
 
-                print 'i',i, 'features.shape', features.shape, 'new_reward', new_reward, \
-                    'self.feature_reward.features.shape ', self.feature_reward.features.shape 
+                # debug
+                #print 'new_reward', new_reward
+                #print 'features', features[:18].ravel()
+                #print 'self.feature_reward.features', self.feature_reward.features[:18].ravel()
 
                 self.feature_reward.features = \
                                  self.feature_reward.features * (1. - \
@@ -271,8 +269,6 @@ class Model(object):
         new_features.features[:self.feature_context.features.size] = \
                 copy.deepcopy(self.feature_context.features)
         self.feature_reward_q.append([timer, new_features])
-        
-        print 'timer', timer, 'new_features.features.shape', new_features.features.shape
         
         return 
         

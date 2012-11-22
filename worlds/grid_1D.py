@@ -27,7 +27,7 @@ class World(BaseWorld):
         
         self.REPORTING_PERIOD = 10 ** 3
         self.LIFESPAN = 2 * 10 ** 4
-        self.REWARD_MAGNITUDE = 0.5
+        self.REWARD_MAGNITUDE = 1.
         self.ENERGY_COST = 0.01
         self.display_state = False
         self.name = 'one dimensional grid world'
@@ -91,9 +91,6 @@ class World(BaseWorld):
         """ Punish actions just a little """
         reward -= energy  * self.ENERGY_COST
         reward = np.max(reward, -1)
-        
-        reward *= 10 
-        reward -= 100
         
         self.display(action)
         

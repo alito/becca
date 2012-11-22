@@ -31,7 +31,7 @@ class World(BaseWorld):
         self.REPORTING_PERIOD = 10 ** 3
         self.LIFESPAN = 2 * 10 ** 4
         self.ENERGY_COST = 0.05
-        self.REWARD_MAGNITUDE = 0.5
+        self.REWARD_MAGNITUDE = 1.
         self.display_state = False
         self.name = 'decoupled two dimensional grid world'
         self.announce()

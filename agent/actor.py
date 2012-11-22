@@ -68,14 +68,6 @@ class Actor(object):
 
     def process_reward(self, raw_reward):
         
-        debug = False
-        if np.random.random_sample() < 0.01:
-            debug = True
-        if debug:
-            print 'before', 'self.reward_average', self.reward_average,  \
-                    'self.reward_deviation', self.reward_deviation, \
-                    'raw_reward', raw_reward
-                    
         """ Map raw reward onto subjective reward """
         self.reward_average = self.reward_average * \
                 (1. - self.REWARD_AVERAGE_DECAY_RATE) \
@@ -89,11 +81,6 @@ class Actor(object):
         reward = utils.map_inf_to_one((raw_reward - self.reward_average) / \
                                 self.reward_deviation) + self.REWARD_OFFSET
          
-        if debug:                       
-            print 'after', 'self.reward_average', self.reward_average,  \
-                    'self.reward_deviation', self.reward_deviation, \
-                    'reward', reward
-
         return reward
     
     
@@ -111,7 +98,7 @@ class Actor(object):
             """    
             current_feature_activity = self.feature_activity.features
             n_features = current_feature_activity.size
-            current_goal = self.goal.features[n_features,:]
+            current_goal = self.goal.features[:n_features,:]
             
             #context_feature_values = self.model.context.features[
             #           :n_features,:self.model.n_transitions] * \
@@ -174,10 +161,12 @@ class Actor(object):
                         np.random.random_sample(salience.shape)
              
             salience += current_feature_activity * (1 + current_goal)
+            
+            salience += np.abs(self.model.feature_reward.features[:n_features])
                         
             """ Pick the feature with the greatest salience """
             max_salience_index = np.argmax(salience)
-    
+            
             """ Assign a 1 to the feature to be attended. Handle primitive
             and action groups according to their group numbers.
             """
