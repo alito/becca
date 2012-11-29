@@ -26,13 +26,13 @@ class World(BaseWorld):
     def __init__(self):
         super(World, self).__init__()
 
-        self.REPORTING_PERIOD = 10 ** 3   
+        self.REPORTING_PERIOD = 10 ** 4   
         self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
         self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 1.
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
-        self.graphing = True
+        self.graphing = False
         self.name = 'two dimensional visual world'
         self.announce()
 

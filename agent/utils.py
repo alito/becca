@@ -69,6 +69,16 @@ def bounded_sum(a, b):
         
     result = np.zeros(np.shape(a))
 
+    """ Check whether all elements are of magnitude one or less """
+    if np.nonzero(abs(a) > 1.0)[0].size > 0 or \
+       np.nonzero(abs(b) > 1.0)[0].size > 0:
+        print 'utils.bounded_sum(): arguments have magnitude greater than 1.'
+        print 'results are being truncated to 1.'
+        
+        a = np.minimum(a, 1.0)
+        b = np.minimum(b, 1.0)
+        a = np.maximum(a, -1.0)
+        b = np.maximum(b, -1.0)
     
     """ There are different functions, depending on whether 
     a and b are same or opposite signs. 
@@ -171,9 +181,15 @@ def similarity(point, point_set, max_index=None):
     set_mat = point_set[:,:max_index]
 
     delta = abs(point_mat - set_mat)
-    distance = np.minimum(1, np.sum(delta, axis=0))
-    result = 1 - distance
 
+    # Manhattan distance-based similarity    
+    #distance = np.minimum(1, np.sum(delta, axis=0))
+    #result = 1 - distance
+    
+    # modified Manhattan-based similarity to avoid saturation
+    factor = 0.3
+    result = 2 ** (-np.sum(delta, axis=0) * factor)
+    
     return result
 
 

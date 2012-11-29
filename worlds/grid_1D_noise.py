@@ -19,7 +19,7 @@ class World(BaseWorld):
                 
         super(World, self).__init__()
         
-        self.REPORTING_PERIOD = 10 ** 3
+        self.REPORTING_PERIOD = 10 ** 4
         self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 1.
         self.ENERGY_COST = 0.1      
@@ -77,6 +77,9 @@ class World(BaseWorld):
         """ Generate a set of noise primitives """
         noise_primitives = np.round(np.random.random_sample
                                     (self.num_noise_primitives))
+        # debug -- always on
+        #noise_primitives[0] = 1
+        
         primitives = np.hstack((real_primitives, noise_primitives))
 
         reward = -self.REWARD_MAGNITUDE
@@ -94,6 +97,8 @@ class World(BaseWorld):
     def set_agent_parameters(self, agent):
         """ Prevent the agent from forming any groups """
         agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
+        agent.actor.model.SIMILARITY_THRESHOLD = 0.8      # real, 0 < x < 1
+        #agent.actor.planner.EXPLORATION_FRACTION = 0.05     # real, 0 < x < 1
 
 
     def display(self, action):

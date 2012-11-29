@@ -91,7 +91,7 @@ class Model(object):
         self.CLEANING_PERIOD = 10 ** 5        # integer, somewhat large
         
         """ Lower bound on the rate at which transitions are updated """
-        self.UPDATE_RATE = 0.1                # real, 0 < x < 1
+        self.UPDATE_RATE = 10 ** -1                # real, 0 < x < 1
         
         """ The number of transitions to be included in the trace context.
         The trace is used to assign credit for transitions with deferred
@@ -111,7 +111,7 @@ class Model(object):
         self.GOAL_DECAY_RATE = 1.0            # real, 0 < x < 1
         
         """ The initial value for uncertainty in the effect and the reward """
-        self.INITIAL_UNCERTAINTY = 0.25
+        self.INITIAL_UNCERTAINTY = 0.5
 
         """ The rate at which the reward associated with individual features
         decays toward the average value.
@@ -143,11 +143,12 @@ class Model(object):
         self.effect_uncertainty = self.context.ones_like()
         self.effect_uncertainty.multiply(self.INITIAL_UNCERTAINTY)
         
-        self.count = np.zeros((2*self.MAX_ENTRIES,1))
-        self.reward_value = np.zeros((2*self.MAX_ENTRIES,1))
-        self.reward_uncertainty = np.ones((2*self.MAX_ENTRIES,1)) * \
+        thin_shape = (1, 2*self.MAX_ENTRIES)
+        self.count = np.zeros(thin_shape)
+        self.reward_value = np.zeros(thin_shape)
+        self.reward_uncertainty = np.ones(thin_shape) * \
                                     self.INITIAL_UNCERTAINTY
-        self.goal_value = np.zeros((2*self.MAX_ENTRIES,1))
+        self.goal_value = np.zeros(thin_shape)
 
         """ Maintain a history of the attended features and feature activity"""
         self.zero_state = state.State(num_primitives, 
@@ -195,7 +196,7 @@ class Model(object):
         self.feature_context = self.collapse(
                                      self.feature_activity_history[::-1])
                  
-        self.associate_reward_with_features()     
+        #self.associate_reward_with_features()     
 
         self.process_new_transitions()
         self.process_transition_updates()
@@ -228,7 +229,7 @@ class Model(object):
         return
         
 
-    def associate_reward_with_features(self):
+    '''def associate_reward_with_features(self):
         """ If any feature sets are waiting to be associated, add them """
         graduates = []
         
@@ -271,7 +272,7 @@ class Model(object):
         self.feature_reward_q.append([timer, new_features])
         
         return 
-        
+        '''
         
     def find_transition_matches(self):
         """ Check to see whether the new entry is already in the model """ 
@@ -304,6 +305,10 @@ class Model(object):
         
         is_new = True
         
+        #debug test whether unique transitions are being added
+        #print 'self.current_context', self.current_context.features[:self.n_features,:].ravel()
+        #print 'self.current_cause', self.current_cause.features.ravel()
+        
         for i in range((len(self.new_transition_q))):
             q_context = self.new_transition_q[i][1]
             q_cause = self.new_transition_q[i][2]
@@ -312,6 +317,10 @@ class Model(object):
                     self.current_context.is_close(q_context, 
                                                   self.SIMILARITY_THRESHOLD)):
                 is_new = False
+                
+            #print 'context', i, ':', q_context.features[:self.n_features,:].ravel()
+            #print 'cause', i, ':', q_cause.features.ravel()
+            #print 'is new?', is_new
             
         if is_new:
             """ If there is no match, the just-experienced transition is
@@ -362,8 +371,8 @@ class Model(object):
                                      matching_transition_index] = \
                                         new_effect.features.ravel()
                 
-                self.reward_value[matching_transition_index] = new_reward
-                self.count[matching_transition_index] =  1.
+                self.reward_value[0, matching_transition_index] = new_reward
+                self.count[0, matching_transition_index] =  1.
                 self.n_transitions += 1  
                 
         """ Remove the transitions from the queue that were added.
@@ -419,7 +428,7 @@ class Model(object):
                 new_reward = self.current_reward
 
                 reward_difference = np.abs(new_reward - \
-                           self.reward_value[matching_transition_index])
+                           self.reward_value[0, matching_transition_index])
 
                 """ Calculate the absolute difference of the 
                 transition effect and the observation effect.
@@ -429,7 +438,7 @@ class Model(object):
                        self.effect.features[:new_effect.features.size, 
                                             matching_transition_index]))
                             
-                self.count[matching_transition_index] += update_strength
+                self.count[0, matching_transition_index] += update_strength
                 
                 """ Modify the effect.
                 Making the update rate a function of count allows 
@@ -438,16 +447,16 @@ class Model(object):
                 to contradict them. This facilitates one-shot learning.
                 """
                 update_rate_raw = (1 - self.UPDATE_RATE) / \
-                    self.count[matching_transition_index] + self.UPDATE_RATE
+                    self.count[0, matching_transition_index] + self.UPDATE_RATE
                 update_rate = min(1.0, update_rate_raw) * update_strength
                 
                 max_step_size = new_reward -  \
-                                self.reward_value[matching_transition_index]
+                                self.reward_value[0, matching_transition_index]
 
-                self.reward_value[matching_transition_index] += \
+                self.reward_value[0, matching_transition_index] += \
                                             max_step_size * update_rate
-                self.reward_uncertainty[matching_transition_index] = \
-                        self.reward_uncertainty[matching_transition_index] * \
+                self.reward_uncertainty[0, matching_transition_index] = \
+                        self.reward_uncertainty[0, matching_transition_index] *\
                         (1. - update_rate) + \
                         reward_difference * update_rate
                     
@@ -525,27 +534,112 @@ class Model(object):
         return similarity
     
     
-    def collapse(self, state_list):
+    def get_values(self):
+        '''
+        transition_goal_values = np.sum(self.effect.features[:self.n_features, 
+                                                     :self.n_transitions] * \
+                                self.goal_value[0, :self.n_transitions], axis=0)
+        values = utils.bounded_sum(transition_goal_values, 
+                                  self.reward_value[:, :self.n_transitions])
+        
+        return values[np.newaxis,:]
+        '''
+        return self.reward_value[:, :self.n_transitions]
+    
+    
+    def get_value_deviations(self):
+        '''
+        transition_goal_uncertainties = \
+                    self.effect_uncertainty.features[:self.n_features, 
+                                                     :self.n_transitions] * \
+                                self.goal_value[0, :self.n_transitions]
+        values = utils.bounded_sum(transition_goal_uncertainties, 
+                           self.reward_uncertainty[0, :self.n_transitions])
+        return values[np.newaxis,:]
+        '''
+        return self.reward_uncertainty[:, :self.n_transitions]
+    
+    
+    def get_count_weight(self):
+        return utils.map_inf_to_one(np.log(
+                                    self.count[:,:self.n_transitions] + 1) / 3)
+
+    
+    def get_feature_salience(self, feature_activity):
+        
+        if self.n_transitions == 0:
+            return np.zeros(feature_activity.shape)
+        
+        n_features = feature_activity.size
+        context = self.context.features[:n_features,:self.n_transitions]
+        #print 'context', context.shape
+        #print 'feature_activity', feature_activity.shape
+
+        #count = self.get_count_weight()
+        count = self.count[:,:self.n_transitions]
+        #print 'count', count
+        
+        overlap = np.minimum(context, feature_activity)
+        #print 'overlap', overlap
+        
+        similarity = np.sum(overlap, axis=0)[np.newaxis,:]
+        #print 'similarity', similarity.ravel()
+        
+        deviation = self.get_value_deviations()
+        #print 'deviation', deviation
+        
+        confidence = np.maximum(1 - 2 * deviation, 0) ** 2
+        
+        #weight = confidence * similarity * count
+        weight = confidence * similarity
+        #print 'weight', weight
+        
+        feature_salience = np.sum(weight * context, axis=1) / \
+                        (np.sum(weight, axis=1) + utils.EPSILON)
+        feature_salience = feature_salience[:,np.newaxis]
+        
+        #feature_salience = np.max(context * (1-deviation), axis=1)[:, np.newaxis]
+        #print 'feature salience', feature_salience.shape
+        if np.random.random_sample() < 0.00:
+            
+
+            for i in range(self.n_transitions):
+                print 'context', self.context.features[:n_features,i].ravel() 
+                print 'cause', self.cause.features[:n_features,i].ravel() 
+                print 'effect', self.effect.features[:n_features,i].ravel() 
+                print 'effect uncertainty', self.effect_uncertainty.features[:n_features,i].ravel() 
+                print 'reward', self.reward_value[:n_features,i].ravel() 
+                print 'reward uncertainty', self.reward_uncertainty[:n_features,i].ravel() 
+                print 'count', self.count[:n_features,i].ravel() 
+                
+        print 'feature_activity', feature_activity.ravel()
+        print 'feature salience', feature_salience.ravel()
+
+        return feature_salience
+    
+    
+    def collapse(self, list_to_collapse):
         """ Collapse a list of scalars or States into a single one, 
         giving later members of the list lower weights.
         """
-        if not isinstance(state_list[0], state.State):
+        if not isinstance(list_to_collapse[0], state.State):
             """ Handle the scalar list case first """
-            collapsed_value = state_list[0]
+            collapsed_value = list_to_collapse[0]
             
-            for i in range(1,len(state_list)):            
-                decayed_value = state_list[i] * \
+            for i in range(1,len(list_to_collapse)):            
+                decayed_value = list_to_collapse[i] * \
                                 ((1. - self.TRACE_DECAY_RATE) ** i)
                 collapsed_value = utils.bounded_sum(collapsed_value, 
                                                     decayed_value)
+                
             return collapsed_value
             
         else:
             """ Handle the State case """
-            collapsed_state = copy.deepcopy(state_list[0])
+            collapsed_state = copy.deepcopy(list_to_collapse[0])
             
-            for i in range(1,len(state_list)):            
-                decayed_state = copy.deepcopy(state_list[i])
+            for i in range(1,len(list_to_collapse)):            
+                decayed_state = copy.deepcopy(list_to_collapse[i])
                 decayed_state.multiply((1. - self.TRACE_DECAY_RATE) ** i)
                 collapsed_state = collapsed_state.bounded_sum(decayed_state)
 
@@ -571,10 +665,9 @@ class Model(object):
             self.new_transition_q = []
             self.transition_update_q = []
 
-            
-            self.count[:self.n_transitions] -=  \
-                                1 / self.count[:self.n_transitions]
-            forget_indices = (self.count[:self.n_transitions] < eps). \
+            self.count[0,:self.n_transitions] -=  \
+                        1 / (self.count[0,:self.n_transitions] + eps)
+            forget_indices = (self.count[0,:self.n_transitions] < eps). \
                                 ravel().nonzero()[0]
 
             self.context.features = np.delete(self.context.features, 
@@ -586,11 +679,11 @@ class Model(object):
             self.effect_uncertainty.features = \
                             np.delete(self.effect_uncertainty.features, 
                             forget_indices, 1)
-            self.count = np.delete(self.count, forget_indices)
-            self.reward_value = np.delete(self.reward_value, forget_indices)
-            self.goal_value = np.delete(self.goal_value, forget_indices)
+            self.count = np.delete(self.count, forget_indices, 1)
+            self.reward_value = np.delete(self.reward_value, forget_indices, 1)
+            self.goal_value = np.delete(self.goal_value, forget_indices, 1)
             self.reward_uncertainty = np.delete(self.reward_uncertainty, 
-                                                forget_indices)
+                                                forget_indices, 1)
 
             self.clean_count = 0
             self.n_transitions -= len(forget_indices)
@@ -610,26 +703,28 @@ class Model(object):
         """
         if self.effect.features.shape[1] < self.MAX_ENTRIES:
             
-            size = (self.effect.features.shape[0], self.MAX_ENTRIES)
+            shape = (self.effect.features.shape[0], self.MAX_ENTRIES)
+            thin_shape = (1, self.MAX_ENTRIES)
+
             self.context.features = np.hstack((self.context.features, 
-                                                 np.zeros(size)))
+                                                 np.zeros(shape)))
             self.cause.features  = np.hstack((self.cause.features, 
-                                                np.zeros(size)))
+                                                np.zeros(shape)))
             self.effect.features = np.hstack((self.effect.features, 
-                                                np.zeros(size)))
+                                                np.zeros(shape)))
             self.effect_uncertainty.features = \
                                 np.hstack((self.effect_uncertainty.features, 
-                                np.zeros(size)))
+                                np.zeros(shape)))
 
-            self.count = np.hstack((self.count, np.zeros(self.MAX_ENTRIES)))
+            self.count = np.hstack((self.count, np.zeros(thin_shape)))
             self.reward_value = np.hstack((self.reward_value, 
-                                           np.zeros(self.MAX_ENTRIES)))
+                                           np.zeros(thin_shape)))
             self.reward_uncertainty = np.hstack((self.reward_uncertainty, 
-                                           np.ones(self.MAX_ENTRIES) * \
+                                           np.ones(thin_shape) * \
                                            self.INITIAL_UNCERTAINTY))
             self.goal_value = np.hstack((self.goal_value, 
-                                           np.zeros(self.MAX_ENTRIES)))
-
+                                           np.zeros(thin_shape)))
+            
         return
 
         

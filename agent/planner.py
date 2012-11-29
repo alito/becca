@@ -23,6 +23,7 @@ class Planner(object):
         #self.OBSERVATION_FRACTION = 0.3     # real, 0 < x < 1
         
         self.OBSERVE = True
+        #debug
         self.OBSERVE_STEPS = 3
         self.observe_steps_left = self.OBSERVE_STEPS 
 
@@ -133,15 +134,14 @@ class Planner(object):
         """ TODO: query model, so I don't have to probe 
         its members directly. 
         """
-        value = utils.bounded_sum(model.goal_value[:model.n_transitions], 
-                                  model.reward_value[:model.n_transitions])
+        value = model.get_values()
+        
         #value_uncertainty = model.reward_uncertainty[:model.n_transitions]
         
         """ Each transition's count and its similarity to the working memory 
         also factor in to its vote.
         """
-        count_weight = utils.map_inf_to_one(np.log(model.count
-                [:model.n_transitions] + 1) / 3)
+        count_weight = model.get_count_weight()
 
         similarity = model.get_context_similarities(planning=True)
 

@@ -32,7 +32,7 @@ class World(BaseWorld):
         self.REWARD_MAGNITUDE = 1.
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
-        self.graphing = True
+        self.graphing = False
         self.name = 'one dimensional visual world'
         self.announce()
 

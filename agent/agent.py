@@ -88,9 +88,9 @@ class Agent(object):
         if (self.timestep % self.REPORTING_PERIOD) == 0:
             self.record_reward_history()
             self.show_reward_history(save_eps=True)
-            print "agent is ", self.timestep ," timesteps old" 
+            #print "agent is ", self.timestep ," timesteps old" 
             
-            self.perceiver.visualize(save_eps=True)
+            #self.perceiver.visualize(save_eps=True)
             #self.actor.visualize()
  
     
@@ -120,8 +120,6 @@ class Agent(object):
         performance = np.mean(self.reward_history)
         print("Final performance is %f" % performance)
         
-        self.perceiver.visualize(save_eps=True)
-        self.actor.visualize(save_eps=True)
         self.show_reward_history(save_eps=True)
 
         if show:
