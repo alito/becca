@@ -152,7 +152,7 @@ class World(BaseWorld):
 
 
     def set_agent_parameters(self, agent):
-        #agent.perceiver.DISSIPATION_FACTOR = 1.0               # real, 0 < x 
+        #agent.perceiver.DISSIPATION_FACTOR = 1.0
         pass
             
          

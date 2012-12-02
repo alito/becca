@@ -21,7 +21,7 @@ class World(BaseWorld):
     simple-as-possible-but-slightly-more-interesting-
     that-the-one-dimensional-task task for troubleshooting BECCA.
 
-    Optimal performance is between 0.3 and 0.35.
+    Optimal performance is about 0.8.
 
     """
     def __init__(self):
@@ -30,7 +30,7 @@ class World(BaseWorld):
         
         self.REPORTING_PERIOD = 10 ** 4
         self.LIFESPAN = 2 * 10 ** 4
-        self.ENERGY_COST = 0.05
+        self.ENERGY_COST = 0.1
         self.REWARD_MAGNITUDE = 1.
         self.display_state = False
         self.name = 'decoupled two dimensional grid world'

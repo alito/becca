@@ -1,4 +1,5 @@
 
+import copy
 from model import Model
 from planner import Planner
 from state import State
@@ -13,7 +14,7 @@ class Actor(object):
 
     def __init__(self, num_primitives, num_actions, max_num_features):
 
-        self.SALIENCE_NOISE = 10 ** -2 
+        self.SALIENCE_NOISE = 10 ** -3 
         self.FATIGUE_DECAY_RATE = 10 ** -1 
         self.MAX_NUM_FEATURES = max_num_features
     
@@ -101,53 +102,60 @@ class Actor(object):
             n_features = current_feature_activity.size
             current_goal = self.goal.features[:n_features,:]
             
-            #debug
-            #if np.random.random_sample() < 0.01:
-            #    print context_feature_values
-            #    print feature_values
+            debug = False
+            if np.random.random_sample() < 0.0:
+                debug = True
             
-            salience = np.zeros_like(current_feature_activity)
+            """ Large magnitude features are salient """
+            salience = copy.deepcopy(current_feature_activity)
+            
+            if debug:
+                print 'feature_activity', current_feature_activity.ravel()
             
             """ Make some noise """
             #salience = self.SALIENCE_NOISE * \
             #            np.random.random_sample(salience.shape)
-            salience = self.SALIENCE_NOISE / \
+            noise = 1 + self.SALIENCE_NOISE / \
                         np.random.random_sample(salience.shape)
-             
-            """ Large magnitude features are salient """
-            salience += current_feature_activity
-            
+            salience *= noise
+            if debug:
+                print 'noise', noise.ravel()
+                print 'salience w noise', salience.ravel()
+ 
             """ Features associated with transitions that lead to 
             large reward are salient.
             """
             feature_salience = self.model.get_feature_salience(current_feature_activity) 
-            salience += feature_salience
             
+            #salience *= 1 + feature_salience
+            
+            if debug:
+                print 'feature salience', 1 + feature_salience.ravel()
+                print 'salience w features', salience.ravel()
+
             """ Penalize salience for recently-attended features """
-            salience -= self.salience_fatigue[:n_features,:]
+            salience *= 1 - self.salience_fatigue[:n_features,:]
                         
+            if debug:
+                print 'fatigue', 1 - self.salience_fatigue[:n_features,:].ravel()
+                print 'salience w fatigue', salience.ravel()
+            
             """ Pick the feature with the greatest salience """
             max_salience_index = np.argmax(salience)
             
-            #debug
-            #print 'salience', salience.ravel()
-            print 'Attended feauture: ', max_salience_index
+            if debug:
+                print 'Attended feauture: ', max_salience_index
             
             """ Assign a 1 to the feature to be attended. Handle primitive
             and action groups according to their group numbers.
             """
             self.attended_feature.features[max_salience_index] = 1
 
-            #print 'attended feature vector', self.attended_feature.features.ravel()
-            
             """ update fatigue """
             self.salience_fatigue[:n_features,:] += \
                 (self.attended_feature.features - 
                 self.salience_fatigue[:n_features,:]) * self.FATIGUE_DECAY_RATE
                 
-            #debug
-            print 'salience fatigue', self.salience_fatigue[:n_features,:].ravel()
-
         return self.attended_feature
 
                  

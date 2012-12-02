@@ -97,9 +97,13 @@ class World(BaseWorld):
     def set_agent_parameters(self, agent):
         """ Prevent the agent from forming any groups """
         agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
-        agent.actor.model.SIMILARITY_THRESHOLD = 0.8      # real, 0 < x < 1
-        #agent.actor.planner.EXPLORATION_FRACTION = 0.05     # real, 0 < x < 1
-
+        agent.actor.model.SIMILARITY_THRESHOLD = 0.7
+        
+        """ No need to decay for this simple world. There's only one 
+        relevant feature to attend at any time step.
+        """   
+        agent.actor.FATIGUE_DECAY_RATE = 0
+        
 
     def display(self, action):
         """ Provide an intuitive display of the current state of the World 

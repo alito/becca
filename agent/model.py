@@ -566,7 +566,12 @@ class Model(object):
 
     
     def get_feature_salience(self, feature_activity):
-        
+       
+        debug = False
+ 
+        if np.random.random_sample() < 0.00:
+            debug = True
+            
         if self.n_transitions == 0:
             return np.zeros(feature_activity.shape)
         
@@ -576,7 +581,7 @@ class Model(object):
         #print 'feature_activity', feature_activity.shape
 
         #count = self.get_count_weight()
-        count = self.count[:,:self.n_transitions]
+        #count = self.count[:,:self.n_transitions]
         #print 'count', count
         
         overlap = np.minimum(context, feature_activity)
@@ -602,7 +607,6 @@ class Model(object):
         #print 'feature salience', feature_salience.shape
         if np.random.random_sample() < 0.00:
             
-
             for i in range(self.n_transitions):
                 print 'context', self.context.features[:n_features,i].ravel() 
                 print 'cause', self.cause.features[:n_features,i].ravel() 
@@ -612,8 +616,9 @@ class Model(object):
                 print 'reward uncertainty', self.reward_uncertainty[:n_features,i].ravel() 
                 print 'count', self.count[:n_features,i].ravel() 
                 
-        print 'feature_activity', feature_activity.ravel()
-        print 'feature salience', feature_salience.ravel()
+        if debug: 
+            print 'feature_activity', feature_activity.ravel()
+            print 'feature salience', feature_salience.ravel()
 
         return feature_salience
     
@@ -650,8 +655,6 @@ class Model(object):
 
         self.clean_count += 1
 
-        eps = np.finfo(float).eps
-        
         """ Clean out the model when appropriate """
         if self.n_transitions >= self.MAX_ENTRIES:
             self.clean_count = self.CLEANING_PERIOD + 1
@@ -666,9 +669,9 @@ class Model(object):
             self.transition_update_q = []
 
             self.count[0,:self.n_transitions] -=  \
-                        1 / (self.count[0,:self.n_transitions] + eps)
-            forget_indices = (self.count[0,:self.n_transitions] < eps). \
-                                ravel().nonzero()[0]
+                        1 / (self.count[0,:self.n_transitions] + utils.EPSILON)
+            forget_indices = (self.count[0,:self.n_transitions] <= \
+                                        utils.EPSILON).ravel().nonzero()[0]
 
             self.context.features = np.delete(self.context.features, 
                                                 forget_indices, 1)
