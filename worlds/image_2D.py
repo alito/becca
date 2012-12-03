@@ -28,7 +28,7 @@ class World(BaseWorld):
 
         self.REPORTING_PERIOD = 10 ** 4   
         self.FEATURE_DISPLAY_INTERVAL = 10 ** 4
-        self.LIFESPAN = 2 * 10 ** 4
+        self.LIFESPAN = 2 * 10 ** 5
         self.REWARD_MAGNITUDE = 1.
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
@@ -163,7 +163,13 @@ class World(BaseWorld):
         if abs(self.row_position - self.TARGET_ROW) < \
                self.REWARD_REGION_WIDTH / 2:
             reward += self.REWARD_MAGNITUDE / 2
-
+        '''
+        if (abs(self.column_position - self.TARGET_COLUMN) < \
+                self.REWARD_REGION_WIDTH / 2) and  \
+                (abs(self.row_position - self.TARGET_ROW) < \
+               self.REWARD_REGION_WIDTH / 2):
+            reward += self.REWARD_MAGNITUDE
+            '''
         return reward
 
         
@@ -185,6 +191,15 @@ class World(BaseWorld):
  
     def set_agent_parameters(self, agent):
         #agent.perceiver.DISSIPATION_FACTOR = 1.0
+        agent.actor.model.SIMILARITY_THRESHOLD = 0.9
+        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.1            # real,  x >= 0
+        
+        """ If the minimum co-activity between each 
+        of the elements of a growing feature and the next candidates 
+        is lower than this value, don't add any more. 
+        """
+        #agent.perceiver.MIN_SIG_COACTIVITY = 0.9  * \
+        #                agent.perceiver.NEW_FEATURE_THRESHOLD
         pass
     
         

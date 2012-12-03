@@ -45,6 +45,8 @@ class World(BaseWorld):
     def step(self, action): 
         """ Advance the World by one timestep """
 
+        print action
+        
         if action is None:
             action = np.zeros(self.num_actions)
         

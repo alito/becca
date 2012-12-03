@@ -27,7 +27,7 @@ def main():
     """ A unique identifying string for the agent, allowing specific
     saved agents to be recalled. 
     """
-    MAX_NUM_FEATURES = 500
+    MAX_NUM_FEATURES = 1000
     agent = Agent(world.num_sensors, world.num_primitives, 
                   world.num_actions, MAX_NUM_FEATURES, agent_name="test")
 
@@ -44,7 +44,7 @@ def main():
     world.set_agent_parameters(agent)
          
     """ Give an initial resting action to kick things off. """
-    actions = np.zeros(world.num_actions)
+    actions = np.zeros((world.num_actions,1))
     
     """ Repeat the loop through the duration of the existence of the world."""
     while(world.is_alive()):
