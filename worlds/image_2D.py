@@ -28,7 +28,7 @@ class World(BaseWorld):
 
         self.REPORTING_PERIOD = 10 ** 4   
         self.FEATURE_DISPLAY_INTERVAL = 10 ** 4
-        self.LIFESPAN = 2 * 10 ** 5
+        self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 1.
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
@@ -193,6 +193,11 @@ class World(BaseWorld):
         #agent.perceiver.DISSIPATION_FACTOR = 1.0
         agent.actor.model.SIMILARITY_THRESHOLD = 0.9
         agent.perceiver.NEW_FEATURE_THRESHOLD = 0.1            # real,  x >= 0
+        
+        """ Until features are sophisticated enough, feature-based
+        salience is not a big help.
+        """
+        agent.actor.SALIENCE_WEIGHT = 0.1
         
         """ If the minimum co-activity between each 
         of the elements of a growing feature and the next candidates 

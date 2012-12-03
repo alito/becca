@@ -153,6 +153,8 @@ class World(BaseWorld):
 
     def set_agent_parameters(self, agent):
         #agent.perceiver.DISSIPATION_FACTOR = 1.0
+        #agent.actor.SALIENCE_WEIGHT = 0.5
+
         pass
             
          

@@ -15,6 +15,7 @@ class Actor(object):
     def __init__(self, num_primitives, num_actions, max_num_features):
 
         self.SALIENCE_NOISE = 10 ** -3 
+        self.SALIENCE_WEIGHT = 0.5
         self.FATIGUE_DECAY_RATE = 10 ** -1 
         self.MAX_NUM_FEATURES = max_num_features
     
@@ -127,7 +128,7 @@ class Actor(object):
             """
             feature_salience = self.model.get_feature_salience(current_feature_activity) 
             
-            #salience *= 1 + feature_salience
+            salience *= 1 + feature_salience * self.SALIENCE_WEIGHT
             
             if debug:
                 print 'feature salience', 1 + feature_salience.ravel()

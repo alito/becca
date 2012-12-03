@@ -103,6 +103,7 @@ class World(BaseWorld):
         relevant feature to attend at any time step.
         """   
         agent.actor.FATIGUE_DECAY_RATE = 0
+        #agent.actor.SALIENCE_WEIGHT = 1.0
         
 
     def display(self, action):
