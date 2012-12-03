@@ -191,7 +191,7 @@ class World(BaseWorld):
  
     def set_agent_parameters(self, agent):
         #agent.perceiver.DISSIPATION_FACTOR = 1.0
-        agent.actor.model.SIMILARITY_THRESHOLD = 0.9
+        #agent.actor.model.SIMILARITY_THRESHOLD = 0.9
         agent.perceiver.NEW_FEATURE_THRESHOLD = 0.1            # real,  x >= 0
         
         """ Until features are sophisticated enough, feature-based
