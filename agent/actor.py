@@ -44,8 +44,8 @@ class Actor(object):
         self.model.n_features = n_features
         
         #debug
-        #reward = self.process_reward(raw_reward)
-        reward = raw_reward / 2
+        reward = self.process_reward(raw_reward)
+        #reward = raw_reward / 2
         
         """ Attend to a single feature """
         self.attended_feature = self.attend(self.deliberately_acted, 
