@@ -31,7 +31,7 @@ import numpy as np
 
 def main():
 
-    N_RUNS = 7
+    N_RUNS = 27
     overall_performance = []
     
     for i in range(N_RUNS):

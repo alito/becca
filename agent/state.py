@@ -170,7 +170,7 @@ class State(object):
         return
 
     
-    def integrate_state(self, new_state, decay_rate):
+    '''def integrate_state(self, new_state, decay_rate):
         """ Updates the state by combining the new state value with a 
         decayed version of the current state value.
         """
@@ -181,7 +181,7 @@ class State(object):
                                 new_state.features)
                     
         return integrated_state
-            
+    '''        
             
     def prepend(self, array):
         """ Return the entire state with array tacked on 
