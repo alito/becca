@@ -305,23 +305,16 @@ class Model(object):
         
         is_new = True
         
-        #debug test whether unique transitions are being added
-        #print 'self.current_context', self.current_context.features[:self.n_features,:].ravel()
-        #print 'self.current_cause', self.current_cause.features.ravel()
-        
         for i in range((len(self.new_transition_q))):
             q_context = self.new_transition_q[i][1]
             q_cause = self.new_transition_q[i][2]
             
-            if (self.current_cause.equals(q_cause) & 
-                    self.current_context.is_close(q_context, 
-                                                  self.SIMILARITY_THRESHOLD)):
+            similarity = utils.similarity(self.current_context.features[:self.n_features,:], 
+                                q_context.features[:self.n_features,:])
+                                
+            if (self.current_cause.equals(q_cause) and similarity > self.SIMILARITY_THRESHOLD):
                 is_new = False
                 
-            #print 'context', i, ':', q_context.features[:self.n_features,:].ravel()
-            #print 'cause', i, ':', q_cause.features.ravel()
-            #print 'is new?', is_new
-            
         if is_new:
             """ If there is no match, the just-experienced transition is
             novel. Add as a new transision in the model.

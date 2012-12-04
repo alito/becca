@@ -15,7 +15,7 @@ class Actor(object):
     def __init__(self, num_primitives, num_actions, max_num_features):
 
         self.SALIENCE_NOISE = 10 ** -3 
-        self.SALIENCE_WEIGHT = 0.5
+        self.SALIENCE_WEIGHT = 0.2
         self.FATIGUE_DECAY_RATE = 10 ** -1 
         self.MAX_NUM_FEATURES = max_num_features
     
@@ -37,15 +37,24 @@ class Actor(object):
         self.REWARD_DEVIATION_DECAY_RATE = self.REWARD_AVERAGE_DECAY_RATE * \
                                             10. ** -2
            
-
+        self.BIGGEST_REWARD = utils.EPSILON
+        
+        
     def step(self, feature_activity, raw_reward, n_features):
         
         self.feature_activity = feature_activity
         self.model.n_features = n_features
         
         #debug
-        reward = self.process_reward(raw_reward)
+        #reward = self.process_reward(raw_reward)
         #reward = raw_reward / 2
+        #reward = utils.map_inf_to_one(raw_reward)
+        
+        if np.abs(raw_reward) > self.BIGGEST_REWARD:
+            self.BIGGEST_REWARD = np.abs(raw_reward)
+        
+        reward = raw_reward / self.BIGGEST_REWARD
+        
         
         """ Attend to a single feature """
         self.attended_feature = self.attend(self.deliberately_acted, 
@@ -82,7 +91,7 @@ class Actor(object):
                                 self.reward_deviation)
          
         #debug
-        print 'difference', reward - raw_reward, ' reward', reward,' raw reward', raw_reward
+        #print 'difference', reward - raw_reward, ' reward', reward,' raw reward', raw_reward
         
         return reward
     
