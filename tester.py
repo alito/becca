@@ -10,7 +10,7 @@ from agent import viz_utils
 One of these import lines should be uncommented.
 """
 #from worlds.base_world import World
-#from worlds.grid_1D import World
+from worlds.grid_1D import World
 #from worlds.grid_1D_ms import World
 #from worlds.grid_1D_noise import World
 #from worlds.grid_2D import World
