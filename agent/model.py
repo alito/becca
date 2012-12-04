@@ -560,7 +560,17 @@ class Model(object):
                            self.reward_uncertainty[0, :self.n_transitions])
         return values[np.newaxis,:]
         '''
-        return self.reward_uncertainty[:, :self.n_transitions]
+             
+        if self.n_transitions == 0:
+            return np.zeros((0,0))
+        
+        """ Transform the reward to be on the interval (-1, 1) """
+        deviation = self.reward_uncertainty[:, :self.n_transitions]
+        mean_deviation_magnitude = np.mean(np.abs(deviation))
+        normalized_deviations = utils.map_inf_to_one(deviation / \
+                                (mean_deviation_magnitude + utils.EPSILON))
+        
+        return normalized_deviations
     
     
     def get_count_weight(self):
