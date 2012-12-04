@@ -539,6 +539,9 @@ class Model(object):
         return values[np.newaxis,:]
         '''
         
+        if self.n_transitions == 0:
+            return np.zeros((0,0))
+        
         """ Transform the reward to be on the interval (-1, 1) """
         reward = self.reward_value[:, :self.n_transitions]
         mean_reward_magnitude = np.mean(np.abs(reward))
