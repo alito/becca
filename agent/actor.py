@@ -40,7 +40,7 @@ class Actor(object):
         self.BIGGEST_REWARD = utils.EPSILON
         
         
-    def step(self, feature_activity, raw_reward, n_features):
+    def step(self, feature_activity, reward, n_features):
         
         self.feature_activity = feature_activity
         self.model.n_features = n_features
@@ -50,10 +50,10 @@ class Actor(object):
         #reward = raw_reward / 2
         #reward = utils.map_inf_to_one(raw_reward)
         
-        if np.abs(raw_reward) > self.BIGGEST_REWARD:
-            self.BIGGEST_REWARD = np.abs(raw_reward)
+        #if np.abs(raw_reward) > self.BIGGEST_REWARD:
+        #    self.BIGGEST_REWARD = np.abs(raw_reward)
         
-        reward = raw_reward / self.BIGGEST_REWARD
+        #reward = raw_reward / self.BIGGEST_REWARD
         
         
         """ Attend to a single feature """
@@ -75,27 +75,6 @@ class Actor(object):
         return self.action
 
 
-    def process_reward(self, raw_reward):
-        
-        """ Map raw reward onto subjective reward """
-        self.reward_average = self.reward_average * \
-                (1. - self.REWARD_AVERAGE_DECAY_RATE) \
-                + self.REWARD_AVERAGE_DECAY_RATE * raw_reward
-        
-        self.reward_deviation = self.reward_deviation * \
-                (1. - self.REWARD_DEVIATION_DECAY_RATE) \
-                + self.REWARD_DEVIATION_DECAY_RATE * \
-                np.abs(raw_reward - self.reward_average)
-        
-        reward = utils.map_inf_to_one((raw_reward - self.reward_average) / \
-                                self.reward_deviation)
-         
-        #debug
-        #print 'difference', reward - raw_reward, ' reward', reward,' raw reward', raw_reward
-        
-        return reward
-    
-    
     def attend(self, deliberately_acted, last_action=None):
         """ Selects a feature from feature_activity to attend to """
 

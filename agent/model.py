@@ -188,7 +188,8 @@ class Model(object):
         self.next_context = self.collapse(self.attended_feature_history[::-1])
         self.current_cause = self.attended_feature_history[-1]
         self.current_effect = self.collapse(self.feature_activity_history)
-        self.current_reward = self.collapse(self.reward_history)
+        #self.current_reward = self.collapse(self.reward_history)
+        self.current_reward = self.unbounded_collapse(self.reward_history)
         
         """ A collapsed collection of recent features for use in 
         associating reward.
@@ -537,7 +538,13 @@ class Model(object):
         
         return values[np.newaxis,:]
         '''
-        return self.reward_value[:, :self.n_transitions]
+        
+        """ Transform the reward to be on the interval (-1, 1) """
+        reward = self.reward_value[:, :self.n_transitions]
+        mean_reward_magnitude = np.mean(np.abs(reward))
+        values = utils.map_inf_to_one(reward / (mean_reward_magnitude + utils.EPSILON))
+        
+        return values
     
     
     def get_value_deviations(self):
@@ -640,6 +647,33 @@ class Model(object):
                 decayed_state = copy.deepcopy(list_to_collapse[i])
                 decayed_state.multiply((1. - self.TRACE_DECAY_RATE) ** i)
                 collapsed_state = collapsed_state.bounded_sum(decayed_state)
+
+            return collapsed_state
+    
+
+    def unbounded_collapse(self, list_to_collapse):
+        """ Collapse a list of scalars or States into a single one, 
+        giving later members of the list lower weights.
+        """
+        if not isinstance(list_to_collapse[0], state.State):
+            """ Handle the scalar list case first """
+            collapsed_value = list_to_collapse[0]
+            
+            for i in range(1,len(list_to_collapse)):            
+                decayed_value = list_to_collapse[i] * \
+                                ((1. - self.TRACE_DECAY_RATE) ** i)
+                collapsed_value += decayed_value
+                
+            return collapsed_value
+            
+        else:
+            """ Handle the State case """
+            collapsed_state = copy.deepcopy(list_to_collapse[0])
+            
+            for i in range(1,len(list_to_collapse)):            
+                decayed_state = copy.deepcopy(list_to_collapse[i])
+                decayed_state.multiply((1. - self.TRACE_DECAY_RATE) ** i)
+                collapsed_state += decayed_state
 
             return collapsed_state
     

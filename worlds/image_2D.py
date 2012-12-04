@@ -248,5 +248,5 @@ class World(BaseWorld):
         world_utils.vizualize_pixel_array_feature_set(feature_set, 
                                                       world_name='image_2D',
                                                       save_eps=True, 
-                                                      save_jpg=True)
+                                                      save_jpg=False)
     
