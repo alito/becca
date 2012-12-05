@@ -1,8 +1,8 @@
 
-import copy
+#import copy
 from model import Model
 from planner import Planner
-from state import State
+#from state import State
 import utils
 import viz_utils
 
@@ -17,14 +17,18 @@ class Actor(object):
         self.SALIENCE_NOISE = 10 ** -3 
         self.SALIENCE_WEIGHT = 0.2
         self.FATIGUE_DECAY_RATE = 10 ** -1 
-        self.MAX_NUM_FEATURES = max_num_features
-    
-        self.model = Model(num_primitives, num_actions, self.MAX_NUM_FEATURES)
-        self.planner = Planner(num_actions)
 
-        self.goal = State(num_primitives, num_actions, self.MAX_NUM_FEATURES)
+        self.num_primitives = num_primitives
+        self.num_actions = num_actions
+        self.max_num_features = max_num_features
+    
+        self.model = Model(num_primitives, num_actions, self.max_num_features)
+        self.planner = Planner(num_primitives, num_actions)
+
+        #self.goal = State(num_primitives, num_actions, self.max_num_features)
+        self.goal = np.zeros((self.max_num_features,1))
         self.action = np.zeros((num_actions,1))
-        self.salience_fatigue = np.zeros((self.MAX_NUM_FEATURES, 1))
+        self.salience_fatigue = np.zeros((self.max_num_features, 1))
         self.deliberately_acted = False
         
         """ These constants are used to adaptively track the mean 
@@ -43,7 +47,7 @@ class Actor(object):
     def step(self, feature_activity, reward, n_features):
         
         self.feature_activity = feature_activity
-        self.model.n_features = n_features
+        self.model.num_features = n_features
         
         #debug
         #reward = self.process_reward(raw_reward)
@@ -59,7 +63,8 @@ class Actor(object):
         """ Attend to a single feature """
         self.attended_feature = self.attend(self.deliberately_acted, 
                                             self.action)
-        
+        #print 'attended_feature', self.attended_feature[:18,0]
+
         """ Update the model """
         self.model.step(self.attended_feature, self.feature_activity, reward)
 
@@ -69,8 +74,8 @@ class Actor(object):
         """ debug
         Uncomment these two lines to choose a random action at each time step.
         """
-        #self.action = np.zeros(self.goal.action.size, 1);
-        #self.action[np.random.randint(self.goal.action.size), 0] = 1
+        #self.action = np.zeros(self.action.size, 1);
+        #self.action[np.random.randint(self.action.size), 0] = 1
 
         return self.action
 
@@ -78,26 +83,27 @@ class Actor(object):
     def attend(self, deliberately_acted, last_action=None):
         """ Selects a feature from feature_activity to attend to """
 
-        self.attended_feature = self.feature_activity.zeros_like()
-        self.attended_feature.features = np.zeros((self.MAX_NUM_FEATURES,1))
+        self.attended_feature = np.zeros((self.max_num_features,1))
 
-        if deliberately_acted and np.count_nonzero(last_action):
-            self.attended_feature.set_actions(last_action)
-            
+
+        if (deliberately_acted and np.count_nonzero(last_action)):
+            self.attended_feature[self.num_primitives:self.num_primitives + \
+                                  self.num_actions,:] = last_action
+           
         else:
             """ Salience is a combination of feature activity magnitude, 
             reward magnitude, goal magnitude, and a small amount of noise.
             """    
-            current_feature_activity = self.feature_activity.features
+            current_feature_activity = self.feature_activity
             n_features = current_feature_activity.size
-            current_goal = self.goal.features[:n_features,:]
+            current_goal = self.goal[:n_features,:]
             
             debug = False
             if np.random.random_sample() < 0.0:
                 debug = True
             
             """ Large magnitude features are salient """
-            salience = copy.deepcopy(current_feature_activity)
+            salience = np.copy(current_feature_activity)
             
             if debug:
                 print 'feature_activity', current_feature_activity.ravel()
@@ -139,11 +145,11 @@ class Actor(object):
             """ Assign a 1 to the feature to be attended. Handle primitive
             and action groups according to their group numbers.
             """
-            self.attended_feature.features[max_salience_index] = 1
+            self.attended_feature[max_salience_index] = 1
 
             """ update fatigue """
             self.salience_fatigue[:n_features,:] += \
-                (self.attended_feature.features[:n_features,:] - 
+                (self.attended_feature[:n_features,:] - 
                 self.salience_fatigue[:n_features,:]) * self.FATIGUE_DECAY_RATE
                 
         return self.attended_feature

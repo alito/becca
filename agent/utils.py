@@ -143,15 +143,9 @@ def similarity(point, point_set, max_index=None):
     between two vectors.  It is very simple and cheap to compute. 
     Developed during a conversation with David Follett.
     """
-
+    '''
     """ Check to see whether either input is empty """
-    if not (point_set.size > 0) or not (point.size > 0):
-        print "Warning: utils.similarity()-inputs must " + \
-              "both be of non-zero size. "
-        print "    point_set:"
-        print point_set
-        print "    point:"
-        print point
+    if (point_set.size == 0) or (point.size == 0):
         return None
 
     eps = np.finfo(np.double).eps
@@ -179,16 +173,18 @@ def similarity(point, point_set, max_index=None):
     """
     point_mat = np.tile(point, (1, max_index))
     set_mat = point_set[:,:max_index]
+    '''
+    if max_index is not None:
+        point_set = point_set[:,:max_index]
 
-    delta = abs(point_mat - set_mat)
+    delta = abs(point - point_set)
 
     # Manhattan distance-based similarity    
     #distance = np.minimum(1, np.sum(delta, axis=0))
     #result = 1 - distance
     
     # modified Manhattan-based similarity to avoid saturation
-    factor = 0.3
-    result = 2 ** (-np.sum(delta, axis=0) * factor)
+    result = 2 ** (-np.sum(delta, axis=0))
     
     return result
 
@@ -215,7 +211,7 @@ def similarity_by_angle(point, point_set, max_index=None):
     3) if a and b share no nonzero elements, s(a,b) = 0;
     4) s(a,b) = 1 iff a = b * c, where c is a constant > 0
     """
-    
+    '''
     """ Check to see whether either input is empty """ 
     if not (point_set.size > 0) or not (point.size > 0):
         print "Warning: utils.similarity()-inputs must " + \
@@ -249,13 +245,17 @@ def similarity_by_angle(point, point_set, max_index=None):
     """
     point_mat = np.tile(point, (1, max_index))
     set_mat = point_set[:,:max_index]
-    
+    '''
+    if max_index is not None:
+        point_set = point_set[:,:max_index]
+
+
     """ Calculate the angle between each of the corresponding 
     columns.
     """
-    inner_product = np.sum(( point_mat * set_mat), axis=0)
-    mag_point = np.sqrt(np.sum( point_mat ** 2, axis=0)) + eps
-    mag_set = np.sqrt(np.sum(set_mat ** 2, axis=0)) + eps
+    inner_product = np.sum(( point * point_set), axis=0)
+    mag_point = np.sqrt(np.sum( point ** 2, axis=0)) + EPSILON
+    mag_set = np.sqrt(np.sum(point_set ** 2, axis=0)) + EPSILON
     cos_theta = inner_product / (mag_point * mag_set)
     cos_theta = np.minimum(cos_theta, 1)
     theta = np.arccos( cos_theta)

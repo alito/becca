@@ -6,7 +6,7 @@ import numpy as np
 
 class Planner(object):
 
-    def __init__(self, num_actions):
+    def __init__(self, num_primitives, num_actions):
         
         """ The approximate fraction of time steps on which the 
         planner makes a random, exploratory plan.
@@ -32,9 +32,11 @@ class Planner(object):
         """
         self.VOTE_NOISE = 1e-6              # real, 0 < x < 1, typically small
 
+        self.num_primitives = num_primitives
+        self.num_actions = num_actions
         self.action = np.zeros((num_actions,1))
         
-        self.debug = False
+        self.debug = True
 
 
     def step(self, model):
@@ -96,6 +98,8 @@ class Planner(object):
             if self.debug:
                 print '            Observing'
                         
+        #print 'action', self.action
+        
         return self.action, deliberately_acted
             
 
@@ -141,13 +145,10 @@ class Planner(object):
         """ Each transition's count and its similarity to the working memory 
         also factor in to its vote.
         """
-        count_weight = model.get_count_weight()
+        #count_weight = model.get_count_weight()
 
         similarity = model.get_context_similarities(planning=True)
 
-        """ TODO: Raise similarity by some power to focus on more 
-        similar transitions?
-        """
         """ TODO: Add recency? This is likely to be useful when 
         rewards change over time. 
         """
@@ -158,7 +159,11 @@ class Planner(object):
         #                    count_weight.ravel()
         
         #debug--penalize uncertainty
-        transition_vote = value.ravel()  + similarity.ravel() 
+        transition_vote = 3 * value.ravel()  + similarity.ravel() 
+        
+        #print 'value', value[:model.num_transitions].ravel() 
+        #print 'similarity', similarity[:model.num_transitions].ravel() 
+        #print 'transition_vote', transition_vote[:model.num_transitions].ravel() 
         
         if transition_vote.size == 0:
             action = np.zeros(self.action.shape)
@@ -181,16 +186,30 @@ class Planner(object):
                             update_strength=similarity[max_transition_index], 
                             wait=True)
         
-        goal = model.get_cause(max_transition_index)
+        print 'context', model.context[:18,max_transition_index].ravel()
+        print 'cause', model.cause[:18,max_transition_index].ravel()
+        print 'effect', model.effect[:18,max_transition_index].ravel()
+        print 'reward', model.reward_value[:,max_transition_index]
                 
+        print 'max_transition_index', max_transition_index
+        print 'value', value.shape
+        print 'value', value.ravel()[max_transition_index]
+        print 'similarity', similarity [max_transition_index]
+        print 'transition_vote', transition_vote[max_transition_index]
+        
+        goal = model.get_cause(max_transition_index)
+           
         """ Separate action goals from the rest of the goal """
         action = np.zeros(self.action.shape)
-        if np.size((goal.get_actions() > 0).nonzero()):
+        if np.size((goal[self.num_primitives: self.num_primitives + \
+                         self.num_actions,:] > 0).nonzero()):
             self.deliberately_acted = True
 
-            action[goal.get_actions() > 0] = 1
-            goal.set_actions(np.zeros(np.size(goal.get_actions())))
-
+            action[goal[self.num_primitives: self.num_primitives + \
+                         self.num_actions,:] > 0] = 1
+            goal[self.num_primitives: self.num_primitives + \
+                 self.num_actions,:] = np.zeros((self.num_actions, 1))
+    
         return action, goal
 
     

@@ -1,9 +1,9 @@
 
-import state
+#import state
 import utils
 import viz_utils
 
-import copy
+#import copy
 import itertools
 import numpy as np
 
@@ -49,7 +49,7 @@ class Perceiver(object):
         """ Stop creating new groups, once this number of features 
         is nearly reached.
         """
-        self.MAX_NUM_FEATURES = max_num_features
+        self.max_num_features = max_num_features
         
         """ A flag determining whether to stop creating new groups """
         self.features_full = False
@@ -58,13 +58,13 @@ class Perceiver(object):
         into feature activities.
         """
         self.feature_map = np.zeros(
-                        (self.MAX_NUM_FEATURES, 
-                         self.MAX_NUM_FEATURES + num_sensors))
+                        (self.max_num_features, 
+                         self.max_num_features + num_sensors))
         
         """ 2D array for holding the estimate of the co-activity """
         self.coactivity = np.zeros(
-                        (self.MAX_NUM_FEATURES + num_sensors, 
-                         self.MAX_NUM_FEATURES + num_sensors))
+                        (self.max_num_features + num_sensors, 
+                         self.max_num_features + num_sensors))
 
         """ 2D array for tracking the allowable 
         combinations of elements.  
@@ -82,17 +82,19 @@ class Perceiver(object):
         """ State that provides memory of the input on 
         the previous time step. 
         """
-        self.previous_input = state.State(num_primitives, num_actions, 
-                                          self.MAX_NUM_FEATURES)
+        #self.previous_input = state.State(num_primitives, num_actions, 
+        #                                  self.max_num_features)
+        self.previous_input = np.zeros((self.max_num_features, 1))
         
         """ The activity levels of all features in all groups.
         Passed on to the reinforcement learner at each time step.
         """
-        self.feature_activity = self.previous_input.zeros_like()
+        self.feature_activity = np.zeros((self.max_num_features, 1))
 
-        self.n_features = num_primitives
-        self.n_features += num_actions
-        self.n_sensors = num_sensors
+        self.num_sensors = num_sensors
+        self.num_primitives = num_primitives
+        self.num_actions = num_actions
+        self.num_features = num_primitives + num_actions
         
 
     def step(self, sensors, primitives, actions):
@@ -112,27 +114,36 @@ class Perceiver(object):
         Combine sensors and primitives with 
         previous feature_activity to create the full input set.
         """        
-        new_feature_input = copy.deepcopy(self.feature_activity)
-        new_feature_input.set_primitives(primitives)
+        new_feature_input = np.copy(self.feature_activity)
+        new_feature_input[:self.num_primitives,:] = primitives
 
         """ It's not yet clear whether actions should be included or not """
-        new_feature_input.set_actions(actions)
+        new_feature_input[self.num_primitives: \
+                          self.num_primitives + self.num_actions,:] = actions
         #new_feature_input.set_actions(np.zeros(actions.shape))
 
         """ Decay previous input and combine it with the new input """
-        self.previous_input.multiply(1 - self.INPUT_DECAY_RATE)
-        new_feature_input = new_feature_input.bounded_sum(self.previous_input)
-        new_input = new_feature_input.prepend(sensors)
+        #self.previous_input.multiply(1 - self.INPUT_DECAY_RATE)
+        self.previous_input *= (1 - self.INPUT_DECAY_RATE)
+        new_feature_input = utils.bounded_sum(new_feature_input, 
+                                              self.previous_input)
+        new_input = np.vstack((sensors, new_feature_input))
         
         """ Update previous input, preparing it for the next iteration """    
-        self.previous_input = copy.deepcopy(new_feature_input)
+        self.previous_input = np.copy(new_feature_input)
         
         """ Truncate to currently-used features """
-        new_input = new_input[:self.n_sensors + self.n_features,:]
+        new_input = new_input[:self.num_sensors + self.num_features,:]
 
         coactivity_inputs = self.calculate_feature_activities(new_input)
-        self.feature_activity.set_primitives(primitives)
-        self.feature_activity.set_actions(actions)
+        
+        # taken care of already
+        self.feature_activity[:self.num_primitives,:] = \
+                new_feature_input[:self.num_primitives,:]
+        self.feature_activity[self.num_primitives: \
+                          self.num_primitives + self.num_actions,:] = \
+                          new_feature_input[self.num_primitives: \
+                          self.num_primitives + self.num_actions,:]
          
         """ As appropriate, update the co-activity estimate and 
         create new features.
@@ -141,7 +152,7 @@ class Perceiver(object):
             self.update_coactivity_matrix(coactivity_inputs)
             self.create_new_features()
 
-        return self.feature_activity, self.n_features
+        return self.feature_activity, self.num_features
         
 
     def calculate_feature_activities(self, new_input):
@@ -149,14 +160,14 @@ class Perceiver(object):
         multiplying across the feature map.
         """
         initial_feature_activities = np.dot(self.feature_map \
-                                [:self.n_features, :new_input.size], new_input)
+                                [:self.num_features, :new_input.size], new_input)
 
         """ Find the activity levels of the features contributed to by each
         input.
         """
-        feature_contribution_map = np.zeros((self.n_features, new_input.size))
+        feature_contribution_map = np.zeros((self.num_features, new_input.size))
         feature_contribution_map[np.nonzero(self.feature_map
-                                [:self.n_features, :new_input.size])] = 1.
+                                [:self.num_features, :new_input.size])] = 1.
         activated_feature_map = initial_feature_activities * \
                                             feature_contribution_map
         
@@ -183,9 +194,9 @@ class Perceiver(object):
         inhibited_inputs = input_inhibition_map * new_input.transpose()
 
         final_feature_activities = np.sum( self.feature_map \
-               [:self.n_features, :new_input.size] * inhibited_inputs, axis=1)
-        self.feature_activity.set_features(final_feature_activities
-                                           [:self.n_features])
+               [:self.num_features, :new_input.size] * inhibited_inputs, axis=1)
+        self.feature_activity[:self.num_features,0] = \
+                        final_feature_activities[:self.num_features]
 
         """ Calculate how much energy each input has left to contribute
         to the co-activity estimate. Discounting each input according
@@ -236,7 +247,7 @@ class Perceiver(object):
         """ If the right conditions have been reached,
         create a new feature.
         """    
-        n_inputs = self.n_sensors + self.n_features
+        n_inputs = self.num_sensors + self.num_features
         mutual_coactivity = np.minimum(
                        self.coactivity[:n_inputs, :n_inputs], \
                        self.coactivity[:n_inputs, :n_inputs].transpose())
@@ -302,25 +313,25 @@ class Perceiver(object):
                     mutual_coactivity[element] = 0
 
             """ Add the new feature to the feature map """
-            self.feature_map[self.n_features, added_feature_indices] = \
+            self.feature_map[self.num_features, added_feature_indices] = \
                                 1. / np.float(len(added_feature_indices))  
             
-            self.n_features += 1
+            self.num_features += 1
             self.disallow_generation_crossing(added_feature_indices)
             
             #debug
-            '''print 'adding feature', self.n_features, 'in position', \
-                    self.n_features + self.n_sensors - 1, 'with inputs', \
+            '''print 'adding feature', self.num_features, 'in position', \
+                    self.num_features + self.num_sensors - 1, 'with inputs', \
                         added_feature_indices
             '''
                        
             """ Check to see whether the capacity to store and update features
             has been reached.
             """
-            if self.n_features >= self.MAX_NUM_FEATURES:
+            if self.num_features >= self.max_num_features:
                 self.features_full = True
                 print('==Max number of features reached (' + \
-                      str(self.MAX_NUM_FEATURES) + ')==') 
+                      str(self.max_num_features) + ')==') 
         return 
 
           
@@ -332,7 +343,7 @@ class Perceiver(object):
         to create new features.
         """
         
-        new_index = self.n_features + self.n_sensors - 1
+        new_index = self.num_features + self.num_sensors - 1
         
         """ Adopt the disallowed combinations of all parents """
         for element in added_feature_indices:
@@ -351,13 +362,13 @@ class Perceiver(object):
         
         
     def visualize(self, save_eps=False):
-        n_inputs = self.n_sensors + self.n_features
+        n_inputs = self.num_sensors + self.num_features
         
         mutual_coactivity = np.minimum(self.coactivity[:n_inputs, :n_inputs], \
                     self.coactivity[:n_inputs, :n_inputs].transpose())
 
         viz_utils.visualize_coactivity(mutual_coactivity, n_inputs, save_eps)
-        viz_utils.visualize_feature_map(self.feature_map[:self.n_features, 
+        viz_utils.visualize_feature_map(self.feature_map[:self.num_features, 
                                                          :n_inputs])
         viz_utils.force_redraw()
         return

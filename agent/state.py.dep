@@ -152,8 +152,8 @@ class State(object):
         """ Check whether the two states are the same size and 
         pad them if not.
         """
-        min_size = np.minimum(new_state.features.size, self.n_features())
-        max_size = np.maximum(new_state.features.size, self.n_features())
+        min_size = np.minimum(new_state.features.size, self.num_features())
+        max_size = np.maximum(new_state.features.size, self.num_features())
         
         new_features = utils.bounded_sum(self.features[:min_size,:], 
                                          other_state.features[:min_size,:])
@@ -190,7 +190,7 @@ class State(object):
         return(np.concatenate((array, copy.deepcopy(self.features))))
         
         
-    def n_features(self):
+    def num_features(self):
         return self.features.size
     
     
