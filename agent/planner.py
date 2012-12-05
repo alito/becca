@@ -1,7 +1,4 @@
 
-import utils
-import viz_utils
-
 import numpy as np
 
 class Planner(object):
@@ -28,7 +25,7 @@ class Planner(object):
         """ Add just a bit of noise to the vote.
         Serves to randomize selection among nearly equal votes.
         """
-        self.VOTE_NOISE = 1e-6              # real, 0 < x < 1, typically small
+        self.VOTE_NOISE = 1e-5              # real, 0 < x < 1, typically small
 
         self.num_primitives = num_primitives
         self.num_actions = num_actions
@@ -126,8 +123,6 @@ class Planner(object):
         """
         value = model.get_values()
         
-        #value_uncertainty = model.reward_uncertainty[:model.n_transitions]
-        
         """ Each transition's count and its similarity to the working memory 
         also factor in to its vote.
         """
@@ -138,24 +133,18 @@ class Planner(object):
         """ TODO: Add recency? This is likely to be useful when 
         rewards change over time. 
         """
-        #transition_vote = value.ravel()  * similarity.ravel() 
-        
-        #debug--have count be a factor?
-        #transition_vote = value.ravel() * similarity.ravel() * \
-        #                    count_weight.ravel()
-        
-        #debug--penalize uncertainty
-        transition_vote = value.ravel()  + self.SIMILARITY_WEIGHT * similarity.ravel() 
-        
-        #print 'value', value[:model.num_transitions].ravel() 
-        #print 'similarity', similarity[:model.num_transitions].ravel() 
-        #print 'transition_vote', transition_vote[:model.num_transitions].ravel() 
+        transition_vote = value.ravel()  + \
+                        self.SIMILARITY_WEIGHT * similarity.ravel() 
         
         """ Add a small amount of noise to the votes to encourage
         variation in closely-matched options.
         """
-        transition_vote += np.random.random_sample(transition_vote.shape) * \
-                            self.VOTE_NOISE
+        #transition_vote += np.random.random_sample(transition_vote.shape) * \
+        #                    self.VOTE_NOISE
+        noise = 1 + self.VOTE_NOISE / \
+                        np.random.random_sample(transition_vote.shape)
+        transition_vote *= noise
+
         
         max_transition_index = np.argmax(transition_vote)
         

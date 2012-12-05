@@ -535,7 +535,7 @@ class Model(object):
     def get_count_weight(self):
         return utils.map_inf_to_one(np.log(
                                     self.count[:,:self.num_transitions] + 1) / 3)
-
+    
     
     def get_feature_salience(self, feature_activity):
        
