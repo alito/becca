@@ -13,19 +13,17 @@ class Planner(object):
         """
         self.EXPLORATION_FRACTION = 0.2     # real, 0 < x < 1
         
-        """ The approximate fraction of time steps on which the 
-        planner intentionally does nothing so that the model can observe.
-        Because BECCA attends to every deliberate action and exploration,
-        OBSERVATION_FRACTION should be nonzero. If it's zero, BECCA will 
-        always attend its own actions, but never pay attention to their
-        results.
+        """ Affects how heavily the similarity of transitions is
+        considered during deliberation.
         """
-        #self.OBSERVATION_FRACTION = 0.3     # real, 0 < x < 1
+        self.SIMILARITY_WEIGHT = 3.         # real, 0 < x
         
-        self.OBSERVE = True
-        #debug
-        self.OBSERVE_STEPS = 3
+        """ Don't take any deliberate actions for a few time steps
+        between each deliberate action.
+        """
+        self.OBSERVE_STEPS = 3              # integer, 0 < x, typically small
         self.observe_steps_left = self.OBSERVE_STEPS 
+        self.OBSERVE = True
 
         """ Add just a bit of noise to the vote.
         Serves to randomize selection among nearly equal votes.
@@ -36,24 +34,15 @@ class Planner(object):
         self.num_actions = num_actions
         self.action = np.zeros((num_actions,1))
         
-        self.debug = True
+        self.debug = False
 
 
     def step(self, model):
         """ Choose an action at each time step """
         
-        """ First, choose a reactive action """
-        """ TODO: make reactive action habit based, not reward based
-        also make reactive action general """
-        # debug
-        # reactive_action = self.select_action(self.model, 
-        #                                      self.feature_activity)
-
         deliberately_acted = False
         
-        """ Second, choose a deliberate action (or non-action) """
-        """ Only act deliberately on a fraction of the time steps """
-        #if np.random.random_sample() > self.OBSERVATION_FRACTION:
+        """ Only act deliberately occasionally """
         if not self.OBSERVE:
             self.OBSERVE = True
             self.observe_steps_left = self.OBSERVE_STEPS
@@ -63,7 +52,6 @@ class Planner(object):
                 
                 self.action = self.explore()
                             
-                # debug
                 if self.debug:
                     print '            Exploring'
                 
@@ -76,7 +64,6 @@ class Planner(object):
                 """
                 (self.action, goal) = self.deliberate(model)
 
-                # debug
                 if self.debug:
                     print '            Deliberating'
                 
@@ -94,12 +81,9 @@ class Planner(object):
                 
             self.action = np.zeros( self.action.shape)
             
-            # debug
             if self.debug:
                 print '            Observing'
                         
-        #print 'action', self.action
-        
         return self.action, deliberately_acted
             
 
@@ -132,11 +116,13 @@ class Planner(object):
         Choose the cause of the winning transition as the goal for 
         the timestep.
         """
+        if model.num_transitions == 0:
+            action = np.zeros(self.action.shape)
+            goal = None
+            return action, goal
+
         """ Combine the goal-based and reward-based value, for all
         transisions, bounded by one.
-        """
-        """ TODO: query model, so I don't have to probe 
-        its members directly. 
         """
         value = model.get_values()
         
@@ -159,17 +145,12 @@ class Planner(object):
         #                    count_weight.ravel()
         
         #debug--penalize uncertainty
-        transition_vote = 3 * value.ravel()  + similarity.ravel() 
+        transition_vote = value.ravel()  + self.SIMILARITY_WEIGHT * similarity.ravel() 
         
         #print 'value', value[:model.num_transitions].ravel() 
         #print 'similarity', similarity[:model.num_transitions].ravel() 
         #print 'transition_vote', transition_vote[:model.num_transitions].ravel() 
         
-        if transition_vote.size == 0:
-            action = np.zeros(self.action.shape)
-            goal = None
-            return action, goal
-
         """ Add a small amount of noise to the votes to encourage
         variation in closely-matched options.
         """
@@ -186,17 +167,16 @@ class Planner(object):
                             update_strength=similarity[max_transition_index], 
                             wait=True)
         
-        print 'context', model.context[:18,max_transition_index].ravel()
+        '''print 'context', model.context[:18,max_transition_index].ravel()
         print 'cause', model.cause[:18,max_transition_index].ravel()
         print 'effect', model.effect[:18,max_transition_index].ravel()
         print 'reward', model.reward_value[:,max_transition_index]
                 
         print 'max_transition_index', max_transition_index
-        print 'value', value.shape
         print 'value', value.ravel()[max_transition_index]
         print 'similarity', similarity [max_transition_index]
         print 'transition_vote', transition_vote[max_transition_index]
-        
+        '''
         goal = model.get_cause(max_transition_index)
            
         """ Separate action goals from the rest of the goal """

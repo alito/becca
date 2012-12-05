@@ -334,7 +334,7 @@ class Model(object):
                 self.reward_value[0, matching_transition_index] = new_reward
                 self.count[0, matching_transition_index] =  1.
                 self.num_transitions += 1  
- 
+
         """ Remove the transitions from the queue that were added.
         This was sliced a little fancy in order to ensure that the highest
         indexed transitions were removed first, so that as the iteration

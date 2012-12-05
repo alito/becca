@@ -141,52 +141,15 @@ def map_inf_to_one(a_prime):
 def similarity(point, point_set, max_index=None):
     """ This similarity measure is based on a modified l_0 (Manhattan) distance
     between two vectors.  It is very simple and cheap to compute. 
-    Developed during a conversation with David Follett.
+    Conceived during a conversation with David Follett and later refined.
     """
-    '''
-    """ Check to see whether either input is empty """
-    if (point_set.size == 0) or (point.size == 0):
-        return None
-
-    eps = np.finfo(np.double).eps
-
-    """ If there is no maximum transitionindex,
-    set it to the length of the set.
-    """
-    if max_index is None:
-        max_index = point_set.shape[1]
-
-    """ Make sure point is a 2D numpy column array """
-    if len(point.shape) == 1:
-        point = point[:,np.newaxis]
-    if point.shape[0] == 1:
-        point = point.transpose()
-
-    if point.shape[0] != point_set.shape[0]:
-        print "Error in utils.similarity(): point must have the same number"
-        print "elements as the 0th dimension of point_set. "
-        print "Got ", point.shape[0] ,' and ', point_set.shape[0]
-        raise ValueError
-
-    """ Expand the point array to a 2D array the same size
-    as the point_set.
-    """
-    point_mat = np.tile(point, (1, max_index))
-    set_mat = point_set[:,:max_index]
-    '''
     if max_index is not None:
         point_set = point_set[:,:max_index]
 
     delta = abs(point - point_set)
 
-    # Manhattan distance-based similarity    
-    #distance = np.minimum(1, np.sum(delta, axis=0))
-    #result = 1 - distance
-    
-    # modified Manhattan-based similarity to avoid saturation
-    result = 2 ** (-np.sum(delta, axis=0))
-    
-    return result
+    """ modified Manhattan-based similarity to avoid saturation """
+    return 2 ** (-np.sum(delta, axis=0))
 
 
 def similarity_by_angle(point, point_set, max_index=None):
@@ -211,44 +174,8 @@ def similarity_by_angle(point, point_set, max_index=None):
     3) if a and b share no nonzero elements, s(a,b) = 0;
     4) s(a,b) = 1 iff a = b * c, where c is a constant > 0
     """
-    '''
-    """ Check to see whether either input is empty """ 
-    if not (point_set.size > 0) or not (point.size > 0):
-        print "Warning: utils.similarity()-inputs must " + \
-              "both be of non-zero size. "
-        print "    point_set:"
-        print point_set
-        print "    point:"
-        print point
-        return None
-
-    eps = np.finfo(np.double).eps
-
-    """ If there is no maximum group_index, set it to the length of the set """
-    if max_index is None:
-        max_index = point_set.shape[1]
-
-    """ Make sure point is a 2D numpy column array """
-    if len(point.shape) == 1:
-        point = point[:,np.newaxis]
-    if point.shape[0] == 1:
-        point = point.transpose()
-            
-    if point.shape[0] != point_set.shape[0]:
-        print "Error in utils.similarity(): point must have the same number"
-        print "elements as the 0th dimension of point_set. "
-        print "Got ", point.shape[0] ,' and ', point_set.shape[0]
-        raise ValueError
-    
-    """ Expand the point array to a 2D array the same size 
-    as the point_set.
-    """
-    point_mat = np.tile(point, (1, max_index))
-    set_mat = point_set[:,:max_index]
-    '''
     if max_index is not None:
         point_set = point_set[:,:max_index]
-
 
     """ Calculate the angle between each of the corresponding 
     columns.
