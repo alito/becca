@@ -191,7 +191,7 @@ class World(BaseWorld):
  
     def set_agent_parameters(self, agent):
         #agent.perceiver.DISSIPATION_FACTOR = 1.0
-        #agent.actor.model.SIMILARITY_THRESHOLD = 0.9
+        agent.actor.model.SIMILARITY_THRESHOLD = 0.8
         agent.perceiver.NEW_FEATURE_THRESHOLD = 0.1            # real,  x >= 0
         
         """ Until features are sophisticated enough, feature-based
@@ -199,12 +199,6 @@ class World(BaseWorld):
         """
         agent.actor.SALIENCE_WEIGHT = 0.1
         
-        """ If the minimum co-activity between each 
-        of the elements of a growing feature and the next candidates 
-        is lower than this value, don't add any more. 
-        """
-        #agent.perceiver.MIN_SIG_COACTIVITY = 0.9  * \
-        #                agent.perceiver.NEW_FEATURE_THRESHOLD
         pass
     
         

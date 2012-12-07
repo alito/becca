@@ -26,7 +26,7 @@ class World(BaseWorld):
     def __init__(self):
         super(World, self).__init__()
 
-        self.REPORTING_PERIOD = 10 ** 4       
+        self.REPORTING_PERIOD = 10 ** 3       
         self.FEATURE_DISPLAY_INTERVAL = 10 ** 4
         self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 1.
@@ -154,6 +154,7 @@ class World(BaseWorld):
     def set_agent_parameters(self, agent):
         #agent.perceiver.DISSIPATION_FACTOR = 1.0
         #agent.actor.SALIENCE_WEIGHT = 0.5
+        agent.actor.model.SIMILARITY_THRESHOLD = 0.7
 
         pass
             

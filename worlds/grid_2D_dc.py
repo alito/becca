@@ -67,6 +67,11 @@ class World(BaseWorld):
                  np.sum(action[4:6]) - np.sum(2 * action[6:8])
         
 
+        """ At random intervals, jump to a random position in the world """
+        if np.random.random_sample() < 0.01:
+            self.world_state = np.random.random_integers(0, self.world_size, 
+                                                     self.world_state.shape)
+        
         """ Enforces lower and upper limits on the grid world by 
         looping them around.
         It actually has a toroidal topology.
@@ -97,9 +102,9 @@ class World(BaseWorld):
     
     
     def set_agent_parameters(self, agent):
-        """ Prevent the agent from forming any groups """
-        #agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
         #agent.perceiver.NEW_FEATURE_THRESHOLD = 0.05
+        #agent.perceiver.DISSIPATION_FACTOR = 0.0               # real, 0 < x 
+        #agent.actor.INITIAL_UNCERTAINTY = 0.25
         pass
     
 

@@ -90,7 +90,7 @@ class Agent(object):
             self.show_reward_history(save_eps=True)
             #print "agent is ", self.timestep ," timesteps old" 
             
-            #self.perceiver.visualize(save_eps=True)
+            self.perceiver.visualize(save_eps=True)
             #self.actor.visualize()
  
     
