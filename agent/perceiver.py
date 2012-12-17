@@ -18,17 +18,6 @@ class Perceiver(object):
     def __init__(self, num_sensors, num_primitives, num_actions,
                  max_num_features):
 
-        """ Control how rapidly previous inputs are forgotten """
-        self.INPUT_DECAY_RATE = 1.0                 # real, 0 < x < 1
-        
-        """ Control how rapidly the co-activity update plasticity changes """
-        self.PLASTICITY_UPDATE_RATE = 10. ** (-3)   # real, 0 < x < 1, small
-        
-        """ The exponent used in dividing inputs' energy between the 
-        features that they activate.
-        """
-        self.ACTIVATION_WEIGHTING_EXPONENT = 10     # real, 1 < x 
-        
         """ Determines how much an input's contribution to exciting features
         dissipates its contribution to the co-activity estimate.
         """
@@ -43,9 +32,21 @@ class Perceiver(object):
         of the elements of a growing feature and the next candidates 
         is lower than this value, don't add any more. 
         """
-        self.MIN_SIG_COACTIVITY = 0.98  * self.NEW_FEATURE_THRESHOLD
+        self.MIN_SIG_COACTIVITY =  0.98 * self.NEW_FEATURE_THRESHOLD
         # real,  0 < x <= self.NEW_FEATURE_THRESHOLD
 
+        """ Control how rapidly the co-activity update plasticity changes """
+        self.PLASTICITY_UPDATE_RATE = 0.01 * self.NEW_FEATURE_THRESHOLD
+        # real, 0 < x < 1, small
+        
+        """ Control how rapidly previous inputs are forgotten """
+        self.INPUT_DECAY_RATE = 1.0                 # real, 0 < x < 1
+        
+        """ The exponent used in dividing inputs' energy between the 
+        features that they activate.
+        """
+        self.ACTIVATION_WEIGHTING_EXPONENT = 10     # real, 1 < x 
+        
         """ Stop creating new groups, once this number of features 
         is nearly reached.
         """
@@ -116,14 +117,10 @@ class Perceiver(object):
         """        
         new_feature_input = np.copy(self.feature_activity)
         new_feature_input[:self.num_primitives,:] = primitives
-
-        """ It's not yet clear whether actions should be included or not """
         new_feature_input[self.num_primitives: \
                           self.num_primitives + self.num_actions,:] = actions
-        #new_feature_input.set_actions(np.zeros(actions.shape))
-
+    
         """ Decay previous input and combine it with the new input """
-        #self.previous_input.multiply(1 - self.INPUT_DECAY_RATE)
         self.previous_input *= (1 - self.INPUT_DECAY_RATE)
         new_feature_input = utils.bounded_sum(new_feature_input, 
                                               self.previous_input)
@@ -134,10 +131,9 @@ class Perceiver(object):
         
         """ Truncate to currently-used features """
         new_input = new_input[:self.num_sensors + self.num_features,:]
-
+        
         coactivity_inputs = self.calculate_feature_activities(new_input)
         
-        # taken care of already
         self.feature_activity[:self.num_primitives,:] = \
                 new_feature_input[:self.num_primitives,:]
         self.feature_activity[self.num_primitives: \
@@ -145,6 +141,12 @@ class Perceiver(object):
                           new_feature_input[self.num_primitives: \
                           self.num_primitives + self.num_actions,:]
          
+        if np.random.random_sample() < 0.:#1.:
+            print '   --  '
+            #print 'input', new_input.ravel()
+            print 'feature_activity', self.feature_activity[self.num_actions:self.num_features:].ravel()
+
+
         """ As appropriate, update the co-activity estimate and 
         create new features.
         """                 
@@ -207,7 +209,11 @@ class Perceiver(object):
         self-limiting process in which inputs contribute to a limited 
         number of features.
         """
-        combined_weights = np.sum(activated_feature_map, axis=0) + utils.EPSILON
+        
+        final_activated_feature_map = final_feature_activities[:,np.newaxis] * \
+                                            feature_contribution_map
+        combined_weights = np.sum(final_activated_feature_map, axis=0) + utils.EPSILON
+        #combined_weights = np.sum(activated_feature_map, axis=0) + utils.EPSILON
         
         coactivity_inputs = new_input * \
                             2 ** (-combined_weights[:, np.newaxis] * 
@@ -320,10 +326,10 @@ class Perceiver(object):
             self.disallow_generation_crossing(added_feature_indices)
             
             #debug
-            '''print 'adding feature', self.num_features, 'in position', \
+            print 'adding feature', self.num_features, 'in position', \
                     self.num_features + self.num_sensors - 1, 'with inputs', \
                         added_feature_indices
-            '''
+            
                        
             """ Check to see whether the capacity to store and update features
             has been reached.

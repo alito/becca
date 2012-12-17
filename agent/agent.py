@@ -47,15 +47,21 @@ class Agent(object):
         
         self.timestep += 1
 
-        self.sensors = sensors
-        self.primitives = primitives
+        # debug
+        #self.sensors = sensors
+        scaled_sensors = np.maximum(2 * (sensors - 0.5), 0.)
+        
+        #self.primitives = primitives
         self.reward = reward
 
         """
         Feature extractor
         ======================================================
         """
-        feature_activity, n_features = self.perceiver.step(sensors, 
+        #feature_activity, n_features = self.perceiver.step(sensors, 
+        #                                                   primitives, 
+        #                                                   self.action)
+        feature_activity, n_features = self.perceiver.step(scaled_sensors, 
                                                            primitives, 
                                                            self.action)
         
@@ -90,7 +96,7 @@ class Agent(object):
             self.show_reward_history(save_eps=True)
             #print "agent is ", self.timestep ," timesteps old" 
             
-            self.perceiver.visualize(save_eps=True)
+            #self.perceiver.visualize(save_eps=True)
             #self.actor.visualize()
  
     

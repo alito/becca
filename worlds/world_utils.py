@@ -85,7 +85,6 @@ def center_surround(fov, fov_span, block_heigth, block_width, verbose=False):
 
 
 def vizualize_pixel_array_feature_set(feature_set, world_name=None,
-                                  show_image=False,
                                   save_eps=False, save_jpg=False,
                                   filename='log/feature_set'):
     if feature_set.size == 0:
@@ -110,8 +109,7 @@ def vizualize_pixel_array_feature_set(feature_set, world_name=None,
                         
         """ Pad the group number with leading zeros out to three digits """
         feature_str = str(feature_index).zfill(3)
-        fig = plt.figure(world_name + " world features, feature " + 
-                          feature_str)
+        fig = plt.figure(world_name + " world features")
         plt.gray()
         img = plt.imshow(feature_pixels, vmin=0.0, vmax=1.0)
         img.set_interpolation('nearest')
@@ -131,8 +129,5 @@ def vizualize_pixel_array_feature_set(feature_set, world_name=None,
             except:
                 print("I think you need to have PIL installed to print in .jpg format.")
                 
-        if not(show_image):
-            plt.close()
-   
     return
     

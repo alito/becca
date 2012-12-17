@@ -21,14 +21,15 @@ class World(BaseWorld):
 
     http://www.sandia.gov/~brrohre/doc/Rohrer11ImplementedArchitectureFeature.pdf
 
-    Good performance is around 0.4 reward per time step.
+    Optimal performance is a reward of 1.0 per time step.
+    Good performance for BECCA is somewhere over 0.7 reward per time step.
     """
     def __init__(self):
         super(World, self).__init__()
 
         self.REPORTING_PERIOD = 10 ** 3       
         self.FEATURE_DISPLAY_INTERVAL = 10 ** 4
-        self.LIFESPAN = 2 * 10 ** 4
+        self.LIFESPAN = 2 * 10 ** 6
         self.REWARD_MAGNITUDE = 1.
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
@@ -119,40 +120,42 @@ class World(BaseWorld):
 
         sensors = np.concatenate((sensors, 1 - sensors))
 
-        reward = self.calculate_reward()               
+        """ Calculate the reward """
+        reward = 0
+        if abs(self.column_position - self.TARGET_COLUMN) < \
+            self.REWARD_REGION_WIDTH / 2.0:
+            reward += self.REWARD_MAGNITUDE
+        reward -= column_step / self.MAX_STEP_SIZE * 0.1 * self.REWARD_MAGNITUDE
         
         self.log(sensors, self.primitives, reward)
         
         return sensors, self.primitives, reward
     
-    
-    def calculate_reward(self):
-
-        reward = 0
-        if abs(self.column_position - self.TARGET_COLUMN) < \
-            self.REWARD_REGION_WIDTH / 2.0:
-            reward = self.REWARD_MAGNITUDE
-
-        return reward
-
-        
+            
     def log(self, sensors, primitives, reward):
         
-        self.display()
+        if self.graphing:
+            self.column_history.append(self.column_position)
 
-        self.column_history.append(self.column_position)
+        self.display()
 
         if self.animate and (self.timestep % self.ANIMATE_PERIOD) == 0:
             plt.figure("Image sensed")
             sensed_image = np.reshape(sensors[:len(sensors)/2], 
                                       (self.fov_span, self.fov_span))
             plt.gray()
-            plt.imshow(sensed_image)
+            plt.imshow(sensed_image, interpolation='nearest')
             viz_utils.force_redraw()
+            
+            #plt.show()
 
 
     def set_agent_parameters(self, agent):
-        #agent.perceiver.DISSIPATION_FACTOR = 1.0
+        agent.perceiver.DISSIPATION_FACTOR = 3.0
+        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.05
+        agent.perceiver.MIN_SIG_COACTIVITY = 0.995  * agent.perceiver.NEW_FEATURE_THRESHOLD
+        agent.perceiver.PLASTICITY_UPDATE_RATE = agent.perceiver.NEW_FEATURE_THRESHOLD * 0.003
+        
         #agent.actor.SALIENCE_WEIGHT = 0.5
         agent.actor.model.SIMILARITY_THRESHOLD = 0.7
 
