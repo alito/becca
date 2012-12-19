@@ -100,7 +100,7 @@ class Perceiver(object):
         
         """ These help maintain an estimate of each sensor's distribution """
         self.sensor_mean = np.zeros((self.num_raw_sensors, 1))
-        self.sensor_deviation = np.ones((self.num_raw_sensors, 1)) * 0.1
+        self.sensor_deviation = np.ones((self.num_raw_sensors, 1)) * 0.25
         self.SENSOR_MEAN_UPDATE_RATE = 0.01
         self.SENSOR_DEVIATION_UPDATE_RATE = 0.1 * self.SENSOR_MEAN_UPDATE_RATE
         
@@ -122,33 +122,17 @@ class Perceiver(object):
         -1 and 1, regardless of the actual input magnitudes. Split the 
         positive and negative values into two different sensor channels.
         """
-        #debug
-        #print 'raw_sensors', raw_sensors.ravel()
-        #print 'self.sensor_mean', self.sensor_mean.shape
-        #print 'raw_sensors ', raw_sensors.shape
-
         self.sensor_mean = self.sensor_mean * \
                             (1 - self.SENSOR_MEAN_UPDATE_RATE) \
                             + raw_sensors * self.SENSOR_MEAN_UPDATE_RATE 
-        
-        #print 'self.sensor_mean', self.sensor_mean.ravel()
-        
         self.sensor_deviation = self.sensor_deviation * \
                             (1-self.SENSOR_DEVIATION_UPDATE_RATE) \
                             + np.abs(raw_sensors - self.sensor_mean) * \
                             self.SENSOR_DEVIATION_UPDATE_RATE 
-        
-        #print 'self.sensor_deviation', self.sensor_deviation.ravel()
-        
         unsplit_sensors = utils.map_inf_to_one((raw_sensors - self.sensor_mean) / \
                                     (self.sensor_deviation + utils.EPSILON))
-        
-        #print 'unsplit_sensors', unsplit_sensors.ravel()
-        
-        sensors = np.concatenate((np.abs(np.minimum(unsplit_sensors, 0)), \
-                                        np.maximum(unsplit_sensors, 0)))
-
-        #print 'sensors', sensors.ravel()
+        sensors = np.concatenate((np.maximum(unsplit_sensors, 0), \
+                                  np.abs(np.minimum(unsplit_sensors, 0)) ))
         
         """ Build the input vector.
         Combine sensors and primitives with 

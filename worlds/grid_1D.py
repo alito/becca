@@ -27,7 +27,7 @@ class World(BaseWorld):
         
         self.REPORTING_PERIOD = 10 ** 4
         self.LIFESPAN = 2 * 10 ** 4
-        self.REWARD_MAGNITUDE = 1.
+        self.REWARD_MAGNITUDE = 100.
         self.ENERGY_COST = 0.01
         self.display_state = False
         self.name = 'one dimensional grid world'
