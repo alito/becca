@@ -48,15 +48,6 @@ def center_surround(fov, fov_span, block_heigth, block_width, verbose=False):
                 super_pixels[row    ][column + 2] / 12 - \
                 super_pixels[row + 2][column + 2] / 12
                 
-    """ Adjust to get maximum contrast and
-    normalize to scale up small values and to ensure that 
-    it falls between 0 and 1.
-    """
-    max_val = np.max(np.abs(center_surround_pixels))
-    center_surround_pixels *= 1 / (max_val + utils.EPSILON)
-    center_surround_pixels += 1
-    center_surround_pixels *= 0.5
-    
     if verbose:
         plt.figure("fov")
         plt.gray()

@@ -41,7 +41,7 @@ class World(BaseWorld):
 
         self.fov_span = 5
 
-        self.num_sensors = 2 * self.fov_span ** 2
+        self.num_sensors = self.fov_span ** 2
         self.num_primitives = 0
         self.num_actions = 17
 
@@ -145,7 +145,7 @@ class World(BaseWorld):
                         fov, self.fov_span, self.block_width, self.block_width)
 
         sensors = center_surround_pixels.ravel()
-        sensors = np.concatenate((sensors, 1 - sensors))
+        #sensors = np.concatenate((sensors, 1 - sensors))
 
         """ Calculate reward """
         reward = 0

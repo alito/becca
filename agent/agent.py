@@ -46,22 +46,13 @@ class Agent(object):
         """ Advance the agent's operation by one time step """
         
         self.timestep += 1
-
-        # debug
-        #self.sensors = sensors
-        scaled_sensors = np.maximum(2 * (sensors - 0.5), 0.)
-        
-        #self.primitives = primitives
         self.reward = reward
 
         """
         Feature extractor
         ======================================================
         """
-        #feature_activity, n_features = self.perceiver.step(sensors, 
-        #                                                   primitives, 
-        #                                                   self.action)
-        feature_activity, n_features = self.perceiver.step(scaled_sensors, 
+        feature_activity, n_features = self.perceiver.step(sensors, 
                                                            primitives, 
                                                            self.action)
         

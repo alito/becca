@@ -49,17 +49,6 @@ class Actor(object):
         self.feature_activity = feature_activity
         self.model.num_features = n_features
         
-        #debug
-        #reward = self.process_reward(raw_reward)
-        #reward = raw_reward / 2
-        #reward = utils.map_inf_to_one(raw_reward)
-        
-        #if np.abs(raw_reward) > self.BIGGEST_REWARD:
-        #    self.BIGGEST_REWARD = np.abs(raw_reward)
-        
-        #reward = raw_reward / self.BIGGEST_REWARD
-        
-        
         """ Attend to a single feature """
         self.attended_feature = self.attend(self.deliberately_acted, 
                                             self.action)
@@ -109,8 +98,6 @@ class Actor(object):
                 print 'feature_activity', current_feature_activity.ravel()
             
             """ Make some noise """
-            #salience = self.SALIENCE_NOISE * \
-            #            np.random.random_sample(salience.shape)
             noise = 1 + self.SALIENCE_NOISE / \
                         np.random.random_sample(salience.shape)
             salience *= noise
