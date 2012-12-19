@@ -12,7 +12,7 @@ class Agent(object):
     """ A general reinforcement learning agent, modeled on observations and 
     theories of human performance. It takes in a time series of 
     sensory input vectors and a scalar reward and puts out a time series 
-    of motor commands. New features are created as necessary to adequately 
+    of action commands. New features are created as necessary to adequately 
     represent the data.
     """
     def __init__(self, num_sensors, num_primitives, 
@@ -48,28 +48,19 @@ class Agent(object):
         self.timestep += 1
         self.reward = reward
 
-        """
-        Feature extractor
-        ======================================================
-        """
-        feature_activity, n_features = self.perceiver.step(sensors, 
-                                                           primitives, 
-                                                           self.action)
+        """ Feature extractor """
+        feature_activity, n_features = self.perceiver.step(sensors, primitives, self.action)
         
-        """
-        Reinforcement learner
-        ======================================================
-        """
+        """ Reinforcement learner """
         self.action = self.actor.step(feature_activity, reward, n_features) 
         
         self.log()
-
         return self.action
 
     
     def log(self):
-        """ Logs the state of the world into a history that can be used to
-        evaluate and understand Becca's behavior
+        """ Log the state of the world into a history that can be used to
+        evaluate and understand BECCA's behavior
         """
         self.cumulative_reward += self.reward
 
@@ -83,20 +74,25 @@ class Agent(object):
     
     def display(self):
         if (self.timestep % self.REPORTING_PERIOD) == 0:
-            self.record_reward_history()
+            self.reward_history.append(float(self.cumulative_reward) / self.REPORTING_PERIOD)
+            self.reward_steps.append(self.timestep)
             self.show_reward_history(save_eps=True)
-            #print "agent is ", self.timestep ," timesteps old" 
-            
             #self.perceiver.visualize(save_eps=True)
             #self.actor.visualize()
  
     
-    def record_reward_history(self):
-        self.reward_history.append(float(self.cumulative_reward) / 
-                                   self.REPORTING_PERIOD)
-        self.reward_steps.append(self.timestep)
-                    
-            
+    def report_performance(self, show=True):
+        performance = np.mean(self.reward_history)
+        print("Final performance is %f" % performance)
+        
+        self.show_reward_history(save_eps=True)
+
+        if show:
+            plt.show()    
+        
+        return performance
+        
+    
     def show_reward_history(self, show=False, save_eps=False,
                             epsfilename='log/reward_history.eps'):
         if self.graphing:
@@ -113,18 +109,6 @@ class Agent(object):
                 plt.show()
     
     
-    def report_performance(self, show=True):
-        performance = np.mean(self.reward_history)
-        print("Final performance is %f" % performance)
-        
-        self.show_reward_history(save_eps=True)
-
-        if show:
-            plt.show()    
-        
-        return performance
-        
-    
     def save(self):
         success = False
         try:
@@ -133,19 +117,15 @@ class Agent(object):
             print("Agent data saved at " + str(self.timestep) + " time steps")
 
         except IOError as err:
-            print("File error: " + str(err) + 
-                  " encountered while saving agent data")
+            print("File error: " + str(err) + " encountered while saving agent data")
         except pickle.PickleError as perr: 
-            print("Pickling error: " + str(perr) + 
-                  " encountered while saving agent data")        
+            print("Pickling error: " + str(perr) + " encountered while saving agent data")        
         else:
             success = True
-            
         return success
            
         
     def restore(self):
-        
         restored_agent = self
         try:
             with open(self.pickle_filename, 'rb') as agent_data:
@@ -160,13 +140,13 @@ class Agent(object):
                (loaded_agent.num_primitives == self.num_primitives) and
                (loaded_agent.num_actions == self.num_actions)):
             
-                print("Agent restored at timestep " + str(loaded_agent.timestep))
+                print("Agent restored at timestep " + 
+                      str(loaded_agent.timestep))
                 restored_agent = loaded_agent
 
             else:
                 print("The agent " + self.pickle_filename + " does not have " +
-                      "the same number of input and output elements " +
-                      "as the world.")
+                      "the same number of input and output elements as the world.")
                 print("Creating a new agent from scratch.")
             
         except IOError:

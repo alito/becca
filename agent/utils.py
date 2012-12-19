@@ -46,6 +46,7 @@ def bounded_sum(a, b):
     For A < 0, B < 0, 
     bsum(A,B) = -T'(T(-A) + T(-B))
     """
+    """ TODO: remove some checks to speed up operation? """
     scalars = np.isscalar(a)
     if scalars:
         """ Handle the case where a and b are scalars """
@@ -110,30 +111,22 @@ def bounded_sum(a, b):
     
     
 def bounded_array_sum(arr, dim=0):
-    """ Perform a bounded sum on a 2D array on dimension dim.
-    """
-    
-    """ Map [-1,1]  onto (-Inf,Inf)
-    Then map back after dum is completed.
-    """
+    """ Perform a bounded sum on a 2D array on dimension dim """
+    """ Map [-1,1]  onto (-Inf,Inf), then map back after sum is completed """
     arr_prime = map_one_to_inf(arr)
     sum_prime = np.sum(arr_prime, dim)
     return map_inf_to_one(sum_prime)
     
     
 def map_one_to_inf(a):
-    """ Map values from [0, 1] onto [0, inf) and 
-    map values from [-1, 0] onto (-inf, 0].
-    """
+    """ Map values from [0, 1] onto [0, inf) and map values from [-1, 0] onto (-inf, 0] """
     eps = np.finfo(np.double).eps
     a_prime = np.sign(a) / (1 - np.abs(a) + eps) - np.sign(a)
     return a_prime
 
 
 def map_inf_to_one(a_prime):
-    """ Map values from [0, inf) onto [0, 1] and 
-    map values from  (-inf, 0] onto [-1, 0].
-    """
+    """ Map values from [0, inf) onto [0, 1] and map values from  (-inf, 0] onto [-1, 0] """
     a = np.sign(a_prime) * (1 - 1 / (np.abs(a_prime) + 1))
     return a
 
@@ -153,7 +146,6 @@ def similarity(point, point_set, max_index=None):
 
 
 def similarity_by_angle(point, point_set, max_index=None):
-    
     """
     Calculate the similarity between a point (an array) and a set of points.
     point_set must be a 2D 

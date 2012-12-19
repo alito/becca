@@ -5,16 +5,16 @@ class World(object):
     """ The base class for creating a new world. Can also be used as 
     a dummy world for debugging. The functionality is contained in:
     
-        step() -advances the world by one time step
+        step()  advances the world by one time step
         
     also required is:
     
-        is_alive() -returns True until the world ends
+        is_alive()  returns True until the world ends
     
-    For the time being, a Becca-configuration method for internal use 
+    For the time being, a BECCA-configuration method for internal use 
     has been found to be convenient as well.
     
-        set_agent_parameters() -configures Becca
+        set_agent_parameters()  configures Becca
             parameters specifically for the task at hand, when necessary    
     """
 
@@ -40,7 +40,6 @@ class World(object):
         sensors = np.zeros(self.num_sensors)
         primitives = np.zeros(self.num_primitives)
         reward = 0
-        
         
         return sensors, primitives, reward
 

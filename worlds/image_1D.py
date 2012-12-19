@@ -3,7 +3,7 @@ import agent.viz_utils as viz_utils
 from worlds.base_world import World as BaseWorld
 import worlds.world_utils as world_utils
 
-""" The Python Image Library, required by this world, installed
+""" The Python Image Library, required by this world, is installed
 as part of pyplot. This allows the loading and interpreting of .jpgs
 """
 import matplotlib.pyplot as plt
@@ -11,18 +11,14 @@ import numpy as np
 
 
 class World(BaseWorld):
-    """ Image_1D
-    one-dimensional visual servo task
-
+    """ Image_1D, one-dimensional visual servo task
     In this task, BECCA can direct its gaze left and right along a
     mural. It is rewarded for directing it near the center. The
     mural is not represented using basic features, but rather using
     raw inputs, which BECCA must build into features. For a full writeup see:
-
     http://www.sandia.gov/~brrohre/doc/Rohrer11ImplementedArchitectureFeature.pdf
-
-    Optimal performance is a reward of 1.0 per time step.
-    Good performance for BECCA is somewhere over 0.7 reward per time step.
+    Optimal performance is a reward of 100 per time step.
+    Good performance for BECCA is a reward of somewhere over 70 per time step.
     """
     def __init__(self):
         super(World, self).__init__()
@@ -37,7 +33,6 @@ class World(BaseWorld):
         self.name = 'one dimensional visual world'
         self.announce()
 
-        
         self.step_counter = 0
         self.fov_span = 10 
         
@@ -53,13 +48,10 @@ class World(BaseWorld):
         
         """ Convert it to grayscale if it's in color """
         if self.data.shape[2] == 3:
-            """ Collapse the three RGB matrices into one black/white value
-            matrix.
-            """
+            """ Collapse the three RGB matrices into one black/white value matrix """
             self.data = np.sum(self.data, axis=2) / 3.0
 
-        """ Define the size of the field of view, 
-        its range of allowable positions,
+        """ Define the size of the field of view, its range of allowable positions, 
         and its initial position.
         """
         image_width = self.data.shape[1]
@@ -73,9 +65,7 @@ class World(BaseWorld):
         self.fov_width = self.fov_height
         self.column_min = np.ceil(self.fov_width / 2)
         self.column_max = np.floor(self.data.shape[1] - self.column_min)
-        self.column_position = np.random.random_integers(self.column_min, 
-                                                         self.column_max)
-
+        self.column_position = np.random.random_integers(self.column_min, self.column_max)
         self.block_width = self.fov_width / (self.fov_span + 2)
 
         self.sensors = np.zeros(self.num_sensors)
@@ -83,7 +73,6 @@ class World(BaseWorld):
 
 
     def step(self, action): 
-        """ Advance the World by one time step """
         self.timestep += 1
         
         """ Actions 0-3 move the field of view to a higher-numbered 
@@ -100,9 +89,8 @@ class World(BaseWorld):
                                action[7] * self.MAX_STEP_SIZE / 16)
         
         column_step = np.round( column_step * ( 1 + self.NOISE_MAGNITUDE * 
-                                np.random.random_sample() * 2.0- 
-                                self.NOISE_MAGNITUDE * 
-                                np.random.random_sample() * 2.0))
+                                np.random.random_sample() * 2.0 - 
+                                self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0))
         
         self.column_position = self.column_position + int(column_step)
 
@@ -111,15 +99,12 @@ class World(BaseWorld):
 
         """ Create the sensory input vector """
         fov = self.data[:, self.column_position - self.fov_width / 2: 
-                        self.column_position + self.fov_width / 2]
+                           self.column_position + self.fov_width / 2]
         
         center_surround_pixels = world_utils.center_surround( \
                         fov, self.fov_span, self.block_width, self.block_width)
 
         sensors = center_surround_pixels.ravel()
-
-        #DEBUG
-        #sensors = np.concatenate((sensors, 1 - sensors))
 
         """ Calculate the reward """
         reward = 0
@@ -129,7 +114,6 @@ class World(BaseWorld):
         reward -= column_step / self.MAX_STEP_SIZE * 0.1 * self.REWARD_MAGNITUDE
         
         self.log(sensors, self.primitives, reward)
-        
         return sensors, self.primitives, reward
     
             
@@ -156,11 +140,11 @@ class World(BaseWorld):
         """ These parameters create a very neat feature set and are good for
         long-term performance.
         """ 
-        #agent.perceiver.DISSIPATION_FACTOR = 3.0
-        #agent.perceiver.NEW_FEATURE_THRESHOLD = 0.05
-        #agent.perceiver.MIN_SIG_COACTIVITY = 0.995  * agent.perceiver.NEW_FEATURE_THRESHOLD
-        #agent.perceiver.PLASTICITY_UPDATE_RATE = agent.perceiver.NEW_FEATURE_THRESHOLD * 0.003
-        
+        '''agent.perceiver.DISSIPATION_FACTOR = 3.0
+        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.05
+        agent.perceiver.MIN_SIG_COACTIVITY = 0.995  * agent.perceiver.NEW_FEATURE_THRESHOLD
+        agent.perceiver.PLASTICITY_UPDATE_RATE = agent.perceiver.NEW_FEATURE_THRESHOLD * 0.003
+        '''
         pass
             
          
@@ -192,11 +176,7 @@ class World(BaseWorld):
         
     
     def vizualize_feature_set(self, feature_set):
-        """ Provide an intuitive display of the features created by the 
-        agent. 
-        """
-        world_utils.vizualize_pixel_array_feature_set(feature_set, 
-                                                      world_name='image_1D',
-                                                      save_eps=True, 
-                                                      save_jpg=True)
+        """ Provide an intuitive display of the features created by the agent """
+        world_utils.vizualize_pixel_array_feature_set(feature_set, world_name='image_1D', 
+                                                      save_eps=True, save_jpg=True)
     

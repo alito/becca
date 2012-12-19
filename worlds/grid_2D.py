@@ -4,21 +4,15 @@ from .base_world import World as BaseWorld
 import numpy as np
 
 class World(BaseWorld):
-    """ grid_2D.World
-    Two-dimensional grid task
-
+    """ grid_2D.World, Two-dimensional grid task
     In this task, the agent steps North, South, East, or West in a
-    5 x 5 grid-world. Position (4,4) is rewarded (1/2) and (2,2) is
-    punished (-1/2). There is also a penalty of -1/20 for each horizontal
-    or vertical step taken.
-    Horizonal and vertical positions are reported
+    5 x 5 grid-world. Position (4,4) is rewarded and (2,2) is
+    punished. There is also a lesser penalty for each horizontal
+    or vertical step taken. Horizonal and vertical positions are reported
     separately as basic features, rather than raw sensory inputs.
-
-    This is intended to be a
-    simple-as-possible-but-slightly-more-interesting-
+    This is intended to be a simple-as-possible-but-slightly-more-interesting-
     that-the-one-dimensional-task task for troubleshooting BECCA.
-
-    Optimal performance is between 0.3 and 0.35 reward per time step.
+    Optimal performance is a reward of between 70 and 80 per time step.
     """
 
     def __init__(self):
@@ -48,7 +42,6 @@ class World(BaseWorld):
 
     
     def step(self, action): 
-        """ Advance the World by one timestep """
 
         self.timestep += 1
         
@@ -86,7 +79,6 @@ class World(BaseWorld):
         reward -= self.ENERGY_COST * energy
 
         self.display()
-
         return self.sensors, primitives, reward
     
     

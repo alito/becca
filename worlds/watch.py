@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-
 """ Import the Python Imaging Library if it can be found.
 If not, carry on.
 """
@@ -21,15 +20,13 @@ except ImportError:
 
 
 class World(BaseWorld):
-    """ watch
-    visual feature extraction
-
+    """ watch, visual feature extraction
     In this world, Becca's feature extractor creates visual    
     features from portions of images in the
     Caltech-256 image_data dataset. The reinforcement actor serves no
     vital purpose in this world--it is intended to showcase the
     feature extractor.
-    
+
     By default, this world pulls images from the collection at 
     ./images/lib . This directory is specifically excluded from 
     the repository since it can be quite large and shouldn't be 
@@ -57,13 +54,12 @@ class World(BaseWorld):
         self.name = 'watch world'
         self.announce()
 
-        
         self.timestep = 0
         self.sample_counter = 0
 
         self.fov_span = 10
         
-        self.num_sensors = 2 * self.fov_span ** 2
+        self.num_sensors = self.fov_span ** 2
         self.num_primitives = 0
         self.num_actions = 16
 
@@ -79,8 +75,7 @@ class World(BaseWorld):
             for filename in filenames:
                 for extension in extensions:
                     if filename.endswith(extension):
-                        self.image_filenames.append(os.path.join
-                                                    (localpath,filename))
+                        self.image_filenames.append(os.path.join(localpath,filename))
                                                      
         self.image_count = len(self.image_filenames)
         if self.image_count == 0:
@@ -105,7 +100,6 @@ class World(BaseWorld):
     def initialize_image(self):
         
         self.sample_counter = 0
-        
         filename = self.image_filenames[np.random.randint(0, self.image_count)]
         
         if using_pil:
@@ -148,7 +142,6 @@ class World(BaseWorld):
 
 
     def step(self, action): 
-        """ Advance the World by one time step """
         self.timestep += 1
         self.sample_counter += 1
 
@@ -157,11 +150,9 @@ class World(BaseWorld):
             self.initialize_image()
 
         """ Actions 0-3 move the field of view to a higher-numbered 
-        row (downward in the image_data) with varying magnitudes, and
-        actions 4-7 do the opposite.
+        row (downward in the image_data) with varying magnitudes, and actions 4-7 do the opposite.
         Actions 8-11 move the field of view to a higher-numbered 
-        column (rightward in the image_data) with varying magnitudes, and
-        actions 12-15 do the opposite.
+        column (rightward in the image_data) with varying magnitudes, and actions 12-15 do the opposite.
         """
         row_step    = np.round(action[0] * self.MAX_STEP_SIZE / 2 + 
                                action[1] * self.MAX_STEP_SIZE / 4 + 
@@ -195,21 +186,16 @@ class World(BaseWorld):
                         int(self.column_position + self.fov_width / 2)]
         
         center_surround_pixels = world_utils.center_surround( \
-                        fov, self.fov_span, self.block_width, 
-                        self.block_width, verbose=False)
+                        fov, self.fov_span, self.block_width, self.block_width, verbose=False)
 
-        sensors = center_surround_pixels.ravel()
-        sensors = np.concatenate((sensors, 1 - sensors))
-        
+        sensors = center_surround_pixels.ravel()        
         reward = self.calculate_reward()               
         
         return sensors, self.primitives, reward
     
     
     def calculate_reward(self):
-        
-        reward = 0
-        return reward
+        return 0
 
         
     def set_agent_parameters(self, agent):
@@ -231,11 +217,7 @@ class World(BaseWorld):
         
     
     def vizualize_feature_set(self, feature_set):
-        """ Provide an intuitive display of the features created by the 
-        agent. 
-        """
-        world_utils.vizualize_pixel_array_feature_set(feature_set, 
-                                                      world_name='watch',
-                                                      save_eps=True, 
-                                                      save_jpg=True)
+        """ Provide an intuitive display of the features created by the agent """
+        world_utils.vizualize_pixel_array_feature_set(feature_set, world_name='watch',
+                                                      save_eps=True, save_jpg=True)
     

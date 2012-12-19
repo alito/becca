@@ -6,17 +6,11 @@ import numpy as np
 class World(BaseWorld):
     """grid_1D_ms.World
     One-dimensional grid task, multi-step
-
     In this task, the agent steps forward and backward along a
-    line. The fourth position is rewarded (+1/2) and the ninth
-    position is punished (-1/2).
-
+    line. The fourth position is rewarded and the ninth position is punished.
     This is intended to be as similar as possible to the 
-    one-dimensional grid task, but require multi-step planning for optimal 
-    behavior.
-
-    Optimal performance is between 0.25 and 0.3 reward per time step.
-
+    one-dimensional grid task, but require multi-step planning for optimal behavior.
+    Optimal performance is a reward of between 50 and 60 per time step.
     """
 
     def __init__(self):
@@ -51,8 +45,7 @@ class World(BaseWorld):
 
         self.timestep += 1 
 
-        """ Occasionally add a perturbation to the action to knock it into 
-        a different state. """
+        """ Occasionally add a perturbation to the action to knock it into a different state """
         if np.random.random_sample() < self.JUMP_FRACTION:
             action += round(np.random.random_sample() * 6) * \
                     np.round(np.random.random_sample(self.num_actions))
@@ -67,9 +60,7 @@ class World(BaseWorld):
         self.world_state += action[0] - action[1]
         
         """ Ensure that the world state falls between 0 and 9 """
-        self.world_state -= self.num_primitives * \
-                            np.floor_divide(self.world_state, 
-                                            self.num_primitives)
+        self.world_state -= self.num_primitives * np.floor_divide(self.world_state, self.num_primitives)
         self.simple_state = int(np.floor(self.world_state))
         
         """ Assign primitives as zeros or ones. 
@@ -88,7 +79,6 @@ class World(BaseWorld):
         reward = np.max(reward, -1)
         
         self.display()
-
         return sensors, primitives, reward
 
                     
@@ -98,9 +88,7 @@ class World(BaseWorld):
 
 
     def display(self):
-        """ Provide an intuitive display of the current state of the World 
-        to the user.
-        """
+        """ Provide an intuitive display of the current state of the World to the user """
         if (self.display_state):
             state_image = ['.'] * self.num_primitives
             state_image[self.simple_state] = 'O'

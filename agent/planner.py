@@ -10,9 +10,7 @@ class Planner(object):
         """
         self.EXPLORATION_FRACTION = 0.2     # real, 0 < x < 1
         
-        """ Affects how heavily the similarity of transitions is
-        considered during deliberation.
-        """
+        """ Affects how heavily the similarity of transitions is considered during deliberation """
         self.SIMILARITY_WEIGHT = 3.         # real, 0 < x
         
         """ Don't take any deliberate actions for a few time steps
@@ -130,22 +128,15 @@ class Planner(object):
 
         similarity = model.get_context_similarities(planning=True)
 
-        """ TODO: Add recency? This is likely to be useful when 
-        rewards change over time. 
-        """
-        transition_vote = value.ravel()  + \
-                        self.SIMILARITY_WEIGHT * similarity.ravel() 
+        """ TODO: Add recency? This is likely to be useful when rewards change over time """
+        transition_vote = value.ravel()  + self.SIMILARITY_WEIGHT * similarity.ravel() 
         
         """ Add a small amount of noise to the votes to encourage
         variation in closely-matched options.
         """
-        #transition_vote += np.random.random_sample(transition_vote.shape) * \
-        #                    self.VOTE_NOISE
-        noise = 1 + self.VOTE_NOISE / \
-                        np.random.random_sample(transition_vote.shape)
+        noise = 1 + self.VOTE_NOISE / np.random.random_sample(transition_vote.shape)
         transition_vote *= noise
 
-        
         max_transition_index = np.argmax(transition_vote)
         
         """ Update the transition used to select this action. 
@@ -153,29 +144,16 @@ class Planner(object):
         action to be executed.
         """
         model.update_transition(max_transition_index, 
-                            update_strength=similarity[max_transition_index], 
-                            wait=True)
+                                update_strength=similarity[max_transition_index], wait=True)
         
-        '''print 'context', model.context[:18,max_transition_index].ravel()
-        print 'cause', model.cause[:18,max_transition_index].ravel()
-        print 'effect', model.effect[:18,max_transition_index].ravel()
-        print 'reward', model.reward_value[:,max_transition_index]
-                
-        print 'max_transition_index', max_transition_index
-        print 'value', value.ravel()[max_transition_index]
-        print 'similarity', similarity [max_transition_index]
-        print 'transition_vote', transition_vote[max_transition_index]
-        '''
         goal = model.get_cause(max_transition_index)
            
         """ Separate action goals from the rest of the goal """
         action = np.zeros(self.action.shape)
-        if np.size((goal[self.num_primitives: self.num_primitives + \
-                         self.num_actions,:] > 0).nonzero()):
+        if np.size((goal[self.num_primitives: self.num_primitives + self.num_actions,:] > 0).nonzero()):
             self.deliberately_acted = True
 
-            action[goal[self.num_primitives: self.num_primitives + \
-                         self.num_actions,:] > 0] = 1
+            action[goal[self.num_primitives: self.num_primitives + self.num_actions,:] > 0] = 1
             goal[self.num_primitives: self.num_primitives + \
                  self.num_actions,:] = np.zeros((self.num_actions, 1))
     

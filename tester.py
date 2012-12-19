@@ -1,6 +1,4 @@
-"""
-A main test harness for a general reinforcement learning agent. 
-"""
+""" A main test harness for a general reinforcement learning agent """
 
 import numpy as np
 from agent.agent import Agent
@@ -57,9 +55,7 @@ def main():
         try:
             if world.is_time_to_display():                
                 world.vizualize_feature_set(
-                  viz_utils.reduce_feature_set(agent.perceiver, 
-                                               agent.num_primitives, 
-                                               agent.num_actions))
+                  viz_utils.reduce_feature_set(agent.perceiver, agent.num_primitives, agent.num_actions))
                 viz_utils.force_redraw()
         except AttributeError:
             pass

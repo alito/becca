@@ -1,7 +1,4 @@
 
-#import state
-import utils
-
 import copy 
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
@@ -14,18 +11,14 @@ world-specific interpretation of Becca's information. That should be
 taken care of by individual worlds.  
 """
 
-def visualize_coactivity(coactivity, size=0, 
-                                    save_eps=False, 
-                                    epsfilename='log/coactivity.eps'):
+def visualize_coactivity(coactivity, size=0, save_eps=False, epsfilename='log/coactivity.eps'):
     """ Produce a visual representation of the coactivity matrix """
     
     if size == 0:
         size = coactivity.shape[0]
     fig = plt.figure("perceiver coactivity visualization")
     
-    """ Diane L. made the brilliant suggestion to leave this plot in color. 
-    It looks much prettier.
-    """
+    """ Diane L. made the brilliant suggestion to leave this plot in color. It looks much prettier. """
     plt.summer()
 
     im = plt.imshow(coactivity[0:size, 0:size])
@@ -49,8 +42,8 @@ def visualize_feature_map(feature_map):
     plt.title("Feature map")
     plt.draw()
         
-def visualize_feature_set(grouper, save_eps=False, 
-                          epsfilename='log/features.eps'):
+        
+def visualize_feature_set(grouper, save_eps=False, epsfilename='log/features.eps'):
     """ Visualize all the groups in all the features """
     label = 'feature_set'
     fig = plt.figure(label)
@@ -73,9 +66,7 @@ def visualize_feature_set(grouper, save_eps=False,
 
         for feature_index in range(n_features):
 
-            visualize_state(current_group[feature_index], 
-                            y_max=pos_ctr-0.25,
-                            y_min=pos_ctr-0.75,
+            visualize_state(current_group[feature_index], y_max=pos_ctr-0.25, y_min=pos_ctr-0.75,
                             axes=viz_axes)
             pos_ctr -= 1.0
     
@@ -153,8 +144,7 @@ def visualize_model(model, n=None):
         
     n = np.minimum(n, model.num_transitions)
         
-    print "The model has a total of ", model.num_transitions, \
-            " transitions."
+    print "The model has a total of ", model.num_transitions, " transitions."
     
     '''
     """ Show the n transitions from the model that have the 
@@ -194,8 +184,7 @@ def visualize_model(model, n=None):
             (np.log(model.count[:model.num_transitions] + 1)), axis=0).ravel()
     
     for index in range(n):
-        print "Showing the " + str(index) + \
-                    "th most impact."
+        print "Showing the " + str(index) + "th most impact."
                     
         visualize_transition(model, index_by_rank[-(index+1)])
         """ Hold the plot, blocking the program until the user closes
@@ -256,10 +245,8 @@ def visualize_transition(model, transition_index, save_eps=False,
     return
   
   
-def visualize_state(state, num_primitives, num_actions, label='state', 
-                      y_min=0.25, y_max=0.75, 
-                      save_eps=False, epsfilename='log/state.eps', 
-                      axes=None):
+def visualize_state(state, num_primitives, num_actions, label='state', y_min=0.25, y_max=0.75, 
+                      save_eps=False, epsfilename='log/state.eps', axes=None):
     """ Present the state in a visually intuitive way.
     height_proportion is the height of the display as 
     a fraction of width.
