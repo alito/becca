@@ -26,9 +26,9 @@ class World(BaseWorld):
     def __init__(self):
         super(World, self).__init__()
 
-        self.REPORTING_PERIOD = 10 ** 3   
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 4
-        self.LIFESPAN = 2 * 10 ** 6
+        self.REPORTING_PERIOD = 10 ** 4   
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 6
+        self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 1.
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
@@ -147,15 +147,7 @@ class World(BaseWorld):
         sensors = center_surround_pixels.ravel()
         sensors = np.concatenate((sensors, 1 - sensors))
 
-        reward = self.calculate_reward()               
-        
-        self.log(sensors, self.primitives, reward)
-        
-        return sensors, self.primitives, reward
-    
-    
-    def calculate_reward(self):
-        
+        """ Calculate reward """
         reward = 0
         if abs(self.column_position - self.TARGET_COLUMN) < \
                 self.REWARD_REGION_WIDTH / 2: 
@@ -163,16 +155,12 @@ class World(BaseWorld):
         if abs(self.row_position - self.TARGET_ROW) < \
                self.REWARD_REGION_WIDTH / 2:
             reward += self.REWARD_MAGNITUDE / 2
-        '''
-        if (abs(self.column_position - self.TARGET_COLUMN) < \
-                self.REWARD_REGION_WIDTH / 2) and  \
-                (abs(self.row_position - self.TARGET_ROW) < \
-               self.REWARD_REGION_WIDTH / 2):
-            reward += self.REWARD_MAGNITUDE
-            '''
-        return reward
-
         
+        self.log(sensors, self.primitives, reward)
+        
+        return sensors, self.primitives, reward
+    
+    
     def log(self, sensors, primitives, reward):
         
         self.display()
@@ -185,23 +173,11 @@ class World(BaseWorld):
             sensed_image = np.reshape(sensors[:len(sensors)/2], 
                                       (self.fov_span, self.fov_span))
             plt.gray()
-            plt.imshow(sensed_image)
+            plt.imshow(sensed_image, interpolation='nearest')
             viz_utils.force_redraw()
 
  
     def set_agent_parameters(self, agent):
-        agent.perceiver.DISSIPATION_FACTOR = 3.0
-        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.05
-        agent.perceiver.MIN_SIG_COACTIVITY = 0.99  * agent.perceiver.NEW_FEATURE_THRESHOLD
-        agent.perceiver.PLASTICITY_UPDATE_RATE = agent.perceiver.NEW_FEATURE_THRESHOLD * 0.003
-        
-        #agent.actor.SALIENCE_WEIGHT = 0.5
-        agent.actor.model.SIMILARITY_THRESHOLD = 0.7
-
-        """ Until features are sophisticated enough, feature-based
-        salience is not a big help.
-        """
-        #agent.actor.SALIENCE_WEIGHT = 0.1
         
         pass
     
@@ -245,6 +221,6 @@ class World(BaseWorld):
         """
         world_utils.vizualize_pixel_array_feature_set(feature_set, 
                                                       world_name='image_2D',
-                                                      save_eps=True, 
-                                                      save_jpg=False)
+                                                      save_eps=False, 
+                                                      save_jpg=True)
     

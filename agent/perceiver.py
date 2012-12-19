@@ -32,7 +32,7 @@ class Perceiver(object):
         of the elements of a growing feature and the next candidates 
         is lower than this value, don't add any more. 
         """
-        self.MIN_SIG_COACTIVITY =  0.98 * self.NEW_FEATURE_THRESHOLD
+        self.MIN_SIG_COACTIVITY =  0.7 * self.NEW_FEATURE_THRESHOLD
         # real,  0 < x <= self.NEW_FEATURE_THRESHOLD
 
         """ Control how rapidly the co-activity update plasticity changes """

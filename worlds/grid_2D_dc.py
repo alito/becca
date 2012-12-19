@@ -102,9 +102,7 @@ class World(BaseWorld):
     
     
     def set_agent_parameters(self, agent):
-        #agent.perceiver.NEW_FEATURE_THRESHOLD = 0.05
-        #agent.perceiver.DISSIPATION_FACTOR = 0.0               # real, 0 < x 
-        #agent.actor.INITIAL_UNCERTAINTY = 0.25
+
         pass
     
 

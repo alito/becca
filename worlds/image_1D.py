@@ -27,9 +27,9 @@ class World(BaseWorld):
     def __init__(self):
         super(World, self).__init__()
 
-        self.REPORTING_PERIOD = 10 ** 3       
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 4
-        self.LIFESPAN = 2 * 10 ** 6
+        self.REPORTING_PERIOD = 10 ** 4       
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 6
+        self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 1.
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
@@ -151,14 +151,15 @@ class World(BaseWorld):
 
 
     def set_agent_parameters(self, agent):
-        agent.perceiver.DISSIPATION_FACTOR = 3.0
-        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.05
-        agent.perceiver.MIN_SIG_COACTIVITY = 0.995  * agent.perceiver.NEW_FEATURE_THRESHOLD
-        agent.perceiver.PLASTICITY_UPDATE_RATE = agent.perceiver.NEW_FEATURE_THRESHOLD * 0.003
         
-        #agent.actor.SALIENCE_WEIGHT = 0.5
-        agent.actor.model.SIMILARITY_THRESHOLD = 0.7
-
+        """ These parameters create a very neat feature set and are good for
+        long-term performance.
+        """ 
+        #agent.perceiver.DISSIPATION_FACTOR = 3.0
+        #agent.perceiver.NEW_FEATURE_THRESHOLD = 0.05
+        #agent.perceiver.MIN_SIG_COACTIVITY = 0.995  * agent.perceiver.NEW_FEATURE_THRESHOLD
+        #agent.perceiver.PLASTICITY_UPDATE_RATE = agent.perceiver.NEW_FEATURE_THRESHOLD * 0.003
+        
         pass
             
          
