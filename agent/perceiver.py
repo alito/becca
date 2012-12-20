@@ -79,10 +79,15 @@ class Perceiver(object):
         self.num_features = num_primitives + num_actions
         
         """ These help maintain an estimate of each sensor's distribution """
-        self.sensor_mean = np.zeros((self.num_raw_sensors, 1))
-        self.sensor_deviation = np.ones((self.num_raw_sensors, 1)) * 0.25
-        self.SENSOR_MEAN_UPDATE_RATE = 0.01
-        self.SENSOR_DEVIATION_UPDATE_RATE = 0.1 * self.SENSOR_MEAN_UPDATE_RATE
+        self.SENSOR_INITIAL_MEAN = 0.0
+        self.SENSOR_INITIAL_DEVIATION = 0.01
+        self.sensor_mean = np.ones((self.num_raw_sensors, 1)) * self.SENSOR_INITIAL_MEAN
+        self.sensor_deviation = np.ones((self.num_raw_sensors, 1)) * self.SENSOR_INITIAL_DEVIATION
+        self.SENSOR_DISTRIBUTION_UPDATE_RATE = 0.001
+        self.SENSOR_UPDATE_TIME_CONSTANT = 5
+        #self.SENSOR_DEVIATION_UPDATE_RATE = 0.1 * self.SENSOR_MEAN_UPDATE_RATE
+        
+        self.age = 0
         
 
     def step(self, raw_sensors, primitives, actions):
@@ -90,6 +95,8 @@ class Perceiver(object):
         and create new features when appropriate.
         """
 
+        self.age += 1
+        
         """ Make sure all the inputs are 2D arrays """
         if len(raw_sensors.shape) == 1:
             raw_sensors = raw_sensors[:,np.newaxis]
@@ -102,12 +109,15 @@ class Perceiver(object):
         -1 and 1, regardless of the actual input magnitudes. Split the 
         positive and negative values into two different sensor channels.
         """
-        self.sensor_mean = self.sensor_mean * (1 - self.SENSOR_MEAN_UPDATE_RATE) \
-                                   + raw_sensors * self.SENSOR_MEAN_UPDATE_RATE 
-        self.sensor_deviation = self.sensor_deviation * (1-self.SENSOR_DEVIATION_UPDATE_RATE) \
-                + np.abs(raw_sensors - self.sensor_mean) * self.SENSOR_DEVIATION_UPDATE_RATE 
+        sensor_mean_update_rate = self.SENSOR_DISTRIBUTION_UPDATE_RATE + \
+                    self.SENSOR_UPDATE_TIME_CONSTANT / (self.age + self.SENSOR_UPDATE_TIME_CONSTANT)
+        sensor_deviation_update_rate = sensor_mean_update_rate / 10
+        self.sensor_mean = self.sensor_mean * (1 - sensor_mean_update_rate) \
+                                   + raw_sensors * sensor_mean_update_rate 
+        self.sensor_deviation = self.sensor_deviation * (1-sensor_deviation_update_rate) \
+                + np.abs(raw_sensors - self.sensor_mean) * sensor_deviation_update_rate 
         unsplit_sensors = utils.map_inf_to_one((raw_sensors - self.sensor_mean) / \
-                                    (self.sensor_deviation + utils.EPSILON))
+                                    (self.sensor_deviation / 2. + utils.EPSILON))
         sensors = np.concatenate((np.maximum(unsplit_sensors, 0), \
                                   np.abs(np.minimum(unsplit_sensors, 0)) ))
         

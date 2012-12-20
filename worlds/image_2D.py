@@ -23,7 +23,7 @@ class World(BaseWorld):
 
         self.REPORTING_PERIOD = 10 ** 4   
         self.FEATURE_DISPLAY_INTERVAL = 10 ** 6
-        self.LIFESPAN = 2 * 10 ** 4
+        self.LIFESPAN = 5 * 10 ** 4
         self.REWARD_MAGNITUDE = 100.
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False

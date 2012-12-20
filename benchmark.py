@@ -12,7 +12,7 @@ than agents that perform a single task optimally and all others very poorly.
 In order to facilitate apples-to-apples comparisons between agents, the 
 benchmark will be version numbered.
 
-For N_RUNS = 7, Becca 0.4.4 scored 52
+For N_RUNS = 7, Becca 0.4.4 scored 51
 """
 
 
