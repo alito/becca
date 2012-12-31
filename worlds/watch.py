@@ -205,7 +205,7 @@ class World(BaseWorld):
         agent.actor.planner.OBSERVATION_FRACTION = 0.0
         
         """ Don't create a model """
-        agent.actor.model.MAX_ENTRIES = 10 ** 3
+        agent.actor.model.MAX_TRANSITIONS = 10 ** 3
         agent.actor.model.SIMILARITY_THRESHOLD = 0.
         
     

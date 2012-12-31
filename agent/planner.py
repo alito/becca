@@ -16,14 +16,14 @@ class Planner(object):
         """ Don't take any deliberate actions for a few time steps
         between each deliberate action.
         """
-        self.OBSERVE_STEPS = 3              # integer, 0 < x, typically small
+        self.OBSERVE_STEPS = 4              # integer, 0 < x, typically small
         self.observe_steps_left = self.OBSERVE_STEPS 
         self.OBSERVE = True
 
         """ Add just a bit of noise to the vote.
         Serves to randomize selection among nearly equal votes.
         """
-        self.VOTE_NOISE = 1e-5              # real, 0 < x < 1, typically small
+        self.FITNESS_NOISE = 1e-5              # real, 0 < x < 1, typically small
 
         self.num_primitives = num_primitives
         self.num_actions = num_actions
@@ -40,7 +40,7 @@ class Planner(object):
         """ Only act deliberately occasionally """
         if not self.OBSERVE:
             self.OBSERVE = True
-            self.observe_steps_left = self.OBSERVE_STEPS
+            self.observe_steps_left = self.OBSERVE_STEPS - 1
                 
             """ Occasionally explore when making a deliberate action """
             if np.random.random_sample() < self.EXPLORATION_FRACTION:
@@ -134,7 +134,7 @@ class Planner(object):
         """ Add a small amount of noise to the votes to encourage
         variation in closely-matched options.
         """
-        noise = 1 + self.VOTE_NOISE / np.random.random_sample(transition_vote.shape)
+        noise = 1 + self.FITNESS_NOISE / np.random.random_sample(transition_vote.shape)
         transition_vote *= noise
 
         max_transition_index = np.argmax(transition_vote)

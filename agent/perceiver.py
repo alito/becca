@@ -85,7 +85,6 @@ class Perceiver(object):
         self.sensor_deviation = np.ones((self.num_raw_sensors, 1)) * self.SENSOR_INITIAL_DEVIATION
         self.SENSOR_DISTRIBUTION_UPDATE_RATE = 0.001
         self.SENSOR_UPDATE_TIME_CONSTANT = 5
-        #self.SENSOR_DEVIATION_UPDATE_RATE = 0.1 * self.SENSOR_MEAN_UPDATE_RATE
         
         self.age = 0
         
@@ -109,13 +108,11 @@ class Perceiver(object):
         -1 and 1, regardless of the actual input magnitudes. Split the 
         positive and negative values into two different sensor channels.
         """
-        sensor_mean_update_rate = self.SENSOR_DISTRIBUTION_UPDATE_RATE + \
+        update_rate = self.SENSOR_DISTRIBUTION_UPDATE_RATE + \
                     self.SENSOR_UPDATE_TIME_CONSTANT / (self.age + self.SENSOR_UPDATE_TIME_CONSTANT)
-        sensor_deviation_update_rate = sensor_mean_update_rate / 10
-        self.sensor_mean = self.sensor_mean * (1 - sensor_mean_update_rate) \
-                                   + raw_sensors * sensor_mean_update_rate 
-        self.sensor_deviation = self.sensor_deviation * (1-sensor_deviation_update_rate) \
-                + np.abs(raw_sensors - self.sensor_mean) * sensor_deviation_update_rate 
+        self.sensor_mean = self.sensor_mean * (1 - update_rate) + raw_sensors * update_rate 
+        self.sensor_deviation = self.sensor_deviation * (1-update_rate) \
+                + np.abs(raw_sensors - self.sensor_mean) * update_rate 
         unsplit_sensors = utils.map_inf_to_one((raw_sensors - self.sensor_mean) / \
                                     (self.sensor_deviation / 2. + utils.EPSILON))
         sensors = np.concatenate((np.maximum(unsplit_sensors, 0), \

@@ -66,7 +66,7 @@ class Model(object):
         This number is driven by the practical limitations of available
         memory and (more often) computation speed. 
         """
-        self.MAX_ENTRIES = 10 ** 4            # integer, somewhat large
+        self.MAX_TRANSITIONS = 10 ** 4            # integer, somewhat large
         
         """ The maximum number of features that will ever be allowed to be created """
         self.max_num_features = max_num_features  # integer, somewhat large
@@ -75,7 +75,7 @@ class Model(object):
         self.CLEANING_PERIOD = 10 ** 5        # integer, somewhat large
         
         """ Lower bound on the rate at which transitions are updated """
-        self.UPDATE_RATE = 10 ** -1                # real, 0 < x < 1
+        self.TRANSITION_UPDATE_RATE = 10 ** -1                # real, 0 < x < 1
         
         """ The number of transitions to be included in the trace context.
         The trace is used to assign credit for transitions with deferred
@@ -97,11 +97,6 @@ class Model(object):
         """ The initial value for uncertainty in the effect and the reward """
         self.INITIAL_UNCERTAINTY = 0.5
 
-        """ The rate at which the reward associated with individual features
-        decays toward the average value.
-        """
-        self.FEATURE_REWARD_DECAY_RATE = 0.01
-        
         """ The total number of transitions in the model """
         self.num_transitions = 0
         
@@ -116,7 +111,7 @@ class Model(object):
         allocated on startup and the computer doesn't have to mess
         around with it during operation. 
         """ 
-        model_shape = (self.max_num_features, 2*self.MAX_ENTRIES)
+        model_shape = (self.max_num_features, 2*self.MAX_TRANSITIONS)
         self.context = np.zeros(model_shape)
         self.cause = np.zeros(model_shape)
         self.effect = np.zeros(model_shape)
@@ -124,7 +119,7 @@ class Model(object):
         self.effect_uncertainty = np.ones(model_shape)
         self.effect_uncertainty *= self.INITIAL_UNCERTAINTY
         
-        thin_shape = (1, 2*self.MAX_ENTRIES)
+        thin_shape = (1, 2*self.MAX_TRANSITIONS)
         self.count = np.zeros(thin_shape)
         self.reward_value = np.zeros(thin_shape)
         self.reward_uncertainty = np.ones(thin_shape)*self.INITIAL_UNCERTAINTY
@@ -334,8 +329,8 @@ class Model(object):
                 more rapidly when there is little past experience 
                 to contradict them. This facilitates one-shot learning.
                 """
-                update_rate_raw = (1 - self.UPDATE_RATE) / \
-                    self.count[0, matching_transition_index] + self.UPDATE_RATE
+                update_rate_raw = (1 - self.TRANSITION_UPDATE_RATE) / \
+                    self.count[0, matching_transition_index] + self.TRANSITION_UPDATE_RATE
                 update_rate = min(1.0, update_rate_raw) * update_strength
                 max_step_size = new_reward - self.reward_value[0, matching_transition_index]
 
@@ -438,11 +433,6 @@ class Model(object):
     
     def get_feature_salience(self, feature_activity):
        
-        debug = False
- 
-        if np.random.random_sample() < 0.00:
-            debug = True
-            
         if self.num_transitions == 0:
             return np.zeros(feature_activity.shape)
         
@@ -492,7 +482,7 @@ class Model(object):
         self.clean_count += 1
 
         """ Clean out the model when appropriate """
-        if self.num_transitions >= self.MAX_ENTRIES:
+        if self.num_transitions >= self.MAX_TRANSITIONS:
             self.clean_count = self.CLEANING_PERIOD + 1
 
         if self.clean_count > self.CLEANING_PERIOD:
@@ -532,10 +522,10 @@ class Model(object):
 
     def pad_model(self):
         """ Pad the model (re-allocate memory space) if it has shrunk too far """
-        if self.effect.shape[1] < self.MAX_ENTRIES:
+        if self.effect.shape[1] < self.MAX_TRANSITIONS:
             
-            shape = (self.effect.shape[0], self.MAX_ENTRIES)
-            thin_shape = (1, self.MAX_ENTRIES)
+            shape = (self.effect.shape[0], self.MAX_TRANSITIONS)
+            thin_shape = (1, self.MAX_TRANSITIONS)
             self.context = np.hstack((self.context, np.zeros(shape)))
             self.cause  = np.hstack((self.cause, np.zeros(shape)))
             self.effect = np.hstack((self.effect, np.zeros(shape)))
