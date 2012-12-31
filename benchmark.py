@@ -107,7 +107,7 @@ def main():
     
 def test(world):
     
-    MAX_NUM_FEATURES = 300
+    MAX_NUM_FEATURES = 100
     agent = Agent(world.num_sensors, world.num_primitives, world.num_actions, MAX_NUM_FEATURES)
     
     """ If configured to do so, the world sets some BECCA parameters to 

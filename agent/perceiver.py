@@ -14,6 +14,15 @@ class Perceiver(object):
     def __init__(self, num_sensors, num_primitives, num_actions,
                  max_num_features):
 
+        self.num_raw_sensors = num_sensors
+        self.num_sensors = num_sensors * 2
+        self.num_primitives = num_primitives
+        self.num_actions = num_actions
+        self.num_features = num_primitives + num_actions
+
+        """ Stop creating new groups, once this number of features is nearly reached """
+        self.max_num_features = max_num_features
+        
         """ Determines how much an input's contribution to exciting features
         dissipates its contribution to the co-activity estimate.
         """
@@ -40,19 +49,16 @@ class Perceiver(object):
         
         """ The exponent used in dividing inputs' energy between the features that they activate """
         self.ACTIVATION_WEIGHTING_EXPONENT = 10     # real, 1 < x 
-        
-        """ Stop creating new groups, once this number of features is nearly reached """
-        self.max_num_features = max_num_features
-        
+                
         """ A flag determining whether to stop creating new groups """
         self.features_full = False
         
         """ The list of 2D arrays that translates grouped inputs into feature activities """
-        self.feature_map = np.zeros((self.max_num_features, self.max_num_features + num_sensors))
+        self.feature_map = np.zeros((self.max_num_features, self.max_num_features + self.num_sensors))
         
         """ 2D array for holding the estimate of the co-activity """
-        self.coactivity = np.zeros((self.max_num_features + num_sensors, 
-                                    self.max_num_features + num_sensors))
+        self.coactivity = np.zeros((self.max_num_features + self.num_sensors, 
+                                    self.max_num_features + self.num_sensors))
 
         """ 2D array for tracking the allowable combinations of elements """
         self.combination = np.ones(self.coactivity.shape) - np.eye(self.coactivity.shape[0])
@@ -61,8 +67,8 @@ class Perceiver(object):
         for forming features. It's unclear still whether this is 
         the best appraoch, but it works with the current benchmark suite. 
         """
-        self.combination[num_sensors + num_primitives: 
-                         num_sensors + num_primitives + num_actions,:] = 0
+        self.combination[self.num_sensors + self.num_primitives: 
+                         self.num_sensors + self.num_primitives + self.num_actions,:] = 0
         
         """ State that provides memory of the input on the previous time step """
         self.previous_input = np.zeros((self.max_num_features, 1))
@@ -71,12 +77,6 @@ class Perceiver(object):
         Passed on to the reinforcement learner at each time step.
         """
         self.feature_activity = np.zeros((self.max_num_features, 1))
-
-        self.num_raw_sensors = num_sensors
-        self.num_sensors = num_sensors * 2
-        self.num_primitives = num_primitives
-        self.num_actions = num_actions
-        self.num_features = num_primitives + num_actions
         
         """ These help maintain an estimate of each sensor's distribution """
         self.SENSOR_INITIAL_MEAN = 0.0
