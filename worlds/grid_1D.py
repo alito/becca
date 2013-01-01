@@ -4,32 +4,30 @@ from .base_world import World as BaseWorld
 import numpy as np
 
 class World(BaseWorld):
-    """ grid_1D.World
-    One-dimensional grid task
-
+    """ grid_1D.World,  One-dimensional grid task
     In this task, the agent steps forward and backward along a
-    nine-position line. The fourth position is rewarded (+1/2) and the ninth
-    position is punished (-1/2). There is also a slight punishment
+    nine-position line. The fourth position is rewarded and the ninth
+    position is punished. There is also a slight punishment
     for effort expended in trying to move, i.e. taking actions.
-    
     This is intended to be a simple-as-possible task for
     troubleshooting BECCA.
-    
-    The theoretically optimal performance without exploration is 0.5 
-    reward per time step.
+    The theoretically optimal performance without exploration is 
+    a reward of 100 per time step.
     In practice, the best performance the algorithm can achieve with the 
-    exploration levels given is around 0.35 reward per time step.
+    exploration levels given is a reward of between 70 and 80 per time step.
     """
 
     def __init__(self):
                 
         super(World, self).__init__()
         
-        self.REPORTING_PERIOD = 10 ** 3
+        self.REPORTING_PERIOD = 10 ** 4
         self.LIFESPAN = 2 * 10 ** 4
-        self.REWARD_MAGNITUDE = 0.5
+        self.REWARD_MAGNITUDE = 100.
         self.ENERGY_COST = 0.01
         self.display_state = False
+        self.name = 'one dimensional grid world'
+        self.announce()
 
         self.num_sensors = 0
         self.num_primitives = 9
@@ -41,7 +39,7 @@ class World(BaseWorld):
     
     def step(self, action): 
         """ Advance the World by one timestep """
-
+        
         if action is None:
             action = np.zeros(self.num_actions)
         
@@ -70,8 +68,7 @@ class World(BaseWorld):
         
         """ Ensure that the world state falls between 0 and 9 """
         self.world_state -= self.num_primitives * \
-                            np.floor_divide(self.world_state, 
-                                            self.num_primitives)
+                            np.floor_divide(self.world_state, self.num_primitives)
         self.simple_state = int(np.floor(self.world_state))
         
         """ Assign basic_feature_input elements as binary. 
@@ -90,17 +87,12 @@ class World(BaseWorld):
         reward = np.max(reward, -1)
         
         self.display(action)
-        
         return sensors, primitives, reward
     
         
     def set_agent_parameters(self, agent):
         """ Prevent the agent from forming any groups """
         agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
-        
-        agent.actor.model.TRACE_LENGTH = 3
-        #agent.actor.model.TRACE_DECAY_RATE = 0.7
-
         
         
     def display(self, action):

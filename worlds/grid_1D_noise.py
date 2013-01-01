@@ -6,32 +6,33 @@ import numpy as np
 class World(BaseWorld):
     """ grid_1D_noise.World
     One-dimensional grid task with noise
-
     In this task, the agent steps forward and backward along three positions 
-    on a line. The second position is rewarded (1/2) and the first and third
-    positions are punished (-1/2). Also, any actions are penalized (-1/10).
+    on a line. The second position is rewarded and the first and third
+    positions are punished. Also, any actions are penalized to a lesser degree.
     It also includes some basic feature inputs that are pure noise.
-
-    Optimal performance is between 0.3 and 0.35 reward per time step.
+    Optimal performance is a reward of between 60 and 70 per time step.
     """
     
     def __init__(self):
                 
         super(World, self).__init__()
         
-        self.REPORTING_PERIOD = 10 ** 3
+        self.REPORTING_PERIOD = 10 ** 4
         self.LIFESPAN = 2 * 10 ** 4
-        self.REWARD_MAGNITUDE = 0.5
-        self.ENERGY_COST = 0.1      
+        self.REWARD_MAGNITUDE = 100.
+        self.ENERGY_COST = 0.1 * self.REWARD_MAGNITUDE
         self.display_state = False  
+        self.name = 'noisy one dimensional grid world'
+        self.announce()
 
-        """ Number of primitives that have no basis in the world. These
-        are noise meant to distract. """
+
         self.num_sensors = 0
         self.num_real_primitives = 3
-        self.num_noise_primitives = 3
-        self.num_primitives = self.num_noise_primitives + \
-                                self.num_real_primitives
+
+        """ Number of primitives that have no basis in the world. These are noise meant to distract. """
+        self.num_noise_primitives = 12
+        
+        self.num_primitives = self.num_noise_primitives + self.num_real_primitives
         self.num_actions = 3
 
         self.sensors = np.zeros(self.num_sensors)
@@ -60,11 +61,9 @@ class World(BaseWorld):
         num_real_primitives. 
         """
         self.world_state -= self.num_real_primitives * \
-                            np.floor_divide(self.world_state, 
-                                            self.num_real_primitives)
+                    np.floor_divide(self.world_state, self.num_real_primitives)
         self.simple_state = int(np.floor(self.world_state))
         
-
         """ Assign primitives as zeros or ones. 
         Represent the presence or absence of the current position in the bin.
         """
@@ -72,8 +71,8 @@ class World(BaseWorld):
         real_primitives[self.simple_state] = 1
 
         """ Generate a set of noise primitives """
-        noise_primitives = np.round(np.random.random_sample
-                                    (self.num_noise_primitives))
+        noise_primitives = np.round(np.random.random_sample(self.num_noise_primitives))
+        
         primitives = np.hstack((real_primitives, noise_primitives))
 
         reward = -self.REWARD_MAGNITUDE
@@ -84,14 +83,21 @@ class World(BaseWorld):
         reward -= energy * self.ENERGY_COST
         
         self.display(action)
-
         return self.sensors, primitives, reward
 
     
     def set_agent_parameters(self, agent):
         """ Prevent the agent from forming any groups """
         agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
-
+        
+        """ Performance is pretty sensitive to this parameter """
+        agent.actor.model.SIMILARITY_THRESHOLD = 0.3
+        
+        """ No need to decay for this simple world. There's only one 
+        relevant feature to attend at any time step.
+        """   
+        agent.actor.FATIGUE_DECAY_RATE = 0
+        
 
     def display(self, action):
         """ Provide an intuitive display of the current state of the World 

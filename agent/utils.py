@@ -46,6 +46,7 @@ def bounded_sum(a, b):
     For A < 0, B < 0, 
     bsum(A,B) = -T'(T(-A) + T(-B))
     """
+    """ TODO: remove some checks to speed up operation? """
     scalars = np.isscalar(a)
     if scalars:
         """ Handle the case where a and b are scalars """
@@ -69,6 +70,16 @@ def bounded_sum(a, b):
         
     result = np.zeros(np.shape(a))
 
+    """ Check whether all elements are of magnitude one or less """
+    if np.nonzero(abs(a) > 1.0)[0].size > 0 or \
+       np.nonzero(abs(b) > 1.0)[0].size > 0:
+        print 'utils.bounded_sum(): arguments have magnitude greater than 1.'
+        print 'results are being truncated to 1.'
+        
+        a = np.minimum(a, 1.0)
+        b = np.minimum(b, 1.0)
+        a = np.maximum(a, -1.0)
+        b = np.maximum(b, -1.0)
     
     """ There are different functions, depending on whether 
     a and b are same or opposite signs. 
@@ -99,25 +110,42 @@ def bounded_sum(a, b):
         return result
     
     
+def bounded_array_sum(arr, dim=0):
+    """ Perform a bounded sum on a 2D array on dimension dim """
+    """ Map [-1,1]  onto (-Inf,Inf), then map back after sum is completed """
+    arr_prime = map_one_to_inf(arr)
+    sum_prime = np.sum(arr_prime, dim)
+    return map_inf_to_one(sum_prime)
+    
+    
 def map_one_to_inf(a):
-    """ Map values from [0, 1] onto [0, inf) and 
-    map values from [-1, 0] onto (-inf, 0].
-    """
+    """ Map values from [0, 1] onto [0, inf) and map values from [-1, 0] onto (-inf, 0] """
     eps = np.finfo(np.double).eps
     a_prime = np.sign(a) / (1 - np.abs(a) + eps) - np.sign(a)
     return a_prime
 
 
 def map_inf_to_one(a_prime):
-    """ Map values from [0, inf) onto [0, 1] and 
-    map values from  (-inf, 0] onto [-1, 0].
-    """
+    """ Map values from [0, inf) onto [0, 1] and map values from  (-inf, 0] onto [-1, 0] """
     a = np.sign(a_prime) * (1 - 1 / (np.abs(a_prime) + 1))
     return a
 
 
 def similarity(point, point_set, max_index=None):
-    
+    """ This similarity measure is based on a modified l_0 (Manhattan) distance
+    between two vectors.  It is very simple and cheap to compute. 
+    Conceived during a conversation with David Follett and later refined.
+    """
+    if max_index is not None:
+        point_set = point_set[:,:max_index]
+
+    delta = abs(point - point_set)
+
+    """ modified Manhattan-based similarity to avoid saturation """
+    return 2 ** (-np.sum(delta, axis=0))
+
+
+def similarity_by_angle(point, point_set, max_index=None):
     """
     Calculate the similarity between a point (an array) and a set of points.
     point_set must be a 2D 
@@ -138,47 +166,15 @@ def similarity(point, point_set, max_index=None):
     3) if a and b share no nonzero elements, s(a,b) = 0;
     4) s(a,b) = 1 iff a = b * c, where c is a constant > 0
     """
-    
-    """ Check to see whether either input is empty """ 
-    if not (point_set.size > 0) or not (point.size > 0):
-        print "Warning: utils.similarity()-inputs must " + \
-              "both be of non-zero size. "
-        print "    point_set:"
-        print point_set
-        print "    point:"
-        print point
-        return None
+    if max_index is not None:
+        point_set = point_set[:,:max_index]
 
-    eps = np.finfo(np.double).eps
-
-    """ If there is no maximum group_index, set it to the length of the set """
-    if max_index is None:
-        max_index = point_set.shape[1]
-
-    """ Make sure point is a 2D numpy column array """
-    if len(point.shape) == 1:
-        point = point[:,np.newaxis]
-    if point.shape[0] == 1:
-        point = point.transpose()
-            
-    if point.shape[0] != point_set.shape[0]:
-        print "Error in utils.similarity(): point must have the same number"
-        print "elements as the 0th dimension of point_set. "
-        print "Got ", point.shape[0] ,' and ', point_set.shape[0]
-        raise ValueError
-    
-    """ Expand the point array to a 2D array the same size 
-    as the point_set.
-    """
-    point_mat = np.tile(point, (1, max_index))
-    set_mat = point_set[:,:max_index]
-    
     """ Calculate the angle between each of the corresponding 
     columns.
     """
-    inner_product = np.sum(( point_mat * set_mat), axis=0)
-    mag_point = np.sqrt(np.sum( point_mat ** 2, axis=0)) + eps
-    mag_set = np.sqrt(np.sum(set_mat ** 2, axis=0)) + eps
+    inner_product = np.sum(( point * point_set), axis=0)
+    mag_point = np.sqrt(np.sum( point ** 2, axis=0)) + EPSILON
+    mag_set = np.sqrt(np.sum(point_set ** 2, axis=0)) + EPSILON
     cos_theta = inner_product / (mag_point * mag_set)
     cos_theta = np.minimum(cos_theta, 1)
     theta = np.arccos( cos_theta)

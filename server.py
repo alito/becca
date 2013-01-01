@@ -49,7 +49,6 @@ class ShellWorld(BaseWorld):
         """
         #...
 
-        
 
 
 #def step():

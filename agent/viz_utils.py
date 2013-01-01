@@ -1,7 +1,4 @@
 
-import state
-import utils
-
 import copy 
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
@@ -14,18 +11,14 @@ world-specific interpretation of Becca's information. That should be
 taken care of by individual worlds.  
 """
 
-def visualize_coactivity(coactivity, size=0, 
-                                    save_eps=False, 
-                                    epsfilename='log/coactivity.eps'):
+def visualize_coactivity(coactivity, size=0, save_eps=False, epsfilename='log/coactivity.eps'):
     """ Produce a visual representation of the coactivity matrix """
     
     if size == 0:
         size = coactivity.shape[0]
     fig = plt.figure("perceiver coactivity visualization")
     
-    """ Diane L. made the brilliant suggestion to leave this plot in color. 
-    It looks much prettier.
-    """
+    """ Diane L. made the brilliant suggestion to leave this plot in color. It looks much prettier. """
     plt.summer()
 
     im = plt.imshow(coactivity[0:size, 0:size])
@@ -49,8 +42,8 @@ def visualize_feature_map(feature_map):
     plt.title("Feature map")
     plt.draw()
         
-def visualize_feature_set(grouper, save_eps=False, 
-                          epsfilename='log/features.eps'):
+        
+def visualize_feature_set(grouper, save_eps=False, epsfilename='log/features.eps'):
     """ Visualize all the groups in all the features """
     label = 'feature_set'
     fig = plt.figure(label)
@@ -73,9 +66,7 @@ def visualize_feature_set(grouper, save_eps=False,
 
         for feature_index in range(n_features):
 
-            visualize_state(current_group[feature_index], 
-                            y_max=pos_ctr-0.25,
-                            y_min=pos_ctr-0.75,
+            visualize_state(current_group[feature_index], y_max=pos_ctr-0.25, y_min=pos_ctr-0.75,
                             axes=viz_axes)
             pos_ctr -= 1.0
     
@@ -90,38 +81,6 @@ def visualize_feature_set(grouper, save_eps=False,
     if save_eps:
         fig.savefig(epsfilename, format='eps')
         
-    return
-  
-      
-def visualize_feature_spacing(grouper, save_eps=False, 
-                          epsfilename='log/features.eps'):
-    """ Visualize all the groups in all the features """
-    label = 'feature_spacing'
-    fig = plt.figure(label)
-    fig.clf()
-    plt.ioff()
-    plt.title(label)
-    
-    distances = np.zeros((0,1))
-    fmap = grouper.feature_map
-    n_feature_groups = len(fmap.features)
-    for group_index in range(n_feature_groups):
-        for feature_index in range(fmap.features[group_index].shape[0]):
-            similarities = utils.similarity( 
-                fmap.features[group_index][feature_index,:], 
-                fmap.features[group_index].transpose())
-            
-            similarities = np.delete(similarities, [feature_index])
-            similarities = similarities[:,np.newaxis]
-            distances = np.concatenate((distances, 1-similarities))
-            
-    if n_feature_groups > 0:
-        plt.hist(distances, bins=120)
-        force_redraw()
-              
-        if save_eps:
-            fig.savefig(epsfilename, format='eps')
-            
     return
   
       
@@ -141,17 +100,17 @@ def reduce_feature_set(perceiver, n_primitives, n_actions):
     primitives, actions, and created features, modified to account for 
     python's indexing and range behavior.
     """
-    first_feature_index = perceiver.n_sensors + perceiver.n_features -1
+    first_feature_index = perceiver.num_sensors + perceiver.num_features -1
     
     """ The last feature to be expanded will be the first created 
     feature, i.e. the number of sensors plus 
     the number of primitives and actions, modified to account for 
     python's indexing and range behavior.
     """
-    last_feature_index = perceiver.n_sensors + n_primitives + n_actions - 1
+    last_feature_index = perceiver.num_sensors + n_primitives + n_actions - 1
     
     reduced_feature_set = copy.deepcopy(
-                            perceiver.feature_map[:perceiver.n_features, 
+                            perceiver.feature_map[:perceiver.num_features, 
                                                   :first_feature_index + 1])
     
     for column_index in range(first_feature_index, last_feature_index, -1):
@@ -161,7 +120,7 @@ def reduce_feature_set(perceiver, n_primitives, n_actions):
         if features_that_have_this_feature_as_input.size > 0:
             input_magnitudes = reduced_feature_set[
                        features_that_have_this_feature_as_input, column_index]
-            feature_index = column_index - perceiver.n_sensors
+            feature_index = column_index - perceiver.num_sensors
             
             """ Add the contribution from the features in terms of 
             its lower level representation.
@@ -175,25 +134,24 @@ def reduce_feature_set(perceiver, n_primitives, n_actions):
             reduced_feature_set[features_that_have_this_feature_as_input,
                                 column_index] = 0
             
-    return reduced_feature_set[n_primitives + n_actions:,:perceiver.n_sensors]
+    return reduced_feature_set[n_primitives + n_actions:,:perceiver.num_sensors]
 
     
 def visualize_model(model, n=None):
     """ Visualize some of the transitions in the model """
     if n == None:
-        n = model.n_transitions
+        n = model.num_transitions
         
-    n = np.minimum(n, model.n_transitions)
+    n = np.minimum(n, model.num_transitions)
         
-    print "The model has a total of ", model.n_transitions, \
-            " transitions."
+    print "The model has a total of ", model.num_transitions, " transitions."
     
     '''
     """ Show the n transitions from the model that have the 
     highest count.
     NOTE: argsort returns indices of sort in *ascending* order. 
     """
-    index_by_rank = np.argsort(model.count[:model.n_transitions])
+    index_by_rank = np.argsort(model.count[:model.num_transitions])
     
     for index in range(n):
         print "Showing the " + str(index) + \
@@ -206,7 +164,7 @@ def visualize_model(model, n=None):
         plt.show()
         
     """ Show the n transitions from the model that have the highest reward """
-    index_by_rank = np.argsort(model.reward_value[:model.n_transitions])
+    index_by_rank = np.argsort(model.reward_value[:model.num_transitions])
     
     for index in range(n):
         print "Showing the " + str(index) + \
@@ -222,12 +180,11 @@ def visualize_model(model, n=None):
     highest impact.
     NOTE: argsort returns indices of sort in *ascending* order. 
     """
-    index_by_rank = np.argsort(model.reward_value[:model.n_transitions] * \
-            (np.log(model.count[:model.n_transitions] + 1)), axis=0).ravel()
+    index_by_rank = np.argsort(model.reward_value[:model.num_transitions] * \
+            (np.log(model.count[:model.num_transitions] + 1)), axis=0).ravel()
     
     for index in range(n):
-        print "Showing the " + str(index) + \
-                    "th most impact."
+        print "Showing the " + str(index) + "th most impact."
                     
         visualize_transition(model, index_by_rank[-(index+1)])
         """ Hold the plot, blocking the program until the user closes
@@ -244,7 +201,7 @@ def visualize_transition(model, transition_index, save_eps=False,
     if label==None:
         label = 'Transition ' + str(transition_index)
         
-    n_features = model.n_features
+    n_features = model.num_features
         
     fig = plt.figure(label)
     fig.clf()
@@ -264,27 +221,15 @@ def visualize_transition(model, transition_index, save_eps=False,
               '  goal value: {:.2f}'.format(goal_value) )
     plt.xlabel(label)
     
-    n_primitives = model.context.num_primitives
-    n_actions = model.context.num_actions
-    
-    context = state.State(n_primitives, n_actions, n_features)
-    cause = state.State(n_primitives, n_actions, n_features)
-    effect = state.State(n_primitives, n_actions, n_features)
-    effect_uncertainty = state.State(n_primitives, n_actions, n_features)
+    context = np.copy(model.context[:n_features, transition_index, np.newaxis])
+    cause = np.copy(model.cause[:n_features, transition_index, np.newaxis])
+    effect = np.copy(model.effect[:n_features, transition_index, np.newaxis])
+    effect_uncertainty = np.copy(model.effect_uncertainty[:n_features, transition_index, np.newaxis])
 
-    context.features = copy.deepcopy(model.context. \
-                        features[:n_features, transition_index, np.newaxis])
-    cause.features = copy.deepcopy(model.cause. \
-                        features[:n_features, transition_index, np.newaxis])
-    effect.features = copy.deepcopy(model.effect. \
-                        features[:n_features, transition_index, np.newaxis])
-    effect_uncertainty.features = copy.deepcopy(model.effect_uncertainty. \
-                        features[:n_features, transition_index, np.newaxis])
-
-    visualize_state(context, y_max=3.75, y_min=3.25, axes=viz_axes)
-    visualize_state(cause, y_max=2.75, y_min=2.25, axes=viz_axes)
-    visualize_state(effect, y_max=1.75, y_min=1.25, axes=viz_axes)
-    visualize_state(effect_uncertainty, y_max=0.75, y_min=0.25, axes=viz_axes)
+    visualize_state(context, model.num_primitives, model.num_actions, y_max=3.75, y_min=3.25, axes=viz_axes)
+    visualize_state(cause, model.num_primitives, model.num_actions,  y_max=2.75, y_min=2.25, axes=viz_axes)
+    visualize_state(effect, model.num_primitives, model.num_actions,  y_max=1.75, y_min=1.25, axes=viz_axes)
+    visualize_state(effect_uncertainty, model.num_primitives, model.num_actions, y_max=0.75, y_min=0.25, axes=viz_axes)
     
     """ This trick makes matplotlib recognize that it has something to plot.
     Everything else in the plot is patches and text, and for some reason
@@ -300,9 +245,8 @@ def visualize_transition(model, transition_index, save_eps=False,
     return
   
   
-def visualize_state(state, label='state', y_min=0.25, y_max=0.75, 
-                      save_eps=False, epsfilename='log/state.eps', 
-                      axes=None):
+def visualize_state(state, num_primitives, num_actions, label='state', y_min=0.25, y_max=0.75, 
+                      save_eps=False, epsfilename='log/state.eps', axes=None):
     """ Present the state in a visually intuitive way.
     height_proportion is the height of the display as 
     a fraction of width.
@@ -319,13 +263,9 @@ def visualize_state(state, label='state', y_min=0.25, y_max=0.75,
     x_spacer_width = 3 
     total_width = 0
 
-    primitives = state.get_primitives()
-    actions = state.get_actions()
-    features = state.features[primitives.size + actions.size:]
-    
-    #print 'primitives', primitives.ravel()
-    #print 'actions', actions.ravel()
-    #print 'features', features.ravel()
+    primitives = state[:num_primitives,:]
+    actions = state[num_primitives:num_primitives + num_actions,:]
+    features = state[num_primitives + num_actions:,:]
     
     total_width += primitives.size
     total_width += x_spacer_width

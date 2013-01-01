@@ -7,7 +7,7 @@ There are two main factors to consider when analyzing how well \textsc{Becca} sc
 The per-time-step complexity characterizes how much computational effort  \textsc{Becca} requires to update its internal state with each new set of inputs and to select an action to pass back to the world. 
 
 \subsection{Feature extractor}
-In the feature extractor, computational complexity is dominated by the estimation of co-activity.  This requires the creation and manipulation of several two-dimensional arrays that can be as large as $N + M \times N + M$, where $N$ is the number of sensor inputs and $M$ is the maximum number of features. This results in an $\mathcal{O}((N+M)^2)$ complexity in the feature extractor. In practice the actual number of features created may be much less than $M$, but $M$ provides an upper bound.
+In the feature extractor, computational complexity is dominated by the estimation of co-activity.  This requires the creation and manipulation of several two-dimensional arrays that can be as large as $(N + M) \times (N + M)$, where $N$ is the number of sensor inputs and $M$ is the maximum number of features. This results in an $\mathcal{O}((N+M)^2)$ complexity in the feature extractor. In practice the actual number of features created may be much less than $M$, but $M$ provides an upper bound.
 
 Low-order polynomial complexity is probably the best that can be hoped for in feature extraction without introducing a great deal of domain knowledge. Comparing every member in a set of inputs against every other member is an inherently polynomial operation. Polynomial complexity is typical of other feature extraction methods. 
 

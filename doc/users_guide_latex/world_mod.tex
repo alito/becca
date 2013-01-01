@@ -16,14 +16,12 @@ A \textsc{Becca} {\em agent} is a thing that chooses actions. In order for those
 The architecture is modular. You can develop and run your own worlds without having to know very much about how the \textsc{Becca} agent works. The only constraints \textsc{Becca} imposes on worlds are:
 
 \begin{itemize}
-\item{A world must read in a fixed number of actions at each time step. This number is chosen by and defined in the world.}
+\item{A world must read in a fixed number of actions at each time step. This number is chosen by and defined in the world. All actions are equal to 0, 1, or something in between.}
 \item{A world must provide a fixed number of sensory observations at each time step. This number is also chosen by and defined in the world.}
 \item{A world must provide a scalar reward value at each time step.}
-\item{All actions and observations are real valued, equal to 0, 1, or something in between.}
-\item{The reward signal is real valued, equal to -1, 1, or something in between.}
 \end{itemize}
 
-Strictly speaking, \textsc{Becca} allows for two classes of observations, {\em sensors} and {\em primitives}. The only difference between the two is that the agent has to build sensors into features before it can use them, whereas it can use primitives as features immediately. Typically, observations that are likely to need some refining before they become useful (such as sets of pixel values) are passed in as sensors, and observations that are more immediately useful (such as a contact sensor) are passed in as primitives. 
+Strictly speaking, \textsc{Becca} allows for two classes of observations, {\em sensors} and {\em primitives}. The main difference between the two is that the agent has to build sensors into features before it can use them, whereas it can use primitives as features immediately. Typically, observations that are likely to need some refining before they become useful (such as sets of pixel values) are passed in as sensors, and observations that are more immediately useful (such as a contact sensor) are passed in as primitives. Primitives must be equal to one, zero, or something in between. Sensors have no such restriction.
 
 \section{How do I make a {\em hello} world?}
 
@@ -98,15 +96,13 @@ Advances the world by one time step. This is single most important method in a w
 Informs the executing loop when to stop. The top level execution loop (as implemented in \texttt{benchmark.py} and \texttt{tester.py} continues to run \textsc{Becca} through its agent-world-agent cycle until \texttt{is\_alive()} returns false.
 
 \subsection{\texttt{set\_agent\_parameters()}}
-Sets the the agent's internal parameters to values specific to the world. \textsc{Becca} has a quite a few constants that affect its operation, 14 is this version. Most of these are set to values that seem to work for all worlds in the benchmark battery. But for development and troubleshooting, it has proven useful to be able to adjust some of \textsc{Becca}'s parameters manually. It is my hope that, in time, a single set of parameters will prove generally useful across a broad set of tasks. In the meantime this method provides a mechanism for world-specific knob-twiddling.
+Sets the the agent's internal parameters to values specific to the world. \textsc{Becca} has a quite a few constants that affect its operation. Most of these are set to values that seem to work for all worlds in the benchmark battery. But for development and troubleshooting, it has proven useful to be able to adjust some of \textsc{Becca}'s parameters manually. It is my hope that, in time, a single set of parameters will prove generally useful across a broad set of tasks. In the meantime this method provides a mechanism for world-specific knob-twiddling.
 
 \subsection{\texttt{is\_time\_to\_display()}}
 Informs the executing loop when to display the feature set by returning \texttt{True}. This is for visualization purposes only and doesn't help \textsc{Becca} learn in any way. This method is optional. If it doesn't exist, the execution loop just moves on.
 
 \subsection{\texttt{vizualize\_feature\_set()}}
-Displays the feature set when \texttt{is\_time\_to\_display()} returns \texttt{True}. The feature set is expressed in terms of sensors, primitives, and actions by the agent. This method takes those feature representations and interprets them for the user in terms of what it knows about how those signals. For instance, if the sensors correspond to pixel values from a camera, this method would render the sensor component of each feature as an image. The agent has no information about where its sensor and primitive arrays came from or about what its actions do in the world. This method lets the world give a world-specific interpretation of those values to the user.
-
-Worlds of course may have any number of other member variables and methods for internal use. Others that have proven useful in the benchmark battery worlds include \texttt{calculate\_reward()} and \texttt{display()}.
+Displays the feature set when \texttt{is\_time\_to\_display()} returns \texttt{True}. The feature set is expressed in terms of sensors, primitives, and actions by the agent. This method takes those feature representations and interprets them for the user in terms of what it knows about how those signals. For instance, if the sensors correspond to pixel values from a camera, this method would render the sensor component of each feature as an image. The agent has no information about where its sensor and primitive arrays came from or about what its actions do in the world. This method lets the world give a world-specific interpretation of those values to the user. 
 
 \section{What is \texttt{base\_world.py}?}
 ``Wait a second," you say. ``My \texttt{hello.py} didn't have an \texttt{is\_alive()}, but you said it needed one. What's up with that?"
@@ -175,15 +171,16 @@ Begin the execution loop. Couple the output of the world into the input of the a
 If the necessary methods exist, and if they dictate, display the feature set to the user.        
 \begin{verbatim}    
     try:
-        if world.is_time_to_display():
+        if world.is_time_to_display():                
             world.vizualize_feature_set(
                 viz_utils.reduce_feature_set(
-                agent.grouper), 
-                save_eps=True)
-            viz_utils.force_redraw()
+                                agent.perceiver, 
+                                agent.num_primitives, 
+                                agent.num_actions))
+                viz_utils.force_redraw()
     except AttributeError:
         pass
-\end{verbatim}
+    \end{verbatim}
 
 \item
 After the world has completed its lifetime, give a final report of the agent's performance.    

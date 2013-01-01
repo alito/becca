@@ -1,6 +1,4 @@
-"""
-A main test harness for a general reinforcement learning agent. 
-"""
+""" A main test harness for a general reinforcement learning agent """
 
 import numpy as np
 from agent.agent import Agent
@@ -15,8 +13,8 @@ One of these import lines should be uncommented.
 #from worlds.grid_1D_noise import World
 #from worlds.grid_2D import World
 #from worlds.grid_2D_dc import World
-#from worlds.image_1D import World
-from worlds.image_2D import World
+from worlds.image_1D import World
+#from worlds.image_2D import World
 
 #from worlds.watch import World
 
@@ -27,7 +25,7 @@ def main():
     """ A unique identifying string for the agent, allowing specific
     saved agents to be recalled. 
     """
-    MAX_NUM_FEATURES = 1000
+    MAX_NUM_FEATURES = 100
     agent = Agent(world.num_sensors, world.num_primitives, 
                   world.num_actions, MAX_NUM_FEATURES, agent_name="test")
 
@@ -44,7 +42,7 @@ def main():
     world.set_agent_parameters(agent)
          
     """ Give an initial resting action to kick things off. """
-    actions = np.zeros(world.num_actions)
+    actions = np.zeros((world.num_actions,1))
     
     """ Repeat the loop through the duration of the existence of the world."""
     while(world.is_alive()):
@@ -57,9 +55,7 @@ def main():
         try:
             if world.is_time_to_display():                
                 world.vizualize_feature_set(
-                  viz_utils.reduce_feature_set(agent.perceiver, 
-                                               agent.num_primitives, 
-                                               agent.num_actions))
+                  viz_utils.reduce_feature_set(agent.perceiver, agent.num_primitives, agent.num_actions))
                 viz_utils.force_redraw()
         except AttributeError:
             pass

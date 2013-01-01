@@ -1,9 +1,9 @@
 """
-benchmark 0.4.3
+benchmark 0.4.4
 
-A suite of worlds to characterize the performance of Becca variants.
+A suite of worlds to characterize the performance of BECCA variants.
 Other agents may use this benchmark as well, as long as they have the 
-same interface. (See Becca documentation for a detailed specification.)
+same interface. (See BECCA documentation for a detailed specification.)
 
 This benchmark more heavily values breadth than virtuosity. Agents that
 can perform a wide variety of tasks moderately well will score better 
@@ -12,7 +12,7 @@ than agents that perform a single task optimally and all others very poorly.
 In order to facilitate apples-to-apples comparisons between agents, the 
 benchmark will be version numbered.
 
-For N_RUNS = 77, Becca 0.4.3 scored 0.253
+For N_RUNS = 77, Becca 0.4.4 scored 53.1 with a standard deviation of 1.5
 """
 
 
@@ -31,7 +31,7 @@ import numpy as np
 
 def main():
 
-    N_RUNS = 7
+    N_RUNS = 1
     overall_performance = []
     
     for i in range(N_RUNS):
@@ -68,7 +68,7 @@ def main():
     
     
     """ Empirically, running version 0.4.0 of the benchmark multiple times
-    gave values with a standard deviation of about 0.013. So if you want a more
+    gave values with a standard deviation of about 5% of the mean. So if you want a more
     accurate estimate of an agent's performance, run it 3 or 5 times 
     and take the average. Or better yet, to help account for the fact 
     that it is a somewhat non-Gaussian process, (it has a short tail 
@@ -91,11 +91,11 @@ def main():
             overall_performance.remove(lowest_val)
 
     """ Find the average of what's left """
-    sum = 0.
+    sum_so_far = 0.
     for indx in range(len(overall_performance)):
-        sum += overall_performance[indx]
+        sum_so_far += overall_performance[indx]
         
-    typical_performance = sum / len(overall_performance)
+    typical_performance = sum_so_far / len(overall_performance)
     
     print "Typical performance score: ", typical_performance 
     
@@ -107,21 +107,19 @@ def main():
     
 def test(world):
     
-    MAX_NUM_FEATURES = 300
-    agent = Agent(world.num_sensors, world.num_primitives, 
-                  world.num_actions, MAX_NUM_FEATURES)
+    MAX_NUM_FEATURES = 100
+    agent = Agent(world.num_sensors, world.num_primitives, world.num_actions, MAX_NUM_FEATURES)
     
-    """ If configured to do so, the world sets some Becca parameters to 
+    """ If configured to do so, the world sets some BECCA parameters to 
     modify its behavior. This is a development hack, and should eventually be 
-    removed as Becca matures and settles on a good, general purpose
-    set of parameters.
+    removed as BECCA matures and settles on a good, general purpose set of parameters.
     """
     world.set_agent_parameters(agent)
          
-    """ Give an initial resting action to kick things off. """
+    """ Give an initial resting action to kick things off """
     actions = np.zeros(world.num_actions)
     
-    """ Repeat the loop through the duration of the existence of the world."""
+    """ Repeat the loop through the duration of the existence of the world """
     while(world.is_alive()):
         sensors, primitives, reward = world.step(actions)
         actions = agent.step(sensors, primitives, reward)

@@ -1,5 +1,17 @@
 \chapter{Revision history}
 
+\section*{Version 0.4.4, December 31, 2012}
+
+\begin{itemize}
+\item Inputs are no longer constrained to fall between 0 and 1. Their distribution is learned.
+\item Reward is no longer constrained to fall between 0 and 1.
+\item A simpler similarity metric has been implemented, based on Manhattan distance, rather than angle. It's faster to compute and appears to be equally effective.
+\item The State module and its associated class have been removed. 2D numpy arrays are sufficient to represent state. This sped up operation noticeably.
+\item The ability of each feature to accurately predict reward across the model has been factored into salience calculation. Performance on the \texttt{grid\_1D\_noise} world is now as high as expected.
+\item Deliberation in the planner was re-worked.
+\item Deliberate actions are taken at regular intervals, with observation occurring in between. 
+\end{itemize}
+
 \section*{Version 0.4.3, November 9, 2012}
 
 \begin{itemize}

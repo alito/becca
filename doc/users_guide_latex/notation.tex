@@ -1,0 +1,57 @@
+\chapter{Variables and notation}
+\label{notation}
+
+The description of \textsc{Becca}'s operation has gotten lengthy enough to be a bit unwieldy. In order to keep from overloading variables and to keep their use consistent, I've been forced to make a list of them. I include it here for reference and for use when writing about your own extensions and modifications.
+
+\begin{table}[htdp]
+\caption{Variables and notational conventions}
+\begin{center}
+\begin{tabular}{|c|l|}
+\hline
+symbol & description \\
+\hline
+$t$ & agent age in time steps \\
+$i$ & feature index \\
+$j$ & transition index \\
+$k$ & general index \\
+$\tilde{ }$ & new value \\
+$\hat{ }$ & raw or pre-decayed value \\
+$ ^\prime$ & updated or decayed value \\
+$^{-1}$ & inverse of a function \\ 
+$p(a|b)$ & the probability of $a$ given $b$ \\
+$\mathcal{U}(a,b)$ & a value taken from the uniform distribution over [a, b) \\
+$ < \cdot > $ & mean operator \\
+$g(x)$ & function mapping the interval $(-\infty, \infty)$ onto $(-1, 1)$ \\
+$\sigma(\mathbf{a}, \mathbf{b})$ & similarity of array $\mathbf{a}$ with  array $\mathbf{b}$ \\
+$\sigma_0(\mathbf{a}, \mathbf{b})$ & overlap-based similarity of array $\mathbf{a}$ with  array $\mathbf{b}$ \\
+$\mathbf{s}_t$ & full array of sensor channels\\ 
+$s_{k}$ & value of sensor channel $k$\\
+$s_{k \mu}$ & mean value of sensor channel $k$\\
+$s_{k \epsilon}$ & typical deviation of sensor channel $k$\\
+$\rho_s$ & sensor distribution update rate \\
+$\kappa(a, b)$ & co-activity of sensor channel $a$ with sensor channel $b$\\
+$\kappa_M(a,b)$ & mutual co-activity of channel $a$ with channel $b$ \\
+$\mathbf{f}$ & feature activity \\
+$\gamma_i$ & inhibition of feature $i$ \\
+$\gamma_\kappa$ & contribution to co-activity \\
+$\omega$ & salience \\
+$f_\omega$ & feature salience \\
+$\beta_\omega$ & salience fatigue \\
+$\nu_\omega$ & salience noise \\
+$\mathbf{c}$ & context \\
+$\mathbf{d}$ & cause \\
+$\mathbf{e}$ & effect \\
+$\mathbf{e}_\epsilon$ & effect uncertainty\\
+$r$ & reward \\
+$r_\epsilon$ & reward uncertainty \\
+$\mathbf{h}$ & attended feature \\
+$n$ & count \\
+$\rho_e$ & model update rate \\
+$\lambda$ & confidence in reward prediction \\
+$\phi$ & fitness value \\
+$\nu_\phi$ & fitness noise \\
+\hline
+\end{tabular}
+\end{center}
+\label{table:notation}
+\end{table}%
