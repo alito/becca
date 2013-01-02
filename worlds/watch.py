@@ -48,7 +48,7 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.TASK_DURATION = 10 ** 1
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 4
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
         self.LIFESPAN = 10 ** 8
         self.FOV_FRACTION = 0.2
         self.name = 'watch world'
@@ -202,12 +202,15 @@ class World(BaseWorld):
 
         """ Explore on every time step """
         agent.actor.planner.EXPLORATION_FRACTION = 1.0
-        agent.actor.planner.OBSERVATION_FRACTION = 0.0
         
         """ Don't create a model """
         agent.actor.model.MAX_TRANSITIONS = 10 ** 3
         agent.actor.model.SIMILARITY_THRESHOLD = 0.
-        
+
+        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.1
+        agent.perceiver.MIN_SIG_COACTIVITY =  0.8 * agent.perceiver.NEW_FEATURE_THRESHOLD
+        agent.perceiver.PLASTICITY_UPDATE_RATE = 0.01 * agent.perceiver.NEW_FEATURE_THRESHOLD
+
     
     def is_time_to_display(self):
         if (self.timestep % self.FEATURE_DISPLAY_INTERVAL == 0):
@@ -218,6 +221,8 @@ class World(BaseWorld):
     
     def vizualize_feature_set(self, feature_set):
         """ Provide an intuitive display of the features created by the agent """
-        world_utils.vizualize_pixel_array_feature_set(feature_set, world_name='watch',
-                                                      save_eps=True, save_jpg=True)
-    
+        world_utils.vizualize_pixel_array_feature_set(feature_set, 
+                                          start=self.last_feature_vizualized, 
+                                          world_name='image_2D', save_eps=True, save_jpg=False)
+        self.last_feature_vizualized = feature_set.shape[0]
+        

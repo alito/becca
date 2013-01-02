@@ -28,7 +28,7 @@ class World(BaseWorld):
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
         self.graphing = False
-        self.name = 'two dimensional visual world'
+        self.name = 'find block world'
         self.announce()
 
         self.step_counter = 0
@@ -75,8 +75,6 @@ class World(BaseWorld):
 
         self.sensors = np.zeros(self.num_sensors)
         self.primitives = np.zeros(self.num_primitives)
-        
-        self.last_feature_vizualized = 0
         
 
     def step(self, action): 

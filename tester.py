@@ -16,8 +16,8 @@ One of these import lines should be uncommented.
 #from worlds.image_1D import World
 #from worlds.image_2D import World
 
-#from worlds.watch import World
-from worlds.find_block import World
+from worlds.watch import World
+#from worlds.find_block import World
 
 def main():
     
