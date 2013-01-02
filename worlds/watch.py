@@ -59,7 +59,7 @@ class World(BaseWorld):
 
         self.fov_span = 10
         
-        self.num_sensors = self.fov_span ** 2
+        self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 0
         self.num_actions = 16
 
@@ -188,7 +188,11 @@ class World(BaseWorld):
         center_surround_pixels = world_utils.center_surround( \
                         fov, self.fov_span, self.block_width, self.block_width, verbose=False)
 
-        sensors = center_surround_pixels.ravel()        
+        #sensors = center_surround_pixels.ravel()        
+        unsplit_sensors = center_surround_pixels.ravel()        
+        sensors = np.concatenate((np.maximum(unsplit_sensors, 0), \
+                                  np.abs(np.minimum(unsplit_sensors, 0)) ))
+
         reward = self.calculate_reward()               
         
         return sensors, self.primitives, reward
@@ -208,8 +212,11 @@ class World(BaseWorld):
         agent.actor.model.SIMILARITY_THRESHOLD = 0.
 
         agent.perceiver.NEW_FEATURE_THRESHOLD = 0.1
-        agent.perceiver.MIN_SIG_COACTIVITY =  0.8 * agent.perceiver.NEW_FEATURE_THRESHOLD
+        agent.perceiver.MIN_SIG_COACTIVITY =  0.7 * agent.perceiver.NEW_FEATURE_THRESHOLD
         agent.perceiver.PLASTICITY_UPDATE_RATE = 0.01 * agent.perceiver.NEW_FEATURE_THRESHOLD
+
+        agent.perceiver.SENSOR_DISTRIBUTION_UPDATE_RATE = 0.01
+        agent.perceiver.SENSOR_UPDATE_TIME_CONSTANT = 5
 
     
     def is_time_to_display(self):

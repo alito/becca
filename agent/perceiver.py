@@ -15,7 +15,7 @@ class Perceiver(object):
                  max_num_features):
 
         self.num_raw_sensors = num_sensors
-        self.num_sensors = num_sensors * 2
+        self.num_sensors = num_sensors
         self.num_primitives = num_primitives
         self.num_actions = num_actions
         self.num_features = num_primitives + num_actions
@@ -79,23 +79,15 @@ class Perceiver(object):
         self.feature_activity = np.zeros((self.max_num_features, 1))
         
         """ These help maintain an estimate of each sensor's distribution """
-        self.SENSOR_INITIAL_MEAN = 0.0
-        self.SENSOR_INITIAL_DEVIATION = 0.01
-        self.sensor_mean = np.ones((self.num_raw_sensors, 1)) * self.SENSOR_INITIAL_MEAN
-        self.sensor_deviation = np.ones((self.num_raw_sensors, 1)) * self.SENSOR_INITIAL_DEVIATION
-        self.SENSOR_DISTRIBUTION_UPDATE_RATE = 0.001
-        self.SENSOR_UPDATE_TIME_CONSTANT = 5
-        
-        self.age = 0
-        
+        self.sensor_min = np.ones((self.num_raw_sensors, 1)) * utils.BIG
+        self.sensor_max = np.ones((self.num_raw_sensors, 1)) * (-utils.BIG)
+
 
     def step(self, raw_sensors, primitives, actions):
         """ Incrementally estimate co-activity between inputs 
         and create new features when appropriate.
         """
 
-        self.age += 1
-        
         """ Make sure all the inputs are 2D arrays """
         if len(raw_sensors.shape) == 1:
             raw_sensors = raw_sensors[:,np.newaxis]
@@ -105,18 +97,11 @@ class Perceiver(object):
             actions = actions[:,np.newaxis]
         
         """ Modify all sensor inputs so that they automatically fall between
-        -1 and 1, regardless of the actual input magnitudes. Split the 
-        positive and negative values into two different sensor channels.
+        0 and 1, regardless of the actual input magnitudes.
         """
-        update_rate = self.SENSOR_DISTRIBUTION_UPDATE_RATE + \
-                    self.SENSOR_UPDATE_TIME_CONSTANT / (self.age + self.SENSOR_UPDATE_TIME_CONSTANT)
-        self.sensor_mean = self.sensor_mean * (1 - update_rate) + raw_sensors * update_rate 
-        self.sensor_deviation = self.sensor_deviation * (1-update_rate) \
-                + np.abs(raw_sensors - self.sensor_mean) * update_rate 
-        unsplit_sensors = utils.map_inf_to_one((raw_sensors - self.sensor_mean) / \
-                                    (self.sensor_deviation / 2. + utils.EPSILON))
-        sensors = np.concatenate((np.maximum(unsplit_sensors, 0), \
-                                  np.abs(np.minimum(unsplit_sensors, 0)) ))
+        self.sensor_min = np.minimum(raw_sensors , self.sensor_min)
+        self.sensor_max = np.maximum(raw_sensors , self.sensor_max)
+        sensors = (raw_sensors - self.sensor_min) / (self.sensor_max - self.sensor_min + utils.EPSILON)
         
         """ Build the input vector.
         Combine sensors and primitives with 
@@ -291,10 +276,10 @@ class Perceiver(object):
             self.disallow_generation_crossing(added_feature_indices)
             
             #debug
-            '''print 'adding feature', self.num_features, 'in position', \
+            print 'adding feature', self.num_features, 'in position', \
                     self.num_features + self.num_sensors - 1, 'with inputs', \
                         added_feature_indices
-            '''
+            
                        
             """ Check to see whether the capacity to store and update features
             has been reached.

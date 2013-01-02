@@ -2,6 +2,7 @@ import numpy as np
 
 """ Shared constants """
 EPSILON = 10e-9
+BIG = 10. ** 20
 
 """ Utility functions """
 
