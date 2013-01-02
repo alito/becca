@@ -71,6 +71,8 @@ class World(BaseWorld):
         self.sensors = np.zeros(self.num_sensors)
         self.primitives = np.zeros(self.num_primitives)
 
+        self.last_feature_vizualized = 0
+
 
     def step(self, action): 
         self.timestep += 1
@@ -180,6 +182,8 @@ class World(BaseWorld):
     
     def vizualize_feature_set(self, feature_set):
         """ Provide an intuitive display of the features created by the agent """
-        world_utils.vizualize_pixel_array_feature_set(feature_set, world_name='image_1D', 
-                                                      save_eps=True, save_jpg=True)
-    
+        world_utils.vizualize_pixel_array_feature_set(feature_set, 
+                                          start=self.last_feature_vizualized, 
+                                          world_name='image_2D', save_eps=True, save_jpg=False)
+        self.last_feature_vizualized = feature_set.shape[0]
+        

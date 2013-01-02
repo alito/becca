@@ -73,6 +73,7 @@ def center_surround(fov, fov_span, block_heigth, block_width, verbose=False):
 def vizualize_pixel_array_feature_set(feature_set, start=0, world_name=None,
                                   save_eps=False, save_jpg=False,
                                   filename='log/feature_set'):
+    
     if feature_set.size == 0:
         return
 

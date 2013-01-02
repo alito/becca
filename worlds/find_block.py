@@ -76,6 +76,8 @@ class World(BaseWorld):
         self.sensors = np.zeros(self.num_sensors)
         self.primitives = np.zeros(self.num_primitives)
         
+        self.last_feature_vizualized = 0
+
 
     def step(self, action): 
         self.timestep += 1
