@@ -22,7 +22,7 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.REPORTING_PERIOD = 10 ** 4   
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 6
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
         self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 100.
         self.ANIMATE_PERIOD = 10 ** 2
@@ -197,5 +197,5 @@ class World(BaseWorld):
     def vizualize_feature_set(self, feature_set):
         """ Provide an intuitive display of the features created by the agent """
         world_utils.vizualize_pixel_array_feature_set(feature_set, world_name='image_2D',
-                                                      save_eps=False, save_jpg=True)
+                                                      save_eps=True, save_jpg=False)
     

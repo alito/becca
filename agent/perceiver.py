@@ -81,6 +81,7 @@ class Perceiver(object):
         """ These help maintain an estimate of each sensor's distribution """
         self.sensor_min = np.ones((self.num_raw_sensors, 1)) * utils.BIG
         self.sensor_max = np.ones((self.num_raw_sensors, 1)) * (-utils.BIG)
+        self.SENSOR_RANGE_DECAY_RATE = 0.01
 
 
     def step(self, raw_sensors, primitives, actions):
@@ -101,7 +102,10 @@ class Perceiver(object):
         """
         self.sensor_min = np.minimum(raw_sensors , self.sensor_min)
         self.sensor_max = np.maximum(raw_sensors , self.sensor_max)
-        sensors = (raw_sensors - self.sensor_min) / (self.sensor_max - self.sensor_min + utils.EPSILON)
+        spread = self.sensor_max - self.sensor_min
+        sensors = (raw_sensors - self.sensor_min) / (spread + utils.EPSILON)
+        self.sensor_min += spread * self.SENSOR_RANGE_DECAY_RATE
+        self.sensor_max -= spread * self.SENSOR_RANGE_DECAY_RATE
         
         """ Build the input vector.
         Combine sensors and primitives with 
