@@ -70,7 +70,7 @@ def center_surround(fov, fov_span, block_heigth, block_width, verbose=False):
     return center_surround_pixels
 
 
-def vizualize_pixel_array_feature_set(feature_set, world_name=None,
+def vizualize_pixel_array_feature_set(feature_set, start=0, world_name=None,
                                   save_eps=False, save_jpg=False,
                                   filename='log/feature_set'):
     if feature_set.size == 0:
@@ -80,7 +80,7 @@ def vizualize_pixel_array_feature_set(feature_set, world_name=None,
     n_pixels = feature_set.shape[1]/ 2
     fov_span = np.sqrt(n_pixels)
     
-    for feature_index in range(feature_set.shape[0]):
+    for feature_index in range(start, feature_set.shape[0]):
         feature_sensors = feature_set[feature_index, 0:2 * n_pixels]
  
         """ Maximize contrast """
@@ -108,6 +108,7 @@ def vizualize_pixel_array_feature_set(feature_set, world_name=None,
                 fig.savefig(jpgfilename, format='jpg')
             except:
                 print("I think you need to have PIL installed to print in .jpg format.")
+                save_jpg = False
                 
     return
     

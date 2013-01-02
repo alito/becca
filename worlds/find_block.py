@@ -16,13 +16,13 @@ class World(BaseWorld):
     using raw inputs, which BECCA must build into features. See
     http://www.sandia.gov/rohrer/doc/Rohrer11DevelopmentalAgentLearning.pdf
     for a full writeup.
-    Good performance is a reward of around 80 reward per time step.
+    Observed performance: 35@50K, 50@100K, 60@200K
     """
     def __init__(self):
         super(World, self).__init__()
 
-        self.REPORTING_PERIOD = 10 ** 4   
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 4
+        self.REPORTING_PERIOD = 10 ** 3   
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
         self.LIFESPAN = 2 * 10 ** 6
         self.REWARD_MAGNITUDE = 100.
         self.ANIMATE_PERIOD = 10 ** 2
@@ -32,7 +32,7 @@ class World(BaseWorld):
         self.announce()
 
         self.step_counter = 0
-        self.fov_span = 5
+        self.fov_span = 10
 
         self.num_sensors = self.fov_span ** 2
         self.num_primitives = 0
@@ -75,6 +75,8 @@ class World(BaseWorld):
 
         self.sensors = np.zeros(self.num_sensors)
         self.primitives = np.zeros(self.num_primitives)
+        
+        self.last_feature_vizualized = 0
         
 
     def step(self, action): 
@@ -154,7 +156,10 @@ class World(BaseWorld):
 
  
     def set_agent_parameters(self, agent):
-        
+        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.1
+        agent.perceiver.MIN_SIG_COACTIVITY =  0.8 * agent.perceiver.NEW_FEATURE_THRESHOLD
+        agent.perceiver.PLASTICITY_UPDATE_RATE = 0.01 * agent.perceiver.NEW_FEATURE_THRESHOLD
+
         pass
     
         
@@ -193,6 +198,7 @@ class World(BaseWorld):
     
     def vizualize_feature_set(self, feature_set):
         """ Provide an intuitive display of the features created by the agent """
-        world_utils.vizualize_pixel_array_feature_set(feature_set, world_name='image_2D',
-                                                      save_eps=False, save_jpg=True)
-    
+        world_utils.vizualize_pixel_array_feature_set(feature_set, 
+                                          start=self.last_feature_vizualized, 
+                                          world_name='image_2D', save_eps=True, save_jpg=False)
+        self.last_feature_vizualized = feature_set.shape[0]
