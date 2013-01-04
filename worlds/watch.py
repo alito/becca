@@ -209,7 +209,7 @@ class World(BaseWorld):
         agent.actor.model.MAX_TRANSITIONS = 10 ** 3
         agent.actor.model.SIMILARITY_THRESHOLD = 0.
 
-        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.002
+        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.02
         agent.perceiver.MIN_SIG_COACTIVITY =  0.8 * agent.perceiver.NEW_FEATURE_THRESHOLD
         agent.perceiver.PLASTICITY_UPDATE_RATE = 0.01 * agent.perceiver.NEW_FEATURE_THRESHOLD
         agent.perceiver.DISSIPATION_FACTOR = - 0.5 * np.log2(agent.perceiver.NEW_FEATURE_THRESHOLD)

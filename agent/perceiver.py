@@ -81,7 +81,7 @@ class Perceiver(object):
         """ These help maintain an estimate of each sensor's distribution """
         self.sensor_min = np.ones((self.num_raw_sensors, 1)) * utils.BIG
         self.sensor_max = np.ones((self.num_raw_sensors, 1)) * (-utils.BIG)
-        self.SENSOR_RANGE_DECAY_RATE = 10 ** -3
+        self.SENSOR_RANGE_DECAY_RATE = 10 ** -4
 
 
     def step(self, raw_sensors, primitives, actions):
@@ -108,9 +108,10 @@ class Perceiver(object):
         self.sensor_max -= spread * self.SENSOR_RANGE_DECAY_RATE
         
         if np.random.random_sample() < 0.0:
-            print 'sensors', np.sort(sensors, axis=None)
-            sorted_activities = np.sort(self.feature_activity[:self.num_features,:], axis=None)
-            print 'feature activities', sorted_activities
+            #print 'sensors', np.sort(sensors, axis=None)
+            #sorted_activities = np.sort(self.feature_activity[:self.num_features,:], axis=None)
+            #print 'feature activities', sorted_activities
+            print 'feature activities', self.feature_activity[:self.num_features,:].ravel()
             
         """ Build the input vector.
         Combine sensors and primitives with 

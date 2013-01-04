@@ -116,13 +116,12 @@ class Model(object):
         self.cause = np.zeros(model_shape)
         self.effect = np.zeros(model_shape)
 
-        self.effect_uncertainty = np.ones(model_shape)
-        self.effect_uncertainty *= self.INITIAL_UNCERTAINTY
+        self.effect_uncertainty = np.ones(model_shape) * self.INITIAL_UNCERTAINTY
         
         thin_shape = (1, 2*self.MAX_TRANSITIONS)
         self.count = np.zeros(thin_shape)
         self.reward_value = np.zeros(thin_shape)
-        self.reward_uncertainty = np.ones(thin_shape)*self.INITIAL_UNCERTAINTY
+        self.reward_uncertainty = np.ones(thin_shape) * self.INITIAL_UNCERTAINTY * 2
         self.goal_value = np.zeros(thin_shape)
 
         """ Maintain a history of the attended features and feature activity"""
@@ -140,9 +139,24 @@ class Model(object):
         self.new_transition_q = []
         self.transition_update_q = []
         self.feature_reward_q = []
+
+        """ These help maintain an estimate of each sensor's distribution """
+        self.reward_min = utils.BIG
+        self.reward_max = -utils.BIG
+        self.REWARD_RANGE_DECAY_RATE = 10 ** -4
         
 
-    def step(self, attended_feature, feature_activity, reward):
+    def step(self, attended_feature, feature_activity, raw_reward):
+        
+        """ Modify the reward so that it automatically falls between
+        -1 and 1, regardless of the actual reward magnitudes.
+        """
+        self.reward_min = np.minimum(raw_reward, self.reward_min)
+        self.reward_max = np.maximum(raw_reward, self.reward_max)
+        spread = self.reward_max - self.reward_min
+        reward = (raw_reward - self.reward_min) / (spread + utils.EPSILON)
+        self.reward_min += spread * self.REWARD_RANGE_DECAY_RATE
+        self.reward_max -= spread * self.REWARD_RANGE_DECAY_RATE
         
         """ Update histories of attended features, feature activities, 
         and rewards. 
@@ -410,10 +424,11 @@ class Model(object):
         
         """ Transform the reward to be on the interval (-1, 1) """
         reward = self.reward_value[:, :self.num_transitions]
-        mean_reward_magnitude = np.mean(np.abs(reward))
-        values = utils.map_inf_to_one(reward / (mean_reward_magnitude + utils.EPSILON))
-        return values
-        
+        #mean_reward_magnitude = np.mean(np.abs(reward))
+        #values = utils.map_inf_to_one(reward / (mean_reward_magnitude + utils.EPSILON))
+        #return values
+        return reward
+    
     
     def get_value_deviations(self):
         if self.num_transitions == 0:
@@ -421,10 +436,11 @@ class Model(object):
         
         """ Transform the reward to be on the interval (-1, 1) """
         deviation = self.reward_uncertainty[:, :self.num_transitions]
-        mean_deviation_magnitude = np.mean(np.abs(deviation))
-        normalized_deviations = utils.map_inf_to_one(deviation / \
-                                 (mean_deviation_magnitude + utils.EPSILON))
-        return normalized_deviations
+        #mean_deviation_magnitude = np.mean(np.abs(deviation))
+        #normalized_deviations = utils.map_inf_to_one(deviation / \
+        #                         (mean_deviation_magnitude + utils.EPSILON))
+        #return normalized_deviations
+        return deviation
     
     
     def get_count_weight(self):
@@ -441,7 +457,9 @@ class Model(object):
         overlap = np.minimum(context, feature_activity)
         similarity = np.sum(overlap, axis=0)[np.newaxis,:]
         deviation = self.get_value_deviations()
-        confidence = np.maximum(1 - 2 * deviation, 0) ** 2
+        
+        #confidence = np.maximum(1 - 2 * deviation, 0) ** 2
+        confidence = 1 - deviation
         #weight = confidence * similarity * count
         weight = confidence * similarity
         feature_salience = np.sum(weight * context, axis=1) / (np.sum(weight, axis=1) + utils.EPSILON)

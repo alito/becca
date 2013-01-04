@@ -33,7 +33,7 @@ class World(BaseWorld):
         self.announce()
 
         self.step_counter = 0
-        self.fov_span = 10
+        self.fov_span = 5
 
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 0
@@ -139,7 +139,7 @@ class World(BaseWorld):
                            
         reward = self.REWARD_MAGNITUDE * np.exp(- target_distance_sq / 
                                                 (0.5 * self.REWARD_REGION_WIDTH ** 2))
-        
+
         self.log(sensors, self.primitives, reward)
         return sensors, self.primitives, reward
     
@@ -159,11 +159,12 @@ class World(BaseWorld):
 
  
     def set_agent_parameters(self, agent):
-        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.002
+        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.1
         agent.perceiver.MIN_SIG_COACTIVITY =  0.8 * agent.perceiver.NEW_FEATURE_THRESHOLD
         agent.perceiver.PLASTICITY_UPDATE_RATE = 0.01 * agent.perceiver.NEW_FEATURE_THRESHOLD
         agent.perceiver.DISSIPATION_FACTOR = - 0.5 * np.log2(agent.perceiver.NEW_FEATURE_THRESHOLD)
 
+        agent.actor.SALIENCE_WEIGHT = 1.0
         pass
     
         
