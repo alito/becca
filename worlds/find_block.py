@@ -29,12 +29,13 @@ class World(BaseWorld):
         self.animate = False
         self.graphing = False
         self.name = 'find block world'
+        self.name_short = 'block'
         self.announce()
 
         self.step_counter = 0
         self.fov_span = 10
 
-        self.num_sensors = self.fov_span ** 2
+        self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 0
         self.num_actions = 17
 
@@ -128,7 +129,9 @@ class World(BaseWorld):
         center_surround_pixels = world_utils.center_surround( \
                         fov, self.fov_span, self.block_width, self.block_width)
 
-        sensors = center_surround_pixels.ravel()
+        unsplit_sensors = center_surround_pixels.ravel()        
+        sensors = np.concatenate((np.maximum(unsplit_sensors, 0), \
+                                  np.abs(np.minimum(unsplit_sensors, 0)) ))
 
         """ Calculate reward """
         target_distance_sq = (self.column_position - self.TARGET_COLUMN) ** 2 +  \
@@ -156,9 +159,10 @@ class World(BaseWorld):
 
  
     def set_agent_parameters(self, agent):
-        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.1
+        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.002
         agent.perceiver.MIN_SIG_COACTIVITY =  0.8 * agent.perceiver.NEW_FEATURE_THRESHOLD
         agent.perceiver.PLASTICITY_UPDATE_RATE = 0.01 * agent.perceiver.NEW_FEATURE_THRESHOLD
+        agent.perceiver.DISSIPATION_FACTOR = - 0.5 * np.log2(agent.perceiver.NEW_FEATURE_THRESHOLD)
 
         pass
     
@@ -200,5 +204,5 @@ class World(BaseWorld):
         """ Provide an intuitive display of the features created by the agent """
         world_utils.vizualize_pixel_array_feature_set(feature_set, 
                                           start=self.last_feature_vizualized, 
-                                          world_name='image_2D', save_eps=True, save_jpg=False)
+                                          world_name=self.name_short, save_eps=True, save_jpg=True)
         self.last_feature_vizualized = feature_set.shape[0]

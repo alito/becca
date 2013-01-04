@@ -52,12 +52,13 @@ class World(BaseWorld):
         self.LIFESPAN = 10 ** 8
         self.FOV_FRACTION = 0.2
         self.name = 'watch world'
+        self.name_short = 'watch'
         self.announce()
 
         self.timestep = 0
         self.sample_counter = 0
 
-        self.fov_span = 10
+        self.fov_span = 7
         
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 0
@@ -190,20 +191,15 @@ class World(BaseWorld):
         center_surround_pixels = world_utils.center_surround( \
                         fov, self.fov_span, self.block_width, self.block_width, verbose=False)
 
-        #sensors = center_surround_pixels.ravel()        
         unsplit_sensors = center_surround_pixels.ravel()        
         sensors = np.concatenate((np.maximum(unsplit_sensors, 0), \
                                   np.abs(np.minimum(unsplit_sensors, 0)) ))
 
-        reward = self.calculate_reward()               
+        reward = 0              
         
         return sensors, self.primitives, reward
     
-    
-    def calculate_reward(self):
-        return 0
-
-        
+            
     def set_agent_parameters(self, agent):
 
         """ Explore on every time step """
@@ -213,14 +209,12 @@ class World(BaseWorld):
         agent.actor.model.MAX_TRANSITIONS = 10 ** 3
         agent.actor.model.SIMILARITY_THRESHOLD = 0.
 
-        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.1
-        agent.perceiver.MIN_SIG_COACTIVITY =  0.7 * agent.perceiver.NEW_FEATURE_THRESHOLD
+        agent.perceiver.NEW_FEATURE_THRESHOLD = 0.002
+        agent.perceiver.MIN_SIG_COACTIVITY =  0.8 * agent.perceiver.NEW_FEATURE_THRESHOLD
         agent.perceiver.PLASTICITY_UPDATE_RATE = 0.01 * agent.perceiver.NEW_FEATURE_THRESHOLD
+        agent.perceiver.DISSIPATION_FACTOR = - 0.5 * np.log2(agent.perceiver.NEW_FEATURE_THRESHOLD)
 
-        agent.perceiver.SENSOR_DISTRIBUTION_UPDATE_RATE = 0.01
-        agent.perceiver.SENSOR_UPDATE_TIME_CONSTANT = 5
 
-    
     def is_time_to_display(self):
         if (self.timestep % self.FEATURE_DISPLAY_INTERVAL == 0):
             return True
@@ -233,6 +227,6 @@ class World(BaseWorld):
         
         world_utils.vizualize_pixel_array_feature_set(feature_set, 
                                           start=self.last_feature_vizualized, 
-                                          world_name='image_2D', save_eps=True, save_jpg=False)
+                                          world_name=self.name_short, save_eps=True, save_jpg=True)
         self.last_feature_vizualized = feature_set.shape[0]
         

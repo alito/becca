@@ -21,7 +21,7 @@ class Agent(object):
         self.pickle_filename ="log/" + agent_name + "_agent.pickle"
         
         self.REPORTING_PERIOD = 10 ** 3
-        self.BACKUP_PERIOD = 2 * 10 ** 4
+        self.BACKUP_PERIOD = 10 ** 8
 
         self.num_sensors = num_sensors
         self.num_primitives = num_primitives
@@ -74,6 +74,7 @@ class Agent(object):
     
     def display(self):
         if (self.timestep % self.REPORTING_PERIOD) == 0:
+            print self.timestep, 'time steps'
             self.reward_history.append(float(self.cumulative_reward) / self.REPORTING_PERIOD)
             self.reward_steps.append(self.timestep)
             self.show_reward_history(save_eps=True)

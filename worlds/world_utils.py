@@ -30,7 +30,6 @@ def center_surround(fov, fov_span, block_heigth, block_width, verbose=False):
             
             """ Calculate a center-surround value that represents
             the difference between the pixel and its surroundings.
-            The result lies between -1 and 1.
             """
             center_surround_pixels[row][column] = \
                 super_pixels[row + 1][column + 1] - \

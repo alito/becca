@@ -29,6 +29,7 @@ class World(BaseWorld):
         self.animate = False
         self.graphing = False
         self.name = 'two dimensional visual world'
+        self.name_short = 'image_2D'
         self.announce()
 
         self.step_counter = 0
@@ -201,7 +202,7 @@ class World(BaseWorld):
         """ Provide an intuitive display of the features created by the agent """
         world_utils.vizualize_pixel_array_feature_set(feature_set, 
                                           start=self.last_feature_vizualized, 
-                                          world_name='image_2D', save_eps=True, save_jpg=False)
+                                          world_name=self.name_short, save_eps=True, save_jpg=True)
         self.last_feature_vizualized = feature_set.shape[0]
         
         
