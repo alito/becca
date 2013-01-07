@@ -81,7 +81,7 @@ class Model(object):
         The trace is used to assign credit for transitions with deferred
         effects and rewards.
         """  
-        self.TRACE_LENGTH = 12                 # integer, small
+        self.TRACE_LENGTH = 1                 # integer, small
         
         """ The factor by which the reward is decayed for each
         timestep between when it was received and the event to which
@@ -121,7 +121,7 @@ class Model(object):
         thin_shape = (1, 2*self.MAX_TRANSITIONS)
         self.count = np.zeros(thin_shape)
         self.reward_value = np.zeros(thin_shape)
-        self.reward_uncertainty = np.ones(thin_shape) * self.INITIAL_UNCERTAINTY * 2
+        self.reward_uncertainty = np.ones(thin_shape) * self.INITIAL_UNCERTAINTY
         self.goal_value = np.zeros(thin_shape)
 
         """ Maintain a history of the attended features and feature activity"""
@@ -155,6 +155,10 @@ class Model(object):
         self.reward_max = np.maximum(raw_reward, self.reward_max)
         spread = self.reward_max - self.reward_min
         reward = (raw_reward - self.reward_min) / (spread + utils.EPSILON)
+        
+        """ account for summation during collapse """
+        #reward /= 2
+        
         self.reward_min += spread * self.REWARD_RANGE_DECAY_RATE
         self.reward_max -= spread * self.REWARD_RANGE_DECAY_RATE
         

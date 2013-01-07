@@ -137,7 +137,7 @@ def reduce_feature_set(perceiver, n_primitives, n_actions):
     return reduced_feature_set[n_primitives + n_actions:,:perceiver.num_sensors]
 
     
-def visualize_model(model, n=None):
+def visualize_model(model, num_primitives, num_actions, n=None):
     """ Visualize some of the transitions in the model """
     if n == None:
         n = model.num_transitions
@@ -186,7 +186,7 @@ def visualize_model(model, n=None):
     for index in range(n):
         print "Showing the " + str(index) + "th most impact."
                     
-        visualize_transition(model, index_by_rank[-(index+1)])
+        visualize_transition(model, num_primitives, num_actions, index_by_rank[-(index+1)])
         """ Hold the plot, blocking the program until the user closes
         the figure window.
         """
@@ -195,7 +195,7 @@ def visualize_model(model, n=None):
     return
     
         
-def visualize_transition(model, transition_index, save_eps=False, 
+def visualize_transition(model, num_primitives, num_actions, transition_index, save_eps=False, 
                           label=None, epsfilename='log/transition.eps'):
     """ Visualize a single model transition """
     if label==None:
@@ -209,10 +209,10 @@ def visualize_transition(model, transition_index, save_eps=False,
     
     viz_axes = fig.add_subplot(1,1,1)
     
-    count = model.count[transition_index, 0]
-    reward_value = model.reward_value[transition_index, 0]
-    reward_uncertainty = model.reward_uncertainty[transition_index, 0]
-    goal_value = model.goal_value[transition_index, 0]
+    count = model.count[0, transition_index]
+    reward_value = model.reward_value[0, transition_index]
+    reward_uncertainty = model.reward_uncertainty[0, transition_index]
+    goal_value = model.goal_value[0, transition_index]
     
     plt.title('Transition {:}'.format(transition_index) + 
               '  count: {:.2f}'.format(count)  + 
@@ -226,10 +226,10 @@ def visualize_transition(model, transition_index, save_eps=False,
     effect = np.copy(model.effect[:n_features, transition_index, np.newaxis])
     effect_uncertainty = np.copy(model.effect_uncertainty[:n_features, transition_index, np.newaxis])
 
-    visualize_state(context, model.num_primitives, model.num_actions, y_max=3.75, y_min=3.25, axes=viz_axes)
-    visualize_state(cause, model.num_primitives, model.num_actions,  y_max=2.75, y_min=2.25, axes=viz_axes)
-    visualize_state(effect, model.num_primitives, model.num_actions,  y_max=1.75, y_min=1.25, axes=viz_axes)
-    visualize_state(effect_uncertainty, model.num_primitives, model.num_actions, y_max=0.75, y_min=0.25, axes=viz_axes)
+    visualize_state(context, num_primitives, num_actions, y_max=3.75, y_min=3.25, axes=viz_axes)
+    visualize_state(cause, num_primitives, num_actions,  y_max=2.75, y_min=2.25, axes=viz_axes)
+    visualize_state(effect, num_primitives, num_actions,  y_max=1.75, y_min=1.25, axes=viz_axes)
+    visualize_state(effect_uncertainty, num_primitives, num_actions, y_max=0.75, y_min=0.25, axes=viz_axes)
     
     """ This trick makes matplotlib recognize that it has something to plot.
     Everything else in the plot is patches and text, and for some reason

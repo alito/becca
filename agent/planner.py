@@ -16,7 +16,7 @@ class Planner(object):
         """ Don't take any deliberate actions for a few time steps
         between each deliberate action.
         """
-        self.OBSERVE_STEPS = 4              # integer, 0 < x, typically small
+        self.OBSERVE_STEPS = 2              # integer, 0 < x, typically small
         self.observe_steps_left = self.OBSERVE_STEPS 
         self.OBSERVE = True
 

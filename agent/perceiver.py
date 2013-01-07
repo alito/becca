@@ -81,7 +81,7 @@ class Perceiver(object):
         """ These help maintain an estimate of each sensor's distribution """
         self.sensor_min = np.ones((self.num_raw_sensors, 1)) * utils.BIG
         self.sensor_max = np.ones((self.num_raw_sensors, 1)) * (-utils.BIG)
-        self.SENSOR_RANGE_DECAY_RATE = 10 ** -4
+        self.SENSOR_RANGE_DECAY_RATE = 10 ** -3
 
 
     def step(self, raw_sensors, primitives, actions):

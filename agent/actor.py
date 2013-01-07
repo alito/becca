@@ -12,7 +12,7 @@ class Actor(object):
 
         self.SALIENCE_NOISE = 10 ** -3 
         self.SALIENCE_WEIGHT = 0.2
-        self.FATIGUE_DECAY_RATE = 10 ** -1 
+        self.FATIGUE_DECAY_RATE = 0.9
 
         self.num_primitives = num_primitives
         self.num_actions = num_actions
@@ -95,15 +95,15 @@ class Actor(object):
             """ update fatigue """
             self.salience_fatigue[:n_features,:] += \
                 (self.attended_feature[:n_features,:] - 
-                self.salience_fatigue[:n_features,:]) * self.FATIGUE_DECAY_RATE
+                self.salience_fatigue[:n_features,:]) * (1 - self.FATIGUE_DECAY_RATE)
                 
         return self.attended_feature
 
                  
     def visualize(self, save_eps=True):
-        '''
+        
         import viz_utils
-        viz_utils.visualize_model(self.model, 10)
+        viz_utils.visualize_model(self.model, self.num_primitives, self.num_actions, 10)
         viz_utils.force_redraw()
-        '''
+        
         return
