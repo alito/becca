@@ -165,11 +165,7 @@ class World(BaseWorld):
         agent.perceiver.DISSIPATION_FACTOR = - 0.5 * np.log2(agent.perceiver.NEW_FEATURE_THRESHOLD)
 
         agent.actor.SALIENCE_WEIGHT = 1.0
-        
-        agent.actor.model.TRACE_LENGTH = 12
-        agent.actor.planner.OBSERVE_STEPS =2              # integer, 0 < x, typically small
-        
-        
+                
         pass
     
         
