@@ -1,19 +1,19 @@
 
 import numpy as np
+import utils
 
 class Planner(object):
 
     def __init__(self, num_primitives, num_actions):
         
-        """ The approximate fraction of time steps on which the 
-        planner makes a random, exploratory plan.
-        """
-        self.EXPLORATION_FRACTION = 0.2     # real, 0 < x < 1
+        self.num_primitives = num_primitives
+        self.num_actions = num_actions
+        self.action = np.zeros((num_actions,1))
         
         """ Affects how heavily the similarity of transitions is considered during deliberation """
         self.SIMILARITY_WEIGHT = 3.         # real, 0 < x
         
-        """ Don't take any deliberate actions for a few time steps
+        """ Don't take any deliberate actions for (OBSERVE_STEPS - 1) time steps
         between each deliberate action.
         """
         self.OBSERVE_STEPS = 2              # integer, 0 < x, typically small
@@ -24,10 +24,17 @@ class Planner(object):
         Serves to randomize selection among nearly equal votes.
         """
         self.FITNESS_NOISE = 1e-5              # real, 0 < x < 1, typically small
+        
+        self.MIN_JUMP_FREQUENCY = 0.01
 
-        self.num_primitives = num_primitives
-        self.num_actions = num_actions
-        self.action = np.zeros((num_actions,1))
+        """ The approximate fraction of time steps on which the 
+        planner makes an exploratory plan.
+        """
+        self.EXPLORATION_FREQUENCY = 0.001
+        self.MAX_EXPLORATION_PERIOD = 20
+        self.explore_steps_left = 0
+        self.EXPLORE = False
+        self.exploration_goal = None
         
         self.debug = False
 
@@ -41,66 +48,58 @@ class Planner(object):
         if not self.OBSERVE:
             self.OBSERVE = True
             self.observe_steps_left = self.OBSERVE_STEPS - 1
-                
-            """ Occasionally explore when making a deliberate action """
-            if np.random.random_sample() < self.EXPLORATION_FRACTION:
-                
-                self.action = self.explore()
-                            
-                if self.debug:
-                    print '            Exploring'
-                
-                """ Attend to any deliberate action """
+            
+            (self.action, goal) = self.deliberate(model, self.exploration_goal)  
+                          
+            """ Attend to any deliberate action """
+            if np.count_nonzero(self.action) > 0:
                 deliberately_acted = True
-                
+
+            if self.EXPLORE:
+                """ Temporarily pursue a goal other than reward """
+                self.explore_steps_left -= 1
+
+                """ If done exploring, prepare for greedy actions the next time around """
+                if self.explore_steps_left == 0:
+                    self.EXPLORE = False
+                    self.exploration_goal = None
+
+                if self.debug:
+                    print '            Exploring'         
+                           
             else:
                 """ The rest of the time, deliberately choose an action.
                 Choose features as goals, in addition to action.
                 """
-                (self.action, goal) = self.deliberate(model)
-
-                if self.debug:
-                    print '            Deliberating'
-                
                 """ Pass goal to model """ 
                 model.update_goal(goal)
+                                
+                """ Begin exploring the next time around? """    
+                explore_val = self.EXPLORATION_FREQUENCY / (np.random.random_sample() + utils.EPSILON)
                 
-                if np.count_nonzero(self.action) > 0:
-                    """ Attend to any deliberate action """
-                    deliberately_acted = True
-        
+                if explore_val > 1:
+                    self.EXPLORE = True
+                    self.explore_steps_left = np.minimum(np.ceil(explore_val), self.MAX_EXPLORATION_PERIOD)
+                    
+                    """ Choose a new goal. The goal is the effect of a randomly selected transition. """
+                    self.exploration_goal = model.effect[:,np.random.randint(model.num_transitions)].copy()
+                    self.exploration_goal = self.exploration_goal[:,np.newaxis]
+                    
         else:
-            self.observe_steps_left -= 1
-            if self.observe_steps_left <= 0:
-                self.OBSERVE = False
-                
+            """ if only observing """
             self.action = np.zeros( self.action.shape)
             
             if self.debug:
                 print '            Observing'
                         
+            self.observe_steps_left -= 1
+            if self.observe_steps_left <= 0:
+                self.OBSERVE = False
+                
         return self.action, deliberately_acted
             
 
-    def explore(self):
-        """ Forms a random, exploratory plan """
-        """ TODO: form and execute multi-step plans, rather than single-step
-        random action.
-        """        
-        """ Exploratory commands are only generated at the basic 
-        action feature level. Features and higher-level commands 
-        are not excited. 
-        """
-        """ Set all elements of the action to zero """
-        action = np.zeros((self.action.shape))
-
-        """ When exploring, randomly pick one action element to be active """
-        action[np.random.random_integers(0, action.size-1)] = 1
-        
-        return action
-
-
-    def deliberate(self, model):
+    def deliberate(self, model, exploration_goal=None):
         """
         Deliberate, choosing goals based on the current working memory.
         Find the transition that is best suited based on:
@@ -116,11 +115,17 @@ class Planner(object):
             goal = None
             return action, goal
 
-        """ Combine the goal-based and reward-based value, for all
-        transisions, bounded by one.
-        """
-        value = model.get_values()
-        
+        """ Combine the goal-based and reward-based value, for all transitions """
+        if exploration_goal is None:
+            value = model.reward_value[:, :model.num_transitions]
+            uncertainty = model.reward_uncertainty[:, :model.num_transitions]
+        else:
+            value = np.sum(model.effect[:, :model.num_transitions] * exploration_goal, axis=0) \
+                  / np.sum(exploration_goal, axis=0)
+            uncertainty = np.sum(model.effect_uncertainty[:, :model.num_transitions] * 
+                                    exploration_goal, axis=0) / np.sum(exploration_goal, axis=0)
+            uncertainty = uncertainty[np.newaxis, :]
+                 
         """ Each transition's count and its similarity to the working memory 
         also factor in to its vote.
         """
@@ -131,31 +136,44 @@ class Planner(object):
         """ TODO: Add recency? This is likely to be useful when rewards change over time """
         transition_vote = value.ravel()  + self.SIMILARITY_WEIGHT * similarity.ravel() 
         
-        """ Add a small amount of noise to the votes to encourage
-        variation in closely-matched options.
-        """
+        """ Add a small amount of noise to the votes to encourage variation in closely-matched options """
         noise = 1 + self.FITNESS_NOISE / np.random.random_sample(transition_vote.shape)
         transition_vote *= noise
 
         max_transition_index = np.argmax(transition_vote)
         
-        """ Update the transition used to select this action. 
-        Setting wait to True allows one extra time step for the 
-        action to be executed.
-        """
-        model.update_transition(max_transition_index, 
-                                update_strength=similarity[max_transition_index], wait=True)
+        #print 'max_transition_index', max_transition_index
+        #print 'uncertainty', uncertainty[:,max_transition_index]
         
-        goal = model.get_cause(max_transition_index)
-           
-        """ Separate action goals from the rest of the goal """
-        action = np.zeros(self.action.shape)
-        if np.size((goal[self.num_primitives: self.num_primitives + self.num_actions,:] > 0).nonzero()):
+        """ Introduce periodic jumps """   
+        uncertainty[:,max_transition_index]     
+        if np.random.random_sample() < uncertainty[:,max_transition_index] + self.MIN_JUMP_FREQUENCY:
+            action = np.zeros(self.action.shape)
+            action[np.random.randint(action.size),:] = 1
             self.deliberately_acted = True
+            goal = self.exploration_goal
+            
+            if self.debug:
+                print '                    Jumping'         
+                       
+        else:
+            """ Update the transition used to select this action. 
+            Setting wait to True allows one extra time step for the action to be executed.
+            """
+            model.update_transition(max_transition_index, 
+                                    update_strength=similarity[max_transition_index], wait=True)
+            
+            goal = model.get_cause(max_transition_index)
+           
+            """ Separate action goals from the rest of the goal """
+            action = np.zeros(self.action.shape)
 
-            action[goal[self.num_primitives: self.num_primitives + self.num_actions,:] > 0] = 1
-            goal[self.num_primitives: self.num_primitives + \
-                 self.num_actions,:] = np.zeros((self.num_actions, 1))
+            if np.size((goal[self.num_primitives: self.num_primitives + self.num_actions,:] > 0).nonzero()):
+                self.deliberately_acted = True
+    
+                action[goal[self.num_primitives: self.num_primitives + self.num_actions,:] > 0] = 1
+                goal[self.num_primitives: self.num_primitives + \
+                     self.num_actions,:] = np.zeros((self.num_actions, 1))
     
         return action, goal
 

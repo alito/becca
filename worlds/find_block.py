@@ -22,7 +22,7 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.REPORTING_PERIOD = 10 ** 3   
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 6
         self.LIFESPAN = 2 * 10 ** 6
         self.REWARD_MAGNITUDE = 100.
         self.ANIMATE_PERIOD = 10 ** 2
@@ -165,6 +165,8 @@ class World(BaseWorld):
         agent.perceiver.DISSIPATION_FACTOR = - 0.5 * np.log2(agent.perceiver.NEW_FEATURE_THRESHOLD)
 
         agent.actor.SALIENCE_WEIGHT = 1.0
+        
+        #agent.actor.planner.EXPLORATION_FREQUENCY = 0.001
                 
         pass
     

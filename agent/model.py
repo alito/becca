@@ -422,7 +422,7 @@ class Model(object):
         return similarity
     
     
-    def get_values(self):
+        '''def get_values(self):
         if self.num_transitions == 0:
             return np.zeros((0,0))
         
@@ -432,9 +432,9 @@ class Model(object):
         #values = utils.map_inf_to_one(reward / (mean_reward_magnitude + utils.EPSILON))
         #return values
         return reward
+        '''
     
-    
-    def get_value_deviations(self):
+        '''def get_value_deviations(self):
         if self.num_transitions == 0:
             return np.zeros((0,0))
         
@@ -445,7 +445,7 @@ class Model(object):
         #                         (mean_deviation_magnitude + utils.EPSILON))
         #return normalized_deviations
         return deviation
-    
+        '''
     
     def get_count_weight(self):
         return utils.map_inf_to_one(np.log(self.count[:,:self.num_transitions] + 1) / 3)
@@ -460,12 +460,16 @@ class Model(object):
         context = self.context[:n_features,:self.num_transitions]        
         overlap = np.minimum(context, feature_activity)
         similarity = np.sum(overlap, axis=0)[np.newaxis,:]
-        deviation = self.get_value_deviations()
+        
+        #deviation = self.get_value_deviations()
+        deviation = self.reward_uncertainty[:, :self.num_transitions]
         
         #confidence = np.maximum(1 - 2 * deviation, 0) ** 2
         confidence = 1 - deviation
+        
         #weight = confidence * similarity * count
         weight = confidence * similarity
+        
         feature_salience = np.sum(weight * context, axis=1) / (np.sum(weight, axis=1) + utils.EPSILON)
         feature_salience = feature_salience[:,np.newaxis]
 
