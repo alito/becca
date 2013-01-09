@@ -31,7 +31,7 @@ class Planner(object):
         """ The approximate fraction of time steps on which the 
         planner makes an exploratory plan.
         """
-        self.EXPLORATION_FREQUENCY = 0.01
+        self.EXPLORATION_FREQUENCY = 0.001
         self.MAX_EXPLORATION_PERIOD = 20
         self.explore_steps_left = 0
         self.EXPLORE = False
@@ -84,10 +84,15 @@ class Planner(object):
                     
                     """ Choose a new goal. The goal is the effect of a randomly selected transition. """
                     candidate_transitions = np.where(np.sum(model.effect, axis=0) > 0)
-                    self.exploration_goal = model.effect[:,candidate_transitions[0][ 
+                    if candidate_transitions[0].size > 0:
+                        self.exploration_goal = model.effect[:,candidate_transitions[0][ 
                                              np.random.randint(candidate_transitions[0].size)]].copy()
-                    self.exploration_goal = self.exploration_goal[:,np.newaxis]
-                    
+                        self.exploration_goal = self.exploration_goal[:,np.newaxis]
+                    else:
+                        self.exploration_goal = None
+                        self.EXPLORE = False
+                        self.explore_steps_left = 0
+                        
         else:
             """ if only observing """
             self.action = np.zeros( self.action.shape)

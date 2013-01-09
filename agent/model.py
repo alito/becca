@@ -66,7 +66,7 @@ class Model(object):
         This number is driven by the practical limitations of available
         memory and (more often) computation speed. 
         """
-        self.MAX_TRANSITIONS = 10 ** 3            # integer, somewhat large
+        self.MAX_TRANSITIONS = 10 ** 4            # integer, somewhat large
         
         """ The maximum number of features that will ever be allowed to be created """
         self.max_num_features = max_num_features  # integer, somewhat large
@@ -454,6 +454,10 @@ class Model(object):
         """ Return the index of a transition with a low count so that it can be overwritten """
         low_indices = np.where(self.count == np.min(self.count))
         low_index = low_indices[1][np.random.randint(low_indices[1].size)]
+
+        if np.min(self.count) > 0:
+            print 'np.min(self.count)', np.min(self.count)
+        
         return low_index
     
     

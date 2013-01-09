@@ -44,8 +44,9 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.TASK_DURATION = 10 ** 3
+        self.TARGET_SIZE_FRACTION = 0.7
         self.REPORTING_PERIOD = 10 ** 3   
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 6
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
         self.LIFESPAN = 2 * 10 ** 6
         self.REWARD_MAGNITUDE = 100.
         self.ANIMATE_PERIOD = 10 ** 2
@@ -132,6 +133,12 @@ class World(BaseWorld):
         """ Define the size of the base image """
         (im_height, im_width) = self.image_data.shape
         im_size = np.minimum(im_height, im_width)
+
+        # make it square
+        self.image_data = self.image_data[:im_size, :im_size]
+        (im_height, im_width) = self.image_data.shape
+        im_size = np.minimum(im_height, im_width)
+        
         self.MAX_STEP_SIZE = im_size / 2
         self.REWARD_REGION_WIDTH = im_size / 8
         self.NOISE_MAGNITUDE = 0.1
@@ -148,31 +155,24 @@ class World(BaseWorld):
         self.superpixel_height = np.round(self.fov_height / (self.fov_span + 2))
         
         """ Define the size of the block image and its initial position """
-        self.BLOCK_SIZE_FRACTION = 0.95
-        self.block_height =  im_size * self.BLOCK_SIZE_FRACTION
-        self.block_width = self.block_height
-        self.block_column_min = np.ceil(self.block_width / 2)
-        self.block_column_max = np.floor(im_width - self.block_column_min)
-        self.block_row_min = np.ceil(self.block_height / 2)
-        self.block_row_max = np.floor(im_height - self.block_row_min)
-        self.TARGET_COLUMN = np.random.randint(self.block_column_min, self.block_column_max)
-        self.TARGET_ROW = np.random.random_integers(self.block_row_min, self.block_row_max)
-        block_left = np.floor(self.TARGET_COLUMN - self.block_width / 2)
-        block_right = np.floor(self.TARGET_COLUMN + self.block_width / 2)
-        block_bottom = np.floor(self.TARGET_ROW + self.block_width / 2)
-        block_top = np.floor(self.TARGET_ROW - self.block_width / 2)
+        max_column_margin = (1 - self.TARGET_SIZE_FRACTION) * im_width
+        max_row_margin = (1 - self.TARGET_SIZE_FRACTION) * im_height
+        column_margin = np.floor(np.random.random_sample() * max_column_margin)
+        row_margin = np.floor(np.random.random_sample() * max_row_margin)
+        target_height =  np.round(im_size * self.TARGET_SIZE_FRACTION)
+        target_width = target_height
+        self.TARGET_COLUMN = column_margin + target_width / 2
+        self.TARGET_ROW = row_margin + target_height / 2
         
-        scaled_block_data = self.interpolate_nearest_2D(self.block_image_data, block_bottom - block_top,
-                                           block_right - block_left)
-        self.image_data[block_top:block_bottom, block_left:block_right] = scaled_block_data
+        scaled_block_data = self.interpolate_nearest_2D(self.block_image_data, target_height, target_width)
+        self.image_data[row_margin:row_margin + target_height, 
+                        column_margin:column_margin + target_width] = scaled_block_data
         
         if (( self.superpixel_width < 1) | ( self.superpixel_height < 1)):
             self.initialize_image()
 
         if self.animate:
-            from matplotlib import pyplot as plt
-            
-            fig = plt.figure('image_with_block')
+            plt.figure('image_with_block')
             plt.imshow(self.image_data)
             plt.gray()
             viz_utils.force_redraw()
@@ -281,6 +281,7 @@ class World(BaseWorld):
             sensed_image = np.reshape(full_sensors,(self.fov_span, self.fov_span))
             plt.gray()
             plt.imshow(sensed_image, interpolation='nearest')
+            plt.title('reward: ' + str(reward))
             viz_utils.force_redraw()
 
  
