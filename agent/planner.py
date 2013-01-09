@@ -12,6 +12,7 @@ class Planner(object):
         
         """ Affects how heavily the similarity of transitions is considered during deliberation """
         self.SIMILARITY_WEIGHT = 3.         # real, 0 < x
+        #self.CONFIDENCE_WEIGHT = 0.02
         
         """ Don't take any deliberate actions for (OBSERVE_STEPS - 1) time steps
         between each deliberate action.
@@ -30,7 +31,7 @@ class Planner(object):
         """ The approximate fraction of time steps on which the 
         planner makes an exploratory plan.
         """
-        self.EXPLORATION_FREQUENCY = 0.001
+        self.EXPLORATION_FREQUENCY = 0.01
         self.MAX_EXPLORATION_PERIOD = 20
         self.explore_steps_left = 0
         self.EXPLORE = False
@@ -82,7 +83,9 @@ class Planner(object):
                     self.explore_steps_left = np.minimum(np.ceil(explore_val), self.MAX_EXPLORATION_PERIOD)
                     
                     """ Choose a new goal. The goal is the effect of a randomly selected transition. """
-                    self.exploration_goal = model.effect[:,np.random.randint(model.num_transitions)].copy()
+                    candidate_transitions = np.where(np.sum(model.effect, axis=0) > 0)
+                    self.exploration_goal = model.effect[:,candidate_transitions[0][ 
+                                             np.random.randint(candidate_transitions[0].size)]].copy()
                     self.exploration_goal = self.exploration_goal[:,np.newaxis]
                     
         else:
@@ -110,19 +113,25 @@ class Planner(object):
         Choose the cause of the winning transition as the goal for 
         the timestep.
         """
-        if model.num_transitions == 0:
+        '''if model.num_transitions == 0:
             action = np.zeros(self.action.shape)
             goal = None
             return action, goal
-
+        '''
         """ Combine the goal-based and reward-based value, for all transitions """
         if exploration_goal is None:
-            value = model.reward_value[:, :model.num_transitions]
-            uncertainty = model.reward_uncertainty[:, :model.num_transitions]
+            #value = model.reward_value[:, :model.num_transitions]
+            #uncertainty = model.reward_uncertainty[:, :model.num_transitions]
+            value = model.reward_value
+            uncertainty = model.reward_uncertainty
         else:
-            value = np.sum(model.effect[:, :model.num_transitions] * exploration_goal, axis=0) \
+            #value = np.sum(model.effect[:, :model.num_transitions] * exploration_goal, axis=0) \
+            #      / np.sum(exploration_goal, axis=0)
+            #uncertainty = np.sum(model.effect_uncertainty[:, :model.num_transitions] * 
+            #                        exploration_goal, axis=0) / np.sum(exploration_goal, axis=0)
+            value = np.sum(model.effect * exploration_goal, axis=0) \
                   / np.sum(exploration_goal, axis=0)
-            uncertainty = np.sum(model.effect_uncertainty[:, :model.num_transitions] * 
+            uncertainty = np.sum(model.effect_uncertainty * 
                                     exploration_goal, axis=0) / np.sum(exploration_goal, axis=0)
             uncertainty = uncertainty[np.newaxis, :]
                  
@@ -136,14 +145,16 @@ class Planner(object):
         """ TODO: Add recency? This is likely to be useful when rewards change over time """
         transition_vote = value.ravel()  + self.SIMILARITY_WEIGHT * similarity.ravel() 
         
+        """ TODO: Add confidence weighting? All else being equal, higher confidence
+        transitions should be preferred, right? Initial testing shows that it doesn't help yet.
+        """
+        #transition_vote *= 1 - uncertainty.ravel() * self.CONFIDENCE_WEIGHT
+        
         """ Add a small amount of noise to the votes to encourage variation in closely-matched options """
         noise = 1 + self.FITNESS_NOISE / np.random.random_sample(transition_vote.shape)
         transition_vote *= noise
 
         max_transition_index = np.argmax(transition_vote)
-        
-        #print 'max_transition_index', max_transition_index
-        #print 'uncertainty', uncertainty[:,max_transition_index]
         
         """ Introduce periodic jumps """   
         uncertainty[:,max_transition_index]     

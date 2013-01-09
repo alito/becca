@@ -5,35 +5,59 @@ import worlds.world_utils as world_utils
 
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+
+""" Import the Python Imaging Library if it can be found.
+If not, carry on.
+"""
+try:
+    from PIL import Image
+    using_pil = True
+except ImportError:
+    using_pil = False
+    print "PIL (the Python Imaging Library) was not found."
+    print "This means that the watch world will only be able to load .png files."
+    print "If you want to load .jpgs and other formats, install PIL."
 
 
 class World(BaseWorld):
     """ Image_2D, two-dimensional visual servo task
     In this task, BECCA can direct its gaze up, down, left, and
-    right, saccading about an image_data of a black square on a white
+    right, saccading about an block_image_data of a black square on a white
     background. It is rewarded for directing it near the center.
     The mural is not represented using basic features, but rather
     using raw inputs, which BECCA must build into features. See
     http://www.sandia.gov/rohrer/doc/Rohrer11DevelopmentalAgentLearning.pdf
     for a full writeup.
-    Observed performance: 35@50K, 50@100K, 60@200K
+
+    By default, this world pulls images from the collection at 
+    ./images/lib . This directory is specifically excluded from 
+    the repository since it can be quite large and shouldn't be 
+    distributed with Becca. You will have to fill this directory
+    yourself in order to run this world. See
+
+    This world also requires an installation of the Python Imaging Library
+    (PIL). I've had problems installing it on Windows. I had to recompile it
+    to run it on Mac. It ran on Ubuntu Linux 12.04 right out of the box.    
     """
     def __init__(self):
         super(World, self).__init__()
 
+        self.TASK_DURATION = 10 ** 3
         self.REPORTING_PERIOD = 10 ** 3   
         self.FEATURE_DISPLAY_INTERVAL = 10 ** 6
         self.LIFESPAN = 2 * 10 ** 6
         self.REWARD_MAGNITUDE = 100.
         self.ANIMATE_PERIOD = 10 ** 2
-        self.animate = False
+        self.animate = True
         self.graphing = False
         self.name = 'find block world'
         self.name_short = 'block'
         self.announce()
 
+        self.sample_counter = 0
         self.step_counter = 0
-        self.fov_span = 5
+        self.fov_span = 10
 
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 0
@@ -42,27 +66,76 @@ class World(BaseWorld):
         self.column_history = []
         self.row_history = []
 
-        """ Initialize the image_data to be used as the environment """
-        self.image_filename = "./images/block_test.png" 
-        self.image_data = plt.imread(self.image_filename)
+        """ Initialize the block_image_data to be used as the environment """
+        self.block_image_filename = "./images/block_test.png" 
+        self.block_image_data = plt.imread(self.block_image_filename)
         
         """ Convert it to grayscale if it's in color """
-        if self.image_data.shape[2] == 3:
+        if self.block_image_data.shape[2] == 3:
             """ Collapse the three RGB matrices into one black/white value matrix """
-            self.image_data = np.sum(self.image_data, axis=2) / 3.0
+            self.block_image_data = np.sum(self.block_image_data, axis=2) / 3.0
+        
+        self.image_filenames = []
+        path = 'images/lib/' 
+        
+        if using_pil:
+            extensions = ['.jpg', '.tif', '.gif', '.png', '.bmp']
+        else:
+            extensions = ['.png']
 
-        """ Define the size of the field of view, its range of allowable positions,
-        and its initial position.
-        """
+        for localpath, directories, filenames in os.walk(path):
+            for filename in filenames:
+                for extension in extensions:
+                    if filename.endswith(extension):
+                        self.image_filenames.append(os.path.join(localpath,filename))
+                                                     
+        self.image_count = len(self.image_filenames)
+        if self.image_count == 0:
+            try:
+                raise RuntimeError('Add image files to image\/lib\/')
+            except RuntimeError:
+                print 'Error in watch.py: No images loaded.'
+                print '    Make sure the \'images\' directory contains '
+                print '    a \'lib\' directory and that it contains'
+                print '    some image files.'
+                raise
+        else:
+            print self.image_count, 'image_data filenames loaded.'
+            
+        """ Initialize the image_data to be viewed """
+        self.initialize_image()
+        
+        self.sensors = np.zeros(self.num_sensors)
+        self.primitives = np.zeros(self.num_primitives)
+        
+        self.last_feature_vizualized = 0
+
+
+    def initialize_image(self):
+        
+        self.sample_counter = 0
+        filename = self.image_filenames[np.random.randint(0, self.image_count)]
+        
+        if using_pil:
+            self.image = Image.open(filename)
+            """ Convert it to grayscale if it's in color """
+            self.image = self.image.convert('L')
+            self.image_data = np.asarray(self.image) / 255.0    
+                    
+        else:
+            self.image_data = plt.imread(filename)
+            """ Convert it to grayscale if it's in color """
+            if len(self.image_data.shape) == 3:
+                self.image_data = np.sum(self.image_data, axis=2) / \
+                                    self.image_data.shape[2]
+            
+        """ Define the size of the base image """
         (im_height, im_width) = self.image_data.shape
         im_size = np.minimum(im_height, im_width)
         self.MAX_STEP_SIZE = im_size / 2
-        self.TARGET_COLUMN = im_width / 2
-        self.TARGET_ROW = im_height / 2
         self.REWARD_REGION_WIDTH = im_size / 8
         self.NOISE_MAGNITUDE = 0.1
-
-        self.FIELD_OF_VIEW_FRACTION = 0.5;
+        self.FIELD_OF_VIEW_FRACTION = 0.5
         self.fov_height =  im_size * self.FIELD_OF_VIEW_FRACTION
         self.fov_width = self.fov_height
         self.column_min = np.ceil(self.fov_width / 2)
@@ -71,18 +144,65 @@ class World(BaseWorld):
         self.row_max = np.floor(im_height - self.row_min)
         self.column_position = np.random.random_integers(self.column_min, self.column_max)
         self.row_position = np.random.random_integers(self.row_min, self.row_max)
-        self.block_width = np.round(self.fov_width / (self.fov_span + 2))
-        self.block_height = np.round(self.fov_height / (self.fov_span + 2))
-
-        self.sensors = np.zeros(self.num_sensors)
-        self.primitives = np.zeros(self.num_primitives)
+        self.superpixel_width = np.round(self.fov_width / (self.fov_span + 2))
+        self.superpixel_height = np.round(self.fov_height / (self.fov_span + 2))
         
-        self.last_feature_vizualized = 0
+        """ Define the size of the block image and its initial position """
+        self.BLOCK_SIZE_FRACTION = 0.95
+        self.block_height =  im_size * self.BLOCK_SIZE_FRACTION
+        self.block_width = self.block_height
+        self.block_column_min = np.ceil(self.block_width / 2)
+        self.block_column_max = np.floor(im_width - self.block_column_min)
+        self.block_row_min = np.ceil(self.block_height / 2)
+        self.block_row_max = np.floor(im_height - self.block_row_min)
+        self.TARGET_COLUMN = np.random.randint(self.block_column_min, self.block_column_max)
+        self.TARGET_ROW = np.random.random_integers(self.block_row_min, self.block_row_max)
+        block_left = np.floor(self.TARGET_COLUMN - self.block_width / 2)
+        block_right = np.floor(self.TARGET_COLUMN + self.block_width / 2)
+        block_bottom = np.floor(self.TARGET_ROW + self.block_width / 2)
+        block_top = np.floor(self.TARGET_ROW - self.block_width / 2)
+        
+        scaled_block_data = self.interpolate_nearest_2D(self.block_image_data, block_bottom - block_top,
+                                           block_right - block_left)
+        self.image_data[block_top:block_bottom, block_left:block_right] = scaled_block_data
+        
+        if (( self.superpixel_width < 1) | ( self.superpixel_height < 1)):
+            self.initialize_image()
+
+        if self.animate:
+            from matplotlib import pyplot as plt
+            
+            fig = plt.figure('image_with_block')
+            plt.imshow(self.image_data)
+            plt.gray()
+            viz_utils.force_redraw()
+
+        return    
+
+
+    def interpolate_nearest_2D(self, data, rows, cols):
+        
+        (data_rows, data_cols) = data.shape
+        resampled_rows = np.floor(data_rows * np.arange(rows) / rows)
+        resampled_cols = np.floor(data_cols * np.arange(cols) / cols)
+        
+        """ This shaping is necessary for getting the indices to broadcast 
+        correctly when slicing the image.
+        """
+        resampled_rows = resampled_rows[:,np.newaxis]
+        resampled_cols = resampled_cols[np.newaxis,:]
+        
+        return data[resampled_rows.astype(int), resampled_cols.astype(int)]
 
 
     def step(self, action): 
         self.timestep += 1
+        self.sample_counter += 1
         
+        """ Restart the task when appropriate """
+        if self.sample_counter >= self.TASK_DURATION:
+            self.initialize_image()
+
         """ Actions 0-3 move the field of view to a higher-numbered 
         row (downward in the image_data) with varying magnitudes, and actions 4-7 do the opposite.
         Actions 8-11 move the field of view to a higher-numbered 
@@ -127,11 +247,14 @@ class World(BaseWorld):
                               self.column_position + self.fov_width / 2]
 
         center_surround_pixels = world_utils.center_surround( \
-                        fov, self.fov_span, self.block_width, self.block_width)
+                        fov, self.fov_span, self.superpixel_width, self.superpixel_height)
 
         unsplit_sensors = center_surround_pixels.ravel()        
         sensors = np.concatenate((np.maximum(unsplit_sensors, 0), \
                                   np.abs(np.minimum(unsplit_sensors, 0)) ))
+                
+        #if not (sensors < 1).all and (sensors > 0).all:
+        #    print 'sensors', sensors
 
         """ Calculate reward """
         target_distance_sq = (self.column_position - self.TARGET_COLUMN) ** 2 +  \
@@ -151,8 +274,11 @@ class World(BaseWorld):
         self.column_history.append(self.column_position)
 
         if self.animate and (self.timestep % self.ANIMATE_PERIOD) == 0:
+            #print 'sensors', sensors
             plt.figure("Image sensed")
-            sensed_image = np.reshape(sensors[:len(sensors)/2],(self.fov_span, self.fov_span))
+            full_sensors = 0.5 + (sensors[:len(sensors)/2] - sensors[len(sensors)/2:]) / 2
+            #print 'full_sensors', full_sensors
+            sensed_image = np.reshape(full_sensors,(self.fov_span, self.fov_span))
             plt.gray()
             plt.imshow(sensed_image, interpolation='nearest')
             viz_utils.force_redraw()

@@ -10,7 +10,7 @@ import numpy as np
 class World(BaseWorld):
     """ Image_2D, two-dimensional visual servo task
     In this task, BECCA can direct its gaze up, down, left, and
-    right, saccading about an image_data of a black square on a white
+    right, saccading about an block_image_data of a black square on a white
     background. It is rewarded for directing it near the center.
     The mural is not represented using basic features, but rather
     using raw inputs, which BECCA must build into features. See
@@ -42,19 +42,19 @@ class World(BaseWorld):
         self.column_history = []
         self.row_history = []
 
-        """ Initialize the image_data to be used as the environment """
-        self.image_filename = "./images/block_test.png" 
-        self.image_data = plt.imread(self.image_filename)
+        """ Initialize the block_image_data to be used as the environment """
+        self.block_image_filename = "./images/block_test.png" 
+        self.block_image_data = plt.imread(self.block_image_filename)
         
         """ Convert it to grayscale if it's in color """
-        if self.image_data.shape[2] == 3:
+        if self.block_image_data.shape[2] == 3:
             """ Collapse the three RGB matrices into one black/white value matrix """
-            self.image_data = np.sum(self.image_data, axis=2) / 3.0
+            self.block_image_data = np.sum(self.block_image_data, axis=2) / 3.0
 
         """ Define the size of the field of view, its range of allowable positions,
         and its initial position.
         """
-        (im_height, im_width) = self.image_data.shape
+        (im_height, im_width) = self.block_image_data.shape
         im_size = np.minimum(im_height, im_width)
         self.MAX_STEP_SIZE = im_size / 2
         self.TARGET_COLUMN = im_width / 2
@@ -84,9 +84,9 @@ class World(BaseWorld):
         self.timestep += 1
         
         """ Actions 0-3 move the field of view to a higher-numbered 
-        row (downward in the image_data) with varying magnitudes, and actions 4-7 do the opposite.
+        row (downward in the block_image_data) with varying magnitudes, and actions 4-7 do the opposite.
         Actions 8-11 move the field of view to a higher-numbered 
-        column (rightward in the image_data) with varying magnitudes, and actions 12-15 do the opposite.
+        column (rightward in the block_image_data) with varying magnitudes, and actions 12-15 do the opposite.
         """
         row_step    = np.round(action[0] * self.MAX_STEP_SIZE / 2 + 
                                action[1] * self.MAX_STEP_SIZE / 4 + 
@@ -114,14 +114,14 @@ class World(BaseWorld):
         self.row_position    = self.row_position    + int(row_step)
         self.column_position = self.column_position + int(column_step)
 
-        """ Respect the boundaries of the image_data """
+        """ Respect the boundaries of the block_image_data """
         self.row_position = max(self.row_position, self.row_min)
         self.row_position = min(self.row_position, self.row_max)
         self.column_position = max(self.column_position, self.column_min)
         self.column_position = min(self.column_position, self.column_max)
 
         """ Create the sensory input vector """
-        fov = self.image_data[self.row_position - self.fov_height / 2: 
+        fov = self.block_image_data[self.row_position - self.fov_height / 2: 
                               self.row_position + self.fov_height / 2, 
                               self.column_position - self.fov_width / 2: 
                               self.column_position + self.fov_width / 2]

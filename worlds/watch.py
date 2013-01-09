@@ -23,7 +23,7 @@ class World(BaseWorld):
     """ watch, visual feature extraction
     In this world, Becca's feature extractor creates visual    
     features from portions of images in the
-    Caltech-256 image_data dataset. The reinforcement actor serves no
+    Caltech-256 block_image_data dataset. The reinforcement actor serves no
     vital purpose in this world--it is intended to showcase the
     feature extractor.
 
@@ -89,9 +89,9 @@ class World(BaseWorld):
                 print '    some image files.'
                 raise
         else:
-            print self.image_count, ' image_data filenames loaded.'
+            print self.image_count, ' block_image_data filenames loaded.'
             
-        """ Initialize the image_data to be viewed """
+        """ Initialize the block_image_data to be viewed """
         self.initialize_image()
         
         self.sensors = np.zeros(self.num_sensors)
@@ -109,16 +109,16 @@ class World(BaseWorld):
             self.image = Image.open(filename)
             """ Convert it to grayscale if it's in color """
             self.image = self.image.convert('L')
-            self.image_data = np.asarray(self.image) / 255.0    
+            self.block_image_data = np.asarray(self.image) / 255.0    
                     
         else:
-            self.image_data = plt.imread(filename)
+            self.block_image_data = plt.imread(filename)
             """ Convert it to grayscale if it's in color """
-            if len(self.image_data.shape) == 3:
-                self.image_data = np.sum(self.image_data, axis=2) / \
-                                    self.image_data.shape[2]
+            if len(self.block_image_data.shape) == 3:
+                self.block_image_data = np.sum(self.block_image_data, axis=2) / \
+                                    self.block_image_data.shape[2]
             
-        (im_height, im_width) = self.image_data.shape
+        (im_height, im_width) = self.block_image_data.shape
         im_size = np.minimum(im_height, im_width)
         
         self.fov_height = im_size * self.FOV_FRACTION
@@ -153,9 +153,9 @@ class World(BaseWorld):
             self.initialize_image()
 
         """ Actions 0-3 move the field of view to a higher-numbered 
-        row (downward in the image_data) with varying magnitudes, and actions 4-7 do the opposite.
+        row (downward in the block_image_data) with varying magnitudes, and actions 4-7 do the opposite.
         Actions 8-11 move the field of view to a higher-numbered 
-        column (rightward in the image_data) with varying magnitudes, and actions 12-15 do the opposite.
+        column (rightward in the block_image_data) with varying magnitudes, and actions 12-15 do the opposite.
         """
         row_step    = np.round(action[0] * self.MAX_STEP_SIZE / 2 + 
                                action[1] * self.MAX_STEP_SIZE / 4 + 
@@ -183,7 +183,7 @@ class World(BaseWorld):
         self.column_position = np.minimum(self.column_position, self.column_max)
 
         """ Create the sensory input vector """
-        fov = self.image_data[int(self.row_position - self.fov_height / 2): 
+        fov = self.block_image_data[int(self.row_position - self.fov_height / 2): 
                         int(self.row_position + self.fov_height / 2), 
                         int(self.column_position - self.fov_width / 2): 
                         int(self.column_position + self.fov_width / 2)]

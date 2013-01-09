@@ -44,8 +44,8 @@ class World(BaseWorld):
         self.column_history = []
 
         """ Initialize the image to be used as the environment """
-        self.image_filename = "./images/bar_test.png" 
-        self.data = plt.imread(self.image_filename)
+        self.block_image_filename = "./images/bar_test.png" 
+        self.data = plt.imread(self.block_image_filename)
         
         """ Convert it to grayscale if it's in color """
         if self.data.shape[2] == 3:
