@@ -26,7 +26,7 @@ def main():
     """ A unique identifying string for the agent, allowing specific
     saved agents to be recalled. 
     """
-    MAX_NUM_FEATURES = 500
+    MAX_NUM_FEATURES = 300
     agent = Agent(world.num_sensors, world.num_primitives, 
                   world.num_actions, MAX_NUM_FEATURES, agent_name="test")
 
@@ -66,7 +66,16 @@ def main():
     agent.show_reward_history()
     
     return
+
+
+def profile():
+    import cProfile
+    import pstats
+    cProfile.run('main()', 'tester_profile')
+    p = pstats.Stats('tester_profile')
+    p.strip_dirs().sort_stats('time', 'cum').print_stats(30)
     
     
 if __name__ == '__main__':
     main()
+    #profile()

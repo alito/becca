@@ -114,7 +114,7 @@ class World(BaseWorld):
 
         """ Calculate the reward """
         reward = 0
-        if abs(self.column_position - self.TARGET_COLUMN) < \
+        if np.abs(self.column_position - self.TARGET_COLUMN) < \
             self.REWARD_REGION_WIDTH / 2.0:
             reward += self.REWARD_MAGNITUDE
         reward -= column_step / self.MAX_STEP_SIZE * 0.1 * self.REWARD_MAGNITUDE

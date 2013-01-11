@@ -72,8 +72,8 @@ def bounded_sum(a, b):
     result = np.zeros(np.shape(a))
 
     """ Check whether all elements are of magnitude one or less """
-    if np.nonzero(abs(a) > 1.0)[0].size > 0 or \
-       np.nonzero(abs(b) > 1.0)[0].size > 0:
+    if np.nonzero(np.abs(a) > 1.0)[0].size > 0 or \
+       np.nonzero(np.abs(b) > 1.0)[0].size > 0:
         print 'utils.bounded_sum(): arguments have magnitude greater than 1.'
         print 'results are being truncated to 1.'
         
@@ -140,7 +140,7 @@ def similarity(point, point_set, max_index=None):
     if max_index is not None:
         point_set = point_set[:,:max_index]
 
-    delta = abs(point - point_set)
+    delta = np.abs(point - point_set)
 
     """ modified Manhattan-based similarity to avoid saturation """
     return 2 ** (-np.sum(delta, axis=0))

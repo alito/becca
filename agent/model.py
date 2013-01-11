@@ -72,7 +72,7 @@ class Model(object):
         self.max_num_features = max_num_features  # integer, somewhat large
         
         """ How often the model is cleaned out, removing transisions that are rarely observed """
-        self.AGING_PERIOD = 10 ** 5        # integer, somewhat large
+        #self.AGING_PERIOD = 10 ** 5        # integer, somewhat large
         
         """ Lower bound on the rate at which transitions are updated """
         self.TRANSITION_UPDATE_RATE = 10 ** -1                # real, 0 < x < 1
@@ -198,8 +198,8 @@ class Model(object):
                           context_similarity[transition_match_indices]
             self.update_transition(np.argmax(matching_transition_similarities))           
 
-        self.age()        
-        #self.clean_library()        
+        """ Age the transitions """
+        self.count -=  np.minimum(1 / (self.MAX_TRANSITIONS * self.count + utils.EPSILON), self.count)
         return
         
 
@@ -456,7 +456,8 @@ class Model(object):
         low_index = low_indices[1][np.random.randint(low_indices[1].size)]
 
         if np.min(self.count) > 0:
-            print 'np.min(self.count)', np.min(self.count)
+            if np.random.random_sample() < 0.01:
+                print 'np.min(self.count)', np.min(self.count)
         
         return low_index
     
@@ -515,70 +516,3 @@ class Model(object):
             
         return collapsed_value
                 
-
-    def age(self):
-        if self.time_steps > self.AGING_PERIOD:
-            self.count -=  np.maximum((1 / (self.count + utils.EPSILON), 0))
-        return
-    
-        '''def clean_library(self):
-
-        self.time_steps += 1
-
-        """ Clean out the model when appropriate """
-        if self.num_transitions >= self.MAX_TRANSITIONS:
-            self.time_steps = self.AGING_PERIOD + 1
-
-        if self.time_steps > self.AGING_PERIOD:
-            print("Cleaning up model")
-            
-            """ Empty these queues. Deleting library entries will
-            corrupt the process of adding or updating transitions.
-            """        
-            self.new_transition_q = []
-            self.transition_update_q = []
-
-            self.count[0,:self.num_transitions] -=  \
-                        1 / (self.count[0,:self.num_transitions] + utils.EPSILON)
-            forget_indices = (self.count[0,:self.num_transitions] <= \
-                                        utils.EPSILON).ravel().nonzero()[0]
-
-            self.context = np.delete(self.context, forget_indices, 1)
-            self.cause = np.delete(self.cause, forget_indices, 1)
-            self.effect = np.delete(self.effect, forget_indices, 1)
-            self.effect_uncertainty = np.delete(self.effect_uncertainty, forget_indices, 1)
-            self.count = np.delete(self.count, forget_indices, 1)
-            self.reward_value = np.delete(self.reward_value, forget_indices, 1)
-            self.goal_value = np.delete(self.goal_value, forget_indices, 1)
-            self.reward_uncertainty = np.delete(self.reward_uncertainty, forget_indices, 1)
-
-            self.time_steps = 0
-            self.num_transitions -= len(forget_indices)
-            if self.num_transitions < 0:
-                self.num_transitions = 0
-
-            print 'Library cleaning out ', len(forget_indices), \
-                    ' entries to ', self.num_transitions, ' entries '
-
-            self.pad_model()
-        return
-
-
-    def pad_model(self):
-        """ Pad the model (re-allocate memory space) if it has shrunk too far """
-        if self.effect.shape[1] < self.MAX_TRANSITIONS:
-            
-            shape = (self.effect.shape[0], self.MAX_TRANSITIONS)
-            thin_shape = (1, self.MAX_TRANSITIONS)
-            self.context = np.hstack((self.context, np.zeros(shape)))
-            self.cause  = np.hstack((self.cause, np.zeros(shape)))
-            self.effect = np.hstack((self.effect, np.zeros(shape)))
-            self.effect_uncertainty = np.hstack((self.effect_uncertainty, np.zeros(shape)))
-            self.count = np.hstack((self.count, np.zeros(thin_shape)))
-            self.reward_value = np.hstack((self.reward_value, np.zeros(thin_shape)))
-            self.reward_uncertainty = np.hstack((self.reward_uncertainty, 
-                                    np.ones(thin_shape) * self.INITIAL_UNCERTAINTY))
-            self.goal_value = np.hstack((self.goal_value, np.zeros(thin_shape)))
-        return
-    '''
-        

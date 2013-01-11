@@ -136,9 +136,9 @@ class World(BaseWorld):
 
         """ Calculate reward """
         reward = 0
-        if abs(self.column_position - self.TARGET_COLUMN) < self.REWARD_REGION_WIDTH / 2: 
+        if np.abs(self.column_position - self.TARGET_COLUMN) < self.REWARD_REGION_WIDTH / 2: 
             reward += self.REWARD_MAGNITUDE / 2
-        if abs(self.row_position - self.TARGET_ROW) < self.REWARD_REGION_WIDTH / 2:
+        if np.abs(self.row_position - self.TARGET_ROW) < self.REWARD_REGION_WIDTH / 2:
             reward += self.REWARD_MAGNITUDE / 2
         
         self.log(sensors, self.primitives, reward)

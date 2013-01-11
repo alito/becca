@@ -44,13 +44,13 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.TASK_DURATION = 10 ** 3
-        self.TARGET_SIZE_FRACTION = 0.7
+        self.TARGET_SIZE_FRACTION = 0.8
         self.REPORTING_PERIOD = 10 ** 3   
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 6
         self.LIFESPAN = 2 * 10 ** 6
         self.REWARD_MAGNITUDE = 100.
         self.ANIMATE_PERIOD = 10 ** 2
-        self.animate = True
+        self.animate = False
         self.graphing = False
         self.name = 'find block world'
         self.name_short = 'block'
@@ -58,7 +58,7 @@ class World(BaseWorld):
 
         self.sample_counter = 0
         self.step_counter = 0
-        self.fov_span = 10
+        self.fov_span = 7
 
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 0
@@ -133,12 +133,6 @@ class World(BaseWorld):
         """ Define the size of the base image """
         (im_height, im_width) = self.image_data.shape
         im_size = np.minimum(im_height, im_width)
-
-        # make it square
-        self.image_data = self.image_data[:im_size, :im_size]
-        (im_height, im_width) = self.image_data.shape
-        im_size = np.minimum(im_height, im_width)
-        
         self.MAX_STEP_SIZE = im_size / 2
         self.REWARD_REGION_WIDTH = im_size / 8
         self.NOISE_MAGNITUDE = 0.1
