@@ -50,7 +50,7 @@ class World(BaseWorld):
         self.LIFESPAN = 2 * 10 ** 6
         self.REWARD_MAGNITUDE = 100.
         self.ANIMATE_PERIOD = 10 ** 2
-        self.animate = False
+        self.animate = True
         self.graphing = False
         self.name = 'find block world'
         self.name_short = 'block'
@@ -58,9 +58,10 @@ class World(BaseWorld):
 
         self.sample_counter = 0
         self.step_counter = 0
-        self.fov_span = 7
+        self.small_fov_span = 6
+        self.large_fov_span = 6
 
-        self.num_sensors = 2 * self.fov_span ** 2
+        self.num_sensors = 2 * self.small_fov_span ** 2 + 2 * self.large_fov_span ** 2
         self.num_primitives = 0
         self.num_actions = 17
 
@@ -132,37 +133,57 @@ class World(BaseWorld):
             
         """ Define the size of the base image """
         (im_height, im_width) = self.image_data.shape
+        
+        """ Hack to make the image square.  fix later """
         im_size = np.minimum(im_height, im_width)
-        self.MAX_STEP_SIZE = im_size / 2
-        self.REWARD_REGION_WIDTH = im_size / 8
+        self.image_data = self.image_data[:im_size, :im_size]
+        (im_height, im_width) = self.image_data.shape
+        
+        border = np.maximum(im_height, im_width)
+        
+        """ Pad the image with a border """
+        self.image_data = np.concatenate((np.tile(self.image_data[:,0][:,np.newaxis], (1, border)),
+                                          self.image_data, 
+                                          np.tile(self.image_data[:,-1][:,np.newaxis], (1, border))), axis = 1 )
+        self.image_data = np.concatenate((np.tile(self.image_data[0,:][np.newaxis, :], (border, 1)),
+                                          self.image_data, 
+                                          np.tile(self.image_data[-1,:][np.newaxis, :], (border, 1))), axis = 0 )
+        
+        self.MAX_STEP_SIZE = border
+        self.REWARD_REGION_WIDTH = border / 4
         self.NOISE_MAGNITUDE = 0.1
-        self.FIELD_OF_VIEW_FRACTION = 0.5
-        self.fov_height =  im_size * self.FIELD_OF_VIEW_FRACTION
-        self.fov_width = self.fov_height
-        self.column_min = np.ceil(self.fov_width / 2)
-        self.column_max = np.floor(im_width - self.column_min)
-        self.row_min = np.ceil(self.fov_height / 2)
-        self.row_max = np.floor(im_height - self.row_min)
+        small_field_of_view_fraction = 0.5
+        large_field_of_view_fraction = 1.5
+        self.small_fov_height =  border * small_field_of_view_fraction
+        self.large_fov_height =  border * large_field_of_view_fraction
+        self.small_fov_width = self.small_fov_height
+        self.large_fov_width = self.large_fov_height
+        
+        """ Set limits for the center of the fields of view """
+        self.column_min = np.ceil(self.small_fov_width / 2) + border
+        self.column_max = np.floor(im_width - self.small_fov_width / 2) + border
+        self.row_min = np.ceil(self.small_fov_height / 2) + border
+        self.row_max = np.floor(im_height - self.small_fov_height / 2) + border
         self.column_position = np.random.random_integers(self.column_min, self.column_max)
         self.row_position = np.random.random_integers(self.row_min, self.row_max)
-        self.superpixel_width = np.round(self.fov_width / (self.fov_span + 2))
-        self.superpixel_height = np.round(self.fov_height / (self.fov_span + 2))
+        self.small_superpixel_width = np.round(self.small_fov_width / (self.small_fov_span + 2))
+        self.small_superpixel_height = np.round(self.small_fov_height / (self.small_fov_span + 2))
+        self.large_superpixel_width = np.round(self.large_fov_width / (self.large_fov_span + 2))
+        self.large_superpixel_height = np.round(self.large_fov_height / (self.large_fov_span + 2))
         
         """ Define the size of the block image and its initial position """
-        max_column_margin = (1 - self.TARGET_SIZE_FRACTION) * im_width
-        max_row_margin = (1 - self.TARGET_SIZE_FRACTION) * im_height
-        column_margin = np.floor(np.random.random_sample() * max_column_margin)
-        row_margin = np.floor(np.random.random_sample() * max_row_margin)
-        target_height =  np.round(im_size * self.TARGET_SIZE_FRACTION)
+        self.TARGET_COLUMN = np.random.random_integers(self.column_min, self.column_max)
+        self.TARGET_ROW  = np.random.random_integers(self.row_min, self.row_max)
+        target_height = 2 * np.floor(self.TARGET_SIZE_FRACTION * border / 2)
         target_width = target_height
-        self.TARGET_COLUMN = column_margin + target_width / 2
-        self.TARGET_ROW = row_margin + target_height / 2
+        row_margin = self.TARGET_ROW - np.floor(target_height / 2)
+        column_margin = self.TARGET_COLUMN - np.floor(target_width / 2)        
         
         scaled_block_data = self.interpolate_nearest_2D(self.block_image_data, target_height, target_width)
         self.image_data[row_margin:row_margin + target_height, 
                         column_margin:column_margin + target_width] = scaled_block_data
         
-        if (( self.superpixel_width < 1) | ( self.superpixel_height < 1)):
+        if (( self.small_superpixel_width < 1) | ( self.small_superpixel_height < 1)):
             self.initialize_image()
 
         if self.animate:
@@ -235,20 +256,30 @@ class World(BaseWorld):
         self.column_position = min(self.column_position, self.column_max)
 
         """ Create the sensory input vector """
-        fov = self.image_data[self.row_position - self.fov_height / 2: 
-                              self.row_position + self.fov_height / 2, 
-                              self.column_position - self.fov_width / 2: 
-                              self.column_position + self.fov_width / 2]
+        small_fov = self.image_data[self.row_position - self.small_fov_height / 2: 
+                              self.row_position + self.small_fov_height / 2, 
+                              self.column_position - self.small_fov_width / 2: 
+                              self.column_position + self.small_fov_width / 2]
+        large_fov = self.image_data[self.row_position - self.large_fov_height / 2: 
+                              self.row_position + self.large_fov_height / 2, 
+                              self.column_position - self.large_fov_width / 2: 
+                              self.column_position + self.large_fov_width / 2]
 
-        center_surround_pixels = world_utils.center_surround( \
-                        fov, self.fov_span, self.superpixel_width, self.superpixel_height)
+        small_center_surround_pixels = world_utils.center_surround( small_fov, self.small_fov_span, 
+                                  self.small_superpixel_width, self.small_superpixel_height)
 
-        unsplit_sensors = center_surround_pixels.ravel()        
-        sensors = np.concatenate((np.maximum(unsplit_sensors, 0), \
-                                  np.abs(np.minimum(unsplit_sensors, 0)) ))
+        large_center_surround_pixels = world_utils.center_surround( large_fov, self.large_fov_span, 
+                                  self.large_superpixel_width, self.large_superpixel_height)
+
+        small_unsplit_sensors = small_center_surround_pixels.ravel()        
+        small_sensors = np.concatenate((np.maximum(small_unsplit_sensors, 0), \
+                                  np.abs(np.minimum(small_unsplit_sensors, 0)) ))
                 
-        #if not (sensors < 1).all and (sensors > 0).all:
-        #    print 'sensors', sensors
+        large_unsplit_sensors = large_center_surround_pixels.ravel()        
+        large_sensors = np.concatenate((np.maximum(large_unsplit_sensors, 0), \
+                                  np.abs(np.minimum(large_unsplit_sensors, 0)) ))
+                
+        sensors = np.concatenate((small_sensors, large_sensors))
 
         """ Calculate reward """
         target_distance_sq = (self.column_position - self.TARGET_COLUMN) ** 2 +  \
@@ -268,16 +299,25 @@ class World(BaseWorld):
         self.column_history.append(self.column_position)
 
         if self.animate and (self.timestep % self.ANIMATE_PERIOD) == 0:
-            #print 'sensors', sensors
-            plt.figure("Image sensed")
-            full_sensors = 0.5 + (sensors[:len(sensors)/2] - sensors[len(sensors)/2:]) / 2
-            #print 'full_sensors', full_sensors
-            sensed_image = np.reshape(full_sensors,(self.fov_span, self.fov_span))
+            plt.figure("Small image sensed")
+            small_sensors = sensors[:2 * self.small_fov_span ** 2]
+            full_small_sensors = 0.5 + (small_sensors[:len(small_sensors)/2] - 
+                                  small_sensors[len(small_sensors)/2:]) / 2
+            sensed_image = np.reshape(full_small_sensors,( self.small_fov_span, self.small_fov_span))
             plt.gray()
             plt.imshow(sensed_image, interpolation='nearest')
-            plt.title('reward: ' + str(reward))
+            plt.title('small sensors. reward: ' + str(reward))
             viz_utils.force_redraw()
 
+            plt.figure("Large image sensed")
+            large_sensors = sensors[2 * self.small_fov_span ** 2 :]
+            full_large_sensors = 0.5 + (large_sensors[:len(large_sensors)/2] - 
+                                  large_sensors[len(large_sensors)/2:]) / 2
+            sensed_image = np.reshape(full_large_sensors,( self.large_fov_span, self.large_fov_span))
+            plt.gray()
+            plt.imshow(sensed_image, interpolation='nearest')
+            plt.title('Large sensors. reward: ' + str(reward))
+            viz_utils.force_redraw()
  
     def set_agent_parameters(self, agent):
         agent.perceiver.NEW_FEATURE_THRESHOLD = 0.1

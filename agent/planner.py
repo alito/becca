@@ -162,7 +162,8 @@ class Planner(object):
         max_transition_index = np.argmax(transition_vote)
         
         """ Introduce periodic jumps """   
-        if np.random.random_sample() < uncertainty[:,max_transition_index] ** 2 + self.MIN_JUMP_FREQUENCY:
+        if np.random.random_sample() < uncertainty[:,max_transition_index] ** 2 + \
+                                                            self.MIN_JUMP_FREQUENCY:
             action = np.zeros(self.action.shape)
             action[np.random.randint(action.size),:] = 1
             self.deliberately_acted = True
