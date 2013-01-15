@@ -50,7 +50,7 @@ class World(BaseWorld):
         self.LIFESPAN = 2 * 10 ** 6
         self.REWARD_MAGNITUDE = 100.
         self.ANIMATE_PERIOD = 10 ** 2
-        self.animate = True
+        self.animate = False
         self.graphing = False
         self.name = 'find block world'
         self.name_short = 'block'
@@ -279,6 +279,9 @@ class World(BaseWorld):
         large_sensors = np.concatenate((np.maximum(large_unsplit_sensors, 0), \
                                   np.abs(np.minimum(large_unsplit_sensors, 0)) ))
                 
+        # debug
+        small_sensors = np.zeros(small_sensors.shape)
+        
         sensors = np.concatenate((small_sensors, large_sensors))
 
         """ Calculate reward """

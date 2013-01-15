@@ -68,11 +68,10 @@ class Model(object):
         """
         self.MAX_TRANSITIONS = 10 ** 4            # integer, somewhat large
         
+        self.AGING_TIME_CONSTANT = 10 * self.MAX_TRANSITIONS
+        
         """ The maximum number of features that will ever be allowed to be created """
         self.max_num_features = max_num_features  # integer, somewhat large
-        
-        """ How often the model is cleaned out, removing transisions that are rarely observed """
-        #self.AGING_PERIOD = 10 ** 5        # integer, somewhat large
         
         """ Lower bound on the rate at which transitions are updated """
         self.TRANSITION_UPDATE_RATE = 10 ** -1                # real, 0 < x < 1
@@ -199,7 +198,7 @@ class Model(object):
             self.update_transition(np.argmax(matching_transition_similarities))           
 
         """ Age the transitions """
-        self.count -=  np.minimum(1 / (self.MAX_TRANSITIONS * self.count + utils.EPSILON), self.count)
+        self.count -=  np.minimum(1 / (self.AGING_TIME_CONSTANT * self.count + utils.EPSILON), self.count)
         return
         
 
