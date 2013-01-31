@@ -22,7 +22,7 @@ class World(BaseWorld):
         super(World, self).__init__()
         
         self.REPORTING_PERIOD = 10 ** 4
-        self.LIFESPAN = 2 * 10 ** 4
+        self.LIFESPAN = 2 * 10 ** 5
         self.REWARD_MAGNITUDE = 100.
         self.ENERGY_COST = 0.1 * self.REWARD_MAGNITUDE 
         self.display_state = False
@@ -57,8 +57,8 @@ class World(BaseWorld):
                  np.sum(action[4:6]) - np.sum(2 * action[6:8])
         
         """ At random intervals, jump to a random position in the world """
-        if np.random.random_sample() < 0.01:
-            self.world_state = np.random.random_integers(0, self.world_size, self.world_state.shape)
+        #if np.random.random_sample() < 0.01:
+        #    self.world_state = np.random.random_integers(0, self.world_size, self.world_state.shape)
         
         """ Enforce lower and upper limits on the grid world by looping them around.
         It actually has a toroidal topology.
@@ -88,6 +88,8 @@ class World(BaseWorld):
     
     
     def set_agent_parameters(self, agent):
+        agent.actor.model.reward_min = -100.
+        agent.actor.model.reward_max = 100.
 
         pass
     
@@ -97,7 +99,7 @@ class World(BaseWorld):
         to the user.
         """
         if (self.display_state):
-            print self.simple_state
+            print '2D grid position', self.simple_state
             
         if (self.timestep % self.REPORTING_PERIOD) == 0:
             print("world age is %s timesteps " % self.timestep)

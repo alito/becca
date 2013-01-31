@@ -18,7 +18,7 @@ class World(BaseWorld):
         super(World, self).__init__()
         
         self.REPORTING_PERIOD = 10 ** 4
-        self.LIFESPAN = 2 * 10 ** 4
+        self.LIFESPAN = 2 * 10 ** 2
         self.REWARD_MAGNITUDE = 100.
         self.ENERGY_COST = 0.1 * self.REWARD_MAGNITUDE
         self.display_state = False  
@@ -30,7 +30,7 @@ class World(BaseWorld):
         self.num_real_primitives = 3
 
         """ Number of primitives that have no basis in the world. These are noise meant to distract. """
-        self.num_noise_primitives = 12
+        self.num_noise_primitives = 20
         
         self.num_primitives = self.num_noise_primitives + self.num_real_primitives
         self.num_actions = 3
@@ -87,16 +87,16 @@ class World(BaseWorld):
 
     
     def set_agent_parameters(self, agent):
-        """ Prevent the agent from forming any groups """
-        agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
-        
-        """ Performance is pretty sensitive to this parameter """
-        agent.actor.model.SIMILARITY_THRESHOLD = 0.3
         
         """ No need to decay for this simple world. There's only one 
         relevant feature to attend at any time step.
         """   
-        agent.actor.FATIGUE_DECAY_RATE = 0
+        #agent.actor.FATIGUE_DECAY_RATE = 0
+
+        agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
+        agent.actor.model.reward_min = -100.
+        agent.actor.model.reward_max = 100.
+
         
 
     def display(self, action):

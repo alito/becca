@@ -24,7 +24,7 @@ class World(BaseWorld):
         self.REPORTING_PERIOD = 10 ** 4
         self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 100.
-        self.ENERGY_COST = 0.01
+        self.ENERGY_COST = 1.
         self.display_state = False
         self.name = 'one dimensional grid world'
         self.announce()
@@ -41,10 +41,10 @@ class World(BaseWorld):
         """ Advance the World by one timestep """
         
         if action is None:
-            action = np.zeros(self.num_actions)
+            action = np.zeros((self.num_actions,1))
         
         self.timestep += 1 
-
+        
         step_size = (action[0] + 
                  2 * action[1] + 
                  3 * action[2] + 
@@ -84,7 +84,7 @@ class World(BaseWorld):
         
         """ Punish actions just a little """
         reward -= energy  * self.ENERGY_COST
-        reward = np.max(reward, -1)
+        reward = np.maximum(reward, -self.REWARD_MAGNITUDE)
         
         self.display(action)
         return sensors, primitives, reward
@@ -93,6 +93,9 @@ class World(BaseWorld):
     def set_agent_parameters(self, agent):
         """ Prevent the agent from forming any groups """
         agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
+        agent.actor.model.reward_min = -100.
+        agent.actor.model.reward_max = 100.
+        
         
         
     def display(self, action):
@@ -100,13 +103,13 @@ class World(BaseWorld):
         to the user.
         """
         if (self.display_state):
-            
             state_image = ['.'] * (self.num_primitives + self.num_actions + 2)
             state_image[self.simple_state] = 'O'
             state_image[self.num_primitives:self.num_primitives + 2] = '||'
             action_index = np.nonzero(action)[0]
             if action_index.size > 0:
-                state_image[self.num_primitives + 2 + action_index[0]] = 'x'
+                for i in range(action_index.size):
+                    state_image[self.num_primitives + 2 + action_index[i]] = 'x'
             print(''.join(state_image))
             
         if (self.timestep % self.REPORTING_PERIOD) == 0:
