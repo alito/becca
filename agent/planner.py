@@ -65,7 +65,7 @@ class Planner(object):
         goal_value = utils.map_inf_to_one(np.sum(model.effect * utils.map_one_to_inf(self.goal), axis=0))
         goal_value_uncertainty = np.sum(model.effect_uncertainty * np.abs(self.goal), axis=0) / \
                                  np.sqrt(np.sum(np.abs(self.goal), axis=0) + utils.EPSILON)
-        value_total = model.reward_value + goal_value
+        value_total = model.reward_value - model.reward_uncertainty + goal_value - goal_value_uncertainty
         value_uncertainty = model.reward_uncertainty + goal_value_uncertainty
         expected_reward_value = utils.weighted_average(value_total, 
                                 context_matches * model.cause / (value_uncertainty + utils.EPSILON))
@@ -81,7 +81,7 @@ class Planner(object):
         cumulative_vote = np.cumsum(adjusted_vote_power,axis=0) / np.sum(adjusted_vote_power, axis=0)
         new_goal_feature = np.nonzero(np.random.random_sample() < cumulative_vote)[0][0]
         self.goal[new_goal_feature, :] += adjusted_vote[new_goal_feature, :]
-        self.goal[new_goal_feature, :] = np.maximum(self.goal[new_goal_feature, :], 1)
+        self.goal[new_goal_feature, :] = np.minimum(self.goal[new_goal_feature, :], 1)
         
         #print 'adjusted_vote', adjusted_vote.ravel()
            

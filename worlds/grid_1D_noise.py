@@ -18,9 +18,9 @@ class World(BaseWorld):
         super(World, self).__init__()
         
         self.REPORTING_PERIOD = 10 ** 4
-        self.LIFESPAN = 2 * 10 ** 2
+        self.LIFESPAN = 2 * 10 ** 6
         self.REWARD_MAGNITUDE = 100.
-        self.ENERGY_COST = 0.1 * self.REWARD_MAGNITUDE
+        self.ENERGY_COST = 0.01 * self.REWARD_MAGNITUDE
         self.display_state = False  
         self.name = 'noisy one dimensional grid world'
         self.announce()
@@ -87,17 +87,10 @@ class World(BaseWorld):
 
     
     def set_agent_parameters(self, agent):
-        
-        """ No need to decay for this simple world. There's only one 
-        relevant feature to attend at any time step.
-        """   
-        #agent.actor.FATIGUE_DECAY_RATE = 0
-
         agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
-        agent.actor.model.reward_min = -100.
-        agent.actor.model.reward_max = 100.
+        #agent.actor.model.reward_min = -100.
+        #agent.actor.model.reward_max = 100.
 
-        
 
     def display(self, action):
         """ Provide an intuitive display of the current state of the World 

@@ -60,13 +60,13 @@ class Model(object):
                  graphs=True):
 
         """ The threshold above which two states are similar enough to be considered a match """
-        self.SIMILARITY_THRESHOLD = 0.9       # real, 0 < x < 1
+        #self.SIMILARITY_THRESHOLD = 0.9       # real, 0 < x < 1
         
         """ The maximum number of entries allowed in the model.
         This number is driven by the practical limitations of available
         memory and (more often) computation speed. 
         """
-        self.MAX_TRANSITIONS = 10 ** 3            # integer, somewhat large
+        self.MAX_TRANSITIONS = 10 ** 4            # integer, somewhat large
         
         self.AGING_TIME_CONSTANT = 10 ** 6 #self.MAX_TRANSITIONS
         
@@ -91,7 +91,7 @@ class Model(object):
         """ The factor by which goals are decayed for each
         timestep.
         """
-        self.GOAL_DECAY_RATE = 1.0            # real, 0 < x < 1
+        #self.GOAL_DECAY_RATE = 1.0            # real, 0 < x < 1
         
         """ The initial value for prediction_uncertainty in the effect and the reward """
         self.INITIAL_UNCERTAINTY = 0.25

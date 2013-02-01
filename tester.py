@@ -8,10 +8,10 @@ from agent import viz_utils
 One of these import lines should be uncommented.
 """
 #from worlds.base_world import World
-from worlds.grid_1D import World
+#from worlds.grid_1D import World
 #from worlds.grid_1D_ms import World
 #from worlds.grid_1D_noise import World
-#from worlds.grid_2D import World
+from worlds.grid_2D import World
 #from worlds.grid_2D_dc import World
 #from worlds.image_1D import World
 #from worlds.image_2D import World
@@ -26,7 +26,7 @@ def main():
     """ A unique identifying string for the agent, allowing specific
     saved agents to be recalled. 
     """
-    MAX_NUM_FEATURES = 20
+    MAX_NUM_FEATURES = 50
     agent = Agent(world.num_sensors, world.num_primitives, 
                   world.num_actions, MAX_NUM_FEATURES, agent_name="test")
 

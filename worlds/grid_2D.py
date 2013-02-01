@@ -23,7 +23,7 @@ class World(BaseWorld):
         self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 100.
         self.ENERGY_COST = 0.05 * self.REWARD_MAGNITUDE
-        self.display_state = True
+        self.display_state = False
         self.name = 'two dimensional grid world'
         self.announce()
 

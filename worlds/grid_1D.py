@@ -24,7 +24,7 @@ class World(BaseWorld):
         self.REPORTING_PERIOD = 10 ** 4
         self.LIFESPAN = 2 * 10 ** 4
         self.REWARD_MAGNITUDE = 100.
-        self.ENERGY_COST = 1.
+        self.ENERGY_COST = 0.01 * self.REWARD_MAGNITUDE
         self.display_state = False
         self.name = 'one dimensional grid world'
         self.announce()
@@ -93,8 +93,8 @@ class World(BaseWorld):
     def set_agent_parameters(self, agent):
         """ Prevent the agent from forming any groups """
         agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
-        agent.actor.model.reward_min = -100.
-        agent.actor.model.reward_max = 100.
+        #agent.actor.model.reward_min = -100.
+        #agent.actor.model.reward_max = 100.
         
         
         
