@@ -52,7 +52,7 @@ class World(BaseWorld):
                              action[4:6] - 2 * action[6:8]).transpose()
 
         energy = np.sum(action[0:2]) + np.sum(2 * action[2:4]) + \
-                 np.sum(action[4:6]) - np.sum(2 * action[6:8])
+                 np.sum(action[4:6]) + np.sum(2 * action[6:8])
         
 
         """ Enforce lower and upper limits on the grid world by 

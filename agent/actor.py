@@ -56,6 +56,7 @@ class Actor(object):
         salience = np.copy(self.feature_activity)
         #self.SALIENCE_WEIGHT = 10
         salience *= 1 + self.planner.goal #* self.SALIENCE_WEIGHT
+        print 'salience', salience.shape
         
         cumulative_salience = np.cumsum(salience,axis=0) / np.sum(salience, axis=0)
         attended_feature_index = np.nonzero(np.random.random_sample() < cumulative_salience)[0][0]

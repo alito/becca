@@ -19,12 +19,14 @@ class World(BaseWorld):
     """
     def __init__(self):
                 
+        """ TODO: restore size = 5 and random jumps """
+        
         super(World, self).__init__()
         
         self.REPORTING_PERIOD = 10 ** 4
-        self.LIFESPAN = 2 * 10 ** 5
+        self.LIFESPAN = 2 * 10 ** 6
         self.REWARD_MAGNITUDE = 100.
-        self.ENERGY_COST = 0.1 * self.REWARD_MAGNITUDE 
+        self.ENERGY_COST = 0.01 * self.REWARD_MAGNITUDE 
         self.display_state = False
         self.name = 'decoupled two dimensional grid world'
         self.announce()
@@ -32,13 +34,17 @@ class World(BaseWorld):
 
         self.num_sensors = 0
         self.num_actions = 9            
+        #self.num_actions = 5            
         self.world_size = 5
+        #self.world_size = 2
         self.num_primitives = self.world_size * 2
         self.world_state = np.array([1, 1])
         self.simple_state = self.world_state.copy()
 
         self.target = (3,3)
         self.obstacle = (1,1)
+        #self.target = (1,1)
+        #self.obstacle = (0,0)
 
         self.sensors = np.zeros(self.num_sensors)
         self.motor_output_history = np.array([])            
@@ -52,9 +58,11 @@ class World(BaseWorld):
 
         self.world_state += (action[0:2] + 2 * action[2:4] - \
                              action[4:6] - 2 * action[6:8]).transpose()
+        #self.world_state += (action[0:2] - action[2:4]).transpose()
 
         energy = np.sum(action[0:2]) + np.sum(2 * action[2:4]) + \
-                 np.sum(action[4:6]) - np.sum(2 * action[6:8])
+                 np.sum(action[4:6]) + np.sum(2 * action[6:8])
+        #energy = np.sum(action[0:2]) + np.sum(action[2:4])
         
         """ At random intervals, jump to a random position in the world """
         #if np.random.random_sample() < 0.01:
