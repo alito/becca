@@ -66,7 +66,7 @@ class Model(object):
         This number is driven by the practical limitations of available
         memory and (more often) computation speed. 
         """
-        self.MAX_TRANSITIONS = 10 ** 4            # integer, somewhat large
+        self.MAX_TRANSITIONS = 10 ** 3            # integer, somewhat large
         
         self.AGING_TIME_CONSTANT = 10 ** 6 #self.MAX_TRANSITIONS
         
@@ -161,6 +161,17 @@ class Model(object):
         reward = (raw_reward - self.reward_min) / (spread + utils.EPSILON)
         self.reward_min += spread * self.REWARD_RANGE_DECAY_RATE
         self.reward_max -= spread * self.REWARD_RANGE_DECAY_RATE
+        
+        '''self.reward_min_observed = np.minimum(raw_reward, self.reward_min_observed)
+        self.reward_max_observed = np.maximum(raw_reward, self.reward_max_observed)
+        spread_observed = self.reward_max_observed - self.reward_min_observed
+        self.reward_min_observed += spread_observed * self.REWARD_RANGE_DECAY_RATE
+        self.reward_max_observed -= spread_observed * self.REWARD_RANGE_DECAY_RATE
+        self.reward_min = self.reward_min_observed - spread_observed * 0.1
+        self.reward_max = self.reward_max_observed + spread_observed * 0.1
+        spread = self.reward_max - self.reward_min
+        reward = (raw_reward - self.reward_min) / (spread + utils.EPSILON)
+        '''
         
         """ Update histories of attended features, feature activities, 
         and rewards. 

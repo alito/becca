@@ -24,7 +24,7 @@ class Planner(object):
         self.goal *= 1 - self.GOAL_DECAY_RATE
 
         self.debug = False
-        if np.random.random_sample() < 0.01:
+        if np.random.random_sample() < 0.0:
             self.debug = True
             
         if self.debug:
@@ -52,6 +52,9 @@ class Planner(object):
 
         """ Separate action goals from the rest of the goal """
         self.action = np.sign(self.goal[self.num_primitives: self.num_primitives + self.num_actions,:])
+        #self.goal[self.num_primitives: self.num_primitives + self.num_actions,:] = \
+        #        np.sign(self.goal[self.num_primitives: self.num_primitives + self.num_actions,:])
+        #self.action = np.copy(self.goal[self.num_primitives: self.num_primitives + self.num_actions,:])
         #self.action = np.maximum(self.action, 0.)
 
         #debug
@@ -63,54 +66,58 @@ class Planner(object):
     def deliberate(self, model, attended_feature, n_features):
         
         context_matches = np.sum(model.context * attended_feature, axis=0)[np.newaxis,:]
-        
         match_indices = np.nonzero(context_matches)[1]
-        """ calculated value by transition """
-        
-        penalized_reward_value = np.maximum(model.reward_value - model.reward_uncertainty, 0)
+        penalized_reward_value = model.reward_value - model.reward_uncertainty# - model.current_reward
+        penalized_reward_value = np.maximum(penalized_reward_value, 0)
+        #penalized_reward_value = np.maximum(model.reward_value - model.reward_uncertainty, 0)
         reward_value_by_feature = utils.weighted_average(penalized_reward_value, 
-                                context_matches * model.cause / (model.reward_uncertainty + utils.EPSILON))
+                context_matches * model.cause / (model.reward_uncertainty + utils.EPSILON))
 
-        goal_indices = np.argmax((model.effect - model.effect_uncertainty) * self.goal, axis=0)
-        nonzero_goal_indices = np.nonzero(goal_indices)[0]
-        
+        goal_jitter = utils.EPSILON * np.random.random_sample(model.effect.shape)
+        goal_indices = np.argmax((model.effect - model.effect_uncertainty) * 
+                                 self.goal + goal_jitter, axis=0)
         transition_indices = np.arange(model.effect.shape[1])
-        
-        goal_value_by_transition = model.effect[goal_indices,transition_indices] - \
-                                   model.effect_uncertainty[goal_indices,transition_indices]
-        goal_value_uncertainty_by_transition = model.effect_uncertainty[goal_indices,transition_indices]
-        penalized_goal_value = np.maximum(goal_value_by_transition - 
-                                          goal_value_uncertainty_by_transition, 0)
+        goal_value_by_transition = (model.effect * self.goal)[goal_indices,transition_indices] 
+        goal_value_uncertainty_by_transition = \
+                        (model.effect_uncertainty * self.goal)[goal_indices,transition_indices]
+        penalized_goal_value = goal_value_by_transition - goal_value_uncertainty_by_transition
+        penalized_goal_value = np.maximum(penalized_goal_value, 0)
         goal_value_by_feature = utils.weighted_average(penalized_goal_value, 
-                        context_matches * model.cause / (goal_value_uncertainty_by_transition + utils.EPSILON))
-        #goal_value = utils.map_inf_to_one(np.sum(model.effect * utils.map_one_to_inf(self.goal), axis=0))
-        #goal_value_uncertainty = np.sum(model.effect_uncertainty * np.abs(self.goal), axis=0) / \
-        #                         np.sqrt(np.sum(np.abs(self.goal), axis=0) + utils.EPSILON)
-                                 
-        #penalized_goal_value = np.maximum(goal_value - goal_value_uncertainty, 0)
-        #goal_value_by_feature = utils.weighted_average(penalized_goal_value, 
-        #                        context_matches * model.cause / (goal_value_uncertainty + utils.EPSILON))
-                                 
-        '''value_total = model.reward_value - model.reward_uncertainty + goal_value - goal_value_uncertainty
-        value_total = np.maximum(value_total, 0)
-        value_uncertainty = model.reward_uncertainty + goal_value_uncertainty
-        expected_reward_value = utils.weighted_average(value_total, 
-                                context_matches * model.cause / (value_uncertainty + utils.EPSILON))
-        '''
-        value_by_feature = reward_value_by_feature + goal_value_by_feature
+                context_matches * model.cause / (goal_value_uncertainty_by_transition + utils.EPSILON))
+        
+        #value_by_feature = utils.map_inf_to_one(utils.map_one_to_inf(reward_value_by_feature) + 
+        #                                        utils.map_one_to_inf(goal_value_by_feature))
         
         count_by_feature = utils.weighted_average(model.count, context_matches * model.cause)
-        self.EXPLORATION_FACTOR = 1.
-        exploration_vote = self.EXPLORATION_FACTOR / (count_by_feature + 1)
+        #self.EXPLORATION_FACTOR = 1.
+        #exploration_vote = self.EXPLORATION_FACTOR / (count_by_feature + 1)
+        exploration_vote = 1. / (count_by_feature + 1)
         exploration_vote[n_features:] = 0.
         
-        total_vote = exploration_vote + value_by_feature
+        #total_vote = utils.map_inf_to_one(utils.map_one_to_inf(exploration_vote) + 
+        #                                  utils.map_one_to_inf(value_by_feature))
+        total_vote = reward_value_by_feature + goal_value_by_feature + exploration_vote
+        #total_vote = reward_value_by_feature  + exploration_vote
+        
         adjusted_vote = total_vote * (1 - self.goal)
-        adjusted_vote_power = adjusted_vote ** n_features
-        cumulative_vote = np.cumsum(adjusted_vote_power,axis=0) / np.sum(adjusted_vote_power, axis=0)
+        adjusted_vote = np.maximum(adjusted_vote, utils.EPSILON)
+        
+        #adjusted_vote_power = adjusted_vote ** n_features
+        adjusted_vote_power = np.sign(adjusted_vote) * np.abs(adjusted_vote) ** n_features
+        #adjusted_vote_power = adjusted_vote ** (n_features ** 0.5)
+        cumulative_vote = np.cumsum(adjusted_vote_power, axis=0) / np.sum(adjusted_vote_power, axis=0)
         new_goal_feature = np.nonzero(np.random.random_sample() < cumulative_vote)[0][0]
-        self.goal[new_goal_feature, :] += adjusted_vote[new_goal_feature, :]
-        self.goal[new_goal_feature, :] = np.minimum(self.goal[new_goal_feature, :], 1)
+        self.goal[new_goal_feature, :] = utils.map_inf_to_one(
+                                          utils.map_one_to_inf(reward_value_by_feature[new_goal_feature, :]) + 
+                                          utils.map_one_to_inf(goal_value_by_feature[new_goal_feature, :]) + 
+                                          utils.map_one_to_inf(exploration_vote[new_goal_feature, :]))
+        #self.goal[new_goal_feature, :] = np.max((reward_value_by_feature[new_goal_feature, :],
+        #                                         goal_value_by_feature[new_goal_feature, :],
+        #                                         exploration_vote[new_goal_feature, :]))
+        #self.goal[new_goal_feature, :] = np.max((reward_value_by_feature[new_goal_feature, :],
+        #                                         exploration_vote[new_goal_feature, :]))
+        #self.goal[new_goal_feature, :] = np.minimum(self.goal[new_goal_feature, :], 1.)
+        #self.goal[new_goal_feature, :] = np.minimum(self.goal[new_goal_feature, :], 1 - model.current_reward)
         
         #print 'adjusted_vote', adjusted_vote.ravel()
         
@@ -124,16 +131,10 @@ class Planner(object):
             print 'model.reward',  model.reward_value[:,match_indices]     
             print 'model.reward_uncertainty',  model.reward_uncertainty[:,match_indices]     
             print 'model.feature_activity', model.feature_activity[:n_features,:].ravel()
-            print 'nonzero goal_indices', nonzero_goal_indices
-            #print 'goal_value_by_transition', goal_value_by_transition[nonzero_goal_indices]
-            #print 'goal_value_uncertainty_by_transition', goal_value_uncertainty_by_transition[nonzero_goal_indices]
-            #print 'penalized_goal_value', penalized_goal_value[nonzero_goal_indices]
-        
             print 'goal_value_by_transition', goal_value_by_transition[:,match_indices].ravel()
             print 'goal_value_uncertainty_by_transition', goal_value_uncertainty_by_transition[:,match_indices].ravel()
             print 'reward_value_by_feature', reward_value_by_feature.ravel()
             print 'goal_value_by_feature', goal_value_by_feature.ravel()
-            print 'value_by_feature', value_by_feature.ravel()
             print 'model.current_reward', model.current_reward
             
             print 'count_by_feature', count_by_feature.ravel()

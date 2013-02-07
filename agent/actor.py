@@ -1,6 +1,7 @@
 
 from model import Model
 from planner import Planner
+import utils
 
 import numpy as np
 
@@ -53,12 +54,12 @@ class Actor(object):
         """ Salience is a combination of feature activity magnitude, 
         reward magnitude, goal magnitude, and a small amount of noise.
         """    
-        salience = np.copy(self.feature_activity)
+        salience = np.copy(self.feature_activity) + utils.EPSILON
         #self.SALIENCE_WEIGHT = 10
         salience *= 1 + self.planner.goal #* self.SALIENCE_WEIGHT
-        print 'salience', salience.shape
+        #salience *= 1 - model.prediction
         
-        cumulative_salience = np.cumsum(salience,axis=0) / np.sum(salience, axis=0)
+        cumulative_salience = np.cumsum(salience,axis=0) / (np.sum(salience, axis=0) + utils.EPSILON)
         attended_feature_index = np.nonzero(np.random.random_sample() < cumulative_salience)[0][0]
         
         '''print 'self.feature_activity', self.feature_activity[np.nonzero(self.feature_activity)[0],:].ravel(), \
