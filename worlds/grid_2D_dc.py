@@ -24,9 +24,10 @@ class World(BaseWorld):
         super(World, self).__init__()
         
         self.REPORTING_PERIOD = 10 ** 4
-        self.LIFESPAN = 2 * 10 ** 6
+        self.LIFESPAN = 5 * 10 ** 3
         self.REWARD_MAGNITUDE = 100.
         self.ENERGY_COST = 0.01 * self.REWARD_MAGNITUDE 
+        self.JUMP_FRACTION = 0.01
         self.display_state = False
         self.name = 'decoupled two dimensional grid world'
         self.announce()
@@ -34,13 +35,12 @@ class World(BaseWorld):
 
         self.num_sensors = 0
         self.num_actions = 9            
-        #self.num_actions = 5            
         self.world_size = 5
-        #self.world_size = 2
         self.num_primitives = self.world_size * 2
+        self.MAX_NUM_FEATURES = 50
         self.world_state = np.array([1, 1])
         self.simple_state = self.world_state.copy()
-
+        
         self.target = (3,3)
         self.obstacle = (1,1)
         #self.target = (1,1)
@@ -65,8 +65,8 @@ class World(BaseWorld):
         #energy = np.sum(action[0:2]) + np.sum(action[2:4])
         
         """ At random intervals, jump to a random position in the world """
-        #if np.random.random_sample() < 0.01:
-        #    self.world_state = np.random.random_integers(0, self.world_size, self.world_state.shape)
+        if np.random.random_sample() < self.JUMP_FRACTION:
+            self.world_state = np.random.random_integers(0, self.world_size, self.world_state.shape)
         
         """ Enforce lower and upper limits on the grid world by looping them around.
         It actually has a toroidal topology.
@@ -96,8 +96,8 @@ class World(BaseWorld):
     
     
     def set_agent_parameters(self, agent):
-        agent.actor.model.reward_min = -100.
-        agent.actor.model.reward_max = 100.
+        #agent.actor.model.reward_min = -100.
+        #agent.actor.model.reward_max = 100.
 
         pass
     

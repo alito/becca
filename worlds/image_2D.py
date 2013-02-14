@@ -22,9 +22,10 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.REPORTING_PERIOD = 10 ** 4   
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 6
-        self.LIFESPAN = 2 * 10 ** 4
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
+        self.LIFESPAN = 5 * 10 ** 3
         self.REWARD_MAGNITUDE = 100.
+        self.JUMP_FRACTION = 0.01
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
         self.graphing = False
@@ -38,7 +39,8 @@ class World(BaseWorld):
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 0
         self.num_actions = 17
-
+        self.MAX_NUM_FEATURES = 100
+        
         self.column_history = []
         self.row_history = []
 
@@ -120,6 +122,11 @@ class World(BaseWorld):
         self.column_position = max(self.column_position, self.column_min)
         self.column_position = min(self.column_position, self.column_max)
 
+        """ At random intervals, jump to a random position in the world """
+        if np.random.random_sample() < self.JUMP_FRACTION:
+            self.column_position = np.random.random_integers(self.column_min, self.column_max)
+            self.row_position = np.random.random_integers(self.row_min, self.row_max)
+
         """ Create the sensory input vector """
         fov = self.block_image_data[self.row_position - self.fov_height / 2: 
                               self.row_position + self.fov_height / 2, 
@@ -141,6 +148,9 @@ class World(BaseWorld):
         if np.abs(self.row_position - self.TARGET_ROW) < self.REWARD_REGION_WIDTH / 2:
             reward += self.REWARD_MAGNITUDE / 2
         
+        if self.animate:
+            print self.row_position, self.column_position, '-row and col position  ', reward, '-reward'
+        
         self.log(sensors, self.primitives, reward)
         return sensors, self.primitives, reward
     
@@ -153,14 +163,18 @@ class World(BaseWorld):
 
         if self.animate and (self.timestep % self.ANIMATE_PERIOD) == 0:
             plt.figure("Image sensed")
-            sensed_image = np.reshape(sensors[:len(sensors)/2],(self.fov_span, self.fov_span))
+            sensed_image = np.reshape(0.5 * (sensors[:len(sensors)/2] - sensors[len(sensors)/2:] + 1), 
+                                      (self.fov_span, self.fov_span))
+            #sensed_image = np.reshape(sensors[:len(sensors)/2],(self.fov_span, self.fov_span))
             plt.gray()
             plt.imshow(sensed_image, interpolation='nearest')
             viz_utils.force_redraw()
 
  
     def set_agent_parameters(self, agent):
-        
+        #agent.actor.model.reward_min = 0.
+        #agent.actor.model.reward_max = 100.
+
         pass
     
         

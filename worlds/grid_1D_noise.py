@@ -18,7 +18,7 @@ class World(BaseWorld):
         super(World, self).__init__()
         
         self.REPORTING_PERIOD = 10 ** 4
-        self.LIFESPAN = 2 * 10 ** 6
+        self.LIFESPAN = 5 * 10 ** 3
         self.REWARD_MAGNITUDE = 100.
         self.ENERGY_COST = 0.01 * self.REWARD_MAGNITUDE
         self.display_state = False  
@@ -34,8 +34,8 @@ class World(BaseWorld):
         
         self.num_primitives = self.num_noise_primitives + self.num_real_primitives
         self.num_actions = 3
-
         self.sensors = np.zeros(self.num_sensors)
+        self.MAX_NUM_FEATURES = self.num_primitives + self.num_actions
         
         self.world_state = 0      
         self.simple_state = 0       
@@ -88,8 +88,8 @@ class World(BaseWorld):
     
     def set_agent_parameters(self, agent):
         agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
-        agent.actor.model.reward_min = -100.
-        agent.actor.model.reward_max = 100.
+        #agent.actor.model.reward_min = -100.
+        #agent.actor.model.reward_max = 100.
 
 
     def display(self, action):

@@ -29,13 +29,15 @@ class Actor(object):
         self.model.num_features = n_features
         
         """ Attend to a single feature """
-        self.attended_feature = self.attend()
+        #self.attended_feature = self.attend()
 
         """ Update the model """
-        self.model.step(self.attended_feature, self.feature_activity, reward)
+        #self.model.step(self.attended_feature, self.feature_activity, reward)
+        self.model.step(self.feature_activity, reward)
 
         """ Decide on an action """
-        self.action = self.planner.step(self.model, self.attended_feature, n_features)
+        #self.action = self.planner.step(self.model, self.attended_feature, n_features)
+        self.action = self.planner.step(self.model, n_features)
         
         """ debug
         Uncomment these two lines to choose a random action at each time step.
@@ -55,11 +57,13 @@ class Actor(object):
         reward magnitude, goal magnitude, and a small amount of noise.
         """    
         salience = np.copy(self.feature_activity) + utils.EPSILON
+        
+        """ Jitter the salience values """
+        salience += utils.EPSILON * np.random.random_sample(salience.shape)
         #self.SALIENCE_WEIGHT = 10
         salience *= 1 + self.planner.goal #* self.SALIENCE_WEIGHT
         #salience *= 1 - model.prediction
-        
-        cumulative_salience = np.cumsum(salience,axis=0) / (np.sum(salience, axis=0) + utils.EPSILON)
+        cumulative_salience = np.cumsum(salience,axis=0) / np.sum(salience, axis=0)
         attended_feature_index = np.nonzero(np.random.random_sample() < cumulative_salience)[0][0]
         
         '''print 'self.feature_activity', self.feature_activity[np.nonzero(self.feature_activity)[0],:].ravel(), \

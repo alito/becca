@@ -30,6 +30,8 @@ class World(object):
         self.num_primitives = 0
         self.num_actions = 0
         
+        self.MAX_NUM_FEATURES = None
+        
 
     def step(self, action):
         """ Advances the World by one timestep.

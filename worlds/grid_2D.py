@@ -20,9 +20,10 @@ class World(BaseWorld):
         super(World, self).__init__()
         
         self.REPORTING_PERIOD = 10 ** 4
-        self.LIFESPAN = 2 * 10 ** 4
+        self.LIFESPAN = 5 * 10 ** 3
         self.REWARD_MAGNITUDE = 100.
         self.ENERGY_COST = 0.05 * self.REWARD_MAGNITUDE
+        self.JUMP_FRACTION = 0.01
         self.display_state = False
         self.name = 'two dimensional grid world'
         self.announce()
@@ -32,6 +33,8 @@ class World(BaseWorld):
         self.num_actions = 9            
         self.world_size = 5
         self.num_primitives = self.world_size ** 2
+        self.MAX_NUM_FEATURES = self.num_primitives + self.num_actions
+        
         self.world_state = np.array([1, 1])
         self.simple_state = self.world_state.copy()
 
@@ -54,6 +57,9 @@ class World(BaseWorld):
         energy = np.sum(action[0:2]) + np.sum(2 * action[2:4]) + \
                  np.sum(action[4:6]) + np.sum(2 * action[6:8])
         
+        """ At random intervals, jump to a random position in the world """
+        if np.random.random_sample() < self.JUMP_FRACTION:
+            self.world_state = np.random.random_integers(0, self.world_size, self.world_state.shape)
 
         """ Enforce lower and upper limits on the grid world by 
         looping them around. It actually has a toroidal topology.
@@ -85,8 +91,8 @@ class World(BaseWorld):
     def set_agent_parameters(self, agent):
         """ Prevent the agent from forming any groups """
         agent.perceiver.NEW_GROUP_THRESHOLD = 1.0
-        agent.actor.model.reward_min = -100.
-        agent.actor.model.reward_max = 100.
+        #agent.actor.model.reward_min = -100.
+        #agent.actor.model.reward_max = 100.
 
 
     def display(self):

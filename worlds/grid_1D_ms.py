@@ -18,7 +18,7 @@ class World(BaseWorld):
         super(World, self).__init__()
         
         self.REPORTING_PERIOD = 10 ** 4
-        self.LIFESPAN = 2 * 10 ** 4
+        self.LIFESPAN = 5 * 10 ** 3
         self.REWARD_MAGNITUDE = 100.
         self.ENERGY_COST = 0.01 * self.REWARD_MAGNITUDE
         self.JUMP_FRACTION = 0.10
@@ -29,6 +29,7 @@ class World(BaseWorld):
         self.num_sensors = 0
         self.num_primitives = 9
         self.num_actions = 3
+        self.MAX_NUM_FEATURES = self.num_primitives + self.num_actions
 
         self.world_state = 0            
         self.simple_state = 0

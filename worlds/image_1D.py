@@ -25,9 +25,11 @@ class World(BaseWorld):
 
         self.REPORTING_PERIOD = 10 ** 4       
         self.FEATURE_DISPLAY_INTERVAL = 10 ** 6
-        self.LIFESPAN = 2 * 10 ** 4
+        self.LIFESPAN = 5 * 10 ** 3
         self.REWARD_MAGNITUDE = 100.
-        self.ANIMATE_PERIOD = 10 ** 2
+        self.JUMP_FRACTION = 0.01
+        self.ANIMATE_PERIOD = 10 ** 3
+        self.STEP_COST =  0.1 * self.REWARD_MAGNITUDE
         self.animate = False
         self.graphing = False
         self.name = 'one dimensional visual world'
@@ -40,7 +42,8 @@ class World(BaseWorld):
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 0
         self.num_actions = 9
-
+        self.MAX_NUM_FEATURES = 100
+        
         self.column_history = []
 
         """ Initialize the image to be used as the environment """
@@ -100,6 +103,10 @@ class World(BaseWorld):
         self.column_position = max(self.column_position, self.column_min)
         self.column_position = min(self.column_position, self.column_max)
 
+        """ At random intervals, jump to a random position in the world """
+        if np.random.random_sample() < self.JUMP_FRACTION:
+            self.column_position = np.random.random_integers(self.column_min, self.column_max)
+
         """ Create the sensory input vector """
         fov = self.data[:, self.column_position - self.fov_width / 2: 
                            self.column_position + self.fov_width / 2]
@@ -107,7 +114,6 @@ class World(BaseWorld):
         center_surround_pixels = world_utils.center_surround( \
                         fov, self.fov_span, self.block_width, self.block_width)
 
-        #sensors = center_surround_pixels.ravel()        
         unsplit_sensors = center_surround_pixels.ravel()        
         sensors = np.concatenate((np.maximum(unsplit_sensors, 0), \
                                   np.abs(np.minimum(unsplit_sensors, 0)) ))
@@ -117,8 +123,11 @@ class World(BaseWorld):
         if np.abs(self.column_position - self.TARGET_COLUMN) < \
             self.REWARD_REGION_WIDTH / 2.0:
             reward += self.REWARD_MAGNITUDE
-        reward -= column_step / self.MAX_STEP_SIZE * 0.1 * self.REWARD_MAGNITUDE
+        reward -= np.abs(column_step) / self.MAX_STEP_SIZE * self.STEP_COST
         
+        if self.animate:
+            print 'column_position: ', self.column_position, '  reward: ', reward[0]
+            
         self.log(sensors, self.primitives, reward)
         return sensors, self.primitives, reward
     
@@ -132,7 +141,7 @@ class World(BaseWorld):
 
         if self.animate and (self.timestep % self.ANIMATE_PERIOD) == 0:
             plt.figure("Image sensed")
-            sensed_image = np.reshape(sensors[:len(sensors)/2], 
+            sensed_image = np.reshape(0.5 * (sensors[:len(sensors)/2] - sensors[len(sensors)/2:] + 1), 
                                       (self.fov_span, self.fov_span))
             plt.gray()
             plt.imshow(sensed_image, interpolation='nearest')

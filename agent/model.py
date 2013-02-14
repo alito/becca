@@ -66,13 +66,13 @@ class Model(object):
         This number is driven by the practical limitations of available
         memory and (more often) computation speed. 
         """
-        self.MAX_TRANSITIONS = 10 ** 3            # integer, somewhat large
+        #self.MAX_TRANSITIONS = 10 ** 4            # integer, somewhat large
         
         self.AGING_TIME_CONSTANT = 10 ** 6 #self.MAX_TRANSITIONS
         
         """ The maximum number of features that will ever be allowed to be created """
         self.max_num_features = max_num_features  # integer, somewhat large
-        
+        self.MAX_TRANSITIONS = self.max_num_features ** 2
         """ Lower bound on the rate at which transitions are updated """
         self.TRANSITION_UPDATE_RATE = 10 ** -1                # real, 0 < x < 1
         
@@ -94,7 +94,7 @@ class Model(object):
         #self.GOAL_DECAY_RATE = 1.0            # real, 0 < x < 1
         
         """ The initial value for prediction_uncertainty in the effect and the reward """
-        self.INITIAL_UNCERTAINTY = 0.25
+        self.INITIAL_UNCERTAINTY = 0.5
 
         """ The total number of transitions in the model """
         #self.num_transitions = 0
@@ -111,8 +111,9 @@ class Model(object):
         around with it during operation. 
         """ 
         model_shape = (self.max_num_features, self.MAX_TRANSITIONS)
-        self.context = np.zeros(model_shape)
-        self.cause = np.zeros(model_shape)
+        three_d_eye = np.tile(np.eye(self.max_num_features), (self.max_num_features, 1, 1))
+        self.context = np.reshape(three_d_eye.transpose((1,2,0)), model_shape)
+        self.cause = np.reshape(three_d_eye.transpose((1,0,2)), model_shape)
         self.effect = np.zeros(model_shape)
 
         self.effect_uncertainty = np.ones(model_shape) * self.INITIAL_UNCERTAINTY
@@ -125,22 +126,25 @@ class Model(object):
 
         """ Maintain a history of the attended features and feature activity"""
         state_shape = (self.max_num_features,1)
-        self.attended_feature_history = [np.zeros(state_shape)] * \
-                                        self.TRACE_LENGTH
-        self.feature_activity_history = [np.zeros(state_shape)] * \
-                                        self.TRACE_LENGTH
-        self.next_context = np.zeros(state_shape)
-        self.reward_history = [0] * self.TRACE_LENGTH
+        #self.attended_feature_history = [np.zeros(state_shape)] * \
+        #                                self.TRACE_LENGTH
+        #self.feature_activity_history = [np.zeros(state_shape)] * \
+        #                                self.TRACE_LENGTH
+        #self.next_context = np.zeros(state_shape)
+        #self.reward_history = [0] * self.TRACE_LENGTH
         
         self.feature_activity = np.zeros(state_shape)
-        self.previous_feature_activity = np.zeros(state_shape)
+        #self.previous_feature_activity = np.zeros(state_shape)
+        self.new_context = np.zeros(state_shape)
+        self.new_cause = np.zeros(state_shape)
+        self.new_effect = np.zeros(state_shape)
         
         """ Hold on to transitions to be added or updated until their 
         future effects and rewards can be determined.
         """
-        self.new_transition_q = []
-        self.transition_update_q = []
-        self.feature_reward_q = []
+        #self.new_transition_q = []
+        #self.transition_update_q = []
+        #self.feature_reward_q = []
 
         """ These help maintain an estimate of each sensor's distribution """
         self.reward_min = utils.BIG
@@ -148,9 +152,14 @@ class Model(object):
         self.REWARD_RANGE_DECAY_RATE = 10 ** -10
         
 
-    def step(self, attended_feature, feature_activity, raw_reward):
-        self.previous_feature_activity = self.feature_activity.copy()
+    def step(self, feature_activity, raw_reward):
+        #self.previous_feature_activity = self.feature_activity.copy()
         self.feature_activity = feature_activity
+        
+        self.new_context = self.new_cause.copy()
+        #self.new_cause = self.new_effect.copy()
+        self.new_cause = self.feature_activity.copy()
+        self.new_effect = self.feature_activity.copy()
         
         """ Modify the reward so that it automatically falls between
         -1 and 1, regardless of the actual reward magnitudes.
@@ -158,7 +167,7 @@ class Model(object):
         self.reward_min = np.minimum(raw_reward, self.reward_min)
         self.reward_max = np.maximum(raw_reward, self.reward_max)
         spread = self.reward_max - self.reward_min
-        reward = (raw_reward - self.reward_min) / (spread + utils.EPSILON)
+        self.current_reward = (raw_reward - self.reward_min) / (spread + utils.EPSILON)
         self.reward_min += spread * self.REWARD_RANGE_DECAY_RATE
         self.reward_max -= spread * self.REWARD_RANGE_DECAY_RATE
         
@@ -178,49 +187,99 @@ class Model(object):
         """
         #print 'attended_feature', np.nonzero(attended_feature)[0]
         
-        self.attended_feature_history.append(np.copy(attended_feature))
-        self.attended_feature_history.pop(0)
-        self.feature_activity_history.append(np.copy(self.feature_activity))
-        self.feature_activity_history.pop(0)
-        self.reward_history.append(reward)
-        self.reward_history.pop(0)
+        #self.attended_feature_history.append(np.copy(attended_feature))
+        #self.attended_feature_history.pop(0)
+        #self.feature_activity_history.append(np.copy(self.feature_activity))
+        #self.feature_activity_history.pop(0)
+        #self.reward_history.append(reward)
+        #self.reward_history.pop(0)
         
         """ Calculate the current context and cause.
         The next context is a combination of the current cause and the 
         current context.
         """ 
-        self.current_context = self.next_context
-        self.next_context = self.collapse(self.attended_feature_history[::-1])
-        self.current_cause = self.attended_feature_history[-1]
-        self.current_effect = self.collapse(self.feature_activity_history)
-        self.current_reward = self.unbounded_collapse(self.reward_history)
+        #self.current_context = self.next_context
+        #self.next_context = self.collapse(self.attended_feature_history[::-1])
+        #self.current_cause = self.attended_feature_history[-1]
+        #self.current_effect = self.collapse(self.feature_activity_history)
+        #self.current_reward = self.unbounded_collapse(self.reward_history)
         
         """ A collapsed collection of recent features for use in associating reward """
-        self.feature_context = self.collapse(self.feature_activity_history[::-1])
+        #self.feature_context = self.collapse(self.feature_activity_history[::-1])
 
         """ Find transitions in the library that are similar to 
         the current situation. 
         """                
-        context_matches = np.sum(self.context * self.current_context, axis=0)[np.newaxis,:]
-        cause_matches = np.sum(self.cause * self.current_cause, axis=0)[np.newaxis,:]
-        transition_matches = context_matches * cause_matches
-        transition_match_index = (transition_matches).ravel().nonzero()[0]                                         
+        #context_matches = np.sum(self.context * self.current_context, axis=0)[np.newaxis,:]
+        #cause_matches = np.sum(self.cause * self.current_cause, axis=0)[np.newaxis,:]
+        
+        #transition_matches = context_matches * cause_matches
+        #transition_match_index = (transition_matches).ravel().nonzero()[0]                                         
 
-        if len(transition_match_index) == 0:             
-            self.add_new_transition()
-        else: 
-            self.update_transition(transition_match_index[0])           
+        #transition_similarities = np.dot(self.new_cause, self.new_context)
+        context_similarities = np.sum((self.new_context * self.context), axis=0)[np.newaxis,:]
+        cause_similarities = np.sum((self.new_cause * self.cause), axis=0)[np.newaxis,:]
+        transition_similarities = (context_similarities * cause_similarities) ** 4
         
-        self.process_new_transitions()
-        self.process_transition_updates()
+        transition_similarities = np.sum(transition_similarities, axis=0)[np.newaxis,:]
         
+        #if len(transition_match_index) == 0:             
+        #    self.add_new_transition()
+        #else: 
+        #    self.update_transition(transition_match_index[0])           
+        
+        #self.process_new_transitions()
+        #self.process_transition_updates()
+        
+        self.update_model(transition_similarities, self.current_reward)
 
         """ Age the transitions """
         self.count -=  np.minimum(1 / (self.AGING_TIME_CONSTANT * self.count + utils.EPSILON), self.count)
         return
     
     
-    def add_new_transition(self):
+    def update_model(self, transition_similarities, reward):
+        
+        reward_difference = np.abs(reward - self.reward_value)
+        effect_difference = np.abs(self.new_effect - self.effect)
+        update_rate_raw = transition_similarities * ((1 - self.TRANSITION_UPDATE_RATE) / \
+                    (self.count + utils.EPSILON) + self.TRANSITION_UPDATE_RATE)
+        self.count += transition_similarities
+                    
+        update_rate = np.minimum(0.5, update_rate_raw)
+        #update_rate = np.minimum(1.0, update_rate_raw)
+        self.reward_value += (reward - self.reward_value) * update_rate
+        self.reward_uncertainty += (reward_difference - self.reward_uncertainty) * update_rate
+            
+        self.effect += (self.new_effect - self.effect) * update_rate         
+        self.effect_uncertainty += (effect_difference - self.effect_uncertainty) * update_rate
+        
+        if np.random.random_sample() < 0.0:
+            print "----------------------------------------------------------- new model update"
+            #print 'reward', reward.ravel()
+            #print 'self.reward_value', self.reward_value.ravel()
+            #print 'reward_difference', reward_difference.ravel()
+            #print 'self.new_effect', self.new_effect.ravel()
+            #print 'self.effect', self.effect
+            #print 'effect_difference', effect_difference
+            print 'self.new_context', self.new_context.ravel()
+            print 'self.new_cause', self.new_cause.ravel()
+            #print 'transition_similarities', transition_similarities.ravel()
+            nz = np.nonzero(transition_similarities)[1]
+            print 'nz', nz
+            print 'update_rate_raw', update_rate_raw[:,nz]
+            print 'update_rate', update_rate[:,nz]
+            print 'self.reward_value', self.reward_value[:,nz]
+            print 'self.reward_uncertainty', self.reward_uncertainty[:,nz]
+            print 'self.effect', self.effect[:,nz]
+            print 'self.effect_uncertainty', self.effect_uncertainty[:,nz]
+            
+            
+            
+        return
+   
+   
+        '''def add_new_transition(self):
         
         is_new = True
         
@@ -279,11 +338,6 @@ class Model(object):
                 self.reward_value[0, new_transition_index] = new_reward
                 self.count[0, new_transition_index] =  1.
                 
-                '''print'new_context.ravel()', np.nonzero(new_context)[0].ravel() 
-                print'new_cause.ravel()', np.nonzero(new_cause)[0].ravel() 
-                print'new_effect.ravel()', np.nonzero(new_effect)[0].ravel() 
-                print'new_reward',new_reward  
-                '''
                 
         """ Remove the transitions from the queue that were added.
         This was sliced a little fancy in order to ensure that the highest
@@ -331,14 +385,6 @@ class Model(object):
                 matching_transition_index = self.transition_update_q[i][1] 
                 update_strength = self.transition_update_q[i][2] 
                 
-                '''print'old_context.ravel()', np.nonzero(self.context[:,matching_transition_index])[0].ravel() 
-                print'old_cause.ravel()', np.nonzero(self.cause[:,matching_transition_index])[0].ravel() 
-                print'old_effect.ravel()', self.effect[:,matching_transition_index].ravel() 
-                print'old_effect_uncertainty.ravel()', self.effect_uncertainty[:,matching_transition_index].ravel() 
-                print'old_reward', self.reward_value[:,matching_transition_index]  
-                print'old_reward_uncertainty', self.reward_uncertainty[:,matching_transition_index]  
-                print 'update_strength', update_strength
-                '''
                 """ Calculate states and values for the update """
                 new_effect = np.copy(self.current_effect)
                 new_reward = self.current_reward
@@ -360,7 +406,7 @@ class Model(object):
                 """
                 update_rate_raw = (1 - self.TRANSITION_UPDATE_RATE) / \
                     self.count[0, matching_transition_index] + self.TRANSITION_UPDATE_RATE
-                update_rate = min(1.0, update_rate_raw) * update_strength
+                update_rate = np.minimum(1.0, update_rate_raw) * update_strength
                 max_step_size = new_reward - self.reward_value[0, matching_transition_index]
 
                 self.reward_value[0, matching_transition_index] += max_step_size * update_rate
@@ -376,14 +422,7 @@ class Model(object):
                         self.effect_uncertainty[ :new_effect.size, matching_transition_index] * \
                         (1. - update_rate) + effect_difference.ravel() * update_rate
                 
-                '''print'new_context.ravel()', np.nonzero(self.context[:,matching_transition_index])[0].ravel() 
-                print'new_cause.ravel()', np.nonzero(self.cause[:,matching_transition_index])[0].ravel() 
-                print'new_effect.ravel()', self.effect[:,matching_transition_index].ravel() 
-                print'new_effect_uncertainty.ravel()', self.effect_uncertainty[:,matching_transition_index].ravel() 
-                print'new_reward', self.reward_value[:,matching_transition_index]  
-                print'new_reward_uncertainty', self.reward_uncertainty[:,matching_transition_index]  
-                '''
-
+            
         """ Remove the transitions from the queue that were added.
         This was sliced a little fancy in order to ensure that the highest
         indexed transitions were removed first, so that as the iteration
@@ -393,8 +432,8 @@ class Model(object):
             self.transition_update_q.pop(i)
 
         return 
+        '''
     
-   
     def get_recycled_index(self):
         """ Return the index of a transition with a low count so that it can be overwritten """
         low_indices = np.where(self.count == np.min(self.count))
