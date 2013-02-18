@@ -24,7 +24,7 @@ class World(BaseWorld):
         super(World, self).__init__()
         
         self.REPORTING_PERIOD = 10 ** 4
-        self.LIFESPAN = 5 * 10 ** 3
+        self.LIFESPAN = 10 ** 4
         self.REWARD_MAGNITUDE = 100.
         self.ENERGY_COST = 0.01 * self.REWARD_MAGNITUDE 
         self.JUMP_FRACTION = 0.01
@@ -96,8 +96,8 @@ class World(BaseWorld):
     
     
     def set_agent_parameters(self, agent):
-        #agent.actor.model.reward_min = -100.
-        #agent.actor.model.reward_max = 100.
+        agent.actor.model.reward_min = -100.
+        agent.actor.model.reward_max = 100.
 
         pass
     

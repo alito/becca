@@ -18,9 +18,10 @@ class World(BaseWorld):
         super(World, self).__init__()
         
         self.REPORTING_PERIOD = 10 ** 4
-        self.LIFESPAN = 5 * 10 ** 3
+        self.LIFESPAN = 10 ** 4
         self.REWARD_MAGNITUDE = 100.
         self.ENERGY_COST = 0.01 * self.REWARD_MAGNITUDE
+        self.JUMP_FRACTION = 0.01
         self.display_state = False  
         self.name = 'noisy one dimensional grid world'
         self.announce()
@@ -57,6 +58,10 @@ class World(BaseWorld):
 
         self.world_state = self.world_state + step_size
         
+        """ At random intervals, jump to a random position in the world """
+        if np.random.random_sample() < self.JUMP_FRACTION:
+            self.world_state = self.num_real_primitives * np.random.random_sample()
+
         """ Ensure that the world state falls between 0 and 
         num_real_primitives. 
         """
@@ -88,8 +93,8 @@ class World(BaseWorld):
     
     def set_agent_parameters(self, agent):
         agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
-        #agent.actor.model.reward_min = -100.
-        #agent.actor.model.reward_max = 100.
+        agent.actor.model.reward_min = -100.
+        agent.actor.model.reward_max = 100.
 
 
     def display(self, action):

@@ -23,7 +23,7 @@ class World(BaseWorld):
 
         self.REPORTING_PERIOD = 10 ** 4   
         self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
-        self.LIFESPAN = 5 * 10 ** 3
+        self.LIFESPAN = 10 ** 4
         self.REWARD_MAGNITUDE = 100.
         self.JUMP_FRACTION = 0.01
         self.ANIMATE_PERIOD = 10 ** 2
@@ -172,8 +172,8 @@ class World(BaseWorld):
 
  
     def set_agent_parameters(self, agent):
-        #agent.actor.model.reward_min = 0.
-        #agent.actor.model.reward_max = 100.
+        agent.actor.model.reward_min = 0.
+        agent.actor.model.reward_max = 100.
 
         pass
     

@@ -18,10 +18,10 @@ class World(BaseWorld):
         super(World, self).__init__()
         
         self.REPORTING_PERIOD = 10 ** 4
-        self.LIFESPAN = 5 * 10 ** 3
+        self.LIFESPAN = 10 ** 4
         self.REWARD_MAGNITUDE = 100.
         self.ENERGY_COST = 0.01 * self.REWARD_MAGNITUDE
-        self.JUMP_FRACTION = 0.10
+        self.JUMP_FRACTION = 0.01
         self.display_state = False
         self.name = 'multi-step one dimensional grid world'
         self.announce()
@@ -46,20 +46,14 @@ class World(BaseWorld):
 
         self.timestep += 1 
 
-        """ Occasionally add a perturbation to the action to knock it into a different state """
-        if np.random.random_sample() < self.JUMP_FRACTION:
-            action += round(np.random.random_sample() * 6) * \
-                    np.round(np.random.random_sample(self.num_actions))
-                    
-            #print('jumping')
-        else:
-            #print('not jumping')
-            pass
-            
         energy = action[0] + action[1]
         
         self.world_state += action[0] - action[1]
         
+        """ Occasionally add a perturbation to the action to knock it into a different state """
+        if np.random.random_sample() < self.JUMP_FRACTION:
+            self.world_state = self.num_primitives * np.random.random_sample()
+                    
         """ Ensure that the world state falls between 0 and 9 """
         self.world_state -= self.num_primitives * np.floor_divide(self.world_state, self.num_primitives)
         self.simple_state = int(np.floor(self.world_state))
@@ -86,6 +80,8 @@ class World(BaseWorld):
     def set_agent_parameters(self, agent):
         """ Prevent the agent from forming any groups """
         agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
+        agent.actor.model.reward_min = -100.
+        agent.actor.model.reward_max = 100.
 
 
     def display(self):

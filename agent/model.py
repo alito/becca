@@ -164,23 +164,13 @@ class Model(object):
         """ Modify the reward so that it automatically falls between
         -1 and 1, regardless of the actual reward magnitudes.
         """
+        
         self.reward_min = np.minimum(raw_reward, self.reward_min)
         self.reward_max = np.maximum(raw_reward, self.reward_max)
         spread = self.reward_max - self.reward_min
         self.current_reward = (raw_reward - self.reward_min) / (spread + utils.EPSILON)
         self.reward_min += spread * self.REWARD_RANGE_DECAY_RATE
         self.reward_max -= spread * self.REWARD_RANGE_DECAY_RATE
-        
-        '''self.reward_min_observed = np.minimum(raw_reward, self.reward_min_observed)
-        self.reward_max_observed = np.maximum(raw_reward, self.reward_max_observed)
-        spread_observed = self.reward_max_observed - self.reward_min_observed
-        self.reward_min_observed += spread_observed * self.REWARD_RANGE_DECAY_RATE
-        self.reward_max_observed -= spread_observed * self.REWARD_RANGE_DECAY_RATE
-        self.reward_min = self.reward_min_observed - spread_observed * 0.1
-        self.reward_max = self.reward_max_observed + spread_observed * 0.1
-        spread = self.reward_max - self.reward_min
-        reward = (raw_reward - self.reward_min) / (spread + utils.EPSILON)
-        '''
         
         """ Update histories of attended features, feature activities, 
         and rewards. 
