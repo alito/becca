@@ -1,0 +1,62 @@
+This is BibTeX, Version 0.99d (TeX Live 2011)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: becca_users_guide.aux
+A level-1 auxiliary file: download.aux
+A level-1 auxiliary file: world_mod.aux
+A level-1 auxiliary file: world_share.aux
+A level-1 auxiliary file: agent_mod.aux
+A level-1 auxiliary file: agent_share.aux
+A level-1 auxiliary file: perceiver.aux
+A level-1 auxiliary file: actor.aux
+A level-1 auxiliary file: notation.aux
+A level-1 auxiliary file: complexity.aux
+A level-1 auxiliary file: related_work.aux
+A level-1 auxiliary file: biology.aux
+A level-1 auxiliary file: contributions.aux
+A level-1 auxiliary file: achievements.aux
+A level-1 auxiliary file: history.aux
+A level-1 auxiliary file: legal.aux
+A level-1 auxiliary file: citation.aux
+The style file: plain.bst
+Database file #1: master.bib
+You've used 35 entries,
+            2118 wiz_defined-function locations,
+            695 strings with 9928 characters,
+and the built_in function-call counts, 10342 in all, are:
+= -- 961
+> -- 508
+< -- 1
++ -- 203
+- -- 166
+* -- 640
+:= -- 1764
+add.period$ -- 109
+call.type$ -- 35
+change.case$ -- 188
+chr.to.int$ -- 0
+cite$ -- 35
+duplicate$ -- 390
+empty$ -- 884
+format.name$ -- 166
+if$ -- 2175
+int.to.chr$ -- 0
+int.to.str$ -- 35
+missing$ -- 27
+newline$ -- 181
+num.names$ -- 70
+pop$ -- 249
+preamble$ -- 1
+purify$ -- 153
+quote$ -- 0
+skip$ -- 253
+stack$ -- 0
+substring$ -- 463
+swap$ -- 50
+text.length$ -- 1
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 136
+warning$ -- 0
+while$ -- 83
+width$ -- 37
+write$ -- 378
