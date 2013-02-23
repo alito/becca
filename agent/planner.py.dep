@@ -16,55 +16,15 @@ class Planner(object):
 
     def step(self, model, n_features):
       
-        #print 'self.goal before-beginning', self.goal.ravel()
         self.goal *= 1 - model.feature_activity
-        #self.goal -= np.minimum(model.feature_activity, self.goal)
-        #print 'self.goal before-middle', self.goal.ravel()
         self.GOAL_DECAY_RATE = 0.1
         self.goal *= 1 - self.GOAL_DECAY_RATE
-        #print 'self.goal before-end', self.goal.ravel()
 
-        self.debug = False
-        if np.random.random_sample() < 0.0:
-            self.debug = True
-            
-        if self.debug:
-            print 'new iteration ======================================================================='
-            print 'model.feature_activity', model.feature_activity[:n_features,:].ravel()
-            print 'self.goal', self.goal[np.nonzero(self.goal)[0],:].ravel(), \
-                                   np.nonzero(self.goal)[0].ravel()
-        
-
-        #self.deliberate(model, attended_feature, n_features)  
         self.deliberate(model, n_features)  
-        
-        #reaction = self.react(model)
-        
-        #self.goal = reaction + excitation - inhibition
-        #self.goal = np.maximum(self.goal, 0.)
-        #self.goal = np.minimum(self.goal, 1.)
-        
-        #print reaction.ravel(), 'reaction'
-        #print excitation.ravel(), 'excitation'
-        #print inhibition.ravel(), 'inhibition'
-        #print self.goal.ravel(), 'goal'
-        
-        #self.planner_salience = np.minimum(excitation + inhibition, 1.)
-
-
-        """ Separate action goals from the rest of the goal """
-        #self.action = np.sign(self.goal[self.num_primitives: self.num_primitives + self.num_actions,:])
-        #print 'self.goal before', self.goal.ravel()
         self.goal[self.num_primitives: self.num_primitives + self.num_actions,:] = \
                 np.sign(self.goal[self.num_primitives: self.num_primitives + self.num_actions,:])
         self.action = np.copy(self.goal[self.num_primitives: self.num_primitives + self.num_actions,:])
-        #self.action = np.maximum(self.action, 0.)
 
-        #print 'self.goal after', self.goal.ravel()
-        #print 'self.action', self.action.ravel()
-        #debug
-        #self.goal = np.zeros(self.goal.shape)
-        
         return self.action
             
             

@@ -16,6 +16,7 @@ For N_RUNS = 77, Becca 0.4.4 scored 53.1 with a standard deviation of 1.5
 """
 
 
+import tester
 from agent.agent import Agent
 from worlds.grid_1D import World as World_grid_1D
 from worlds.grid_1D_ms import World as World_grid_1D_ms
@@ -27,10 +28,17 @@ from worlds.image_2D import World as World_image_2D
 
 import matplotlib.pyplot as plt
 import numpy as np
-
+import os, sys    
 
 def main():
 
+    '''lib_path = os.path.abspath(os.path.join('..',''))
+    sys.path.append(lib_path)
+    os.chdir(os.path.join('..',''))
+
+    import tester
+    from agent.agent import Agent
+    '''
     N_RUNS = 7
     overall_performance = []
     
@@ -40,19 +48,19 @@ def main():
         performance = []
         
         world = World_grid_1D()
-        performance.append(test(world))
+        performance.append(tester.test(world, show=False))
         world = World_grid_1D_ms()
-        performance.append(test(world))
+        performance.append(tester.test(world, show=False))
         world = World_grid_1D_noise()
-        performance.append(test(world))
+        performance.append(tester.test(world, show=False))
         world = World_grid_2D()
-        performance.append(test(world))
+        performance.append(tester.test(world, show=False))
         world = World_grid_2D_dc()
-        performance.append(test(world))
+        performance.append(tester.test(world, show=False))
         world = World_image_1D()
-        performance.append(test(world))
+        performance.append(tester.test(world, show=False))
         world = World_image_2D()
-        performance.append(test(world))
+        performance.append(tester.test(world, show=False))
         
         print "Individual benchmark scores: " , performance
         
@@ -104,35 +112,6 @@ def main():
     """
     plt.show()
     
-    
-def test(world):
-    
-    if world.MAX_NUM_FEATURES is None:
-        MAX_NUM_FEATURES = 100
-    else:
-        MAX_NUM_FEATURES = world.MAX_NUM_FEATURES
-        
-    agent = Agent(world.num_sensors, world.num_primitives, world.num_actions, MAX_NUM_FEATURES)
-    
-    """ If configured to do so, the world sets some BECCA parameters to 
-    modify its behavior. This is a development hack, and should eventually be 
-    removed as BECCA matures and settles on a good, general purpose set of parameters.
-    """
-    world.set_agent_parameters(agent)
-         
-    """ Give an initial resting action to kick things off """
-    actions = np.zeros(world.num_actions)
-    
-    """ Repeat the loop through the duration of the existence of the world """
-    while(world.is_alive()):
-        sensors, primitives, reward = world.step(actions)
-        actions = agent.step(sensors, primitives, reward)
-             
-    """ Report the performance of the agent on the world. """
-    performance = agent.report_performance(show=False)
-    
-    return performance
-
     
 if __name__ == '__main__':
     main()

@@ -1,8 +1,8 @@
 *.pyc
 *.pickle
-contrib/*
 log/*
 images/lib/*
+becca_*
 *~
 build
 

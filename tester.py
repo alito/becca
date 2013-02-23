@@ -8,36 +8,34 @@ from agent import viz_utils
 One of these import lines should be uncommented.
 """
 #from worlds.base_world import World
-#from worlds.grid_1D import World
+from worlds.grid_1D import World
 #from worlds.grid_1D_ms import World
 #from worlds.grid_1D_noise import World
 #from worlds.grid_2D import World
-from worlds.grid_2D_dc import World
+#from worlds.grid_2D_dc import World
 #from worlds.image_1D import World
 #from worlds.image_2D import World
 
 #from worlds.watch import World
-#from worlds.find_block import World 
+#from becca_world_find_block.find_block import World 
 
 def main():
     
-    world = World()
+    test(World())
+
     
-    """ A unique identifying string for the agent, allowing specific
-    saved agents to be recalled. 
-    """
+def test(world, restore=False, agent_name="test", show=True):
+    
     if world.MAX_NUM_FEATURES is None:
         MAX_NUM_FEATURES = 100
     else:
         MAX_NUM_FEATURES = world.MAX_NUM_FEATURES
 
     agent = Agent(world.num_sensors, world.num_primitives, 
-                  world.num_actions, MAX_NUM_FEATURES, agent_name="test")
+                  world.num_actions, MAX_NUM_FEATURES, agent_name=agent_name)
 
-    """ If uncommented, try to restore the agent from saved data.
-    If commented out, start fresh each time.
-    """
-    #agent = agent.restore()
+    if restore:
+        agent = agent.restore()
     
     """ If configured to do so, the world sets some Becca parameters to 
     modify its behavior. This is a development hack, and should eventually be 
@@ -65,11 +63,8 @@ def main():
         except AttributeError:
             pass
     
-    """ Report the performance of the agent on the world. """
-    agent.report_performance()
-    agent.show_reward_history()
-    
-    return
+    return agent.report_performance(show)
+
 
 
 def profile():

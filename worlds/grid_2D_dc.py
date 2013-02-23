@@ -96,8 +96,8 @@ class World(BaseWorld):
     
     
     def set_agent_parameters(self, agent):
-        agent.actor.model.reward_min = -100.
-        agent.actor.model.reward_max = 100.
+        agent.actor.reward_min = -100.
+        agent.actor.reward_max = 100.
 
         pass
     

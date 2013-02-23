@@ -1,6 +1,5 @@
 
 from .base_world import World as BaseWorld
-
 import numpy as np
 
 class World(BaseWorld):
@@ -18,7 +17,7 @@ class World(BaseWorld):
     """
 
     def __init__(self):
-                
+        
         super(World, self).__init__()
         
         self.REPORTING_PERIOD = 10 ** 4
@@ -99,8 +98,8 @@ class World(BaseWorld):
     def set_agent_parameters(self, agent):
         """ Prevent the agent from forming any groups """
         agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
-        agent.actor.model.reward_min = -100.
-        agent.actor.model.reward_max = 100.
+        agent.actor.reward_min = -100.
+        agent.actor.reward_max = 100.
         
         
         
@@ -120,5 +119,3 @@ class World(BaseWorld):
             
         if (self.timestep % self.REPORTING_PERIOD) == 0:
             print("world age is %s timesteps " % self.timestep)
-
-        

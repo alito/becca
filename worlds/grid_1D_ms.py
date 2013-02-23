@@ -80,8 +80,8 @@ class World(BaseWorld):
     def set_agent_parameters(self, agent):
         """ Prevent the agent from forming any groups """
         agent.perceiver.NEW_FEATURE_THRESHOLD = 1.0
-        agent.actor.model.reward_min = -100.
-        agent.actor.model.reward_max = 100.
+        agent.actor.reward_min = -100.
+        agent.actor.reward_max = 100.
 
 
     def display(self):
