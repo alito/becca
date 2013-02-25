@@ -10,10 +10,7 @@ class World(BaseWorld):
     for effort expended in trying to move, i.e. taking actions.
     This is intended to be a simple-as-possible task for
     troubleshooting BECCA.
-    The theoretically optimal performance without exploration is 
-    a reward of 100 per time step.
-    In practice, the best performance the algorithm can achieve with the 
-    exploration levels given is a reward of between 70 and 80 per time step.
+    Optimal performance is a reward of about 90 per time step.
     """
 
     def __init__(self):
@@ -39,11 +36,8 @@ class World(BaseWorld):
 
     
     def step(self, action): 
-        """ Advance the World by one timestep """
-        
         if action is None:
             action = np.zeros((self.num_actions,1))
-        
         self.timestep += 1 
         
         step_size = (action[0] + 
@@ -72,8 +66,7 @@ class World(BaseWorld):
             self.world_state = self.num_primitives * np.random.random_sample()
 
         """ Ensure that the world state falls between 0 and 9 """
-        self.world_state -= self.num_primitives * \
-                            np.floor_divide(self.world_state, self.num_primitives)
+        self.world_state -= self.num_primitives * np.floor_divide(self.world_state, self.num_primitives)
         self.simple_state = int(np.floor(self.world_state))
         
         """ Assign basic_feature_input elements as binary. 
@@ -102,11 +95,7 @@ class World(BaseWorld):
         agent.actor.reward_max = 100.
         
         
-        
     def display(self, action):
-        """ Provide an intuitive display of the current state of the World 
-        to the user.
-        """
         if (self.display_state):
             state_image = ['.'] * (self.num_primitives + self.num_actions + 2)
             state_image[self.simple_state] = 'O'

@@ -1,31 +1,28 @@
-""" A main test harness for a general reinforcement learning agent """
 
 import numpy as np
 from agent.agent import Agent
 from agent import viz_utils
         
-"""  Select the World that the Agent will be placed in. 
-One of these import lines should be uncommented.
-"""
+"""  Select the World that the Agent will be placed in. One of these import lines should be uncommented. """
 #from worlds.base_world import World
-from worlds.grid_1D import World
+#from worlds.grid_1D import World
 #from worlds.grid_1D_ms import World
 #from worlds.grid_1D_noise import World
 #from worlds.grid_2D import World
 #from worlds.grid_2D_dc import World
 #from worlds.image_1D import World
-#from worlds.image_2D import World
+from worlds.image_2D import World
 
+""" If you want to run a world of your own, add the appropriate line here """
 #from worlds.watch import World
 #from becca_world_find_block.find_block import World 
 
 def main():
-    
     test(World())
 
     
 def test(world, restore=False, agent_name="test", show=True):
-    
+    """ Run 'world' """
     if world.MAX_NUM_FEATURES is None:
         MAX_NUM_FEATURES = 100
     else:
@@ -44,17 +41,14 @@ def test(world, restore=False, agent_name="test", show=True):
     """
     world.set_agent_parameters(agent)
          
-    """ Give an initial resting action to kick things off. """
     actions = np.zeros((world.num_actions,1))
     
-    """ Repeat the loop through the duration of the existence of the world."""
+    """ Repeat the loop through the duration of the existence of the world """
     while(world.is_alive()):
         sensors, primitives, reward = world.step(actions)
         actions = agent.step(sensors, primitives, reward)
         
-        """ If the world has the appropriate method, use it to display the 
-        feature set.
-        """
+        """ If the world has the appropriate method, use it to display the feature set """
         try:
             if world.is_time_to_display():                
                 world.vizualize_feature_set(
@@ -66,8 +60,8 @@ def test(world, restore=False, agent_name="test", show=True):
     return agent.report_performance(show)
 
 
-
 def profile():
+    """ Profile BECCA's performance """
     import cProfile
     import pstats
     cProfile.run('main()', 'tester_profile')
@@ -77,4 +71,5 @@ def profile():
     
 if __name__ == '__main__':
     main()
+    """ Uncomment this line and comment out the previous one to run the profiler """ 
     #profile()

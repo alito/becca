@@ -7,7 +7,6 @@ import cPickle as pickle
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 class Agent(object):
     """ A general reinforcement learning agent, modeled on observations and 
     theories of human performance. It takes in a time series of 
@@ -43,8 +42,6 @@ class Agent(object):
  
         
     def step(self, sensors, primitives, reward):
-        """ Advance the agent's operation by one time step """
-        
         self.timestep += 1
         self.reward = reward
         
@@ -59,9 +56,6 @@ class Agent(object):
 
     
     def log(self):
-        """ Log the state of the world into a history that can be used to
-        evaluate and understand BECCA's behavior
-        """
         self.cumulative_reward += self.reward
 
         if (self.timestep % self.REPORTING_PERIOD) == 0:
@@ -70,6 +64,7 @@ class Agent(object):
 
         if (self.timestep % self.BACKUP_PERIOD) == 0:
             self.save()    
+        return
 
     
     def display(self):
@@ -80,17 +75,15 @@ class Agent(object):
             self.show_reward_history(save_eps=True)
             #self.perceiver.visualize(save_eps=True)
             #self.actor.visualize()
+        return
  
     
     def report_performance(self, show=True):
         performance = np.mean(self.reward_history)
         print("Final performance is %f" % performance)
-        
         self.show_reward_history(save_eps=True)
-
         if show:
             plt.show()    
-        
         return performance
         
     
@@ -102,12 +95,11 @@ class Agent(object):
             plt.xlabel("time step")
             plt.ylabel("average reward")
             viz_utils.force_redraw()
-
             if save_eps:
                 plt.savefig(epsfilename, format='eps')
-
             if show:
                 plt.show()
+        return
     
     
     def save(self):
@@ -116,7 +108,6 @@ class Agent(object):
             with open(self.pickle_filename, 'wb') as agent_data:
                 pickle.dump(self, agent_data)
             print("Agent data saved at " + str(self.timestep) + " time steps")
-
         except IOError as err:
             print("File error: " + str(err) + " encountered while saving agent data")
         except pickle.PickleError as perr: 
@@ -132,9 +123,8 @@ class Agent(object):
             with open(self.pickle_filename, 'rb') as agent_data:
                 loaded_agent = pickle.load(agent_data)
 
-            """ Compare the number of channels in the restored agent with
-            those in the already initialized agent. 
-            If it matches, accept the agent. If it doesn't,
+            """ Compare the number of channels in the restored agent with those in the 
+            already initialized agent. If it matches, accept the agent. If it doesn't,
             print a message, and keep the just-initialized agent.
             """
             if((loaded_agent.num_sensors == self.num_sensors) and 
@@ -144,15 +134,13 @@ class Agent(object):
                 print("Agent restored at timestep " + 
                       str(loaded_agent.timestep))
                 restored_agent = loaded_agent
-
             else:
                 print("The agent " + self.pickle_filename + " does not have " +
                       "the same number of input and output elements as the world.")
                 print("Creating a new agent from scratch.")
-            
+                
         except IOError:
             print("Couldn't open %s for loading" % self.pickle_filename)
         except pickle.PickleError, e:
             print("Error unpickling world: %s" % e)
-
         return restored_agent

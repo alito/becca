@@ -1,6 +1,5 @@
 
 from .base_world import World as BaseWorld
-
 import numpy as np
 
 class World(BaseWorld):
@@ -10,7 +9,7 @@ class World(BaseWorld):
     line. The fourth position is rewarded and the ninth position is punished.
     This is intended to be as similar as possible to the 
     one-dimensional grid task, but require multi-step planning for optimal behavior.
-    Optimal performance is a reward of between 50 and 60 per time step.
+    Optimal performance is a reward of about 85 per time step.
     """
 
     def __init__(self):
@@ -36,18 +35,13 @@ class World(BaseWorld):
         
             
     def step(self, action): 
-        """ Advance the World by one timestep """
-
         if action is None:
             action = np.zeros(self.num_actions)
-
         action = np.round(action)
         action = action.ravel()
-
         self.timestep += 1 
 
         energy = action[0] + action[1]
-        
         self.world_state += action[0] - action[1]
         
         """ Occasionally add a perturbation to the action to knock it into a different state """

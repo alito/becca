@@ -4,7 +4,6 @@ import agent.viz_utils as viz_utils
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 def center_surround(fov, fov_span, block_heigth, block_width, verbose=False):
     super_pixels = np.zeros((fov_span + 2, fov_span + 2))
     center_surround_pixels = np.zeros((fov_span, fov_span))
@@ -13,18 +12,7 @@ def center_surround(fov, fov_span, block_heigth, block_width, verbose=False):
     for row in range(fov_span + 2):
         for column in range(fov_span + 2):
             super_pixels[row][column] = np.mean( fov[row * block_heigth: (row + 1) * block_heigth , 
-                                                     column * block_width: (column + 1) * block_width ])
-                
-    '''
-    """ no center surround """
-    # debug
-    center_surround_pixels = copy.deepcopy(super_pixels[1:-1,1:-1])
-    min_val = np.min(np.abs(center_surround_pixels))
-    center_surround_pixels -= min_val
-    max_val = np.max(np.abs(center_surround_pixels))
-    center_surround_pixels /= max_val + utils.EPSILON
-    
-    '''
+                                                     column * block_width: (column + 1) * block_width ])                
     for row in range(fov_span):
         for column in range(fov_span):
             
@@ -72,7 +60,6 @@ def center_surround(fov, fov_span, block_heigth, block_width, verbose=False):
 def vizualize_pixel_array_feature_set(feature_set, start=0, world_name=None,
                                   save_eps=False, save_jpg=False,
                                   filename='log/feature_set'):
-    
     if feature_set.size == 0:
         return
 
@@ -85,8 +72,7 @@ def vizualize_pixel_array_feature_set(feature_set, start=0, world_name=None,
  
         """ Maximize contrast """
         feature_sensors *= 1 / (np.max(feature_sensors) + 10 ** -6)
-        pixel_values = ((feature_sensors[ 0:n_pixels] - \
-                         feature_sensors[n_pixels:2 * n_pixels]) + 1.0) / 2.0
+        pixel_values = ((feature_sensors[ 0:n_pixels] - feature_sensors[n_pixels:2 * n_pixels]) + 1.0) / 2.0
         feature_pixels = pixel_values.reshape(fov_span, fov_span)
                         
         """ Pad the group number with leading zeros out to three digits """
