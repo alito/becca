@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.3-1.40.12 (TeX Live 2011) (format=latex 2011.7.3)  31 DEC 2012 11:43
+This is pdfTeX, Version 3.1415926-2.3-1.40.12 (TeX Live 2011) (format=latex 2011.7.3)  27 FEB 2013 09:51
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -89,11 +89,7 @@ Package: verbatim 2003/08/22 v1.5q LaTeX2e package for verbatim enhancements
 \Urlmuskip=\muskip10
 Package: url 2006/04/12  ver 3.3  Verb mode for urls, etc.
 )
-(./becca_users_guide.aux (./download.aux) (./world_mod.aux) (./world_share.aux)
-(./agent_mod.aux) (./agent_share.aux) (./perceiver.aux) (./actor.aux)
-(./notation.aux) (./complexity.aux) (./related_work.aux) (./biology.aux)
-(./contributions.aux) (./achievements.aux) (./history.aux) (./legal.aux)
-(./citation.aux))
+(./becca_users_guide.aux)
 \openout1 = `becca_users_guide.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 10.
@@ -114,29 +110,14 @@ File: figs/becca_logo.eps Graphic file (type eps)
 ]
 LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <24.88> not available
 (Font)              Font shape `T1/ptm/b/n' tried instead on input line 37.
- (./becca_users_guide.toc
-LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <12> not available
-(Font)              Font shape `T1/ptm/b/n' tried instead on input line 1.
-LaTeX Font Info:    Font shape `T1/ptm/bx/sc' in size <12> not available
-(Font)              Font shape `T1/ptm/b/sc' tried instead on input line 1.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <12> on input line 2.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 2.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 2.
-LaTeX Font Info:    Try loading font information for T1+pcr on input line 9.
-
-(/usr/local/texlive/2011/texmf-dist/tex/latex/psnfss/t1pcr.fd
-File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
-) [2
-
-] [3] [4])
+ (./becca_users_guide.toc)
 \tf@toc=\write3
 \openout3 = `becca_users_guide.toc'.
 
 
-[5]
+[2
+
+]
 \openout2 = `download.aux'.
 
  (./download.tex
@@ -145,84 +126,130 @@ LaTeX Font Info:    Font shape `T1/ptm/bx/sc' in size <24.88> not available
 (Font)              Font shape `T1/ptm/b/sc' tried instead on input line 1.
 LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <17.28> not available
 (Font)              Font shape `T1/ptm/b/n' tried instead on input line 5.
-[6
+LaTeX Font Info:    Try loading font information for T1+pcr on input line 9.
+(/usr/local/texlive/2011/texmf-dist/tex/latex/psnfss/t1pcr.fd
+File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
+) [3
 
 
 ]
-LaTeX Font Info:    Try loading font information for OMS+ptm on input line 23.
- (/usr/local/texlive/2011/texmf-dist/tex/latex/psnfss/omsptm.fd
+LaTeX Font Info:    Try loading font information for OMS+ptm on input line 27.
+
+(/usr/local/texlive/2011/texmf-dist/tex/latex/psnfss/omsptm.fd
 File: omsptm.fd 
 )
 LaTeX Font Info:    Font shape `OMS/ptm/m/n' in size <12> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 23.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 27.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 24.
+(Font)              <12> on input line 28.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 24.
+(Font)              <8> on input line 28.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 28.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 28.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 28.
 
-Overfull \hbox (9.28459pt too wide) in paragraph at lines 27--28
+Overfull \hbox (9.28459pt too wide) in paragraph at lines 31--32
 \T1/ptm/m/n/12 32-bit Win-dows Vista, and 32-bit Win-dows 7) and IDEs/editors (
 Eclipse, PyScripter,
  []
 
-[7]) [8]
+[4]) [5]
 \openout2 = `world_mod.aux'.
 
  (./world_mod.tex
 Chapter 2.
+LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <12> not available
+(Font)              Font shape `T1/ptm/b/n' tried instead on input line 7.
+
+LaTeX Warning: Reference `agent_world' on page 6 undefined on input line 7.
+
+
+LaTeX Warning: Citation `sutton98' on page 6 undefined on input line 7.
+
 File: figs/agent_world.eps Graphic file (type eps)
 <figs/agent_world.eps>
 Overfull \hbox (1.24394pt too wide) in paragraph at lines 11--12
  [][] 
  []
 
-[9
+[6
 
 
 
 ]
 LaTeX Font Info:    Font shape `T1/ptm/bx/it' in size <17.28> not available
 (Font)              Font shape `T1/ptm/b/it' tried instead on input line 26.
- [10]
-Overfull \hbox (19.05257pt too wide) in paragraph at lines 48--50
+ [7]
+Overfull \hbox (19.05257pt too wide) in paragraph at lines 47--49
 \T1/ptm/m/n/12 to \T1/pcr/m/n/12 tester.py\T1/ptm/m/n/12 . Make sure all the ot
 her lines be-gin-ning with \T1/pcr/m/n/12 from worlds\T1/ptm/m/n/12 ...
  []
 
-[11]
+[8]
 LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <14.4> not available
-(Font)              Font shape `T1/ptm/b/n' tried instead on input line 83.
+(Font)              Font shape `T1/ptm/b/n' tried instead on input line 75.
 LaTeX Font Info:    Font shape `T1/pcr/bx/n' in size <14.4> not available
-(Font)              Font shape `T1/pcr/b/n' tried instead on input line 83.
- [12] [13]
+(Font)              Font shape `T1/pcr/b/n' tried instead on input line 75.
+ [9]
 LaTeX Font Info:    Font shape `T1/pcr/bx/n' in size <17.28> not available
-(Font)              Font shape `T1/pcr/b/n' tried instead on input line 107.
- [14] [15]
-Overfull \hbox (49.77452pt too wide) in paragraph at lines 166--166
+(Font)              Font shape `T1/pcr/b/n' tried instead on input line 93.
+ [10] [11]
+Overfull \hbox (78.57451pt too wide) in paragraph at lines 121--121
+ []\T1/pcr/m/n/12 def test(world, restore=False, agent_name="test", show=True):
+[] 
+ []
+
+
+Overfull \hbox (56.97452pt too wide) in paragraph at lines 126--126
+ []    \T1/pcr/m/n/12 agent = Agent(world.num_sensors, world.num_primitives,[] 
+
+ []
+
+
+Overfull \hbox (28.17453pt too wide) in paragraph at lines 127--127
+ []                  \T1/pcr/m/n/12 world.num_actions, MAX_NUM_FEATURES,[] 
+ []
+
+
+Overfull \hbox (49.77452pt too wide) in paragraph at lines 149--149
  []        \T1/pcr/m/n/12 sensors, primitives, reward = world.step(actions)[] 
  []
 
 
-Overfull \hbox (49.77452pt too wide) in paragraph at lines 167--167
+Overfull \hbox (49.77452pt too wide) in paragraph at lines 150--150
  []        \T1/pcr/m/n/12 actions = agent.step(sensors, primitives, reward)[] 
  []
 
-
-Overfull \hbox (20.97453pt too wide) in paragraph at lines 178--178
+[12]
+Overfull \hbox (20.97453pt too wide) in paragraph at lines 161--161
  []                                \T1/pcr/m/n/12 agent.num_primitives,[] 
  []
 
 
-Overfull \hbox (6.57454pt too wide) in paragraph at lines 179--179
+Overfull \hbox (6.57454pt too wide) in paragraph at lines 162--162
  []                                \T1/pcr/m/n/12 agent.num_actions))[] 
  []
 
-[16]) [17]
+
+Overfull \hbox (6.57454pt too wide) in paragraph at lines 180--180
+ []    \T1/pcr/m/n/12 cProfile.run('test(World())', 'tester_profile')[] 
+ []
+
+
+Overfull \hbox (71.37451pt too wide) in paragraph at lines 182--182
+ []    \T1/pcr/m/n/12 p.strip_dirs().sort_stats('time', 'cum').print_stats(30)[
+] 
+ []
+
+) [13]
 \openout2 = `world_share.aux'.
 
  (./world_share.tex
 Chapter 3.
-[18
+[14
 
 
 
@@ -232,107 +259,156 @@ Overfull \hbox (56.39981pt too wide) in paragraph at lines 34--34
 [] 
  []
 
-[19]) [20]
+[15]) [16]
 \openout2 = `agent_mod.aux'.
 
  (./agent_mod.tex
 Chapter 4.
-File: figs/becca_0.4.3_block.eps Graphic file (type eps)
-<figs/becca_0.4.3_block.eps>
-Overfull \hbox (37.38008pt too wide) in paragraph at lines 11--12
- [][] 
+
+LaTeX Warning: Reference `becca_block' on page 17 undefined on input line 7.
+
+
+LaTeX Warning: Reference `perceiver_chapter' on page 17 undefined on input line
+ 7.
+
+
+LaTeX Warning: Reference `actor_chapter' on page 17 undefined on input line 7.
+
+File: figs/becca_0.4.5_block.eps Graphic file (type eps)
+<figs/becca_0.4.5_block.eps>
+
+LaTeX Warning: Reference `becca_block' on page 17 undefined on input line 16.
+
+[17
+
+
+
+]
+Overfull \hbox (13.24567pt too wide) in paragraph at lines 33--34
+\T1/ptm/m/n/12 states: a \T1/pcr/m/n/12 context\T1/ptm/m/n/12 , a \T1/pcr/m/n/1
+2 cause\T1/ptm/m/n/12 , an \T1/pcr/m/n/12 effect\T1/ptm/m/n/12 , and an \T1/pcr
+/m/n/12 effect_uncertainty\T1/ptm/m/n/12 .
  []
 
-File: figs/class_structure.eps Graphic file (type eps)
-<figs/class_structure.eps>
-Overfull \hbox (33.15814pt too wide) in paragraph at lines 20--21
- [][] 
- []
-
-[21
-
-
-
-] [22]
-Overfull \hbox (52.42632pt too wide) in paragraph at lines 49--50
-\T1/pcr/m/n/12 context\T1/ptm/m/n/12 , a \T1/pcr/m/n/12 cause\T1/ptm/m/n/12 , a
-n \T1/pcr/m/n/12 effect\T1/ptm/m/n/12 , and an \T1/pcr/m/n/12 effect_uncertaint
-y\T1/ptm/m/n/12 . \T1/pcr/m/n/12 transition\T1/ptm/m/n/12 s
- []
-
-[23] [24]
+[18]
 File: figs/grid_world_1D.eps Graphic file (type eps)
  <figs/grid_world_1D.eps>
-Overfull \hbox (6.0841pt too wide) in paragraph at lines 81--82
+Overfull \hbox (6.0841pt too wide) in paragraph at lines 54--55
  [][] 
  []
 
-[25] [26]
+[19] [20]
 File: figs/grid_world_2D.eps Graphic file (type eps)
- <figs/grid_world_2D.eps> [27]
+ <figs/grid_world_2D.eps> [21] [22]
 File: figs/image_world_1D.eps Graphic file (type eps)
- <figs/image_world_1D.eps> [28]
+ <figs/image_world_1D.eps> [23]
 File: figs/image_world_2D.eps Graphic file (type eps)
 
-<figs/image_world_2D.eps> [29] [30]) [31]
+<figs/image_world_2D.eps>) [24] [25]
 \openout2 = `agent_share.aux'.
 
  (./agent_share.tex
 Chapter 5.
-[32
+
+LaTeX Warning: Reference `world_share' on page 26 undefined on input line 3.
+
+[26
 
 
 
-]) [33]
+]) [27]
 \openout2 = `perceiver.aux'.
 
  (./perceiver.tex
 Appendix A.
+
+LaTeX Warning: Reference `actor_chapter' on page 28 undefined on input line 4.
+
+
+LaTeX Warning: Reference `becca_feature_extractor' on page 28 undefined on inpu
+t line 6.
+
 File: figs/becca_feature_extractor.eps Graphic file (type eps)
-<figs/becca_feature_extractor.eps> [34
+<figs/becca_feature_extractor.eps>
+
+LaTeX Warning: Reference `perceiver_constants' on page 28 undefined on input li
+ne 15.
+
+[28
 
 
 
-] [35] [36] [37] [38]
+] [29]
+
+LaTeX Warning: Reference `coactivity_calc' on page 30 undefined on input line 4
+5.
+
+
+LaTeX Warning: Reference `coactivity_def' on page 30 undefined on input line 47
+.
+
+[30] [31]
+
+LaTeX Warning: Reference `competitive_activation' on page 32 undefined on input
+ line 75.
+
 File: figs/competitive_activation.eps Graphic file (type eps)
-
 <figs/competitive_activation.eps>
-Overfull \hbox (1.09941pt too wide) in paragraph at lines 96--97
+Overfull \hbox (1.09941pt too wide) in paragraph at lines 79--80
  [][] 
  []
 
-[39] [40] [41] [42]) [43] [44]
+
+LaTeX Warning: Reference `feedback_calculation' on page 32 undefined on input l
+ine 80.
+
+
+LaTeX Warning: Reference `feedback_calculation' on page 32 undefined on input l
+ine 80.
+
+[32] [33] [34] [35]
+
+LaTeX Warning: Reference `coactivity_update' on page 36 undefined on input line
+ 135.
+
+[36]
+
+LaTeX Warning: Reference `perceiver_constants' on page 37 undefined on input li
+ne 168.
+
+) [37]
 \openout2 = `actor.aux'.
 
  (./actor.tex
 Appendix B.
+
+LaTeX Warning: Reference `becca_reinforcement_learner' on page 38 undefined on 
+input line 4.
+
 File: figs/becca_reinforcement_learner.eps Graphic file (type eps)
-<figs/becca_reinforcement_learner.eps> [45
+<figs/becca_reinforcement_learner.eps> [38
 
 
 
-] [46]
-Overfull \hbox (2.37106pt too wide) in paragraph at lines 43--44
-[]\T1/ptm/b/n/12 Goal rel-e-vance \T1/ptm/m/n/12 Fea-tures that have been se-le
-cted as in-ter-me-di-ate goals would
- []
+] [39] [40] [41] [42] [43] [44]
+[45] [46] [47] [48]
 
-[47]
-File: figs/transition.eps Graphic file (type eps)
- <figs/transition.eps> [48] [49] [50] [51] [52] [53] [54] [55] [56]
-[57] [58]) [59] [60]
+LaTeX Warning: Reference `actor_constants' on page 49 undefined on input line 2
+60.
+
+) [49] [50]
 \openout2 = `notation.aux'.
 
  (./notation.tex
 Appendix C.
 
-LaTeX Warning: Float too large for page by 92.45512pt on input line 57.
+LaTeX Warning: Float too large for page by 5.45522pt on input line 51.
 
-) [61
+) [51
 
 
 
-] [62]
+] [52]
 \openout2 = `complexity.aux'.
 
  (./complexity.tex
@@ -343,40 +419,132 @@ Overfull \hbox (5.70784pt too wide) in paragraph at lines 7--8
 ta-tional ef-fort \T1/ptm/m/sc/12 Becca
  []
 
-[63
+[53
 
 
 
-] [64] [65] [66] [67]
+]
+
+LaTeX Warning: Reference `coactivity_update' on page 54 undefined on input line
+ 24.
+
+[54] [55] [56]
 Overfull \hbox (5.79057pt too wide) in paragraph at lines 59--60
 []\T1/ptm/b/n/12 Multiple res-o-lu-tion rep-re-sen-ta-tion \T1/ptm/m/n/12 Sen-s
 ors that rep-re-sent in-for-ma-tion, such
  []
 
-) [68]
+) [57] [58]
 \openout2 = `related_work.aux'.
 
  (./related_work.tex
 Appendix E.
-[69
+[59
 
 
 
-] [70] [71] [72] [73] [74] [75] [76] [77]) [78]
+]
+
+LaTeX Warning: Citation `montavon11' on page 60 undefined on input line 12.
+
+
+LaTeX Warning: Citation `arel10' on page 60 undefined on input line 14.
+
+
+LaTeX Warning: Citation `lecun98' on page 60 undefined on input line 14.
+
+
+LaTeX Warning: Citation `hinton06' on page 60 undefined on input line 14.
+
+
+LaTeX Warning: Citation `fasel10b' on page 60 undefined on input line 14.
+
+
+LaTeX Warning: Citation `hawkins11' on page 60 undefined on input line 14.
+
+
+LaTeX Warning: Citation `arel09' on page 60 undefined on input line 14.
+
+[60]
+
+LaTeX Warning: Citation `sutton98' on page 61 undefined on input line 18.
+
+
+LaTeX Warning: Citation `watkins92' on page 61 undefined on input line 22.
+
+
+LaTeX Warning: Citation `sutton91' on page 61 undefined on input line 22.
+
+
+LaTeX Warning: Citation `levinson05' on page 61 undefined on input line 22.
+
+
+LaTeX Warning: Citation `mckinstry06' on page 61 undefined on input line 22.
+
+
+LaTeX Warning: Citation `albus75' on page 61 undefined on input line 22.
+
+[61]
+
+LaTeX Warning: Citation `cuccu11' on page 62 undefined on input line 32.
+
+[62]
+
+LaTeX Warning: Citation `abtahi11' on page 63 undefined on input line 43.
+
+[63]
+
+LaTeX Warning: Citation `legenstein10' on page 64 undefined on input line 54.
+
+[64]
+
+LaTeX Warning: Citation `fernandez08' on page 65 undefined on input line 67.
+
+
+LaTeX Warning: Citation `lange10' on page 65 undefined on input line 80.
+
+[65]
+
+LaTeX Warning: Citation `gisslen11' on page 66 undefined on input line 90.
+
+
+LaTeX Warning: Citation `sutton98' on page 66 undefined on input line 90.
+
+[66]
+
+LaTeX Warning: Citation `pierce97' on page 67 undefined on input line 105.
+
+
+LaTeX Warning: Citation `beeson10' on page 67 undefined on input line 105.
+
+[67]
+
+LaTeX Warning: Citation `choe07' on page 68 undefined on input line 113.
+
+
+LaTeX Warning: Citation `sutton11' on page 68 undefined on input line 115.
+
+
+LaTeX Warning: Citation `maei10' on page 68 undefined on input line 116.
+
+) [68]
 \openout2 = `biology.aux'.
 
  (./biology.tex
 Appendix F.
-[79
+[69
 
 
 
-]) [80]
+]) [70]
 \openout2 = `contributions.aux'.
 
  (./contributions.tex
 Appendix G.
-) [81
+
+LaTeX Warning: Citation `chapman12Code' on page 71 undefined on input line 10.
+
+) [71
 
 
 
@@ -385,26 +553,62 @@ Appendix G.
 
  (./achievements.tex
 Appendix H.
-) [82
+
+LaTeX Warning: Citation `malone12b' on page 72 undefined on input line 12.
+
+
+LaTeX Warning: Citation `malone12a' on page 72 undefined on input line 12.
+
+
+LaTeX Warning: Citation `malone12a' on page 72 undefined on input line 16.
+
+
+LaTeX Warning: Citation `faust12' on page 72 undefined on input line 18.
+
+
+LaTeX Warning: Citation `seh12a' on page 72 undefined on input line 21.
+
+
+LaTeX Warning: Citation `seh12b' on page 72 undefined on input line 22.
+
+
+LaTeX Warning: Citation `seh12c' on page 72 undefined on input line 22.
+
+
+LaTeX Warning: Citation `seh12d' on page 72 undefined on input line 22.
+
+
+LaTeX Warning: Citation `seh12e' on page 72 undefined on input line 22.
+
+
+LaTeX Warning: Citation `chapman12a' on page 72 undefined on input line 30.
+
+
+LaTeX Warning: Citation `chapman12b' on page 72 undefined on input line 32.
+
+
+LaTeX Warning: Citation `rohrer13a' on page 72 undefined on input line 37.
+
+) [72
 
 
 
-] [83]
+] [73]
 \openout2 = `history.aux'.
 
  (./history.tex
 Appendix I.
 
-Overfull \hbox (15.21176pt too wide) in paragraph at lines 10--11
+Overfull \hbox (15.21176pt too wide) in paragraph at lines 17--18
 \T1/ptm/m/n/12 been fac-tored into salience cal-cu-la-tion. Per-for-mance on th
 e \T1/pcr/m/n/12 grid_1D_noise
  []
 
-[84
+[74
 
 
 
-] [85] [86]) [87]
+] [75] [76]) [77]
 \openout2 = `legal.aux'.
 
  (./legal.tex
@@ -419,11 +623,11 @@ Overfull \hbox (14.04301pt too wide) in paragraph at lines 26--33
 \T1/ptm/m/n/12 NESS FOR A PAR-TIC-U-LAR PUR-POSE AND NON-IN-FRINGE-MENT.
  []
 
-[88
+[78
 
 
 
-]) [89]
+]) [79]
 \openout2 = `citation.aux'.
 
  (./citation.tex
@@ -440,11 +644,11 @@ Overfull \hbox (27.59982pt too wide) in paragraph at lines 22--23
 . 4 _ users _ guide .
  []
 
-[90
+[80
 
 
 
-]) [91] (./becca_users_guide.bbl
+]) [81] (./becca_users_guide.bbl
 Underfull \hbox (badness 10000) in paragraph at lines 31--36
 \T1/pcr/m/n/12 com / automenta / critterdroid / blob / master / src / com /
  []
@@ -460,7 +664,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 44--49
 \T1/pcr/m/n/12 / / www . youtube . com / watch ? v = WBZYT8Sj3l4&feature =
  []
 
-[92
+[82
 
 
 ]
@@ -481,18 +685,25 @@ Underfull \hbox (badness 1057) in paragraph at lines 82--86
 
  []
 
-[93] [94]) [95] (./becca_users_guide.aux (./download.aux) (./world_mod.aux)
+[83] [84]) [85] (./becca_users_guide.aux (./download.aux) (./world_mod.aux)
 (./world_share.aux) (./agent_mod.aux) (./agent_share.aux) (./perceiver.aux)
 (./actor.aux) (./notation.aux) (./complexity.aux) (./related_work.aux)
 (./biology.aux) (./contributions.aux) (./achievements.aux) (./history.aux)
-(./legal.aux) (./citation.aux)) ) 
-Here is how much of TeX's memory you used:
- 1251 strings out of 493634
- 15339 string characters out of 3143401
- 67910 words of memory out of 3000000
- 4437 multiletter control sequences out of 15000+200000
- 55864 words of font info for 54 fonts, out of 3000000 for 9000
- 831 hyphenation exceptions out of 8191
- 28i,9n,20p,2087b,356s stack positions out of 5000i,500n,10000p,200000b,50000s
+(./legal.aux) (./citation.aux))
 
-Output written on becca_users_guide.dvi (95 pages, 200016 bytes).
+LaTeX Warning: There were undefined references.
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+ ) 
+Here is how much of TeX's memory you used:
+ 1194 strings out of 493634
+ 14534 string characters out of 3143401
+ 63385 words of memory out of 3000000
+ 4414 multiletter control sequences out of 15000+200000
+ 51683 words of font info for 53 fonts, out of 3000000 for 9000
+ 831 hyphenation exceptions out of 8191
+ 28i,9n,23p,2087b,304s stack positions out of 5000i,500n,10000p,200000b,50000s
+
+Output written on becca_users_guide.dvi (85 pages, 160244 bytes).

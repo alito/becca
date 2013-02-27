@@ -19,44 +19,44 @@ A level-1 auxiliary file: legal.aux
 A level-1 auxiliary file: citation.aux
 The style file: plain.bst
 Database file #1: master.bib
-You've used 35 entries,
+You've used 36 entries,
             2118 wiz_defined-function locations,
-            695 strings with 9928 characters,
-and the built_in function-call counts, 10342 in all, are:
-= -- 961
-> -- 508
+            700 strings with 10068 characters,
+and the built_in function-call counts, 10548 in all, are:
+= -- 980
+> -- 515
 < -- 1
-+ -- 203
-- -- 166
-* -- 640
-:= -- 1764
-add.period$ -- 109
-call.type$ -- 35
-change.case$ -- 188
++ -- 206
+- -- 168
+* -- 646
+:= -- 1798
+add.period$ -- 112
+call.type$ -- 36
+change.case$ -- 192
 chr.to.int$ -- 0
-cite$ -- 35
-duplicate$ -- 390
-empty$ -- 884
-format.name$ -- 166
-if$ -- 2175
+cite$ -- 36
+duplicate$ -- 397
+empty$ -- 906
+format.name$ -- 168
+if$ -- 2220
 int.to.chr$ -- 0
-int.to.str$ -- 35
+int.to.str$ -- 36
 missing$ -- 27
-newline$ -- 181
-num.names$ -- 70
-pop$ -- 249
+newline$ -- 186
+num.names$ -- 72
+pop$ -- 258
 preamble$ -- 1
-purify$ -- 153
+purify$ -- 156
 quote$ -- 0
-skip$ -- 253
+skip$ -- 260
 stack$ -- 0
-substring$ -- 463
-swap$ -- 50
+substring$ -- 468
+swap$ -- 51
 text.length$ -- 1
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 136
+type$ -- 140
 warning$ -- 0
-while$ -- 83
-width$ -- 37
-write$ -- 378
+while$ -- 85
+width$ -- 38
+write$ -- 388

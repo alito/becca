@@ -16,12 +16,14 @@ class Actor(object):
         self.goal = np.zeros((max_num_features, 1))
 
         self.AGING_TIME_CONSTANT = 10 ** 6                  # real, large
-        self.num_transitions = self.max_num_features ** 2   # integer, large
         self.TRANSITION_UPDATE_RATE = 10 ** -1              # real, 0 < x < 1
         self.GOAL_DECAY_RATE = 0.1                          # real, 0 < x < 1
         self.INITIAL_UNCERTAINTY = 0.5                      # real, 0 < x < 1
+        self.MATCH_EXPONENT = 4
+        self.REWARD_RANGE_DECAY_RATE = 10 ** -10
+        
         self.time_steps = 0
-
+        self.num_transitions = self.max_num_features ** 2
         model_shape = (self.max_num_features, self.num_transitions)
         three_d_eye = np.tile(np.eye(self.max_num_features), (self.max_num_features, 1, 1))
         self.context = np.reshape(three_d_eye.transpose((1,2,0)), model_shape)
@@ -43,7 +45,6 @@ class Actor(object):
         
         self.reward_min = BIG
         self.reward_max = -BIG
-        self.REWARD_RANGE_DECAY_RATE = 10 ** -10
             
         
     def step(self, feature_activity, raw_reward, n_features):
@@ -64,29 +65,25 @@ class Actor(object):
         
         context_similarities = np.sum((self.new_context * self.context), axis=0)[np.newaxis,:]
         cause_similarities = np.sum((self.new_cause * self.cause), axis=0)[np.newaxis,:]
-        transition_similarities = (context_similarities * cause_similarities) ** 4
-        transition_similarities = np.sum(transition_similarities, axis=0)[np.newaxis,:]
+        transition_similarities = (context_similarities * cause_similarities) ** self.MATCH_EXPONENT
 
         """ Update the model """
         self.update_model(transition_similarities, self.current_reward)
-        self.count -=  np.minimum(1 / (self.AGING_TIME_CONSTANT * self.count + EPSILON), self.count)
 
         """ Decide on an action """
-        self.goal *= (1 - self.feature_activity) * (1 - self.GOAL_DECAY_RATE)
-        self.deliberate(n_features)  
-        self.goal[self.num_primitives: self.num_primitives + self.num_actions,:] = \
-                np.sign(self.goal[self.num_primitives: self.num_primitives + self.num_actions,:])
-        self.action = np.copy(self.goal[self.num_primitives: self.num_primitives + self.num_actions,:])
+        self.action = self.deliberate(n_features)  
         return self.action
 
 
     def update_model(self, transition_similarities, reward):        
-        reward_difference = np.abs(reward - self.reward_value)
-        effect_difference = np.abs(self.new_effect - self.effect)
         update_rate_raw = transition_similarities * ((1 - self.TRANSITION_UPDATE_RATE) / \
                     (self.count + EPSILON) + self.TRANSITION_UPDATE_RATE)
-        self.count += transition_similarities
         update_rate = np.minimum(0.5, update_rate_raw)
+        
+        reward_difference = np.abs(reward - self.reward_value)
+        effect_difference = np.abs(self.new_effect - self.effect)
+        self.count += transition_similarities
+        self.count -=  np.minimum(1 / (self.AGING_TIME_CONSTANT * self.count + EPSILON), self.count)
         self.reward_value += (reward - self.reward_value) * update_rate
         self.reward_uncertainty += (reward_difference - self.reward_uncertainty) * update_rate
         self.effect += (self.new_effect - self.effect) * update_rate         
@@ -95,8 +92,9 @@ class Actor(object):
    
    
     def deliberate(self, n_features):
-        context_matches = (np.sum(self.context * self.feature_activity, axis=0)[np.newaxis,:]) ** 4
-        match_indices = np.nonzero(context_matches)[1]
+        self.goal *= (1 - self.feature_activity) * (1 - self.GOAL_DECAY_RATE)
+        context_matches = (np.sum(self.context * 
+                                  self.feature_activity, axis=0)[np.newaxis,:]) ** self.MATCH_EXPONENT
         
         estimated_reward_value = self.reward_value + self.reward_uncertainty * \
                     (np.random.random_sample(self.reward_uncertainty.shape) * 2 - 1)
@@ -133,7 +131,12 @@ class Actor(object):
         new_goal_feature = np.argmax(adjusted_vote, axis=0)
         self.goal[new_goal_feature, :] = np.maximum(bounded_total_vote[new_goal_feature, :], 
                                                     self.goal[new_goal_feature, :])
-        return
+        
+        """ Strip the actions off the goals to make the current set of actions """
+        self.goal[self.num_primitives: self.num_primitives + self.num_actions,:] = \
+                np.sign(self.goal[self.num_primitives: self.num_primitives + self.num_actions,:])
+        action = np.copy(self.goal[self.num_primitives: self.num_primitives + self.num_actions,:])
+        return action
 
                  
     def visualize(self, save_eps=True):

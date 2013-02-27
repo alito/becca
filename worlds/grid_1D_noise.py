@@ -4,11 +4,10 @@ import numpy as np
 
 class World(BaseWorld):
     """ grid_1D_noise.World
-    One-dimensional grid task with noise
-    In this task, the agent steps forward and backward along three positions 
-    on a line. The second position is rewarded and the first and third
-    positions are punished. Also, any actions are penalized to a lesser degree.
-    It also includes some basic feature inputs that are pure noise.
+    One-dimensional grid task with noise. In this task, the agent steps forward and backward 
+    along three positions on a line. The second position is rewarded and the first and third
+    positions are punished. Also, any actions are penalized to a lesser degree. It also includes 
+    some basic feature inputs that are pure noise. See Chapter 4 of the Users Guide for details.
     Optimal performance is a reward of between 90 per time step.
     """
     

@@ -10,17 +10,12 @@ from agent import viz_utils
 #from worlds.grid_1D_noise import World
 #from worlds.grid_2D import World
 #from worlds.grid_2D_dc import World
-#from worlds.image_1D import World
-from worlds.image_2D import World
+from worlds.image_1D import World
+#from worlds.image_2D import World
 
 """ If you want to run a world of your own, add the appropriate line here """
-#from worlds.watch import World
-#from becca_world_find_block.find_block import World 
+#from worlds.hello import World
 
-def main():
-    test(World())
-
-    
 def test(world, restore=False, agent_name="test", show=True):
     """ Run 'world' """
     if world.MAX_NUM_FEATURES is None:
@@ -64,12 +59,14 @@ def profile():
     """ Profile BECCA's performance """
     import cProfile
     import pstats
-    cProfile.run('main()', 'tester_profile')
+    cProfile.run('test(World())', 'tester_profile')
     p = pstats.Stats('tester_profile')
     p.strip_dirs().sort_stats('time', 'cum').print_stats(30)
     
     
 if __name__ == '__main__':
-    main()
-    """ Uncomment this line and comment out the previous one to run the profiler """ 
-    #profile()
+    profile_flag = False
+    if profile_flag:
+        profile()
+    else:
+        test(World())

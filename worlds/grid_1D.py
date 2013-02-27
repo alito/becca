@@ -4,12 +4,10 @@ import numpy as np
 
 class World(BaseWorld):
     """ grid_1D.World,  One-dimensional grid task
-    In this task, the agent steps forward and backward along a
-    nine-position line. The fourth position is rewarded and the ninth
-    position is punished. There is also a slight punishment
-    for effort expended in trying to move, i.e. taking actions.
-    This is intended to be a simple-as-possible task for
-    troubleshooting BECCA.
+    In this task, the agent steps forward and backward along a nine-position line. The fourth position 
+    is rewarded and the ninth position is punished. There is also a slight punishment for effort 
+    expended in trying to move, i.e. taking actions. This is intended to be a simple-as-possible task for
+    troubleshooting BECCA. See Chapter 4 of the Users Guide for details.
     Optimal performance is a reward of about 90 per time step.
     """
 

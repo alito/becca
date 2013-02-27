@@ -5,10 +5,10 @@ import numpy as np
 class World(BaseWorld):
     """grid_1D_ms.World
     One-dimensional grid task, multi-step
-    In this task, the agent steps forward and backward along a
-    line. The fourth position is rewarded and the ninth position is punished.
-    This is intended to be as similar as possible to the 
+    In this task, the agent steps forward and backward along a line. The fourth position is rewarded 
+    and the ninth position is punished. This is intended to be as similar as possible to the 
     one-dimensional grid task, but require multi-step planning for optimal behavior.
+    See Chapter 4 of the Users Guide for details.
     Optimal performance is a reward of about 85 per time step.
     """
 

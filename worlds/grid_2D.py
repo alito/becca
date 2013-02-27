@@ -4,13 +4,10 @@ import numpy as np
 
 class World(BaseWorld):
     """ grid_2D.World, Two-dimensional grid task
-    In this task, the agent steps North, South, East, or West in a
-    5 x 5 grid-world. Position (4,4) is rewarded and (2,2) is
-    punished. There is also a lesser penalty for each horizontal
-    or vertical step taken. Horizonal and vertical positions are reported
-    separately as basic features, rather than raw sensory inputs.
-    This is intended to be a simple-as-possible-but-slightly-more-interesting-
-    that-the-one-dimensional-task task for troubleshooting BECCA.
+    In this task, the agent steps North, South, East, or West in a 5 x 5 grid-world. Position (4,4) 
+    is rewarded and (2,2) is punished. There is also a lesser penalty for each horizontal or vertical step 
+    taken. Horizonal and vertical positions are reported separately as basic features, rather than 
+    raw sensory inputs.See Chapter 4 of the Users Guide for details.
     Optimal performance is a reward of about 90 per time step.
     """
 

@@ -13,6 +13,7 @@ class World(BaseWorld):
     background. It is rewarded for directing it near the center.
     The mural is not represented using basic features, but rather
     using raw inputs, which BECCA must build into features. 
+    See Chapter 4 of the Users Guide for details.
     Optimal performance is a reward of around 90 reward per time step.
     """
     def __init__(self):

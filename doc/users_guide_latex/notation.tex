@@ -14,16 +14,15 @@ $t$ & agent age in time steps \\
 $i$ & feature index \\
 $j$ & transition index \\
 $k$ & general index \\
-$\tilde{ }$ & new value \\
-$\hat{ }$ & raw or pre-decayed value \\
+$\tilde{ }$ & new value\\
+$\hat{ }$ & raw or pre-decayed value\\
+$\check{ }$ & a sample drawn from a random distribution \\
 $ ^\prime$ & updated or decayed value \\
 $^{-1}$ & inverse of a function \\ 
 $p(a|b)$ & the probability of $a$ given $b$ \\
 $\mathcal{U}(a,b)$ & a value taken from the uniform distribution over [a, b) \\
 $ < \cdot > $ & mean operator \\
-$g(x)$ & function mapping the interval $(-\infty, \infty)$ onto $(-1, 1)$ \\
 $\sigma(\mathbf{a}, \mathbf{b})$ & similarity of array $\mathbf{a}$ with  array $\mathbf{b}$ \\
-$\sigma_0(\mathbf{a}, \mathbf{b})$ & overlap-based similarity of array $\mathbf{a}$ with  array $\mathbf{b}$ \\
 $\mathbf{s}_t$ & full array of sensor channels\\ 
 $s_{k}$ & value of sensor channel $k$\\
 $s_{k \mu}$ & mean value of sensor channel $k$\\
@@ -32,24 +31,19 @@ $\rho_s$ & sensor distribution update rate \\
 $\kappa(a, b)$ & co-activity of sensor channel $a$ with sensor channel $b$\\
 $\kappa_M(a,b)$ & mutual co-activity of channel $a$ with channel $b$ \\
 $\mathbf{f}$ & feature activity \\
-$\gamma_i$ & inhibition of feature $i$ \\
-$\gamma_\kappa$ & contribution to co-activity \\
-$\omega$ & salience \\
-$f_\omega$ & feature salience \\
-$\beta_\omega$ & salience fatigue \\
-$\nu_\omega$ & salience noise \\
+$\mathbf{g}$ & feature goal set\\
+$h(x)$ & function mapping the interval $(-\infty, \infty)$ onto $(-1, 1)$ \\
 $\mathbf{c}$ & context \\
 $\mathbf{d}$ & cause \\
 $\mathbf{e}$ & effect \\
 $\mathbf{e}_\epsilon$ & effect uncertainty\\
 $r$ & reward \\
 $r_\epsilon$ & reward uncertainty \\
-$\mathbf{h}$ & attended feature \\
 $n$ & count \\
 $\rho_e$ & model update rate \\
-$\lambda$ & confidence in reward prediction \\
-$\phi$ & fitness value \\
-$\nu_\phi$ & fitness noise \\
+$\phi_r$ & reward-based feature vote \\
+$\phi_g$ & goal-based feature vote \\
+$\phi_x$ & exploration-based feature vote \\
 \hline
 \end{tabular}
 \end{center}

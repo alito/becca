@@ -11,11 +11,9 @@ import numpy as np
 
 class World(BaseWorld):
     """ Image_1D, one-dimensional visual servo task
-    In this task, BECCA can direct its gaze left and right along a
-    mural. It is rewarded for directing it near the center. The
-    mural is not represented using basic features, but rather using
-    raw inputs, which BECCA must build into features. For a full writeup see:
-    http://www.sandia.gov/~brrohre/doc/Rohrer11ImplementedArchitectureFeature.pdf
+    In this task, BECCA can direct its gaze left and right along a mural. It is rewarded for directing 
+    it near the center. The mural is not represented using basic features, but rather using raw inputs, 
+    which BECCA must build into features. See Chapter 4 of the Users Guide for details.
     Optimal performance is a reward of somewhere around 90 per time step.
     """
     def __init__(self):
@@ -23,7 +21,7 @@ class World(BaseWorld):
 
         self.REPORTING_PERIOD = 10 ** 4       
         self.FEATURE_DISPLAY_INTERVAL = 10 ** 6
-        self.LIFESPAN = 10 ** 5
+        self.LIFESPAN = 10 ** 4
         self.REWARD_MAGNITUDE = 100.
         self.JUMP_FRACTION = 0.01
         self.ANIMATE_PERIOD = 10 ** 3

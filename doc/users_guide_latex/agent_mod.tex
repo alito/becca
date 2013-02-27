@@ -1,6 +1,6 @@
 \chapter{Modify your agent code}
 
-This section is to help you get started hacking your own version of the \textsc{Becca} agent. It's still very new, and there's a lot of room for improvement, so don't be afraid to jump in and start rewiring it.
+This section is to help you get started hacking your own version of the \textsc{Becca} agent. Don't be afraid to jump in and start rewiring it.
 
 \section{How is the agent code structured?}
 
@@ -8,22 +8,12 @@ This section will give just an overview of the structure so that you have some i
 
 \begin{figure}
 \centering
-\includegraphics[height=6cm]{figs/becca_0.4.3_block.eps}
+\includegraphics[height=6cm]{figs/becca_0.4.5_block.eps}
 \caption{A high-level block diagram of how \textsc{Becca} is put together.}
 \label{becca_block}
 \end{figure}
 
-Figure~\ref{class_structure} shows the major classes. In the code, each class is contained in a module with a lowercase version of the same name. A brief description of the major functions of each class is given below.
-
-\begin{figure}
-\centering
-\includegraphics[height=6cm]{figs/class_structure.eps}
-\caption{The class structure of \textsc{Becca}'s agent code.}
-\label{class_structure}
-\end{figure}
-
-\subsection{\texttt{state}}
-Represents the activity of primitives, features, and actions at a point in time. Although this was a separate class in earlier versions, numpy arrays were found to be adequate for containing state. Using them simplified the code and sped up computation.
+The agent's functionality is contained in three main classes, corresponding to the blocks in Figure~\ref{becca_block}. The feature extractor is instantiated in the \texttt{perceiver} class, the reinforcement learner is instantiated in the \texttt{actor} class, and the \texttt{agent} class ties them together. 
 
 \subsection{\texttt{Agent}}
 \begin{itemize}
@@ -40,22 +30,8 @@ Represents the activity of primitives, features, and actions at a point in time.
 
 \subsection{\texttt{Actor}}
 \begin{itemize}
-\item Chooses which feature to attend to.
-\item Calls \texttt{Model.step()} and  \texttt{Planner.step()} at each time step.
-\end{itemize}
-
-\subsection{\texttt{Model}}
-\begin{itemize}
-\item Contains a library of \texttt{transition}s, each consisting of four states: a \texttt{context}, a \texttt{cause}, an \texttt{effect}, and an \texttt{effect\_uncertainty}.  \texttt{transition}s are conceptual only, and are not actually member variables.
-\item Finds similar transitions in a library.
-\item Records new transitions in the library.
-\item Updates transitions in the library.
-\end{itemize}
-
-\subsection{\texttt{Planner}}
-\begin{itemize}
+\item Contains and maintains a library of \texttt{transition}s, each consisting of four states: a \texttt{context}, a \texttt{cause}, an \texttt{effect}, and an \texttt{effect\_uncertainty}.  \texttt{transition}s are conceptual only, and are not actually member variables.  States include the activity of primitives, features, and actions at a point in time are represented as a numpy array. 
 \item Based on the \texttt{Agent}'s current state and history, chooses an action likely to bring reward.
-\item Refers to the \texttt{Model} in order to make predictions.
 \end{itemize}
 
 \subsection{Utility modules: \texttt{utils} and \texttt{viz\_utils}}
@@ -63,9 +39,6 @@ Represents the activity of primitives, features, and actions at a point in time.
 \item Performs general math chores. May be used by multiple classes.
 \item Visualizes the internal states of classes for the user.
 \end{itemize}
-
-\subsection{TCP/IP communication implementation: \texttt{server.py}}
-SeH wrote this module, creating a TCP/IP interface to the \textsc{Becca} agent. It allows you to hook up a simulation or physical robot world that is speaking something other than Python. This extension enlarges the set of things that \textsc{Becca} can talk to a great deal.
 
 \section{Is my agent better than the core agent?}
 The most natural question to ask after changing the agent is whether the new version is better than the old one.\footnote{This is also a natural question to ask of other reinforcement learning agents. If you care to, you can code up any RL agent in Python and test it against \textsc{Becca} on the benchmark. If you do, I'd be really curious to hear your results.} The answer will of course depend on what you mean by ``better". The choice of performance measure has a great deal of influence on the performance levels of individual agents. The only necessary characteristic of a performance measure is that it produce a numerical value when applied to an agent. If you have a specific performance measure in mind, code it up and use it. If not, consider \texttt{benchmark.py}. 
@@ -128,7 +101,7 @@ The agent can move in increments of 1/4, 1/8, 1/16, and 1/32 of the mural width 
 \label{image_1D}
 \end{figure}
 
-It's worth noting that a naive $\mathcal{Q}$-learning approach to this problem would require creating a $2^103$-element state table. The global information storage capacity is currently on the order of $2^70$ bytes.
+It's worth noting that a naive $\mathcal{Q}$-learning approach to this problem would require creating a $2^{103}$-element state table. The global information storage capacity is currently on the order of $2^{70}$ bytes.
 
 \subsection{\texttt{image\_2D.py}}
 
@@ -140,12 +113,6 @@ This world is similar in many ways to the one dimensional version, just extended
 \caption{The two-dimensional image world.}
 \label{image_2D}
 \end{figure}
-
-
-\subsection{\texttt{watch.py}}
-
-The watch world is not part of the battery. It's a debugging tool. In it, the agent is exposed to image segments taken from a library of natural images, and it builds groups and feature representations from those image segments. It's helping to work out the kinks in the feature extraction heuristic, although I hope to integrate it into a task for future versions of the benchmark.
-
 
 \subsection{\texttt{world\_utils.py}}
 
