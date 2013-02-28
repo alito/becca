@@ -371,5 +371,5 @@ def force_redraw():
     Qt backend needs two event rounds to process screen. 
     Any number > 0.01 and <=0.02 would do
     """
-    plt.pause(0.015)
+    plt.pause(0.0015)
 
