@@ -184,8 +184,8 @@ class Perceiver(object):
             self.disallow_generation_crossing(added_feature_indices)
             
             #debug
-            print 'adding feature', self.num_features, 'in position', \
-                    self.num_features + self.num_sensors - 1, 'with inputs', added_feature_indices
+            #print 'adding feature', self.num_features, 'in position', \
+            #        self.num_features + self.num_sensors - 1, 'with inputs', added_feature_indices
             
             if self.num_features >= self.max_num_features:
                 self.features_full = True

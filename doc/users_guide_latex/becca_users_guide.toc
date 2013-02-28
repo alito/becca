@@ -1,92 +1,92 @@
-\contentsline {chapter}{\numberline {1}Get and run \textsc {Becca}}{3}
-\contentsline {section}{\numberline {1.1}Where do I get the code?}{3}
-\contentsline {section}{\numberline {1.2}What tools do I need to run it?}{4}
-\contentsline {section}{\numberline {1.3}How do I run it?}{4}
-\contentsline {chapter}{\numberline {2}Write and run your first world}{6}
-\contentsline {section}{\numberline {2.1}What is a world?}{6}
-\contentsline {section}{\numberline {2.2}How do I make a {\em hello} world?}{7}
-\contentsline {section}{\numberline {2.3}What do I need to implement in my world?}{8}
-\contentsline {subsection}{\numberline {2.3.1}\texttt {num\_sensors}}{9}
-\contentsline {subsection}{\numberline {2.3.2}\texttt {num\_primitives}}{9}
-\contentsline {subsection}{\numberline {2.3.3}\texttt {num\_actions}}{9}
-\contentsline {subsection}{\numberline {2.3.4}\texttt {step()}}{10}
-\contentsline {subsection}{\numberline {2.3.5}\texttt {is\_alive()}}{10}
-\contentsline {subsection}{\numberline {2.3.6}\texttt {set\_agent\_parameters()}}{10}
-\contentsline {section}{\numberline {2.4}What is \texttt {base\_world.py}?}{11}
-\contentsline {section}{\numberline {2.5}How do I run my world?}{11}
-\contentsline {chapter}{\numberline {3}Share your world with other \textsc {Becca} users}{14}
-\contentsline {section}{\numberline {3.1}Where do I put my world module so that others can find it?}{14}
-\contentsline {section}{\numberline {3.2}How do I tell them about it?}{15}
-\contentsline {chapter}{\numberline {4}Modify your agent code}{17}
-\contentsline {section}{\numberline {4.1}How is the agent code structured?}{17}
-\contentsline {subsection}{\numberline {4.1.1}\texttt {Agent}}{17}
-\contentsline {subsection}{\numberline {4.1.2}\texttt {Perceiver}}{18}
-\contentsline {subsection}{\numberline {4.1.3}\texttt {Actor}}{18}
-\contentsline {subsection}{\numberline {4.1.4}Utility modules: \texttt {utils} and \texttt {viz\_utils}}{19}
-\contentsline {section}{\numberline {4.2}Is my agent better than the core agent?}{19}
-\contentsline {subsection}{\numberline {4.2.1}\texttt {grid\_1D.py}}{20}
-\contentsline {subsection}{\numberline {4.2.2}\texttt {grid\_1D\_ms.py}}{20}
-\contentsline {subsection}{\numberline {4.2.3}\texttt {grid\_1D\_noise.py}}{21}
-\contentsline {subsection}{\numberline {4.2.4}\texttt {grid\_2D.py}}{21}
-\contentsline {subsection}{\numberline {4.2.5}\texttt {grid\_2D\_dc.py}}{21}
-\contentsline {subsection}{\numberline {4.2.6}\texttt {image\_1D.py}}{23}
-\contentsline {subsection}{\numberline {4.2.7}\texttt {image\_2D.py}}{23}
-\contentsline {subsection}{\numberline {4.2.8}\texttt {world\_utils.py}}{24}
-\contentsline {chapter}{\numberline {5}Share your agent with other \textsc {Becca} users}{26}
-\contentsline {section}{\numberline {5.1}How do I make my code look like the rest of the core?}{27}
-\contentsline {chapter}{\numberline {A}How \textsc {Becca}'s feature extractor works}{28}
-\contentsline {section}{\numberline {A.1}Input conditioning}{29}
-\contentsline {section}{\numberline {A.2}Co-activity based feature extraction}{30}
-\contentsline {subsection}{\numberline {A.2.1}Feature map}{32}
-\contentsline {section}{\numberline {A.3}Feature activity}{32}
-\contentsline {subsection}{\numberline {A.3.1}Input energy}{34}
-\contentsline {section}{\numberline {A.4}Hierarchy, time, and domain knowledge}{34}
-\contentsline {section}{\numberline {A.5}Co-activity}{35}
-\contentsline {section}{\numberline {A.6}Constant values}{37}
-\contentsline {chapter}{\numberline {B}How \textsc {Becca}'s reinforcement learner works}{38}
-\contentsline {section}{\numberline {B.1}Model}{38}
-\contentsline {subsection}{\numberline {B.1.1}Transition structure}{40}
-\contentsline {subsubsection}{Context}{40}
-\contentsline {subsubsection}{Cause}{40}
-\contentsline {subsubsection}{Effect}{40}
-\contentsline {subsubsection}{Effect uncertainty}{41}
-\contentsline {subsubsection}{Reward}{41}
-\contentsline {subsubsection}{Reward uncertainty}{41}
-\contentsline {subsubsection}{Count}{41}
-\contentsline {subsection}{\numberline {B.1.2}Transition updates}{42}
-\contentsline {subsection}{\numberline {B.1.3}Forgetting}{44}
-\contentsline {section}{\numberline {B.2}Action selection}{45}
-\contentsline {subsection}{\numberline {B.2.1}Reward votes}{45}
-\contentsline {subsection}{\numberline {B.2.2}Goal votes}{46}
-\contentsline {subsection}{\numberline {B.2.3}Exploration votes}{48}
-\contentsline {subsection}{\numberline {B.2.4}Voting}{49}
-\contentsline {section}{\numberline {B.3}Constant values}{49}
-\contentsline {chapter}{\numberline {C}Variables and notation}{51}
-\contentsline {chapter}{\numberline {D}Computational complexity and scaling}{53}
-\contentsline {section}{\numberline {D.1}Computational complexity per time step}{53}
-\contentsline {subsection}{\numberline {D.1.1}Feature extractor}{53}
-\contentsline {subsection}{\numberline {D.1.2}Reinforcement learner}{54}
-\contentsline {section}{\numberline {D.2}Number of time steps required}{54}
-\contentsline {subsection}{\numberline {D.2.1}Feature extraction}{55}
-\contentsline {subsection}{\numberline {D.2.2}Model learning}{56}
-\contentsline {section}{\numberline {D.3}How well will it scale?}{56}
-\contentsline {chapter}{\numberline {E}Related Work}{59}
-\contentsline {section}{\numberline {E.1}Unsupervised Learning}{59}
-\contentsline {section}{\numberline {E.2}Reinforcement Learning}{61}
-\contentsline {section}{\numberline {E.3}Unsupervised Feature Learning with Reinforcement Learning}{62}
-\contentsline {subsection}{\numberline {E.3.1}VQ-SNES}{62}
-\contentsline {subsection}{\numberline {E.3.2}DBN-NFQ}{63}
-\contentsline {subsection}{\numberline {E.3.3}SFA-NC}{64}
-\contentsline {subsection}{\numberline {E.3.4}ISQL-MDQL}{65}
-\contentsline {subsection}{\numberline {E.3.5}MLP-FQI}{66}
-\contentsline {subsection}{\numberline {E.3.6}sRAAM-SARSA}{66}
-\contentsline {section}{\numberline {E.4}Feature Extraction with Robots}{67}
-\contentsline {subsection}{\numberline {E.4.1}HSSH}{67}
-\contentsline {subsection}{\numberline {E.4.2}DTW}{68}
-\contentsline {section}{\numberline {E.5}Reinforcement Learning with Robots}{68}
-\contentsline {chapter}{\numberline {F}Biological inspiration}{69}
-\contentsline {chapter}{\numberline {G}Project contributions}{71}
-\contentsline {chapter}{\numberline {H}Publications and hacks}{72}
-\contentsline {chapter}{\numberline {I}Revision history}{74}
-\contentsline {chapter}{\numberline {J}The small print}{78}
-\contentsline {chapter}{\numberline {K}Citing this guide}{80}
+\contentsline {chapter}{\numberline {1}Get and run \textsc {Becca}}{5}
+\contentsline {section}{\numberline {1.1}Where do I get the code?}{5}
+\contentsline {section}{\numberline {1.2}What tools do I need to run it?}{6}
+\contentsline {section}{\numberline {1.3}How do I run it?}{6}
+\contentsline {chapter}{\numberline {2}Write and run your first world}{8}
+\contentsline {section}{\numberline {2.1}What is a world?}{8}
+\contentsline {section}{\numberline {2.2}How do I make a {\em hello} world?}{9}
+\contentsline {section}{\numberline {2.3}What do I need to implement in my world?}{10}
+\contentsline {subsection}{\numberline {2.3.1}\texttt {num\_sensors}}{11}
+\contentsline {subsection}{\numberline {2.3.2}\texttt {num\_primitives}}{11}
+\contentsline {subsection}{\numberline {2.3.3}\texttt {num\_actions}}{11}
+\contentsline {subsection}{\numberline {2.3.4}\texttt {step()}}{12}
+\contentsline {subsection}{\numberline {2.3.5}\texttt {is\_alive()}}{12}
+\contentsline {subsection}{\numberline {2.3.6}\texttt {set\_agent\_parameters()}}{12}
+\contentsline {section}{\numberline {2.4}What is \texttt {base\_world.py}?}{13}
+\contentsline {section}{\numberline {2.5}How do I run my world?}{13}
+\contentsline {chapter}{\numberline {3}Share your world with other \textsc {Becca} users}{16}
+\contentsline {section}{\numberline {3.1}Where do I put my world module so that others can find it?}{16}
+\contentsline {section}{\numberline {3.2}How do I tell them about it?}{17}
+\contentsline {chapter}{\numberline {4}Modify your agent code}{19}
+\contentsline {section}{\numberline {4.1}How is the agent code structured?}{19}
+\contentsline {subsection}{\numberline {4.1.1}\texttt {Agent}}{19}
+\contentsline {subsection}{\numberline {4.1.2}\texttt {Perceiver}}{20}
+\contentsline {subsection}{\numberline {4.1.3}\texttt {Actor}}{20}
+\contentsline {subsection}{\numberline {4.1.4}Utility modules: \texttt {utils} and \texttt {viz\_utils}}{21}
+\contentsline {section}{\numberline {4.2}Is my agent better than the core agent?}{21}
+\contentsline {subsection}{\numberline {4.2.1}\texttt {grid\_1D.py}}{22}
+\contentsline {subsection}{\numberline {4.2.2}\texttt {grid\_1D\_ms.py}}{22}
+\contentsline {subsection}{\numberline {4.2.3}\texttt {grid\_1D\_noise.py}}{23}
+\contentsline {subsection}{\numberline {4.2.4}\texttt {grid\_2D.py}}{23}
+\contentsline {subsection}{\numberline {4.2.5}\texttt {grid\_2D\_dc.py}}{23}
+\contentsline {subsection}{\numberline {4.2.6}\texttt {image\_1D.py}}{25}
+\contentsline {subsection}{\numberline {4.2.7}\texttt {image\_2D.py}}{25}
+\contentsline {subsection}{\numberline {4.2.8}\texttt {world\_utils.py}}{26}
+\contentsline {chapter}{\numberline {5}Share your agent with other \textsc {Becca} users}{28}
+\contentsline {section}{\numberline {5.1}How do I make my code look like the rest of the core?}{29}
+\contentsline {chapter}{\numberline {A}How \textsc {Becca}'s feature extractor works}{30}
+\contentsline {section}{\numberline {A.1}Input conditioning}{31}
+\contentsline {section}{\numberline {A.2}Co-activity based feature extraction}{32}
+\contentsline {subsection}{\numberline {A.2.1}Feature map}{34}
+\contentsline {section}{\numberline {A.3}Feature activity}{34}
+\contentsline {subsection}{\numberline {A.3.1}Input energy}{36}
+\contentsline {section}{\numberline {A.4}Hierarchy, time, and domain knowledge}{36}
+\contentsline {section}{\numberline {A.5}Co-activity}{37}
+\contentsline {section}{\numberline {A.6}Constant values}{39}
+\contentsline {chapter}{\numberline {B}How \textsc {Becca}'s reinforcement learner works}{40}
+\contentsline {section}{\numberline {B.1}Model}{40}
+\contentsline {subsection}{\numberline {B.1.1}Transition structure}{42}
+\contentsline {subsubsection}{Context}{42}
+\contentsline {subsubsection}{Cause}{42}
+\contentsline {subsubsection}{Effect}{42}
+\contentsline {subsubsection}{Effect uncertainty}{43}
+\contentsline {subsubsection}{Reward}{43}
+\contentsline {subsubsection}{Reward uncertainty}{43}
+\contentsline {subsubsection}{Count}{43}
+\contentsline {subsection}{\numberline {B.1.2}Transition updates}{44}
+\contentsline {subsection}{\numberline {B.1.3}Forgetting}{46}
+\contentsline {section}{\numberline {B.2}Action selection}{47}
+\contentsline {subsection}{\numberline {B.2.1}Reward votes}{47}
+\contentsline {subsection}{\numberline {B.2.2}Goal votes}{48}
+\contentsline {subsection}{\numberline {B.2.3}Exploration votes}{50}
+\contentsline {subsection}{\numberline {B.2.4}Voting}{51}
+\contentsline {section}{\numberline {B.3}Constant values}{51}
+\contentsline {chapter}{\numberline {C}Variables and notation}{53}
+\contentsline {chapter}{\numberline {D}Computational complexity and scaling}{55}
+\contentsline {section}{\numberline {D.1}Computational complexity per time step}{55}
+\contentsline {subsection}{\numberline {D.1.1}Feature extractor}{55}
+\contentsline {subsection}{\numberline {D.1.2}Reinforcement learner}{56}
+\contentsline {section}{\numberline {D.2}Number of time steps required}{56}
+\contentsline {subsection}{\numberline {D.2.1}Feature extraction}{57}
+\contentsline {subsection}{\numberline {D.2.2}Model learning}{58}
+\contentsline {section}{\numberline {D.3}How well will it scale?}{58}
+\contentsline {chapter}{\numberline {E}Related Work}{61}
+\contentsline {section}{\numberline {E.1}Unsupervised Learning}{61}
+\contentsline {section}{\numberline {E.2}Reinforcement Learning}{63}
+\contentsline {section}{\numberline {E.3}Unsupervised Feature Learning with Reinforcement Learning}{64}
+\contentsline {subsection}{\numberline {E.3.1}VQ-SNES}{64}
+\contentsline {subsection}{\numberline {E.3.2}DBN-NFQ}{65}
+\contentsline {subsection}{\numberline {E.3.3}SFA-NC}{66}
+\contentsline {subsection}{\numberline {E.3.4}ISQL-MDQL}{67}
+\contentsline {subsection}{\numberline {E.3.5}MLP-FQI}{68}
+\contentsline {subsection}{\numberline {E.3.6}sRAAM-SARSA}{68}
+\contentsline {section}{\numberline {E.4}Feature Extraction with Robots}{69}
+\contentsline {subsection}{\numberline {E.4.1}HSSH}{69}
+\contentsline {subsection}{\numberline {E.4.2}DTW}{70}
+\contentsline {section}{\numberline {E.5}Reinforcement Learning with Robots}{70}
+\contentsline {chapter}{\numberline {F}Biological inspiration}{71}
+\contentsline {chapter}{\numberline {G}Project contributions}{73}
+\contentsline {chapter}{\numberline {H}Publications and hacks}{74}
+\contentsline {chapter}{\numberline {I}Revision history}{76}
+\contentsline {chapter}{\numberline {J}The small print}{80}
+\contentsline {chapter}{\numberline {K}Citing this guide}{82}

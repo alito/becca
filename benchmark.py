@@ -7,7 +7,7 @@ same interface. (See BECCA documentation for a detailed specification.)
 In order to facilitate apples-to-apples comparisons between agents, the 
 benchmark will be version numbered.
 
-For N_RUNS = x, Becca 0.4.5 scored x with a standard deviation of x
+For N_RUNS = 7, Becca 0.4.5 scored 78.5
 """
 import tester
 from agent.agent import Agent
