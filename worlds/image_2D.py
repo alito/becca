@@ -6,54 +6,52 @@ import worlds.world_utils as world_utils
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 class World(BaseWorld):
     """ Image_2D, two-dimensional visual servo task
     In this task, BECCA can direct its gaze up, down, left, and
-    right, saccading about an image_data of a black square on a white
+    right, saccading about an block_image_data of a black square on a white
     background. It is rewarded for directing it near the center.
     The mural is not represented using basic features, but rather
-    using raw inputs, which BECCA must build into features. See
-    http://www.sandia.gov/rohrer/doc/Rohrer11DevelopmentalAgentLearning.pdf
-    for a full writeup.
-    Good performance is a reward of around 80 reward per time step.
+    using raw inputs, which BECCA must build into features. 
+    See Chapter 4 of the Users Guide for details.
+    Optimal performance is a reward of around 90 reward per time step.
     """
     def __init__(self):
         super(World, self).__init__()
 
         self.REPORTING_PERIOD = 10 ** 4   
         self.FEATURE_DISPLAY_INTERVAL = 10 ** 6
-        self.LIFESPAN = 2 * 10 ** 4
+        self.LIFESPAN = 10 ** 4
         self.REWARD_MAGNITUDE = 100.
+        self.JUMP_FRACTION = 0.01
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
         self.graphing = False
         self.name = 'two dimensional visual world'
+        self.name_short = 'image_2D'
         self.announce()
 
         self.step_counter = 0
         self.fov_span = 5
 
-        self.num_sensors = self.fov_span ** 2
+        self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 0
         self.num_actions = 17
-
-        self.column_history = []
-        self.row_history = []
-
-        """ Initialize the image_data to be used as the environment """
-        self.image_filename = "./images/block_test.png" 
-        self.image_data = plt.imread(self.image_filename)
+        self.MAX_NUM_FEATURES = 100
+        
+        """ Initialize the block_image_data to be used as the environment """
+        self.block_image_filename = "./images/block_test.png" 
+        self.block_image_data = plt.imread(self.block_image_filename)
         
         """ Convert it to grayscale if it's in color """
-        if self.image_data.shape[2] == 3:
+        if self.block_image_data.shape[2] == 3:
             """ Collapse the three RGB matrices into one black/white value matrix """
-            self.image_data = np.sum(self.image_data, axis=2) / 3.0
+            self.block_image_data = np.sum(self.block_image_data, axis=2) / 3.0
 
         """ Define the size of the field of view, its range of allowable positions,
         and its initial position.
         """
-        (im_height, im_width) = self.image_data.shape
+        (im_height, im_width) = self.block_image_data.shape
         im_size = np.minimum(im_height, im_width)
         self.MAX_STEP_SIZE = im_size / 2
         self.TARGET_COLUMN = im_width / 2
@@ -75,15 +73,18 @@ class World(BaseWorld):
 
         self.sensors = np.zeros(self.num_sensors)
         self.primitives = np.zeros(self.num_primitives)
+        self.column_history = []
+        self.row_history = []
+        self.last_feature_vizualized = 0
         
 
     def step(self, action): 
         self.timestep += 1
         
         """ Actions 0-3 move the field of view to a higher-numbered 
-        row (downward in the image_data) with varying magnitudes, and actions 4-7 do the opposite.
+        row (downward in the block_image_data) with varying magnitudes, and actions 4-7 do the opposite.
         Actions 8-11 move the field of view to a higher-numbered 
-        column (rightward in the image_data) with varying magnitudes, and actions 12-15 do the opposite.
+        column (rightward in the block_image_data) with varying magnitudes, and actions 12-15 do the opposite.
         """
         row_step    = np.round(action[0] * self.MAX_STEP_SIZE / 2 + 
                                action[1] * self.MAX_STEP_SIZE / 4 + 
@@ -102,68 +103,69 @@ class World(BaseWorld):
                                action[14] * self.MAX_STEP_SIZE / 8 - 
                                action[15] * self.MAX_STEP_SIZE / 16)
         
-        row_step    = np.round( row_step * ( 1 + \
-                                self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0 - 
-                                self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0))
-        column_step = np.round( column_step * ( 1 + \
-                                self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0 - 
-                                self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0))
+        row_step    = np.round( row_step * ( 1 + self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0 - 
+                                                 self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0))
+        column_step = np.round( column_step * ( 1 + self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0 - 
+                                                    self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0))
         self.row_position    = self.row_position    + int(row_step)
         self.column_position = self.column_position + int(column_step)
 
-        """ Respect the boundaries of the image_data """
+        """ Respect the boundaries of the block_image_data """
         self.row_position = max(self.row_position, self.row_min)
         self.row_position = min(self.row_position, self.row_max)
         self.column_position = max(self.column_position, self.column_min)
         self.column_position = min(self.column_position, self.column_max)
 
-        """ Create the sensory input vector """
-        fov = self.image_data[self.row_position - self.fov_height / 2: 
-                              self.row_position + self.fov_height / 2, 
-                              self.column_position - self.fov_width / 2: 
-                              self.column_position + self.fov_width / 2]
+        """ At random intervals, jump to a random position in the world """
+        if np.random.random_sample() < self.JUMP_FRACTION:
+            self.column_position = np.random.random_integers(self.column_min, self.column_max)
+            self.row_position = np.random.random_integers(self.row_min, self.row_max)
 
+        """ Create the sensory input vector """
+        fov = self.block_image_data[self.row_position - self.fov_height / 2: 
+                                    self.row_position + self.fov_height / 2, 
+                                    self.column_position - self.fov_width / 2: 
+                                    self.column_position + self.fov_width / 2]
         center_surround_pixels = world_utils.center_surround( \
                         fov, self.fov_span, self.block_width, self.block_width)
+        unsplit_sensors = center_surround_pixels.ravel()
+        sensors = np.concatenate((np.maximum(unsplit_sensors, 0), \
+                                  np.abs(np.minimum(unsplit_sensors, 0)) ))
 
-        sensors = center_surround_pixels.ravel()
-
-        """ Calculate reward """
         reward = 0
-        if abs(self.column_position - self.TARGET_COLUMN) < self.REWARD_REGION_WIDTH / 2: 
+        if np.abs(self.column_position - self.TARGET_COLUMN) < self.REWARD_REGION_WIDTH / 2: 
             reward += self.REWARD_MAGNITUDE / 2
-        if abs(self.row_position - self.TARGET_ROW) < self.REWARD_REGION_WIDTH / 2:
+        if np.abs(self.row_position - self.TARGET_ROW) < self.REWARD_REGION_WIDTH / 2:
             reward += self.REWARD_MAGNITUDE / 2
         
+        if self.animate:
+            print self.row_position, self.column_position, '-row and col position  ', reward, '-reward'
         self.log(sensors, self.primitives, reward)
         return sensors, self.primitives, reward
     
     
     def log(self, sensors, primitives, reward):
-        
         self.display()
         self.row_history.append(self.row_position)
         self.column_history.append(self.column_position)
 
         if self.animate and (self.timestep % self.ANIMATE_PERIOD) == 0:
             plt.figure("Image sensed")
-            sensed_image = np.reshape(sensors[:len(sensors)/2],(self.fov_span, self.fov_span))
+            sensed_image = np.reshape(0.5 * (sensors[:len(sensors)/2] - sensors[len(sensors)/2:] + 1), 
+                                      (self.fov_span, self.fov_span))
             plt.gray()
             plt.imshow(sensed_image, interpolation='nearest')
             viz_utils.force_redraw()
 
  
     def set_agent_parameters(self, agent):
-        
-        pass
+        agent.actor.reward_min = 0.
+        agent.actor.reward_max = 100.
+        return
     
         
     def display(self):
-        """ Provide an intuitive display of the current state of the World 
-        to the user.
-        """        
         if (self.timestep % self.REPORTING_PERIOD) == 0:
-            
             print("world is %s timesteps old" % self.timestep)
             
             if self.graphing:
@@ -180,7 +182,6 @@ class World(BaseWorld):
                 plt.xlabel('time step')
                 plt.ylabel('position (pixels)')
                 viz_utils.force_redraw()
-                            
             return
         
     
@@ -192,7 +193,9 @@ class World(BaseWorld):
         
     
     def vizualize_feature_set(self, feature_set):
-        """ Provide an intuitive display of the features created by the agent """
-        world_utils.vizualize_pixel_array_feature_set(feature_set, world_name='image_2D',
-                                                      save_eps=False, save_jpg=True)
-    
+        world_utils.vizualize_pixel_array_feature_set(feature_set, 
+                                          start=self.last_feature_vizualized, 
+                                          world_name=self.name_short, save_eps=True, save_jpg=True)
+        self.last_feature_vizualized = feature_set.shape[0]
+        
+        

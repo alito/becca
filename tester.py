@@ -1,12 +1,9 @@
-""" A main test harness for a general reinforcement learning agent """
 
 import numpy as np
 from agent.agent import Agent
 from agent import viz_utils
         
-"""  Select the World that the Agent will be placed in. 
-One of these import lines should be uncommented.
-"""
+"""  Select the World that the Agent will be placed in. One of these import lines should be uncommented. """
 #from worlds.base_world import World
 #from worlds.grid_1D import World
 #from worlds.grid_1D_ms import World
@@ -16,23 +13,21 @@ One of these import lines should be uncommented.
 from worlds.image_1D import World
 #from worlds.image_2D import World
 
-#from worlds.watch import World
+""" If you want to run a world of your own, add the appropriate line here """
+#from worlds.hello import World
 
-def main():
-    
-    world = World()
-    
-    """ A unique identifying string for the agent, allowing specific
-    saved agents to be recalled. 
-    """
-    MAX_NUM_FEATURES = 100
+def test(world, restore=False, agent_name="test", show=True):
+    """ Run 'world' """
+    if world.MAX_NUM_FEATURES is None:
+        MAX_NUM_FEATURES = 100
+    else:
+        MAX_NUM_FEATURES = world.MAX_NUM_FEATURES
+
     agent = Agent(world.num_sensors, world.num_primitives, 
-                  world.num_actions, MAX_NUM_FEATURES, agent_name="test")
+                  world.num_actions, MAX_NUM_FEATURES, agent_name=agent_name)
 
-    """ If uncommented, try to restore the agent from saved data.
-    If commented out, start fresh each time.
-    """
-    #agent = agent.restore()
+    if restore:
+        agent = agent.restore()
     
     """ If configured to do so, the world sets some Becca parameters to 
     modify its behavior. This is a development hack, and should eventually be 
@@ -41,17 +36,14 @@ def main():
     """
     world.set_agent_parameters(agent)
          
-    """ Give an initial resting action to kick things off. """
     actions = np.zeros((world.num_actions,1))
     
-    """ Repeat the loop through the duration of the existence of the world."""
+    """ Repeat the loop through the duration of the existence of the world """
     while(world.is_alive()):
         sensors, primitives, reward = world.step(actions)
         actions = agent.step(sensors, primitives, reward)
         
-        """ If the world has the appropriate method, use it to display the 
-        feature set.
-        """
+        """ If the world has the appropriate method, use it to display the feature set """
         try:
             if world.is_time_to_display():                
                 world.vizualize_feature_set(
@@ -60,12 +52,21 @@ def main():
         except AttributeError:
             pass
     
-    """ Report the performance of the agent on the world. """
-    agent.report_performance()
-    agent.show_reward_history()
-    
-    return
+    return agent.report_performance(show)
+
+
+def profile():
+    """ Profile BECCA's performance """
+    import cProfile
+    import pstats
+    cProfile.run('test(World())', 'tester_profile')
+    p = pstats.Stats('tester_profile')
+    p.strip_dirs().sort_stats('time', 'cum').print_stats(30)
     
     
 if __name__ == '__main__':
-    main()
+    profile_flag = False
+    if profile_flag:
+        profile()
+    else:
+        test(World())

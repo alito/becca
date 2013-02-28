@@ -1,21 +1,15 @@
 """
-benchmark 0.4.4
+benchmark 0.4.5
 
 A suite of worlds to characterize the performance of BECCA variants.
 Other agents may use this benchmark as well, as long as they have the 
 same interface. (See BECCA documentation for a detailed specification.)
-
-This benchmark more heavily values breadth than virtuosity. Agents that
-can perform a wide variety of tasks moderately well will score better 
-than agents that perform a single task optimally and all others very poorly.
-
 In order to facilitate apples-to-apples comparisons between agents, the 
 benchmark will be version numbered.
 
-For N_RUNS = 77, Becca 0.4.4 scored 53.1 with a standard deviation of 1.5
+For N_RUNS = 7, Becca 0.4.5 scored 78.5
 """
-
-
+import tester
 from agent.agent import Agent
 from worlds.grid_1D import World as World_grid_1D
 from worlds.grid_1D_ms import World as World_grid_1D_ms
@@ -28,31 +22,30 @@ from worlds.image_2D import World as World_image_2D
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 def main():
 
-    N_RUNS = 1
+    N_RUNS = 7
     overall_performance = []
     
     for i in range(N_RUNS):
         
-        """ Tabulate the performance from each world """
+        """ Run all the worlds in the benchmark and tabulate their performance """
         performance = []
         
         world = World_grid_1D()
-        performance.append(test(world))
+        performance.append(tester.test(world, show=False))
         world = World_grid_1D_ms()
-        performance.append(test(world))
+        performance.append(tester.test(world, show=False))
         world = World_grid_1D_noise()
-        performance.append(test(world))
+        performance.append(tester.test(world, show=False))
         world = World_grid_2D()
-        performance.append(test(world))
+        performance.append(tester.test(world, show=False))
         world = World_grid_2D_dc()
-        performance.append(test(world))
+        performance.append(tester.test(world, show=False))
         world = World_image_1D()
-        performance.append(test(world))
+        performance.append(tester.test(world, show=False))
         world = World_image_2D()
-        performance.append(test(world))
+        performance.append(tester.test(world, show=False))
         
         print "Individual benchmark scores: " , performance
         
@@ -67,15 +60,8 @@ def main():
     print "All overall benchmark scores: ", overall_performance 
     
     
-    """ Empirically, running version 0.4.0 of the benchmark multiple times
-    gave values with a standard deviation of about 5% of the mean. So if you want a more
-    accurate estimate of an agent's performance, run it 3 or 5 times 
-    and take the average. Or better yet, to help account for the fact 
-    that it is a somewhat non-Gaussian process, (it has a short tail 
-    on the low side, almost none on the high side)
-    run it 7 times, throw away the two highest and two lowest scores, 
-    and average the rest. This benchmark will automatically throw away the 
-    2 highest and 2 lowest values if you choose N_RUNS to be 7 or more.
+    """ The benchmark will automatically throw away the 2 highest and 2 lowest values 
+    if you choose N_RUNS to be 7 or more.
     """
     if N_RUNS >= 7:
         for i in range(2):
@@ -104,31 +90,6 @@ def main():
     """
     plt.show()
     
-    
-def test(world):
-    
-    MAX_NUM_FEATURES = 100
-    agent = Agent(world.num_sensors, world.num_primitives, world.num_actions, MAX_NUM_FEATURES)
-    
-    """ If configured to do so, the world sets some BECCA parameters to 
-    modify its behavior. This is a development hack, and should eventually be 
-    removed as BECCA matures and settles on a good, general purpose set of parameters.
-    """
-    world.set_agent_parameters(agent)
-         
-    """ Give an initial resting action to kick things off """
-    actions = np.zeros(world.num_actions)
-    
-    """ Repeat the loop through the duration of the existence of the world """
-    while(world.is_alive()):
-        sensors, primitives, reward = world.step(actions)
-        actions = agent.step(sensors, primitives, reward)
-             
-    """ Report the performance of the agent on the world. """
-    performance = agent.report_performance(show=False)
-    
-    return performance
-
     
 if __name__ == '__main__':
     main()
