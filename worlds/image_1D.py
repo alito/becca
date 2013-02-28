@@ -9,16 +9,12 @@ as part of pyplot. This allows the loading and interpreting of .jpgs
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 class World(BaseWorld):
     """ Image_1D, one-dimensional visual servo task
-    In this task, BECCA can direct its gaze left and right along a
-    mural. It is rewarded for directing it near the center. The
-    mural is not represented using basic features, but rather using
-    raw inputs, which BECCA must build into features. For a full writeup see:
-    http://www.sandia.gov/~brrohre/doc/Rohrer11ImplementedArchitectureFeature.pdf
-    Optimal performance is a reward of 100 per time step.
-    Good performance for BECCA is a reward of somewhere over 70 per time step.
+    In this task, BECCA can direct its gaze left and right along a mural. It is rewarded for directing 
+    it near the center. The mural is not represented using basic features, but rather using raw inputs, 
+    which BECCA must build into features. See Chapter 4 of the Users Guide for details.
+    Optimal performance is a reward of somewhere around 90 per time step.
     """
     def __init__(self):
         super(World, self).__init__()
@@ -38,14 +34,11 @@ class World(BaseWorld):
 
         self.step_counter = 0
         self.fov_span = 10 
-        
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 0
         self.num_actions = 9
         self.MAX_NUM_FEATURES = 50
         
-        self.column_history = []
-
         """ Initialize the image to be used as the environment """
         self.block_image_filename = "./images/bar_test.png" 
         self.data = plt.imread(self.block_image_filename)
@@ -61,10 +54,10 @@ class World(BaseWorld):
         image_width = self.data.shape[1]
         self.MAX_STEP_SIZE = image_width / 2
         self.TARGET_COLUMN = image_width / 2
-
         self.REWARD_REGION_WIDTH = image_width / 16
         self.NOISE_MAGNITUDE = 0.1
         
+        self.column_history = []
         self.fov_height = np.min(self.data.shape)
         self.fov_width = self.fov_height
         self.column_min = np.ceil(self.fov_width / 2)
@@ -74,16 +67,14 @@ class World(BaseWorld):
 
         self.sensors = np.zeros(self.num_sensors)
         self.primitives = np.zeros(self.num_primitives)
-
         self.last_feature_vizualized = 0
 
 
     def step(self, action): 
         self.timestep += 1
         
-        """ Actions 0-3 move the field of view to a higher-numbered 
-        row (downward in the image) with varying magnitudes, and
-        actions 4-7 do the opposite.
+        """ Actions 0-3 move the field of view to a higher-numbered row (downward in the image) 
+        with varying magnitudes, and actions 4-7 do the opposite.
         """
         column_step = np.round(action[0] * self.MAX_STEP_SIZE / 2 + 
                                action[1] * self.MAX_STEP_SIZE / 4 + 
@@ -94,12 +85,9 @@ class World(BaseWorld):
                                action[6] * self.MAX_STEP_SIZE / 8 - 
                                action[7] * self.MAX_STEP_SIZE / 16)
         
-        column_step = np.round( column_step * ( 1 + self.NOISE_MAGNITUDE * 
-                                np.random.random_sample() * 2.0 - 
+        column_step = np.round( column_step * ( 1 + self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0 - 
                                 self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0))
-        
         self.column_position = self.column_position + int(column_step)
-
         self.column_position = max(self.column_position, self.column_min)
         self.column_position = min(self.column_position, self.column_max)
 
@@ -110,13 +98,10 @@ class World(BaseWorld):
         """ Create the sensory input vector """
         fov = self.data[:, self.column_position - self.fov_width / 2: 
                            self.column_position + self.fov_width / 2]
-        
         center_surround_pixels = world_utils.center_surround( \
                         fov, self.fov_span, self.block_width, self.block_width)
-
         unsplit_sensors = center_surround_pixels.ravel()        
-        sensors = np.concatenate((np.maximum(unsplit_sensors, 0), \
-                                  np.abs(np.minimum(unsplit_sensors, 0)) ))
+        sensors = np.concatenate((np.maximum(unsplit_sensors, 0), np.abs(np.minimum(unsplit_sensors, 0)) ))
 
         """ Calculate the reward """
         reward = 0
@@ -127,16 +112,13 @@ class World(BaseWorld):
         
         if self.animate:
             print 'column_position: ', self.column_position, '  reward: ', reward[0]
-            
         self.log(sensors, self.primitives, reward)
         return sensors, self.primitives, reward
     
             
     def log(self, sensors, primitives, reward):
-        
         if self.graphing:
             self.column_history.append(self.column_position)
-
         self.display()
 
         if self.animate and (self.timestep % self.ANIMATE_PERIOD) == 0:
@@ -147,12 +129,10 @@ class World(BaseWorld):
             plt.imshow(sensed_image, interpolation='nearest')
             viz_utils.force_redraw()
             
-            #plt.show()
-
 
     def set_agent_parameters(self, agent):
-        agent.actor.model.reward_min = 0.
-        agent.actor.model.reward_max = 100.
+        agent.actor.reward_min = 0.
+        agent.actor.reward_max = 100.
         
         """ These parameters create a very neat feature set and are good for
         long-term performance.
@@ -162,15 +142,11 @@ class World(BaseWorld):
         agent.perceiver.MIN_SIG_COACTIVITY = 0.995  * agent.perceiver.NEW_FEATURE_THRESHOLD
         agent.perceiver.PLASTICITY_UPDATE_RATE = agent.perceiver.NEW_FEATURE_THRESHOLD * 0.003
         '''
-        pass
+        return
             
          
     def display(self):
-        """ Provide an intuitive display of the current state of the World 
-        to the user.
-        """        
         if (self.timestep % self.REPORTING_PERIOD) == 0:
-            
             print("world is %s timesteps old" % self.timestep)
             
             if self.graphing:
@@ -181,7 +157,6 @@ class World(BaseWorld):
                 plt.ylabel('position (pixels)')
                 plt.draw()
                 viz_utils.force_redraw()
-                            
             return
         
     
@@ -194,8 +169,7 @@ class World(BaseWorld):
     
     def vizualize_feature_set(self, feature_set):
         """ Provide an intuitive display of the features created by the agent """
-        world_utils.vizualize_pixel_array_feature_set(feature_set, 
-                                          start=self.last_feature_vizualized, 
+        world_utils.vizualize_pixel_array_feature_set(feature_set, start=self.last_feature_vizualized, 
                                           world_name=self.name_short, save_eps=True, save_jpg=True)
         self.last_feature_vizualized = feature_set.shape[0]
         

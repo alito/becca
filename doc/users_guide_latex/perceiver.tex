@@ -15,37 +15,20 @@ This appendix provides enough mathematical detail to fully describe the implemen
 There are several user-selected constants that modify the function of the feature extractor. In the following description, they will be identified as $C_x$ where they subscript provides a unique identifier. They default values for these constants in the current version are listed in table~\ref{perceiver_constants}. 
 
 \section{Input conditioning}
-\textsc{Becca} interprets each input as a fuzzy binary value, indicating the degree of presence of an attribute or the degree of activation of a sensor. At each time step, $t$, it receives an array of raw sensor inputs, $\hat{\mathbf{s}}$. The input value $\hat{s}_k$ from each sensor channel $k$ must be mapped to the interval $[0,1]$ to facilitate its interpretation as a graded binary value. This is done adaptively. The mean, $\hat{s}_{k\mu}$, and typical deviation, $\hat{s}_{k\epsilon}$, is estimated incrementally by these formulas:
+\textsc{Becca} interprets each input as a fuzzy binary value, indicating the degree of presence of an attribute or the degree of activation of a sensor. At each time step, $t$, it receives an array of raw sensor inputs, $\hat{\mathbf{s}}$. The input value $\hat{s}_k$ from each sensor channel $k$ must be mapped to the interval $[0,1]$ to facilitate its interpretation as a graded binary value. This is done adaptively. The range of each $\hat{\mathbf{s}}$ is tracked, and the value is normalized to fall in the desired range:
 
 \begin{eqnarray}
-\rho_s &=& C_{sdr} + \frac{C_{sut}}{ t + C_{sut}}\\
-s_{k \mu_{t+1}} &=& s_{k \mu_t } (1 - \rho_s)  + \hat{s}_k  \rho_s \\
-s_{k \epsilon_{t+1}} &=& s_{k \epsilon_t}  (1 - \rho_s)  + |\hat{s}_k - s_{k \mu_{t+1}}| \rho_s 
+\hat{\mathbf{s}}_{\max}^{\prime} &=& \max \left ( \hat{\mathbf{s}}_{\max}, \hat{\mathbf{s}} \right ) \\
+\hat{\mathbf{s}}_{\min}^{\prime} &=& \min \left ( \hat{\mathbf{s}}_{\min}, \hat{\mathbf{s}} \right ) \\
+\mathbf{s} &=& \frac{\hat{\mathbf{s}} -  \hat{\mathbf{s}}_{\min}}{\hat{\mathbf{s}}_{\max} -  \hat{\mathbf{s}}_{\min}}
 \end{eqnarray}
 
-$\rho_s$ here is an update rate that is a function of the agent's age, $t$, the sensor distribution update rate, $C_{sdr}$, and the sensor update time constant, $C_{sut}$. At $t=0$ the value of $s_{k \mu}$ is initialized to $C_{sim}$ and the value of $s_{k \epsilon}$ is initialized to $C_{sid}$. When the agent is very young, the estimates of the mean and deviation change quickly, adapting to the input distributions observed. The adaptation rate slows over time, reflecting increased confidence in the estimates' accuracy.
+The extremes of each range are gradually contracted as well, to account for drift.
 
-Using its mean and deviation, each channel is transformed to a roughly zero-mean signal with this relation:
-
-\begin{equation}
-s_k = g \left (\frac{\hat{s}_k - s_{k \mu} }{2 s_{k \epsilon}} \right )
-\end{equation}
-
-where $g(\cdot)$ is a function that maps the interval $[0, \infty)$ onto $[0,1)$ and the interval $(-\infty,0]$ onto $(-1,0]$:
-
-\begin{equation}
-g(x) = 1 - \frac{1}{x + 1} 
-\label{inf_to_one_map}
-\end{equation}
-
-It's inverse function, $g^\prime(\cdot)$ performs the reverse mapping:
-
-\begin{equation}
-g^{-1}(x) = \frac{1}{x} - 1
-\label{one_to_inf_map}
-\end{equation}
-
-Each of the resulting sensor channels lies on the interval $(-1,1)$. Each channel is then split and rectified into its positive and negative portions, $s_k^+$ and $s_k^-$. This results in a conditioned array of sensor channels, $\mathbf{s}$, that has twice the number of input channels originally passed to the agent.
+\begin{eqnarray}
+\hat{\mathbf{s}}_{\max} &=& \hat{\mathbf{s}}_{\max} - C_{srr} ( \hat{\mathbf{s}}_{\max} -  \hat{\mathbf{s}}_{\min}) \\
+\hat{\mathbf{s}}_{\min} &=& \hat{\mathbf{s}}_{\min} + C_{srr} (\hat{\mathbf{s}}_{\max} -  \hat{\mathbf{s}}_{\min}) 
+\end{eqnarray}
 
 Primitives are not subject to this process. They have been pre-engineered for compatibility with \textsc{Becca} (i.e. they are hacks) and are already on $[0, 1]$.
 
@@ -191,10 +174,7 @@ The values of the constants used in this version of \textsc{Becca} are listed in
 \hline
 constant & value & description\\
 \hline
-$C_{sdr}$ & $10^{-3}$ & sensor distribution update rate \\
-$C_{sut}$ & 5 & sensor update time constant \\
-$C_{sim}$ & 0 & sensor initial mean \\
-$C_{sid}$ & 0.01 & sensor initial deviation \\
+$C_{srr}$ & $10^{-3}$ & sensor range decay rate \\
 $C_{nft}$ & 0.1 & new feature threshold \\
 $C_{msc}$ & 0.07 & minimum significant co-activity threshold \\
 $C_{awe}$ & 10 & activation weighting exponent \\

@@ -21,7 +21,7 @@ The architecture is modular. You can develop and run your own worlds without hav
 \item{A world must provide a scalar reward value at each time step.}
 \end{itemize}
 
-Strictly speaking, \textsc{Becca} allows for two classes of observations, {\em sensors} and {\em primitives}. The main difference between the two is that the agent has to build sensors into features before it can use them, whereas it can use primitives as features immediately. Typically, observations that are likely to need some refining before they become useful (such as sets of pixel values) are passed in as sensors, and observations that are more immediately useful (such as a contact sensor) are passed in as primitives. Primitives must be equal to one, zero, or something in between. Sensors have no such restriction.
+Strictly speaking, \textsc{Becca} allows for two classes of observations, {\em sensors} and {\em primitives}. The main difference between the two is that the agent has to build sensors into features before it can use them, whereas it can use primitives as features immediately. Typically, observations that are likely to need some refining before they become useful (such as sets of pixel values) are passed in as sensors, and observations that are more immediately useful (such as a contact detector) are passed in as primitives. Primitives must be equal to one, zero, or something in between. Sensors have no such restriction.
 
 \section{How do I make a {\em hello} world?}
 
@@ -33,9 +33,8 @@ The quick and dirty way to get started making your own world is to copy an exist
 \begin{verbatim}
 self.timestep += 1 
 print self.timestep, ' hellos!'
-
-sensors = np.zeros(self.num_sensors)
-primitives = np.zeros(self.num_primitives)
+sensors = np.zeros((self.num_sensors, 1))
+primitives = np.zeros((self.num_primitives,1))
 reward = 0
 return sensors, primitives, reward
 \end{verbatim}
@@ -71,13 +70,6 @@ these three methods,
 \item{\texttt{set\_agent\_parameters()}}
 \end{itemize}
 
-and perhaps two optional methods,
-
-\begin{itemize}
-\item{\texttt{is\_time\_to\_display()}}
-\item{\texttt{vizualize\_feature\_set()}}
-\end{itemize}
-
 each of which are all described in more detail below.
 
 \subsection{\texttt{num\_sensors}}
@@ -97,12 +89,6 @@ Informs the executing loop when to stop. The top level execution loop (as implem
 
 \subsection{\texttt{set\_agent\_parameters()}}
 Sets the the agent's internal parameters to values specific to the world. \textsc{Becca} has a quite a few constants that affect its operation. Most of these are set to values that seem to work for all worlds in the benchmark battery. But for development and troubleshooting, it has proven useful to be able to adjust some of \textsc{Becca}'s parameters manually. It is my hope that, in time, a single set of parameters will prove generally useful across a broad set of tasks. In the meantime this method provides a mechanism for world-specific knob-twiddling.
-
-\subsection{\texttt{is\_time\_to\_display()}}
-Informs the executing loop when to display the feature set by returning \texttt{True}. This is for visualization purposes only and doesn't help \textsc{Becca} learn in any way. This method is optional. If it doesn't exist, the execution loop just moves on.
-
-\subsection{\texttt{vizualize\_feature\_set()}}
-Displays the feature set when \texttt{is\_time\_to\_display()} returns \texttt{True}. The feature set is expressed in terms of sensors, primitives, and actions by the agent. This method takes those feature representations and interprets them for the user in terms of what it knows about how those signals. For instance, if the sensors correspond to pixel values from a camera, this method would render the sensor component of each feature as an image. The agent has no information about where its sensor and primitive arrays came from or about what its actions do in the world. This method lets the world give a world-specific interpretation of those values to the user. 
 
 \section{What is \texttt{base\_world.py}?}
 ``Wait a second," you say. ``My \texttt{hello.py} didn't have an \texttt{is\_alive()}, but you said it needed one. What's up with that?"
@@ -127,36 +113,33 @@ import numpy as np
 from agent.agent import Agent
 from agent import viz_utils
 from worlds.hello import World
-\end{verbatim}
+\end{verbatim}    
 
 \item
-Define the \texttt{main} method and initialize some objects. When initializing the \texttt{agent}, there are two optional variables, \texttt{MAX\_NUM\_FEATURES} and \texttt{agent\_name}.  \texttt{MAX\_NUM\_FEATURES} provides an upper limit on the number of features that the agent can create and can be set appropriately to prevent \textsc{Becca} from using up all your RAM. \texttt{agent\_name} is a text string used to identify a specific agent and is useful if you are planning to save the agent or restore it from a previously saved agent. Note that if you do this, the world used in both cases must have the same number of sensors, primitives, and actions.
+Define the \texttt{test} method and initialize some objects. When initializing the \texttt{agent}, there are two optional variables, \texttt{MAX\_NUM\_FEATURES} and \texttt{agent\_name}.  \texttt{MAX\_NUM\_FEATURES} provides an upper limit on the number of features that the agent can create and can be set appropriately to prevent \textsc{Becca} from using up all your RAM. Some worlds contain their own recommended \texttt{MAX\_NUM\_FEATURES} member variable, and if they do, the \texttt{test} method adopts it. \texttt{agent\_name} is a text string used to identify a specific agent and is useful if you are planning to save the agent or restore it from a previously saved agent. Note that if you do this, the world used in both cases must have the same number of sensors, primitives, and actions.
 \begin{verbatim}
-def main():
-    
-    world = World()
-    
-    agent_name = "test";
-    MAX_NUM_FEATURES = 1000
-    agent = Agent(world.num_sensors, 
-                  world.num_primitives, 
-                  world.num_actions, 
-                  MAX_NUM_FEATURES, 
-                  agent_name)
-
+def test(world, restore=False, agent_name="test", show=True):
+    if world.MAX_NUM_FEATURES is None:
+        MAX_NUM_FEATURES = 100
+    else:
+        MAX_NUM_FEATURES = world.MAX_NUM_FEATURES
+    agent = Agent(world.num_sensors, world.num_primitives, 
+                  world.num_actions, MAX_NUM_FEATURES, 
+                  agent_name=agent_name)
 \end{verbatim}
 
 \item
 Restore the agent to a previously saved agent, if desired.
 \begin{verbatim}
-    #agent = agent.restore()
+    if restore:
+        agent = agent.restore()
 \end{verbatim}
     
 \item
 Modify the agent's parameters according to the requirements of this particular world. Initialize actions such that the first set of commands to the world is always zeros.
 \begin{verbatim}
     world.set_agent_parameters(agent)
-    actions = np.zeros(world.num_actions)
+    actions = np.zeros((world.num_actions,1))
 \end{verbatim}
 
 \item
@@ -180,24 +163,35 @@ If the necessary methods exist, and if they dictate, display the feature set to 
                 viz_utils.force_redraw()
     except AttributeError:
         pass
-    \end{verbatim}
-
-\item
-After the world has completed its lifetime, give a final report of the agent's performance.    
-\begin{verbatim}    
-    agent.report_performance()
-    agent.show_reward_history()
-    
-    return
 \end{verbatim}
 
 \item
-And finally, run \texttt{main()}    
+After the world has completed its lifetime, give a final report of the agent's performance and return the performance score.    
 \begin{verbatim}    
+    return agent.report_performance(show)
+\end{verbatim}
+
+\item
+Define the \texttt{profile} method for profiling the code, when desired during debugging.
+\begin{verbatim}    
+def profile():
+    import cProfile
+    import pstats
+    cProfile.run('test(World())', 'tester_profile')
+    p = pstats.Stats('tester_profile')
+    p.strip_dirs().sort_stats('time', 'cum').print_stats(30)
+\end{verbatim}        
+
+\item
+And finally, the global behavior of the module:   
+\begin{verbatim}        
 if __name__ == '__main__':
-    main()
-\end{verbatim}
-
+    profile_flag = False
+    if profile_flag:
+        profile()
+    else:
+        test(World())
+\end{verbatim}        
 \end{enumerate}
 
 % TODO: flesh this out

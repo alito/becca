@@ -1,7 +1,7 @@
 
 
 Copyright (c) 2011 Sandia Corporation. 
-Copyright (c) 2012 Brandon Rohrer, Alejandro Dubrovsky, and SeH
+Copyright (c) 2013 Brandon Rohrer, Alejandro Dubrovsky
 
 Version 0.3.11 of this software was released under the MIT Open Source 
 license by Sandia Corporation. Under the terms of the license, the 
