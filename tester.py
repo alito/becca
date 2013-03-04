@@ -15,7 +15,7 @@ from agent import viz_utils
 
 """ If you want to run a world of your own, add the appropriate line here """
 #from worlds.hello import World
-from worlds.listen import World 
+from becca_world_listen.listen import World 
 
 
 def test(world, restore=False, agent_name="test", show=True):
