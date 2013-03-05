@@ -18,19 +18,21 @@ def visualize_coactivity(coactivity, size=0, save_eps=False, epsfilename='log/co
     im = plt.imshow(coactivity[0:size, 0:size])
     im.set_interpolation('nearest')
     plt.title("Coactivity among inputs")
-    plt.draw()
+    fig.show()
+    fig.canvas.draw()
     if save_eps:
         fig.savefig(epsfilename, format='eps')
     return
   
  
 def visualize_feature_map(feature_map):
-    plt.figure("feature map visualization")
+    fig = plt.figure("feature map visualization")
     plt.summer()
     im = plt.imshow(feature_map)
     im.set_interpolation('nearest')
     plt.title("Feature map")
-    plt.draw()
+    fig.show()
+    fig.canvas.draw()
     return
         
         
@@ -89,7 +91,6 @@ def visualize_model(actor, num_primitives, num_actions, n=None):
         print "Showing the " + str(index) + "th most impact."            
         visualize_transition(actor, num_primitives, num_actions, index_by_rank[-(index+1)])
         plt.show()
-
     return
     
         
@@ -104,6 +105,7 @@ def visualize_transition(actor, num_primitives, num_actions, transition_index, s
     fig.clf()
     plt.ioff()    
     viz_axes = fig.add_subplot(1,1,1)
+
     
     count = actor.count[0, transition_index]
     reward_value = actor.reward_value[0, transition_index]
@@ -132,7 +134,9 @@ def visualize_transition(actor, num_primitives, num_actions, transition_index, s
     it doesn't draw unless you include this plot command.
     """ 
     plt.plot(0, 0, color='black') 
-    force_redraw()
+    
+    fig.show()
+    fig.canvas.draw()
     if save_eps:
         fig.savefig(epsfilename, format='eps')
     return
@@ -146,8 +150,8 @@ def visualize_state(state, num_primitives, num_actions, label='state', y_min=0.2
     if axes == None:
         fig = plt.figure(label)
         fig.clf()
+        fig.set_facecolor((0.8, 0.8, 0.8))
         axes = fig.add_subplot(1,1,1)
-        # TODO: make background color light gray
         plt.title(label)
         axes.set_ylim(0.0, 1.0)
      
@@ -221,9 +225,9 @@ def rectPatch (left_x, right_x, lower_y, upper_y, value=0.5,
     return
     
     
-def force_redraw():
+    '''def force_redraw():
     """ Force matplotlib to draw things on the screen. Pause is needed for events to be processed. 
     Qt backend needs two event rounds to process screen. Any number > 0.01 and <=0.02 would do.
     """
     plt.pause(0.015)
-
+    '''

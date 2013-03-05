@@ -1,7 +1,7 @@
 
 from actor import Actor
 from perceiver import Perceiver
-import viz_utils
+#import viz_utils
 
 import cPickle as pickle
 import matplotlib.pyplot as plt
@@ -73,31 +73,31 @@ class Agent(object):
             self.reward_history.append(float(self.cumulative_reward) / self.REPORTING_PERIOD)
             self.reward_steps.append(self.timestep)
             self.show_reward_history(save_eps=True)
-            #self.perceiver.visualize(save_eps=True)
-            #self.actor.visualize()
+            self.perceiver.visualize(save_eps=True)
+            self.actor.visualize()
         return
  
     
-    def report_performance(self, show=True):
+    def report_performance(self):
         performance = np.mean(self.reward_history)
         print("Final performance is %f" % performance)
-        self.show_reward_history(save_eps=True)
-        if show:
-            plt.show()    
+        self.show_reward_history(save_eps=True, block=True)
         return performance
         
     
-    def show_reward_history(self, show=False, save_eps=False,
+    def show_reward_history(self, block=False, save_eps=False,
                             epsfilename='log/reward_history.eps'):
         if self.graphing:
-            plt.figure(1)
+            fig = plt.figure(1)
             plt.plot(self.reward_steps, self.reward_history)
             plt.xlabel("time step")
             plt.ylabel("average reward")
-            viz_utils.force_redraw()
+            fig.show()
+            fig.canvas.draw()
+
             if save_eps:
                 plt.savefig(epsfilename, format='eps')
-            if show:
+            if block:
                 plt.show()
         return
     

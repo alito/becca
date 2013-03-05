@@ -20,7 +20,7 @@ class World(BaseWorld):
         super(World, self).__init__()
 
         self.REPORTING_PERIOD = 10 ** 4       
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 6
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
         self.LIFESPAN = 10 ** 4
         self.REWARD_MAGNITUDE = 100.
         self.JUMP_FRACTION = 0.01
@@ -37,7 +37,7 @@ class World(BaseWorld):
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_primitives = 0
         self.num_actions = 9
-        self.MAX_NUM_FEATURES = 50
+        self.MAX_NUM_FEATURES = 20#50
         
         """ Initialize the image to be used as the environment """
         self.block_image_filename = "./images/bar_test.png" 
@@ -167,9 +167,11 @@ class World(BaseWorld):
             return False
         
     
-    def vizualize_feature_set(self, feature_set):
-        """ Provide an intuitive display of the features created by the agent """
-        world_utils.vizualize_pixel_array_feature_set(feature_set, start=self.last_feature_vizualized, 
+    def vizualize(self, agent):
+        """ visualize the feature set """
+        feature_set = viz_utils.reduce_feature_set(agent.perceiver, agent.num_primitives, agent.num_actions)
+        world_utils.vizualize_pixel_array_feature_set(feature_set, 
+                                          start=self.last_feature_vizualized, 
                                           world_name=self.name_short, save_eps=True, save_jpg=True)
         self.last_feature_vizualized = feature_set.shape[0]
         

@@ -1,7 +1,7 @@
 
 import numpy as np
 from agent.agent import Agent
-from agent import viz_utils
+#from agent import viz_utils
         
 """  Select the World that the Agent will be placed in. One of these import lines should be uncommented. """
 #from worlds.base_world import World
@@ -10,13 +10,14 @@ from agent import viz_utils
 #from worlds.grid_1D_noise import World
 #from worlds.grid_2D import World
 #from worlds.grid_2D_dc import World
-from worlds.image_1D import World
+#from worlds.image_1D import World
 #from worlds.image_2D import World
 
 """ If you want to run a world of your own, add the appropriate line here """
 #from worlds.hello import World
+from becca_world_listen.listen import World
 
-def test(world, restore=False, agent_name="test", show=True):
+def test(world, restore=False, agent_name="test"):
     """ Run 'world' """
     if world.MAX_NUM_FEATURES is None:
         MAX_NUM_FEATURES = 100
@@ -46,13 +47,11 @@ def test(world, restore=False, agent_name="test", show=True):
         """ If the world has the appropriate method, use it to display the feature set """
         try:
             if world.is_time_to_display():                
-                world.vizualize_feature_set(
-                  viz_utils.reduce_feature_set(agent.perceiver, agent.num_primitives, agent.num_actions))
-                viz_utils.force_redraw()
+                world.vizualize(agent)
         except AttributeError:
             pass
     
-    return agent.report_performance(show)
+    return agent.report_performance()
 
 
 def profile():

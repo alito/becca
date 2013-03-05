@@ -142,5 +142,4 @@ class Actor(object):
     def visualize(self, save_eps=True):
         import viz_utils
         viz_utils.visualize_model(self, self.num_primitives, self.num_actions, 10)
-        viz_utils.force_redraw()
         return

@@ -217,6 +217,6 @@ class Perceiver(object):
                     self.coactivity[:n_inputs, :n_inputs].transpose())
         viz_utils.visualize_coactivity(mutual_coactivity, n_inputs, save_eps)
         viz_utils.visualize_feature_map(self.feature_map[:self.num_features, :n_inputs])
-        viz_utils.force_redraw()
+        #viz_utils.force_redraw()
         return
     

@@ -191,8 +191,10 @@ class World(BaseWorld):
         else:
             return False
         
-    
-    def vizualize_feature_set(self, feature_set):
+        
+    def vizualize(self, agent):
+        """ visualize the feature set """
+        feature_set = viz_utils.reduce_feature_set(agent.perceiver, agent.num_primitives, agent.num_actions)
         world_utils.vizualize_pixel_array_feature_set(feature_set, 
                                           start=self.last_feature_vizualized, 
                                           world_name=self.name_short, save_eps=True, save_jpg=True)
