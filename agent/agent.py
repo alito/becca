@@ -73,8 +73,8 @@ class Agent(object):
             self.reward_history.append(float(self.cumulative_reward) / self.REPORTING_PERIOD)
             self.reward_steps.append(self.timestep)
             self.show_reward_history(save_eps=True)
-            self.perceiver.visualize(save_eps=True)
-            self.actor.visualize()
+            #self.perceiver.visualize(save_eps=True)
+            #self.actor.visualize()
         return
  
     
