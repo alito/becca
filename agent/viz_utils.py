@@ -7,17 +7,19 @@ import numpy as np
 
 """ A set of methods for visualizing aspects of the BECCA's internal state and operations """
 
-def visualize_coactivity(coactivity, size=0, save_eps=False, epsfilename='log/coactivity.eps'):
-    """ Produce a visual representation of the coactivity matrix """    
-    if size == 0:
-        size = coactivity.shape[0]
-    fig = plt.figure("perceiver coactivity visualization")
+def visualize_array(image_data, shape=None, save_eps=False, label='data_figure', epsfilename=None):
+    """ Produce a visual representation of the image_data matrix """    
+    if shape is None:
+        shape = image_data.shape
+    if epsfilename is None:
+        epsfilename = 'log/' + label + '.eps'
+    fig = plt.figure(label)
     
     """ Diane L. made the brilliant suggestion to leave this plot in color. It looks much prettier. """
     plt.summer()
-    im = plt.imshow(coactivity[0:size, 0:size])
+    im = plt.imshow(image_data[0:shape[0], 0:shape[1]])
     im.set_interpolation('nearest')
-    plt.title("Coactivity among inputs")
+    plt.title(label)
     fig.show()
     fig.canvas.draw()
     if save_eps:
@@ -25,16 +27,16 @@ def visualize_coactivity(coactivity, size=0, save_eps=False, epsfilename='log/co
     return
   
  
-def visualize_feature_map(feature_map):
-    fig = plt.figure("feature map visualization")
+    '''def visualize_array(feature_map, ):
+    fig = plt.figure(label)
     plt.summer()
     im = plt.imshow(feature_map)
     im.set_interpolation('nearest')
-    plt.title("Feature map")
+    plt.title(label)
     fig.show()
     fig.canvas.draw()
     return
-        
+    '''
         
 def reduce_feature_set(perceiver, n_primitives, n_actions):
     """ Take in the feature map and express each feature in terms of the lowest level inputs 

@@ -16,14 +16,17 @@ class World(BaseWorld):
     See Chapter 4 of the Users Guide for details.
     Optimal performance is a reward of around 90 reward per time step.
     """
-    def __init__(self):
+    def __init__(self, lifespan=None):
         super(World, self).__init__()
-
-        self.REPORTING_PERIOD = 10 ** 4   
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 6
-        self.LIFESPAN = 10 ** 4
+        
+        if lifespan is None:
+            self.LIFESPAN = 10 ** 4
+        else:
+            self.LIFESPAN = lifespan
+        self.REPORTING_PERIOD = 10 ** 4
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 8
         self.REWARD_MAGNITUDE = 100.
-        self.JUMP_FRACTION = 0.01
+        self.JUMP_FRACTION = 0.1
         self.ANIMATE_PERIOD = 10 ** 2
         self.animate = False
         self.graphing = False
@@ -32,10 +35,9 @@ class World(BaseWorld):
         self.announce()
 
         self.step_counter = 0
-        self.fov_span = 5
+        self.fov_span = 3
 
         self.num_sensors = 2 * self.fov_span ** 2
-        self.num_primitives = 0
         self.num_actions = 17
         self.MAX_NUM_FEATURES = 100
         
@@ -133,18 +135,22 @@ class World(BaseWorld):
                                   np.abs(np.minimum(unsplit_sensors, 0)) ))
 
         reward = 0
-        if np.abs(self.column_position - self.TARGET_COLUMN) < self.REWARD_REGION_WIDTH / 2: 
+        '''if np.abs(self.column_position - self.TARGET_COLUMN) < self.REWARD_REGION_WIDTH / 2: 
             reward += self.REWARD_MAGNITUDE / 2
         if np.abs(self.row_position - self.TARGET_ROW) < self.REWARD_REGION_WIDTH / 2:
             reward += self.REWARD_MAGNITUDE / 2
+        '''
+        if (np.abs(self.column_position - self.TARGET_COLUMN) < self.REWARD_REGION_WIDTH / 2) and \
+            (np.abs(self.row_position - self.TARGET_ROW) < self.REWARD_REGION_WIDTH / 2):
+            reward += self.REWARD_MAGNITUDE
         
         if self.animate:
             print self.row_position, self.column_position, '-row and col position  ', reward, '-reward'
-        self.log(sensors, self.primitives, reward)
-        return sensors, self.primitives, reward
+        self.log(sensors, reward)
+        return sensors, reward
     
     
-    def log(self, sensors, primitives, reward):
+    def log(self, sensors, reward):
         self.display()
         self.row_history.append(self.row_position)
         self.column_history.append(self.column_position)
@@ -159,8 +165,8 @@ class World(BaseWorld):
 
  
     def set_agent_parameters(self, agent):
-        agent.actor.reward_min = 0.
-        agent.actor.reward_max = 100.
+        agent.reward_min = 0.
+        agent.reward_max = 100.
         return
     
         

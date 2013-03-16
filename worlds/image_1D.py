@@ -16,14 +16,17 @@ class World(BaseWorld):
     which BECCA must build into features. See Chapter 4 of the Users Guide for details.
     Optimal performance is a reward of somewhere around 90 per time step.
     """
-    def __init__(self):
+    def __init__(self, lifespan=None):
         super(World, self).__init__()
-
-        self.REPORTING_PERIOD = 10 ** 4       
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
-        self.LIFESPAN = 10 ** 4
+        
+        if lifespan is None:
+            self.LIFESPAN = 10 ** 4
+        else:
+            self.LIFESPAN = lifespan
+        self.REPORTING_PERIOD = 10 ** 4
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 8
         self.REWARD_MAGNITUDE = 100.
-        self.JUMP_FRACTION = 0.01
+        self.JUMP_FRACTION = 0.1
         self.ANIMATE_PERIOD = 10 ** 3
         self.STEP_COST =  0.1 * self.REWARD_MAGNITUDE
         self.animate = False
@@ -33,11 +36,10 @@ class World(BaseWorld):
         self.announce()
 
         self.step_counter = 0
-        self.fov_span = 10 
+        self.fov_span = 7 
         self.num_sensors = 2 * self.fov_span ** 2
-        self.num_primitives = 0
         self.num_actions = 9
-        self.MAX_NUM_FEATURES = 20#50
+        self.MAX_NUM_FEATURES = self.num_sensors + self.num_actions
         
         """ Initialize the image to be used as the environment """
         self.block_image_filename = "./images/bar_test.png" 
@@ -66,7 +68,6 @@ class World(BaseWorld):
         self.block_width = self.fov_width / (self.fov_span + 2)
 
         self.sensors = np.zeros(self.num_sensors)
-        self.primitives = np.zeros(self.num_primitives)
         self.last_feature_vizualized = 0
 
 
@@ -112,11 +113,11 @@ class World(BaseWorld):
         
         if self.animate:
             print 'column_position: ', self.column_position, '  reward: ', reward[0]
-        self.log(sensors, self.primitives, reward)
-        return sensors, self.primitives, reward
+        self.log(sensors, reward)
+        return sensors, reward
     
             
-    def log(self, sensors, primitives, reward):
+    def log(self, sensors, reward):
         if self.graphing:
             self.column_history.append(self.column_position)
         self.display()
@@ -131,8 +132,8 @@ class World(BaseWorld):
             
 
     def set_agent_parameters(self, agent):
-        agent.actor.reward_min = 0.
-        agent.actor.reward_max = 100.
+        agent.reward_min = 0.
+        agent.reward_max = 100.
         
         """ These parameters create a very neat feature set and are good for
         long-term performance.

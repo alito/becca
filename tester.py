@@ -9,23 +9,22 @@ from agent.agent import Agent
 #from worlds.grid_1D_ms import World
 #from worlds.grid_1D_noise import World
 #from worlds.grid_2D import World
-#from worlds.grid_2D_dc import World
+from worlds.grid_2D_dc import World
 #from worlds.image_1D import World
 #from worlds.image_2D import World
 
 """ If you want to run a world of your own, add the appropriate line here """
 #from worlds.hello import World
-from becca_world_listen.listen import World
+#from becca_world_listen.listen import World
 
-def test(world, restore=False, agent_name="test"):
+def test(world, restore=False, show=True, agent_name="test"):
     """ Run 'world' """
     if world.MAX_NUM_FEATURES is None:
         MAX_NUM_FEATURES = 100
     else:
         MAX_NUM_FEATURES = world.MAX_NUM_FEATURES
 
-    agent = Agent(world.num_sensors, world.num_primitives, 
-                  world.num_actions, MAX_NUM_FEATURES, agent_name=agent_name)
+    agent = Agent(world.num_sensors, world.num_actions, MAX_NUM_FEATURES, agent_name=agent_name, show=show)
 
     if restore:
         agent = agent.restore()
@@ -41,8 +40,8 @@ def test(world, restore=False, agent_name="test"):
     
     """ Repeat the loop through the duration of the existence of the world """
     while(world.is_alive()):
-        sensors, primitives, reward = world.step(actions)
-        actions = agent.step(sensors, primitives, reward)
+        sensors, reward = world.step(actions)
+        actions = agent.step(sensors, reward)
         
         """ If the world has the appropriate method, use it to display the feature set """
         try:
@@ -68,4 +67,4 @@ if __name__ == '__main__':
     if profile_flag:
         profile()
     else:
-        test(World())
+        test(World(lifespan=10**6))

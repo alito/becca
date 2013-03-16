@@ -6,8 +6,8 @@ BIG = 10. ** 20
 
 """ Utility functions """
 def weighted_average(values, weights):
-    weighted_sum_values = np.sum(values * weights, axis=1) 
-    sum_of_weights = np.sum(weights, axis=1) 
+    weighted_sum_values = np.sum(values * weights, axis=0) 
+    sum_of_weights = np.sum(weights, axis=0) 
     return (weighted_sum_values / (sum_of_weights + EPSILON))[:,np.newaxis]
 
 
@@ -22,3 +22,16 @@ def map_inf_to_one(a_prime):
     """ Map values from [0, inf) onto [0, 1] and map values from  (-inf, 0] onto [-1, 0] """
     a = np.sign(a_prime) * (1 - 1 / (np.abs(a_prime) + 1))
     return a
+
+def bounded_sum(a, axis=0):
+    if type(a) is list:
+        total = map_one_to_inf(a[0])
+        for item in a[1:]:
+            total += map_one_to_inf(item)
+        return map_inf_to_one(total)
+    # else
+    bounded_total = map_inf_to_one(np.sum(map_one_to_inf(a), axis=axis))
+    #if axis==0:
+    #    return bounded_total[np.newaxis,:]        
+    #else
+    return bounded_total[:,np.newaxis]
