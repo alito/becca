@@ -139,7 +139,6 @@ class Agent(object):
             self.reward_history.append(float(self.cumulative_reward) / self.REPORTING_PERIOD)
             self.reward_steps.append(self.timestep)
             self.show_reward_history(save_eps=True)
-
             self.level1.display()
             if self.two_level:
                 self.level2.display()
