@@ -36,7 +36,7 @@ class World(BaseWorld):
         self.announce()
 
         self.step_counter = 0
-        self.fov_span = 7 
+        self.fov_span = 5 
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_actions = 9
         self.MAX_NUM_FEATURES = self.num_sensors + self.num_actions
@@ -56,7 +56,7 @@ class World(BaseWorld):
         image_width = self.data.shape[1]
         self.MAX_STEP_SIZE = image_width / 2
         self.TARGET_COLUMN = image_width / 2
-        self.REWARD_REGION_WIDTH = image_width / 16
+        self.REWARD_REGION_WIDTH = image_width / 8
         self.NOISE_MAGNITUDE = 0.1
         
         self.column_history = []

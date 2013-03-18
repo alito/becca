@@ -24,7 +24,7 @@ class Map(object):
         """ If the minimum co-activity between each of the elements of a growing feature 
         and the next candidates is lower than this value, don't add any more. 
         """
-        self.MIN_SIG_COACTIVITY =  0.7 * self.NEW_FEATURE_THRESHOLD # real,  0 < x <= 1.0
+        self.MIN_SIG_COACTIVITY =  0.3 * self.NEW_FEATURE_THRESHOLD # real,  0 < x <= 1.0
         self.PLASTICITY_UPDATE_RATE = 0.01 * self.NEW_FEATURE_THRESHOLD # real, 0 < x < 1, small
         
         """ Determines how much an input's contribution to exciting features

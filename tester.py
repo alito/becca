@@ -9,9 +9,9 @@ from agent.agent import Agent
 #from worlds.grid_1D_ms import World
 #from worlds.grid_1D_noise import World
 #from worlds.grid_2D import World
-from worlds.grid_2D_dc import World
+#from worlds.grid_2D_dc import World
 #from worlds.image_1D import World
-#from worlds.image_2D import World
+from worlds.image_2D import World
 
 """ If you want to run a world of your own, add the appropriate line here """
 #from worlds.hello import World
@@ -19,7 +19,7 @@ from worlds.grid_2D_dc import World
 
 def test(world, restore=False, show=True, agent_name="test"):
     """ Run 'world' """
-    if world.MAX_NUM_FEATURES is None:
+    if world.MAX_NUM_FEATURES is None: 
         MAX_NUM_FEATURES = 100
     else:
         MAX_NUM_FEATURES = world.MAX_NUM_FEATURES

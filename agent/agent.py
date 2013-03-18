@@ -39,7 +39,7 @@ class Agent(object):
         
         self.two_level = True
         if self.two_level:
-            level1_cog_out_size = 4 * num_sensors
+            level1_cog_out_size = 30#1. * num_sensors
             num_level2_features_in = level1_cog_out_size + num_actions
             level1_cog_in_size = num_sensors
         else:
