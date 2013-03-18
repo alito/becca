@@ -131,7 +131,13 @@ class Map(object):
             self.disallow_generation_crossing(added_feature_indices)
             
             #debug
-            print 'adding feature', self.num_features - 1, 'with inputs', added_feature_indices
+            if True:
+                print 'adding feature', self.num_features - 1, 'consiting of transitions:'
+                num_features_lo = np.sqrt(self.num_transitions)
+                for index in added_feature_indices:
+                    index_cause = np.floor(index / num_features_lo)
+                    index_effect = np.mod(index, num_features_lo)
+                    print '           cause', index_cause, '  effect', index_effect
             
             if self.num_features >= self.max_num_features:
                 self.features_full = True
