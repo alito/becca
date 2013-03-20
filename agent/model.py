@@ -102,6 +102,18 @@ class Model(object):
         return self.goal
 
                  
+    def get_projections(self, map_projections):
+        num_inputs = self.reward_value.shape[0]
+        all_causes = np.zeros((num_inputs,0))
+        all_effects = np.zeros((num_inputs,0)) 
+        for row in range(map_projections.shape[0]):
+            transitions = np.reshape(map_projections[row,:], (num_inputs,num_inputs))
+            cause = np.sign(np.max(transitions, axis=1))[:,np.newaxis]
+            effect = np.sign(np.max(transitions, axis=0))[:,np.newaxis]
+            all_causes = np.hstack((all_causes, cause))
+            all_effects = np.hstack((all_effects, effect))
+        return (all_causes, all_effects)
+    
     def visualize(self, save_eps=True):
         import viz_utils
         viz_utils.visualize_array(self.reward_value, label=self.name + '_reward')

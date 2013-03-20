@@ -32,6 +32,13 @@ class Level(object):
         return goal 
 
 
+    def get_projections(self):
+        projections = []
+        for cog in self.cogs:
+            projections.append(cog.get_projections())
+        return projections
+        
+        
     def display(self):
         for cog in self.cogs:
             cog.display()

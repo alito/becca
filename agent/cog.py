@@ -41,6 +41,9 @@ class Cog(object):
         goal = self.model.deliberate(transition_goals)     
         return goal
 
+    def get_projections(self):
+        map_projections = self.map.get_projections()
+        return self.model.get_projections(map_projections)
         
     def display(self):
         self.model.visualize()

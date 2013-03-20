@@ -172,6 +172,16 @@ class Map(object):
         return bounded_sum(self.feature_map * hi_goal, axis=0)
         
         
+    def get_projections(self):
+        all_projections = np.zeros((0,self.num_transitions))
+        for feature_index in range(self.num_features):
+            features = np.zeros((self.max_num_features, 1))
+            features[feature_index, 0] = 1.
+            projection = np.sign(np.max(self.feature_map * features, axis=0))[np.newaxis, :]
+            all_projections = np.vstack((all_projections, projection))
+        return all_projections
+        
+        
     def visualize(self, save_eps=False):
         mutual_coactivity = np.minimum(self.coactivity, self.coactivity.T)
         viz_utils.visualize_array(mutual_coactivity, label=self.name + '_coactivity', save_eps=save_eps)

@@ -120,6 +120,9 @@ class Agent(object):
         self.log(raw_reward)
         return self.action
 
+
+    def get_projections(self):
+        return self.level1.get_projections()
     
     def log(self, raw_reward):
         self.cumulative_reward += raw_reward
@@ -142,6 +145,9 @@ class Agent(object):
             self.level1.display()
             if self.two_level:
                 self.level2.display()
+                
+            feature_projections = self.get_projections()  
+
         return
  
     

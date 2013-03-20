@@ -19,7 +19,7 @@ class World(BaseWorld):
             self.LIFESPAN = 10 ** 4
         else:
             self.LIFESPAN = lifespan
-        self.REPORTING_PERIOD = 10 ** 4
+        self.REPORTING_PERIOD = 10 ** 3
         self.REWARD_MAGNITUDE = 100.
         self.ENERGY_COST = 0.01 * self.REWARD_MAGNITUDE 
         self.JUMP_FRACTION = 0.1

@@ -35,7 +35,7 @@ class World(BaseWorld):
         self.announce()
 
         self.step_counter = 0
-        self.fov_span = 6
+        self.fov_span = 6 
 
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_actions = 17
