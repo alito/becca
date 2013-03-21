@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.path import Path
 import matplotlib.patches as patches
 import numpy as np
+import utils 
 
 """ A set of methods for visualizing aspects of the BECCA's internal state and operations """
 
@@ -13,7 +14,7 @@ def visualize_array(image_data, shape=None, save_eps=False, label='data_figure',
         shape = image_data.shape
     if epsfilename is None:
         epsfilename = 'log/' + label + '.eps'
-    fig = plt.figure(label)
+    fig = plt.figure(utils.ord_str(label))
     
     """ Diane L. made the brilliant suggestion to leave this plot in color. It looks much prettier. """
     plt.summer()
@@ -28,7 +29,7 @@ def visualize_array(image_data, shape=None, save_eps=False, label='data_figure',
   
  
     '''def visualize_array(feature_map, ):
-    fig = plt.figure(label)
+    fig = plt.figure(utils.ord_str(label))
     plt.summer()
     im = plt.imshow(feature_map)
     im.set_interpolation('nearest')
@@ -103,7 +104,7 @@ def visualize_transition(actor, num_primitives, num_actions, transition_index, s
         label = 'Transition ' + str(transition_index)
     n_features = actor.num_features
         
-    fig = plt.figure(label)
+    fig = plt.figure(utils.ord_str(label))
     fig.clf()
     plt.ioff()    
     viz_axes = fig.add_subplot(1,1,1)
@@ -150,7 +151,7 @@ def visualize_state(state, num_primitives, num_actions, label='state', y_min=0.2
     a fraction of width.
     """       
     if axes == None:
-        fig = plt.figure(label)
+        fig = plt.figure(utils.ord_str(label))
         fig.clf()
         fig.set_facecolor((0.8, 0.8, 0.8))
         axes = fig.add_subplot(1,1,1)

@@ -116,7 +116,6 @@ class Agent(object):
             for level in self.levels:
                 level.display()
             feature_projections = self.get_projections()  
-
         return
  
     

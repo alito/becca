@@ -48,3 +48,9 @@ def pad(a, shape):
     padded = np.zeros((rows,cols))
     padded[:a.shape[0], :a.shape[1]] = a
     return padded
+
+def ord_str(label):
+    sum = 0
+    for character in label:
+        sum += ord(character)
+    return sum
