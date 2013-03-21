@@ -1,5 +1,5 @@
 
-from utils import *
+import utils as ut
 import viz_utils
 
 import itertools
@@ -11,11 +11,11 @@ class Map(object):
     and using the feature map at each time step to translate the input into feature activity.
     """
     
-    def __init__(self, num_transitions, max_num_hi_features, name='map_name'):
+    def __init__(self, num_transitions, max_feature_outputs, name='map_name'):
 
         self.name = name
         self.num_transitions = num_transitions
-        self.max_num_features = max_num_hi_features
+        self.max_feature_outputs = max_feature_outputs
         self.num_features = 0
         
         """ Once a co-activity value exceeds this value, nucleate a new feature """ 
@@ -37,8 +37,8 @@ class Map(object):
                 
         self.features_full = False        
         self.previous_input = np.zeros((self.num_transitions, 1))
-        self.feature_activity = np.zeros((self.max_num_features, 1))
-        self.feature_map = np.zeros((self.max_num_features, self.num_transitions))
+        self.feature_activity = np.zeros((self.max_feature_outputs, 1))
+        self.feature_map = np.zeros((self.max_feature_outputs, self.num_transitions))
         self.coactivity = np.zeros((self.num_transitions, self.num_transitions))
         self.combination = np.ones(self.coactivity.shape) - np.eye(self.coactivity.shape[0])
                            
@@ -53,7 +53,7 @@ class Map(object):
         activated_feature_map = initial_feature_activities * feature_contribution_map
         
         """ Find the largest feature activity that each input contributes to """
-        max_activation = np.max(activated_feature_map, axis=0) + EPSILON
+        max_activation = np.max(activated_feature_map, axis=0) + ut.EPSILON
 
         """ Divide the energy that each input contributes to each feature """
         input_inhibition_map = np.power(activated_feature_map / max_activation, 
@@ -65,7 +65,7 @@ class Map(object):
 
         """ Calculate how much energy each input has left to contribute to the co-activity estimate """
         final_activated_feature_map = self.feature_activity * feature_contribution_map
-        combined_weights = np.sum(final_activated_feature_map, axis=0) + EPSILON
+        combined_weights = np.sum(final_activated_feature_map, axis=0) + ut.EPSILON
         coactivity_inputs = new_input * 2 ** (-combined_weights[:, np.newaxis] * self.DISSIPATION_FACTOR)
         
         """ As appropriate, update the co-activity estimate and create new features """                 
@@ -73,7 +73,7 @@ class Map(object):
             self.update_coactivity_matrix(coactivity_inputs)
             self.create_new_features()
         
-        return self.feature_activity
+        return self.feature_activity[:self.num_features,:]
 
 
     def update_coactivity_matrix(self, new_input):
@@ -139,9 +139,9 @@ class Map(object):
                     index_effect = np.mod(index, num_features_lo)
                     print '           cause', index_cause, '  effect', index_effect
             
-            if self.num_features >= self.max_num_features:
+            if self.num_features >= self.max_feature_outputs:
                 self.features_full = True
-                print('==Max number of features reached (' + str(self.max_num_features) + ')==') 
+                print('==Max number of features reached (' + str(self.max_feature_outputs) + ')==') 
         return 
 
           
@@ -163,19 +163,21 @@ class Map(object):
         return 
         
         
-    def get_transition_goals(self, hi_goal):
+    def get_transition_goals(self, goal_input):
         """ Multiply the feature goals across the transitions that contribute to them, 
         and perform a bounded sum over all features to get the goal associated with each
         transition.
         """
-        self.hi_goal = hi_goal
-        return bounded_sum(self.feature_map * hi_goal, axis=0)
-        
+        if goal_input.size > 0:
+            goal_input = ut.pad(goal_input, (self.max_feature_outputs, 0))
+            return ut.bounded_sum(self.feature_map * goal_input, axis=0)
+        else:
+            return np.zeros((self.num_transitions, 1))
         
     def get_projections(self):
         all_projections = np.zeros((0,self.num_transitions))
         for feature_index in range(self.num_features):
-            features = np.zeros((self.max_num_features, 1))
+            features = np.zeros((self.max_feature_outputs, 1))
             features[feature_index, 0] = 1.
             projection = np.sign(np.max(self.feature_map * features, axis=0))[np.newaxis, :]
             all_projections = np.vstack((all_projections, projection))
@@ -188,8 +190,8 @@ class Map(object):
         viz_utils.visualize_array(self.feature_map, label=self.name + '_feature_map')
         coverage = np.reshape(np.sum(self.feature_map, axis=0), (int(np.sqrt(self.feature_map.shape[1])), -1))
         viz_utils.visualize_array(coverage, label=self.name + '_feature_map_coverage')
-        goals = np.reshape(bounded_sum(self.feature_map * self.hi_goal, axis=0), (int(np.sqrt(self.feature_map.shape[1])), -1))
-        viz_utils.visualize_array(goals, label=self.name + '_transition_goals')
+        #goals = np.reshape(ut.bounded_sum(self.feature_map * self.goal_input, axis=0), (int(np.sqrt(self.feature_map.shape[1])), -1))
+        #viz_utils.visualize_array(goals, label=self.name + '_transition_goals')
         
         return
     
