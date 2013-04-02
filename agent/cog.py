@@ -25,9 +25,12 @@ class Cog(object):
         goal_output = self.model.deliberate(transition_goals)     
         return goal_output
 
-    def get_projections(self):
-        map_projections = self.map.get_projections()
-        return self.model.get_projections(map_projections)
+    def compare_prediction(self, feature_inputs):
+        return self.model.compare_prediction(feature_inputs)
+
+    def get_projection(self, feature_index):
+        map_projection = self.map.get_projection(feature_index)
+        return self.model.get_projection(map_projection)
 
     def filled(self):
         return float(self.model.num_feature_inputs) / float(self.max_feature_inputs)

@@ -22,7 +22,7 @@ class World(BaseWorld):
         self.REWARD_MAGNITUDE = 100.
         self.ENERGY_COST = 0.01 * self.REWARD_MAGNITUDE
         self.JUMP_FRACTION = 0.1
-        self.display_state = False
+        self.display_state = True 
         self.name = 'one dimensional grid world'
         self.announce()
 

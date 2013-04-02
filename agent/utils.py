@@ -36,7 +36,7 @@ def bounded_sum(a, axis=0):
     #else
     return bounded_total[:,np.newaxis]
 
-def pad(a, shape):
+def pad(a, shape, val=0.):
     if shape[0] <= 0:
         rows = a.shape[0] - shape[0]
     else:
@@ -45,7 +45,7 @@ def pad(a, shape):
         cols = a.shape[1] - shape[1]
     else:
         cols = shape[1]
-    padded = np.zeros((rows,cols))
+    padded = np.ones((rows,cols)) * val
     padded[:a.shape[0], :a.shape[1]] = a
     return padded
 
