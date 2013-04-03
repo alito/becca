@@ -9,8 +9,8 @@ from agent.agent import Agent
 #from worlds.grid_1D_noise import World
 #from worlds.grid_2D import World
 #from worlds.grid_2D_dc import World
-from worlds.image_1D import World
-#from worlds.image_2D import World
+#from worlds.image_1D import World
+from worlds.image_2D import World
 
 """ If you want to run a world of your own, add the appropriate line here """
 #from worlds.hello import World
