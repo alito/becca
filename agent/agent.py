@@ -36,7 +36,7 @@ class Agent(object):
         self.reward_history = []
         self.reward_steps = []
         
-        self.num_levels = 4 # 1
+        self.num_levels =  5
         self.levels = []
         for level_ctr in range(self.num_levels):
             self.levels.append(Level(name='level'+str(level_ctr)))        
@@ -77,24 +77,52 @@ class Agent(object):
         for level in self.levels:
             feature_inputs = level.step_up(feature_inputs, self.reward) 
             
-        if feature_inputs.size > 0:
-            print 'Consider creating a new level'
-            
+        #if feature_inputs.size > 0:
+        #    print 'Consider creating a new level'
         goals = np.zeros((feature_inputs.size,1))
         for level in reversed(self.levels):
             goals = level.step_down(goals) 
-            
-        """ Strip the actions off the goals to make the current set of actions """
+        # Strip the actions off the goals to make the current set of actions
         if goals.size < self.num_actions:
             goals = ut.pad(goals,(self.num_actions, 0))
-        self.action = np.sign(goals[:self.num_actions,:])
+        self.action = np.zeros((self.num_actions, 1))
+        action_thresholds = np.random.random_sample((self.num_actions, 1))
+        self.action[np.nonzero(goals[:self.num_actions,:] 
+                    > action_thresholds)] = 1.
         self.log(raw_reward)
         return self.action
 
+    def get_projections(self, to_screen=False):
+        all_projections = []
+	for level_index in range(len(self.levels)):
+            level_projections = []
+            num_features = self.levels[level_index].output_map.shape[0]
+            for feature_index in range(num_features):    
+                features = np.zeros((num_features, 1))
+                features[feature_index, 0] = 1.
+                projection = self.get_projection(level_index, features)
+                level_projections.append(projection)
+                if to_screen:
+                    print 'projection', self.levels[level_index].name, 'feature', feature_index
+                    for i in range(projection.shape[1]):
+                        print np.nonzero(projection)[0][np.where(np.nonzero(projection)[1] == i)]
+            if len(level_projections) > 0:
+                all_projections.append(level_projections)
+        return all_projections
+  
+    def get_projection(self, level_index, features):
+        if level_index == -1:
+            return features
+        projection = np.zeros((self.levels[level_index].num_feature_inputs, features.shape[1] + 1))
+        for feature_index in range(features.shape[0]):
+            for state_index in range(features.shape[1]):
+                if features[feature_index,state_index] > 0:
+                    projection[:,state_index:state_index + 2] = \
+                                np.maximum(projection[:,state_index:state_index + 2], 
+                                self.levels[level_index].get_projection(feature_index) )
+        projection = self.get_projection(level_index - 1, projection)            
+        return projection
 
-    def get_projections(self):
-        return self.levels[0].get_projections()
-    
     def log(self, raw_reward):
         self.cumulative_reward += raw_reward
 
@@ -103,9 +131,8 @@ class Agent(object):
             self.cumulative_reward = 0    
 
         if (self.timestep % self.BACKUP_PERIOD) == 0:
-            self.save()    
+                self.save()    
         return
-
     
     def display(self):
         if (self.timestep % self.REPORTING_PERIOD) == 0:
@@ -116,10 +143,8 @@ class Agent(object):
             #for level in self.levels:
             #    level.display()
             feature_projections = self.get_projections()  
-
         return
  
-    
     def report_performance(self):
         performance = np.mean(self.reward_history)
         print("Final performance is %f" % performance)

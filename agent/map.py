@@ -19,13 +19,15 @@ class Map(object):
         self.num_features = 0
         
         """ Once a co-activity value exceeds this value, nucleate a new feature """ 
-        self.NEW_FEATURE_THRESHOLD = 0.1            # real,  x >= 0
+        #self.NEW_FEATURE_THRESHOLD = 0.1            # real,  x >= 0
+        self.NEW_FEATURE_THRESHOLD = 0.0003            # real,  x >= 0
         
         """ If the minimum co-activity between each of the elements of a growing feature 
         and the next candidates is lower than this value, don't add any more. 
         """
         self.MIN_SIG_COACTIVITY =  0.3 * self.NEW_FEATURE_THRESHOLD # real,  0 < x <= 1.0
         self.PLASTICITY_UPDATE_RATE = 0.01 * self.NEW_FEATURE_THRESHOLD # real, 0 < x < 1, small
+        #self.PLASTICITY_UPDATE_RATE = 0.1 * self.NEW_FEATURE_THRESHOLD # real, 0 < x < 1, small
         
         """ Determines how much an input's contribution to exciting features
         dissipates its contribution to the co-activity estimate.
@@ -69,6 +71,11 @@ class Map(object):
         coactivity_inputs = new_input * 2 ** (-combined_weights[:, np.newaxis] * self.DISSIPATION_FACTOR)
         
         """ As appropriate, update the co-activity estimate and create new features """                 
+        # debug
+        #if np.random.random_sample() < 1.:
+            #print 'ni', new_input[np.nonzero(new_input)].ravel()
+            #print 'fa', self.feature_activity[np.nonzero(self.feature_activity)].ravel()
+            #print 'ci', coactivity_inputs[np.nonzero(coactivity_inputs)].ravel()
         if not self.features_full:
             self.update_coactivity_matrix(coactivity_inputs)
             self.create_new_features()
@@ -92,11 +99,11 @@ class Map(object):
     def create_new_features(self):
         """ If the right conditions have been reached, create a new feature """    
         mutual_coactivity = np.minimum(self.coactivity, self.coactivity.T)
-        
         """ Make sure that disallowed combinations are not used to nucleate new features """
         mutual_coactivity_nuclei = mutual_coactivity * self.combination * self.combination.T
         max_coactivity = np.max(mutual_coactivity_nuclei)
-        
+        #if np.random.random_sample() <1.:
+        #    print 'max_coactivity', max_coactivity        
         if max_coactivity > self.NEW_FEATURE_THRESHOLD:
             
             """ Nucleate a new feature under the two elements for which co-activity is a maximum """
@@ -174,15 +181,11 @@ class Map(object):
         else:
             return np.zeros((self.num_transitions, 1))
         
-    def get_projections(self):
-        all_projections = np.zeros((0,self.num_transitions))
-        for feature_index in range(self.num_features):
-            features = np.zeros((self.max_feature_outputs, 1))
-            features[feature_index, 0] = 1.
-            projection = np.sign(np.max(self.feature_map * features, axis=0))[np.newaxis, :]
-            all_projections = np.vstack((all_projections, projection))
-        return all_projections
-        
+    def get_projection(self, feature_index):
+        feature = np.zeros((self.max_feature_outputs, 1))
+        feature[feature_index, 0] = 1.
+        projection = np.sign(np.max(self.feature_map * feature, axis=0))[np.newaxis, :]
+        return projection
         
     def visualize(self, save_eps=False):
         mutual_coactivity = np.minimum(self.coactivity, self.coactivity.T)

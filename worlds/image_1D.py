@@ -24,12 +24,12 @@ class World(BaseWorld):
         else:
             self.LIFESPAN = lifespan
         self.REPORTING_PERIOD = 10 ** 4
-        self.FEATURE_DISPLAY_INTERVAL = 10 ** 8
+        self.FEATURE_DISPLAY_INTERVAL = 10 ** 3
         self.REWARD_MAGNITUDE = 100.
         self.JUMP_FRACTION = 0.1
         self.ANIMATE_PERIOD = 10 ** 3
         self.STEP_COST =  0.1 * self.REWARD_MAGNITUDE
-        self.animate = False
+        self.animate = True 
         self.graphing = False
         self.name = 'one dimensional visual world'
         self.name_short = 'image_1D'
@@ -68,8 +68,6 @@ class World(BaseWorld):
         self.block_width = self.fov_width / (self.fov_span + 2)
 
         self.sensors = np.zeros(self.num_sensors)
-        self.last_feature_vizualized = 0
-
 
     def step(self, action): 
         self.timestep += 1
@@ -170,9 +168,12 @@ class World(BaseWorld):
     
     def vizualize(self, agent):
         """ visualize the feature set """
-        feature_set = viz_utils.reduce_feature_set(agent.perceiver, agent.num_primitives, agent.num_actions)
-        world_utils.vizualize_pixel_array_feature_set(feature_set, 
-                                          start=self.last_feature_vizualized, 
-                                          world_name=self.name_short, save_eps=True, save_jpg=True)
-        self.last_feature_vizualized = feature_set.shape[0]
-        
+        feature_set = agent.get_projections()
+        level_index = -1
+        for level in feature_set:
+            level_index += 1
+            feature_index = -1
+            for feature in level:
+                feature_index += 1
+                world_utils.vizualize_pixel_array_feature(feature[self.num_actions:,:], level_index, feature_index, 
+                                        world_name=self.name_short, save_eps=True, save_jpg=True)
