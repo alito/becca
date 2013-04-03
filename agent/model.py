@@ -20,8 +20,8 @@ class Model(object):
         self.time_steps = 0
         model_shape = (max_num_features, max_num_features)        
         self.count = np.zeros(model_shape)
-        self.expected_value = np.zeros(model_shape)
-        self.deviation = np.zeros(model_shape)
+        self.expected_effect = np.zeros(model_shape)
+        self.effect_uncertainty = np.zeros(model_shape)
         self.reward_value = np.zeros(model_shape)
         self.reward_uncertainty = np.ones(model_shape) * self.INITIAL_UNCERTAINTY
 
@@ -36,7 +36,6 @@ class Model(object):
                                              feature_input.size)
         # Pad the incoming feature_input array out to its full size 
         feature_input = ut.pad(feature_input, (self.max_num_features, 0))
-        #nonzero_feature_activities = np.nonzero(feature_input)[0]
         self.current_reward = reward
         self.new_cause = ut.bounded_sum([self.new_effect, 
                                 self.new_cause * (1 - self.CAUSE_DECAY_RATE)])
@@ -47,19 +46,35 @@ class Model(object):
                       ((1 - self.TRANSITION_UPDATE_RATE) / \
                       (self.count + ut.EPSILON) + self.TRANSITION_UPDATE_RATE)
         update_rate = np.minimum(0.5, update_rate_raw)
-        reward_difference = np.abs(reward - self.reward_value)
         self.count += transition_activities
         self.count -= 1 / (self.AGING_TIME_CONSTANT * self.count + 
                             ut.EPSILON)
         self.count = np.maximum(self.count, 0)
-        #self.feature_count += self.new_cause
-        #self.feature_count -= 1 / (self.AGING_TIME_CONSTANT * self.count + 
-        #                           ut.EPSILON)
-        #self.feature_count = np.maximum(self.feature_count, 0)
-        self.expected_value += s
+        reward_difference = np.abs(reward - self.reward_value)
         self.reward_value += (reward - self.reward_value) * update_rate
         self.reward_uncertainty += (reward_difference - 
                                     self.reward_uncertainty) * update_rate
+        
+        update_rate_raw_effect = transition_activities * /
+                      ((1 - self.TRANSITION_UPDATE_RATE) / \
+                      (self.count + ut.EPSILON) + self.TRANSITION_UPDATE_RATE)
+        update_rate_effect = np.minimum(0.5, update_rate_raw_effect)
+        self.cause_count += self.new_cause
+        self.cause_count -= 1 / (self.AGING_TIME_CONSTANT * self.count + 
+                                   ut.EPSILON)
+        self.cause_count = np.maximum(self.cause_count, 0)
+        effect_difference = np.abs(self.new_effect.T - self.expected_effect)
+        print 'ne', self.new_effect.T
+        print 'ee', self.expected_effect
+        print 'ed', effect_difference
+        self.expected_effect += (self.new_effect.T - self.expected_effect) * \
+                                update_rate_effect
+        print 'ee2', self.expected_effect
+        print 'ure', update_rate_effect
+        print 'eu', self.effect_uncertainty
+        self.effect_uncertainty += (effect_difference - 
+                                self.effect_uncertainty) * update_rate_effect 
+        print 'eu2', self.effect_uncertainty
         self.make_prediction(feature_input)
         # Reshape transition activities into a single column
         return transition_activities.ravel()[:,np.newaxis]
