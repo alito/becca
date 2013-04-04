@@ -8,11 +8,11 @@ class Model(object):
         self.max_num_features = max_num_features
         self.name = name
         self.goal = np.zeros((max_num_features, 1))
-        self.prediction = np.ones((max_num_features, 1))
+        self.surprise = np.ones((max_num_features, 1))
 
         self.AGING_TIME_CONSTANT = 10 ** 6                  # real, large
         self.TRANSITION_UPDATE_RATE = 10 ** -1              # real, 0 < x < 1
-        self.CAUSE_DECAY_RATE = 0.33                        # real, 0 < x < 1
+        self.CAUSE_DECAY_RATE = .33                        # real, 0 < x < 1
         self.GOAL_DECAY_RATE = 0.1                          # real, 0 < x < 1
         self.INITIAL_UNCERTAINTY = 0.5                      # real, 0 < x < 1
         self.MATCH_EXPONENT = 4
@@ -20,11 +20,12 @@ class Model(object):
         self.time_steps = 0
         model_shape = (max_num_features, max_num_features)        
         self.count = np.zeros(model_shape)
+        self.cause_count = np.zeros(model_shape)
         self.expected_effect = np.zeros(model_shape)
         self.effect_uncertainty = np.zeros(model_shape)
         self.reward_value = np.zeros(model_shape)
-        self.reward_uncertainty = np.ones(model_shape) * self.INITIAL_UNCERTAINTY
-
+        self.reward_uncertainty = np.ones(model_shape) * \
+				  self.INITIAL_UNCERTAINTY
         state_shape = (max_num_features,1)
         self.new_cause = np.zeros(state_shape)
         self.new_effect = np.zeros(state_shape)
@@ -42,7 +43,7 @@ class Model(object):
         self.new_effect = feature_input
         transition_activities = (self.new_cause * self.new_effect.T) ** \
                                  self.MATCH_EXPONENT
-        update_rate_raw = transition_activities * /
+        update_rate_raw = transition_activities * \
                       ((1 - self.TRANSITION_UPDATE_RATE) / \
                       (self.count + ut.EPSILON) + self.TRANSITION_UPDATE_RATE)
         update_rate = np.minimum(0.5, update_rate_raw)
@@ -55,27 +56,25 @@ class Model(object):
         self.reward_uncertainty += (reward_difference - 
                                     self.reward_uncertainty) * update_rate
         
-        update_rate_raw_effect = transition_activities * /
-                      ((1 - self.TRANSITION_UPDATE_RATE) / \
-                      (self.count + ut.EPSILON) + self.TRANSITION_UPDATE_RATE)
+        update_rate_raw_effect = ((1 - self.TRANSITION_UPDATE_RATE) / \
+                      (self.cause_count + ut.EPSILON) + 
+		      self.TRANSITION_UPDATE_RATE) * self.new_cause
         update_rate_effect = np.minimum(0.5, update_rate_raw_effect)
         self.cause_count += self.new_cause
-        self.cause_count -= 1 / (self.AGING_TIME_CONSTANT * self.count + 
+        self.cause_count -= 1 / (self.AGING_TIME_CONSTANT * self.cause_count +
                                    ut.EPSILON)
         self.cause_count = np.maximum(self.cause_count, 0)
-        effect_difference = np.abs(self.new_effect.T - self.expected_effect)
-        print 'ne', self.new_effect.T
-        print 'ee', self.expected_effect
-        print 'ed', effect_difference
-        self.expected_effect += (self.new_effect.T - self.expected_effect) * \
-                                update_rate_effect
-        print 'ee2', self.expected_effect
-        print 'ure', update_rate_effect
-        print 'eu', self.effect_uncertainty
+        effect_difference = np.abs(self.new_cause * self.new_effect.T - 
+				   self.expected_effect)
+        self.expected_effect += (self.new_cause * self.new_effect.T - 
+				 self.expected_effect) * update_rate_effect
         self.effect_uncertainty += (effect_difference - 
                                 self.effect_uncertainty) * update_rate_effect 
-        print 'eu2', self.effect_uncertainty
-        self.make_prediction(feature_input)
+        self.surprise = ut.weighted_average(np.abs((self.new_effect.T - 
+			    	  self.expected_effect) / 
+				  (self.effect_uncertainty + ut.EPSILON)), 
+				  self.new_cause / 
+			  	 (self.effect_uncertainty + ut.EPSILON))
         # Reshape transition activities into a single column
         return transition_activities.ravel()[:,np.newaxis]
    
@@ -127,29 +126,9 @@ class Model(object):
         self.goal = np.maximum( bounded_total_vote, self.goal)
         return self.goal[:self.num_feature_inputs]
 
-    def make_prediction(self, feature_input):
-        likely_effects = feature_input * self.count
-        print 'fi', feature_input.ravel()
-        print 'count', self.count
-        print 'le', likely_effects
-        self.expected_value
-        self.deviation
-        # Add one to numerator and denominator to make a non-zero expectation
-        # for yet-to-be-observed features
-        prediction_probabilities = (self.count + 1.) / \
-                                   (self.feature_count + 1.) 
-        print 'pp', prediction_probabilities
-        
-        self.prediction =  
-        return
+    def get_surprise(self):
+        return self.surprise[:self.num_feature_inputs]
 
-    def compare_prediction(self, feature_input):
-        # Truncate predictions for yet-to-be-created features
-        relevant_prediction = self.prediction[:feature_input.size,:]
-        # Compare predicted feature values with observed
-        
-        return 
-                 
     def get_projection(self, map_projection):
         num_inputs = self.reward_value.shape[0]
         projection = np.zeros((num_inputs,2))

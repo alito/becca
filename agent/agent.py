@@ -76,12 +76,12 @@ class Agent(object):
         feature_inputs = np.vstack((self.action, sensors))
         for level in self.levels:
             feature_inputs = level.step_up(feature_inputs, self.reward) 
-            
         #if feature_inputs.size > 0:
         #    print 'Consider creating a new level'
         goals = np.zeros((feature_inputs.size,1))
         for level in reversed(self.levels):
             goals = level.step_down(goals) 
+            print 'surprise', level.surprise.ravel()
         # Strip the actions off the goals to make the current set of actions
         if goals.size < self.num_actions:
             goals = ut.pad(goals,(self.num_actions, 0))

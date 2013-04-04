@@ -16,7 +16,8 @@ class Cog(object):
             self.map = Map(max_feature_inputs **2, max_feature_outputs, name=name)
 
     def step_up(self, feature_input, reward):
-        transition_activities = self.model.update(feature_input, reward)        
+        transition_activities = self.model.update(feature_input, reward) 
+        self.surprise = self.model.get_surprise()
         feature_output = self.map.update(transition_activities)
         return feature_output
 
@@ -24,9 +25,6 @@ class Cog(object):
         transition_goals = self.map.get_transition_goals(goal_input) 
         goal_output = self.model.deliberate(transition_goals)     
         return goal_output
-
-    def compare_prediction(self, feature_inputs):
-        return self.model.compare_prediction(feature_inputs)
 
     def get_projection(self, feature_index):
         map_projection = self.map.get_projection(feature_index)
