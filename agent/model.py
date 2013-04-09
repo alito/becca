@@ -70,6 +70,11 @@ class Model(object):
 				 self.expected_effect) * update_rate_effect
         self.effect_uncertainty += (effect_difference - 
                                 self.effect_uncertainty) * update_rate_effect 
+        # Reaction is the expected effect, turned into a goal
+        self.reaction = ut.weighted_average(self.expected_effect, 
+                                            self.new_cause)
+        # Surprise is the difference between the expected effect and
+        # the actual one
         self.surprise = ut.weighted_average(np.abs((self.new_effect.T - 
 			    	  self.expected_effect) / 
 				  (self.effect_uncertainty + ut.EPSILON)), 
@@ -86,7 +91,7 @@ class Model(object):
         similarity = np.tile(self.new_effect, (1,self.new_effect.size))
         estimated_reward_value = self.reward_value - self.current_reward + \
                 self.reward_uncertainty * \
-                (np.random.random_sample(self.reward_uncertainty.shape) * 2 - 1)
+                (np.random.random_sample(self.reward_uncertainty.shape)* 2 - 1)
         estimated_reward_value = np.maximum(estimated_reward_value, 0)
         estimated_reward_value = np.minimum(estimated_reward_value, 1)
         reward_value_by_feature = ut.weighted_average(estimated_reward_value, 
@@ -104,27 +109,38 @@ class Model(object):
              np.random.random_sample(count_by_feature.shape) + ut.EPSILON)
         exploration_vote = np.minimum(exploration_vote, 1.)
         exploration_vote[self.num_feature_inputs:] = 0.
+        #exploration_vote = np.zeros(reward_value_by_feature.shape)
         # debug
-        include_goals = False 
+        include_goals = True
         if include_goals:
             total_vote = reward_value_by_feature + goal_value_by_feature + \
                             exploration_vote
         else:
             total_vote = reward_value_by_feature + exploration_vote
-        adjusted_vote = total_vote * (1 - self.goal)
-        new_goal_feature = np.argmax(adjusted_vote, axis=0)
+        #adjusted_vote = total_vote * (1 - self.goal)
+        #new_goal_feature = np.argmax(adjusted_vote, axis=0)
         # debug 
         if include_goals:
-            bounded_total_vote = ut.bounded_sum([reward_value_by_feature, 
+            vote = ut.bounded_sum([reward_value_by_feature, 
                                 goal_value_by_feature, exploration_vote])
         else:
-            bounded_total_vote = ut.bounded_sum([reward_value_by_feature, 
+            vote = ut.bounded_sum([reward_value_by_feature, 
                                                  exploration_vote])
         #self.goal[new_goal_feature, :] = np.maximum(
-        #        bounded_total_vote[new_goal_feature, :], 
+        #        vote[new_goal_feature, :], 
         #        self.goal[new_goal_feature, :])
-        self.goal = np.maximum( bounded_total_vote, self.goal)
+        self.goal = np.maximum( vote, self.goal)
+        #return ut.pad(vote, (self.max_num_features, 0))
+        print 'goal', self.goal.ravel()
+        print 'vote', vote.ravel()
+        print 'rvbf', reward_value_by_feature.ravel()
+        return vote[:self.num_feature_inputs]
+
+    def get_goal(self):
         return self.goal[:self.num_feature_inputs]
+
+    def get_reaction(self):
+        return self.reaction[:self.num_feature_inputs]
 
     def get_surprise(self):
         return self.surprise[:self.num_feature_inputs]

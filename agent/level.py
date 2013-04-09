@@ -19,6 +19,7 @@ class Level(object):
         self.RANGE_DECAY_RATE = 10 ** -3
         
     def step_up(self, feature_inputs, reward):
+        # Assign any new feature_inputs to a cog
         if feature_inputs.size > self.num_feature_inputs:
             # Pad the input map
             self.input_map = ut.pad(self.input_map, (-1, 0))
@@ -29,9 +30,9 @@ class Level(object):
             cog_index = 0
             while not assigned:
                 if cog_index < len(self.cogs):
-                    # debug
-                    #if np.random.random_sample() > self.cogs[cog_index].filled():
-                    if True:
+                    if np.random.random_sample() > \
+                            self.cogs[cog_index].filled():
+                        #if True:
                         self.input_map[self.num_feature_inputs, cog_index] = 1.
                         assigned = True
                 else:
@@ -56,52 +57,74 @@ class Level(object):
                         (self.max_vals - self.min_vals + ut.EPSILON)
         self.min_vals += spread * self.RANGE_DECAY_RATE
         self.max_vals -= spread * self.RANGE_DECAY_RATE
-        # debug
+
+        # Process the upward pass of each of the cogs in the level
         feature_outputs = np.zeros((self.output_map.shape[0], 1))
         cog_index = 0
         for cog in self.cogs:
-            # pick out the cog's feature inputs, process them, and assign the results to feature outputs
+            # Pick out the cog's feature inputs, process them, and assign 
+            # the results to feature outputs
             cog_feature_inputs = inputs[np.nonzero(
 				        self.input_map[:, cog_index])[0], :]
             cog_feature_outputs = cog.step_up(cog_feature_inputs, reward)
             output_indices = np.nonzero(self.output_map[:, cog_index])[0]
             # Update the output_map to reflect the creation of any features
             if output_indices.size < cog_feature_outputs.size:
-                num_new_features = cog_feature_outputs.size - output_indices.size
-                self.output_map = ut.pad(self.output_map, (- num_new_features, 0))
+                num_new_features = cog_feature_outputs.size - \
+                                   output_indices.size
+                self.output_map = ut.pad(self.output_map, 
+                                        (-num_new_features, 0))
                 self.output_map[-num_new_features:, cog_index] = 1.
                 output_indices = np.nonzero(self.output_map[:, cog_index])[0]
-                feature_outputs = np.zeros((self.output_map.shape[0], 1))
+                feature_outputs = ut.pad(feature_outputs,
+                                        (-num_new_features, 0))
+            # Collect the feature_outputs from each cog
             if output_indices.size > 0:
                 feature_outputs[output_indices, :] = cog_feature_outputs
             cog_index += 1
         return feature_outputs
 
     def step_down(self, goal_inputs):
-        # Handle an uncommon condition where the number of goal inputs isn't yet as large as 
-        # the number of feature outputs
+        # Handle an uncommon condition where the number of goal inputs 
+        # isn't yet as large as the number of feature outputs
         if goal_inputs.size < self.output_map.shape[0]:
             goal_inputs = ut.pad(goal_inputs, (self.output_map.shape[0], 0))
-        goal_outputs = np.zeros((self.input_map.shape[0], 1))
+        goal_vote = np.zeros((self.input_map.shape[0], 1))
+        self.goal_output = np.zeros((self.input_map.shape[0], 1))
+        self.reaction = np.zeros((self.input_map.shape[0], 1))
         self.surprise = np.zeros((self.input_map.shape[0], 1))
+        # Process the downward pass of each of the cogs in the level
         cog_index = 0
         for cog in self.cogs:
+            # Gather the goal inputs for each cog
             goal_indices = np.nonzero(self.output_map[:, cog_index])[0]
             if goal_indices.size > 0:
                 cog_goal_inputs = (self.output_map * goal_inputs) \
                                     [goal_indices, cog_index][:,np.newaxis]
             else:
                 cog_goal_inputs = np.zeros((0,1))
-            cog_goal_outputs = cog.step_down(cog_goal_inputs)
+            cog_goal_vote = cog.step_down(cog_goal_inputs)
             output_indices = np.nonzero(self.input_map[:, cog_index])
-            goal_outputs[output_indices] = np.maximum(
-                    ut.pad(cog_goal_outputs, (output_indices[0].size, 0)),
-                    goal_outputs[output_indices]) 
+            goal_vote[output_indices] = np.maximum(
+                    ut.pad(cog_goal_vote, (output_indices[0].size, 0)),
+                    goal_vote[output_indices]) 
+            self.goal_output[output_indices] = np.maximum(
+                    ut.pad(cog.goal_output, (output_indices[0].size, 0)),
+                    self.goal_output[output_indices]) 
+            self.reaction[output_indices] = np.maximum(
+                    ut.pad(cog.reaction, (output_indices[0].size, 0)),
+                    self.reaction[output_indices]) 
             self.surprise[output_indices] = np.maximum(
                     ut.pad(cog.surprise, (output_indices[0].size, 0)),
                     self.surprise[output_indices]) 
             cog_index += 1
-        return goal_outputs 
+            #self.goal_output = ut.bounded_sum([self.goal_output, self.reaction])
+            #self.goal_output = np.maximum(self.goal_output, self.reaction)
+            print 'level cgo', cog.goal_output.ravel()
+            print 'level oi', output_indices
+            print 'level reaction', self.reaction.ravel()
+        print 'level go', self.goal_output.ravel()
+        return goal_vote 
 
     def get_projection(self, feature_index):
         cog_index = np.nonzero(self.output_map[feature_index, :])[0]

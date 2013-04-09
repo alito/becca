@@ -29,12 +29,9 @@ def bounded_sum(a, axis=0):
         for item in a[1:]:
             total += map_one_to_inf(item)
         return map_inf_to_one(total)
-    # else
-    bounded_total = map_inf_to_one(np.sum(map_one_to_inf(a), axis=axis))
-    #if axis==0:
-    #    return bounded_total[np.newaxis,:]        
-    #else
-    return bounded_total[:,np.newaxis]
+    else:
+        bounded_total = map_inf_to_one(np.sum(map_one_to_inf(a), axis=axis))
+        return bounded_total[:,np.newaxis]
 
 def pad(a, shape, val=0.):
     if shape[0] <= 0:

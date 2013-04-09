@@ -17,14 +17,16 @@ class Cog(object):
 
     def step_up(self, feature_input, reward):
         transition_activities = self.model.update(feature_input, reward) 
+        self.reaction= self.model.get_reaction()
         self.surprise = self.model.get_surprise()
         feature_output = self.map.update(transition_activities)
         return feature_output
 
     def step_down(self, goal_input):
         transition_goals = self.map.get_transition_goals(goal_input) 
-        goal_output = self.model.deliberate(transition_goals)     
-        return goal_output
+        goal_vote = self.model.deliberate(transition_goals)     
+        self.goal_output = self.model.get_goal()
+        return goal_vote
 
     def get_projection(self, feature_index):
         map_projection = self.map.get_projection(feature_index)

@@ -80,8 +80,10 @@ class Agent(object):
         #    print 'Consider creating a new level'
         goals = np.zeros((feature_inputs.size,1))
         for level in reversed(self.levels):
-            goals = level.step_down(goals) 
-            print 'surprise', level.surprise.ravel()
+            goal_vote = level.step_down(goals)
+            goals = level.goal_output
+            #print 'gv', goal_vote.ravel()
+            #print 'g', goals.ravel() 
         # Strip the actions off the goals to make the current set of actions
         if goals.size < self.num_actions:
             goals = ut.pad(goals,(self.num_actions, 0))
