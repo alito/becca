@@ -120,10 +120,10 @@ class Level(object):
             cog_index += 1
             #self.goal_output = ut.bounded_sum([self.goal_output, self.reaction])
             #self.goal_output = np.maximum(self.goal_output, self.reaction)
-            print 'level cgo', cog.goal_output.ravel()
-            print 'level oi', output_indices
-            print 'level reaction', self.reaction.ravel()
-        print 'level go', self.goal_output.ravel()
+            #print 'level cgo', cog.goal_output.ravel()
+            #print 'level oi', output_indices
+            #print 'level reaction', self.reaction.ravel()
+        #print 'level go', self.goal_output.ravel()
         return goal_vote 
 
     def get_projection(self, feature_index):

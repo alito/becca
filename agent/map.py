@@ -169,11 +169,10 @@ class Map(object):
             self.combination[element] = 0
         return 
         
-        
     def get_transition_goals(self, goal_input):
-        """ Multiply the feature goals across the transitions that contribute to them, 
-        and perform a bounded sum over all features to get the goal associated with each
-        transition.
+        """ Multiply the feature goals across the transitions that contribute 
+        to them, and perform a bounded sum over all features to get 
+        the goal associated with each transition.
         """
         if goal_input.size > 0:
             goal_input = ut.pad(goal_input, (self.max_feature_outputs, 0))

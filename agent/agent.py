@@ -35,6 +35,7 @@ class Agent(object):
         self.cumulative_reward = 0
         self.reward_history = []
         self.reward_steps = []
+        self.surprise_history = []
         
         self.num_levels =  5
         self.levels = []
@@ -78,12 +79,18 @@ class Agent(object):
             feature_inputs = level.step_up(feature_inputs, self.reward) 
         #if feature_inputs.size > 0:
         #    print 'Consider creating a new level'
+        max_surprise = 0.0
         goals = np.zeros((feature_inputs.size,1))
         for level in reversed(self.levels):
             goal_vote = level.step_down(goals)
             goals = level.goal_output
-            #print 'gv', goal_vote.ravel()
-            #print 'g', goals.ravel() 
+            if level.surprise.size > 0:
+                max_surprise = np.maximum(np.max(level.surprise), max_surprise)
+                max_arg = np.argmax(level.surprise)
+                #if np.random.random_sample() < 1./100.:
+                    #print level.name, 'max surprise', max_surprise, 'in input', max_arg
+                    #print level.surprise.ravel()
+        self.surprise_history.append(max_surprise)
         # Strip the actions off the goals to make the current set of actions
         if goals.size < self.num_actions:
             goals = ut.pad(goals,(self.num_actions, 0))

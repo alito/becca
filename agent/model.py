@@ -115,25 +115,16 @@ class Model(object):
         if include_goals:
             total_vote = reward_value_by_feature + goal_value_by_feature + \
                             exploration_vote
-        else:
-            total_vote = reward_value_by_feature + exploration_vote
-        #adjusted_vote = total_vote * (1 - self.goal)
-        #new_goal_feature = np.argmax(adjusted_vote, axis=0)
-        # debug 
-        if include_goals:
             vote = ut.bounded_sum([reward_value_by_feature, 
                                 goal_value_by_feature, exploration_vote])
         else:
+            total_vote = reward_value_by_feature + exploration_vote
             vote = ut.bounded_sum([reward_value_by_feature, 
                                                  exploration_vote])
-        #self.goal[new_goal_feature, :] = np.maximum(
-        #        vote[new_goal_feature, :], 
-        #        self.goal[new_goal_feature, :])
         self.goal = np.maximum( vote, self.goal)
-        #return ut.pad(vote, (self.max_num_features, 0))
-        print 'goal', self.goal.ravel()
-        print 'vote', vote.ravel()
-        print 'rvbf', reward_value_by_feature.ravel()
+        #print 'goal', self.goal.ravel()
+        #print 'vote', vote.ravel()
+        #print 'rvbf', reward_value_by_feature.ravel()
         return vote[:self.num_feature_inputs]
 
     def get_goal(self):
