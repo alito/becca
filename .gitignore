@@ -1,0 +1,16 @@
+*.pyc
+*.pickle
+log/*
+images/lib/*
+becca_*
+tester_profile
+*.gz
+*.dvi
+*.aux
+*.log
+*.bbl
+*.toc
+*.blg
+*~
+build
+
