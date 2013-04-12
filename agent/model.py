@@ -15,7 +15,7 @@ class Model(object):
         self.CAUSE_DECAY_RATE = .33                        # real, 0 < x < 1
         self.GOAL_DECAY_RATE = 0.1                          # real, 0 < x < 1
         self.INITIAL_UNCERTAINTY = 0.5                      # real, 0 < x < 1
-        self.MATCH_EXPONENT = 4
+        self.MATCH_EXPONENT = 1
         
         self.time_steps = 0
         model_shape = (max_num_features, max_num_features)        

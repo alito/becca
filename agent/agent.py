@@ -14,66 +14,52 @@ class Agent(object):
     of action commands. New features are created as necessary to adequately 
     represent the data.
     """
-    def __init__(self, num_sensors, num_actions, max_num_features=1000, show=True, agent_name='my'):
-        
+    def __init__(self, num_sensors, num_actions, show=True, agent_name='my'):
         self.show = show
         self.pickle_filename ="log/" + agent_name + "_agent.pickle"
-        
         self.REPORTING_PERIOD = 10 ** 3
         self.BACKUP_PERIOD = 10 ** 8
-
         self.num_sensors = num_sensors
         self.num_actions = num_actions
-
         self.reward = 0
         self.reward2 = 0
         self.action = np.zeros((self.num_actions,1))
-        
         self.timestep = 0
         self.graphing = True
-        
         self.cumulative_reward = 0
         self.reward_history = []
         self.reward_steps = []
         self.surprise_history = []
-        
         self.num_levels =  5
         self.levels = []
         for level_ctr in range(self.num_levels):
             self.levels.append(Level(name='level'+str(level_ctr)))        
-
         self.REWARD_RANGE_DECAY_RATE = 10 ** -10
         self.reward_min = ut.BIG
         self.reward_max = -ut.BIG
-       
         self.SENSOR_RANGE_DECAY_RATE = 10 ** -3
         self.sensor_min = np.ones((self.num_sensors, 1)) * ut.BIG
         self.sensor_max = np.ones((self.num_sensors, 1)) * (-ut.BIG)
         
-        
     def step(self, raw_sensors, raw_reward):
         self.timestep += 1
-        
-        """ Modify the reward so that it automatically falls between 0 and 1 """        
+        # Modify the reward so that it automatically falls between 0 and 1 
         self.reward_min = np.minimum(raw_reward, self.reward_min)
         self.reward_max = np.maximum(raw_reward, self.reward_max)
         spread = self.reward_max - self.reward_min
         self.reward = (raw_reward - self.reward_min) / (spread + ut.EPSILON)
         self.reward_min += spread * self.REWARD_RANGE_DECAY_RATE
         self.reward_max -= spread * self.REWARD_RANGE_DECAY_RATE
-                
         if raw_sensors.ndim == 1:
             raw_sensors = raw_sensors[:,np.newaxis]
-        
-        """ Modify sensor inputs so that they fall between 0 and 1 """
+        # Modify sensor inputs so that they fall between 0 and 1
         self.sensor_min = np.minimum(raw_sensors , self.sensor_min)
         self.sensor_max = np.maximum(raw_sensors , self.sensor_max)
         spread = self.sensor_max - self.sensor_min
         sensors = (raw_sensors - self.sensor_min) / (spread + ut.EPSILON)
         self.sensor_min += spread * self.SENSOR_RANGE_DECAY_RATE
         self.sensor_max -= spread * self.SENSOR_RANGE_DECAY_RATE
-        
-        # propogate the new information up and down through the levels
+        # Propogate the new information up and down through the levels
         feature_inputs = np.vstack((self.action, sensors))
         for level in self.levels:
             feature_inputs = level.step_up(feature_inputs, self.reward) 
@@ -87,9 +73,6 @@ class Agent(object):
             if level.surprise.size > 0:
                 max_surprise = np.maximum(np.max(level.surprise), max_surprise)
                 max_arg = np.argmax(level.surprise)
-                #if np.random.random_sample() < 1./100.:
-                    #print level.name, 'max surprise', max_surprise, 'in input', max_arg
-                    #print level.surprise.ravel()
         self.surprise_history.append(max_surprise)
         # Strip the actions off the goals to make the current set of actions
         if goals.size < self.num_actions:
@@ -112,9 +95,11 @@ class Agent(object):
                 projection = self.get_projection(level_index, features)
                 level_projections.append(projection)
                 if to_screen:
-                    print 'projection', self.levels[level_index].name, 'feature', feature_index
+                    print 'projection', self.levels[level_index].name, \
+                            'feature', feature_index
                     for i in range(projection.shape[1]):
-                        print np.nonzero(projection)[0][np.where(np.nonzero(projection)[1] == i)]
+                        print np.nonzero(projection)[0][np.where(np.nonzero(
+                                                         projection)[1] == i)]
             if len(level_projections) > 0:
                 all_projections.append(level_projections)
         return all_projections
@@ -122,13 +107,16 @@ class Agent(object):
     def get_projection(self, level_index, features):
         if level_index == -1:
             return features
-        projection = np.zeros((self.levels[level_index].num_feature_inputs, features.shape[1] + 1))
+        projection = np.zeros((self.levels[level_index].num_feature_inputs, 
+                               features.shape[1] + 1))
         for feature_index in range(features.shape[0]):
             for state_index in range(features.shape[1]):
-                if features[feature_index,state_index] > 0:
-                    projection[:,state_index:state_index + 2] = \
-                                np.maximum(projection[:,state_index:state_index + 2], 
-                                self.levels[level_index].get_projection(feature_index) )
+                if features[feature_index, state_index] > 0:
+                    new_contribution = self.levels[
+                            level_index].get_projection(feature_index)
+                    projection[:,state_index:state_index + 2] = np.maximum(
+                            projection[:,state_index:state_index + 2], 
+                            new_contribution)
         projection = self.get_projection(level_index - 1, projection)            
         return projection
 
@@ -146,11 +134,13 @@ class Agent(object):
     def display(self):
         if (self.timestep % self.REPORTING_PERIOD) == 0:
             print self.timestep, 'time steps'
-            self.reward_history.append(float(self.cumulative_reward) / self.REPORTING_PERIOD)
+            self.reward_history.append(float(self.cumulative_reward) / 
+                                       self.REPORTING_PERIOD)
             self.reward_steps.append(self.timestep)
             self.show_reward_history(save_eps=True)
             #for level in self.levels:
             #    level.display()
+            #self.levels[0].cogs[0].display()
             feature_projections = self.get_projections()  
         return
  
@@ -159,7 +149,6 @@ class Agent(object):
         print("Final performance is %f" % performance)
         self.show_reward_history(save_eps=True, block=self.show)
         return performance
-        
     
     def show_reward_history(self, block=False, save_eps=False,
                             epsfilename='log/reward_history.eps'):
@@ -170,13 +159,11 @@ class Agent(object):
             plt.ylabel("average reward")
             fig.show()
             fig.canvas.draw()
-
             if save_eps:
                 plt.savefig(epsfilename, format='eps')
             if block:
                 plt.show()
         return
-    
     
     def save(self):
         success = False
@@ -191,7 +178,6 @@ class Agent(object):
         else:
             success = True
         return success
-           
         
     def restore(self):
         restored_agent = self
@@ -214,7 +200,6 @@ class Agent(object):
                 print("The agent " + self.pickle_filename + " does not have " +
                       "the same number of input and output elements as the world.")
                 print("Creating a new agent from scratch.")
-                
         except IOError:
             print("Couldn't open %s for loading" % self.pickle_filename)
         except pickle.PickleError, e:

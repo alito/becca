@@ -5,7 +5,7 @@ import utils as ut
 import numpy as np
 
 class Level(object):
-    def __init__(self, max_inputs_per_cog=20, max_outputs_per_cog=30, 
+    def __init__(self, max_inputs_per_cog=40, max_outputs_per_cog=50, 
                     name='anonymous'):
         self.cogs = []
         self.name = name

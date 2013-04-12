@@ -22,7 +22,10 @@ def test(world, restore=False, show=True, agent_name="test"):
         MAX_NUM_FEATURES = 100
     else:
         MAX_NUM_FEATURES = world.MAX_NUM_FEATURES
-    agent = Agent(world.num_sensors, world.num_actions, MAX_NUM_FEATURES, agent_name=agent_name, show=show)
+    # agent = Agent(world.num_sensors, world.num_actions, 
+    #               MAX_NUM_FEATURES, agent_name=agent_name, show=show)
+    agent = Agent(world.num_sensors, world.num_actions, 
+                  agent_name=agent_name, show=show)
     if restore:
         agent = agent.restore()
     """ If configured to do so, the world sets some Becca parameters to 

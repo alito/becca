@@ -20,14 +20,15 @@ class Map(object):
         
         """ Once a co-activity value exceeds this value, nucleate a new feature """ 
         #self.NEW_FEATURE_THRESHOLD = 0.1            # real,  x >= 0
-        self.NEW_FEATURE_THRESHOLD = 0.0003            # real,  x >= 0
+        self.NEW_FEATURE_THRESHOLD = 10 ** -3 
         
         """ If the minimum co-activity between each of the elements of a growing feature 
         and the next candidates is lower than this value, don't add any more. 
         """
-        self.MIN_SIG_COACTIVITY =  0.3 * self.NEW_FEATURE_THRESHOLD # real,  0 < x <= 1.0
-        self.PLASTICITY_UPDATE_RATE = 0.01 * self.NEW_FEATURE_THRESHOLD # real, 0 < x < 1, small
-        #self.PLASTICITY_UPDATE_RATE = 0.1 * self.NEW_FEATURE_THRESHOLD # real, 0 < x < 1, small
+        # self.MIN_SIG_COACTIVITY =  0.3 * self.NEW_FEATURE_THRESHOLD # real,  0 < x <= 1.0
+        self.MIN_SIG_COACTIVITY =  0.7 * self.NEW_FEATURE_THRESHOLD # real,  0 < x <= 1.0
+        #self.PLASTICITY_UPDATE_RATE = 0.01 * self.NEW_FEATURE_THRESHOLD # real, 0 < x < 1, small
+        self.PLASTICITY_UPDATE_RATE = 0.1 * self.NEW_FEATURE_THRESHOLD # real, 0 < x < 1, small
         
         """ Determines how much an input's contribution to exciting features
         dissipates its contribution to the co-activity estimate.
@@ -68,33 +69,31 @@ class Map(object):
         """ Calculate how much energy each input has left to contribute to the co-activity estimate """
         final_activated_feature_map = self.feature_activity * feature_contribution_map
         combined_weights = np.sum(final_activated_feature_map, axis=0) + ut.EPSILON
-        coactivity_inputs = new_input * 2 ** (-combined_weights[:, np.newaxis] * self.DISSIPATION_FACTOR)
-        
-        """ As appropriate, update the co-activity estimate and create new features """                 
-        # debug
-        #if np.random.random_sample() < 1.:
-            #print 'ni', new_input[np.nonzero(new_input)].ravel()
-            #print 'fa', self.feature_activity[np.nonzero(self.feature_activity)].ravel()
-            #print 'ci', coactivity_inputs[np.nonzero(coactivity_inputs)].ravel()
+        coactivity_inputs = new_input * 2 ** (-combined_weights[:, np.newaxis]\
+                                              * self.DISSIPATION_FACTOR)
+        # As appropriate update the co-activity estimate and create new features
         if not self.features_full:
             self.update_coactivity_matrix(coactivity_inputs)
             self.create_new_features()
         
         return self.feature_activity[:self.num_features,:]
 
-
     def update_coactivity_matrix(self, new_input):
-        """ Update an estimate of co-activity between every feature and every other feature """
+        """ Update an estimate of co-activity between every feature 
+        and every other feature. 
+        """
         instant_coactivity = np.dot(new_input, new_input.transpose())
-        
-        """ Determine the upper bound on the size of the incremental step toward the instant co-activity """
-        delta_coactivity = np.tile(new_input.transpose(), (new_input.size, 1)) * \
-                                (instant_coactivity - self.coactivity)
-                     
-        """ Adapt co-activity toward instant co-activity by the calculated step size at the prescibed rate """
+        # debug
+        #if np.random.random_sample() < 0.01:
+        #    print self.name, 'ic', np.max(instant_coactivity), '::',instant_coactivity.ravel()
+        # Determine the upper bound on the size of the incremental step 
+        # toward the instant co-activity.
+        delta_coactivity = np.tile(new_input.transpose(),(new_input.size, 1)) \
+                             * (instant_coactivity - self.coactivity)
+        # Adapt co-activity toward instant co-activity by the calculated 
+        # step size at the prescibed rate.
         self.coactivity += self.PLASTICITY_UPDATE_RATE * delta_coactivity
         return
-    
     
     def create_new_features(self):
         """ If the right conditions have been reached, create a new feature """    
@@ -102,8 +101,8 @@ class Map(object):
         """ Make sure that disallowed combinations are not used to nucleate new features """
         mutual_coactivity_nuclei = mutual_coactivity * self.combination * self.combination.T
         max_coactivity = np.max(mutual_coactivity_nuclei)
-        #if np.random.random_sample() <1.:
-        #    print 'max_coactivity', max_coactivity        
+        #if np.random.random_sample() < 0.1:
+        #    print self.name, 'max_coactivity', max_coactivity        
         if max_coactivity > self.NEW_FEATURE_THRESHOLD:
             
             """ Nucleate a new feature under the two elements for which co-activity is a maximum """
@@ -183,17 +182,19 @@ class Map(object):
     def get_projection(self, feature_index):
         feature = np.zeros((self.max_feature_outputs, 1))
         feature[feature_index, 0] = 1.
-        projection = np.sign(np.max(self.feature_map * feature, axis=0))[np.newaxis, :]
+        projection = np.sign(np.max(self.feature_map * feature, axis=0)) \
+                            [np.newaxis, :]
         return projection
         
     def visualize(self, save_eps=False):
         mutual_coactivity = np.minimum(self.coactivity, self.coactivity.T)
-        viz_utils.visualize_array(mutual_coactivity, label=self.name + '_coactivity', save_eps=save_eps)
-        viz_utils.visualize_array(self.feature_map, label=self.name + '_feature_map')
-        coverage = np.reshape(np.sum(self.feature_map, axis=0), (int(np.sqrt(self.feature_map.shape[1])), -1))
-        viz_utils.visualize_array(coverage, label=self.name + '_feature_map_coverage')
-        #goals = np.reshape(ut.bounded_sum(self.feature_map * self.goal_input, axis=0), (int(np.sqrt(self.feature_map.shape[1])), -1))
-        #viz_utils.visualize_array(goals, label=self.name + '_transition_goals')
-        
+        viz_utils.visualize_array(mutual_coactivity, 
+                                  label=self.name + '_coactivity', 
+                                  save_eps=save_eps)
+        viz_utils.visualize_array(self.feature_map, 
+                                  label=self.name + '_feature_map')
+        coverage = np.reshape(np.sum(self.feature_map, axis=0), 
+                             (int(np.sqrt(self.feature_map.shape[1])), -1))
+        viz_utils.visualize_array(coverage, 
+                                  label=self.name + '_feature_map_coverage')
         return
-    
