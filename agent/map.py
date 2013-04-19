@@ -1,16 +1,18 @@
+import itertools
+import numpy as np
 
 import utils as ut
 import viz_utils
 
-import itertools
-import numpy as np
-
 class Map(object):
-    """ The object responsible for feature extraction. 
-    This includes assembling inputs of various types, determining their co-activity, creating features,
-    and using the feature map at each time step to translate the input into feature activity.
-    """
+    """ 
+    The object responsible for feature extraction. 
     
+    This includes assembling inputs of various types, determining 
+    their co-activity, creating features,
+    and using the feature map at each time step to translate 
+    the input into feature activity.
+    """
     def __init__(self, num_transitions, max_feature_outputs, name='map_name'):
 
         self.name = name
@@ -19,16 +21,16 @@ class Map(object):
         self.num_features = 0
         
         """ Once a co-activity value exceeds this value, nucleate a new feature """ 
-        #self.NEW_FEATURE_THRESHOLD = 0.1            # real,  x >= 0
-        self.NEW_FEATURE_THRESHOLD = 10 ** -3 
+        self.NEW_FEATURE_THRESHOLD = 0.1            # real,  x >= 0
+        #self.NEW_FEATURE_THRESHOLD = 10 ** -4 
         
         """ If the minimum co-activity between each of the elements of a growing feature 
         and the next candidates is lower than this value, don't add any more. 
         """
         # self.MIN_SIG_COACTIVITY =  0.3 * self.NEW_FEATURE_THRESHOLD # real,  0 < x <= 1.0
-        self.MIN_SIG_COACTIVITY =  0.7 * self.NEW_FEATURE_THRESHOLD # real,  0 < x <= 1.0
-        #self.PLASTICITY_UPDATE_RATE = 0.01 * self.NEW_FEATURE_THRESHOLD # real, 0 < x < 1, small
-        self.PLASTICITY_UPDATE_RATE = 0.1 * self.NEW_FEATURE_THRESHOLD # real, 0 < x < 1, small
+        self.MIN_SIG_COACTIVITY =  0.95 * self.NEW_FEATURE_THRESHOLD # real,  0 < x <= 1.0
+        self.PLASTICITY_UPDATE_RATE = 0.01 * self.NEW_FEATURE_THRESHOLD # real, 0 < x < 1, small
+        #self.PLASTICITY_UPDATE_RATE = 0.1 * self.NEW_FEATURE_THRESHOLD # real, 0 < x < 1, small
         
         """ Determines how much an input's contribution to exciting features
         dissipates its contribution to the co-activity estimate.

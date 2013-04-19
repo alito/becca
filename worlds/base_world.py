@@ -31,6 +31,9 @@ class World(object):
         else:
             return False
    
+    def log(self):
+        pass
+
     def is_time_to_display(self):
         return False
      

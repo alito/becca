@@ -26,18 +26,6 @@ def visualize_array(image_data, shape=None, save_eps=False, label='data_figure',
     if save_eps:
         fig.savefig(epsfilename, format='eps')
     return
-  
- 
-    '''def visualize_array(feature_map, ):
-    fig = plt.figure(utils.ord_str(label))
-    plt.summer()
-    im = plt.imshow(feature_map)
-    im.set_interpolation('nearest')
-    plt.title(label)
-    fig.show()
-    fig.canvas.draw()
-    return
-    '''
         
 def reduce_feature_set(perceiver, n_primitives, n_actions):
     """ Take in the feature map and express each feature in terms of the lowest level inputs 
