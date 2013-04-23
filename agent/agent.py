@@ -22,16 +22,15 @@ class Agent(object):
         sensors and actions arrays that the agent and the world use to
         communicate with each other. 
         """
+        self.VISUALIZE_PERIOD = 10 ** 3
+        self.BACKUP_PERIOD = 10 ** 4
+        self.show = show
+        self.pickle_filename ="log/" + agent_name + "_agent.pickle"
         # TODO: Automatically adapt to the number of sensors pass in
         self.num_sensors = num_sensors
         self.num_actions = num_actions
-        self.show = show
-        self.pickle_filename ="log/" + agent_name + "_agent.pickle"
-        self.REPORTING_PERIOD = 10 ** 3
-        self.BACKUP_PERIOD = 10 ** 4
 
-        # Create level infrastructure
-        # TODO: Automatically create levels based on the agent's needs
+        # Initialize agent infrastructure
         self.num_levels =  1
         self.levels = [Level(name='level'+str(self.num_levels - 1))]
         self.action = np.zeros((self.num_actions,1))
@@ -69,7 +68,8 @@ class Agent(object):
         if feature_inputs.size > 0:
             self.num_levels +=  1
             self.levels.append(Level(name='level'+str(self.num_levels - 1)))
-            feature_inputs = levels[-1].step_up(feature_inputs, self.reward) 
+            feature_inputs = self.levels[-1].step_up(feature_inputs, 
+                                                     self.reward) 
             print "Added level", self.num_levels - 1
 
         # Propogate the goals down through the levels
@@ -164,20 +164,13 @@ class Agent(object):
     def _display(self, unscaled_reward):
         """ Show the current state and some history of the agent """
         self.cumulative_reward += unscaled_reward
-        if (self.timestep % self.REPORTING_PERIOD) == 0:
+        if (self.timestep % self.VISUALIZE_PERIOD) == 0:
             print self.timestep, 'time steps'
             self.reward_history.append(float(self.cumulative_reward) / 
-                                       self.REPORTING_PERIOD)
+                                       self.VISUALIZE_PERIOD)
             self.cumulative_reward = 0    
             self.reward_steps.append(self.timestep)
             self._show_reward_history(save_eps=True)
-            # For a full display of BECCA's internal state, uncomment
-            # these lines. This makes a lot of plots.
-            #for level in self.levels:
-            #    level.display()
-            #    for cog in level.cogs:
-            #        cog.display()
-            #feature_projections = self.get_projections(to_screen=True)  
         return
  
     def report_performance(self):

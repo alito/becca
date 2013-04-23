@@ -1,3 +1,7 @@
+import cProfile
+import numpy as np
+import pstats
+
 """
 Run a BECCA agent with a world.
 
@@ -20,13 +24,9 @@ Run from the command line, e.g.
 
 # If you want to run a world of your own, add the appropriate line here
 #from worlds.hello import World
-
-import cProfile
-import numpy as np
-import pstats
+from becca_world_listen.listen import World
 
 from agent.agent import Agent 
-from becca_world_listen.listen import World
 
 def test(world, restore=False, show=True, agent_name="test"):
     """ 
@@ -42,6 +42,7 @@ def test(world, restore=False, show=True, agent_name="test"):
     """
     agent = Agent(world.num_sensors, world.num_actions, 
                   agent_name=agent_name, show=show)
+    # debug
     if restore:
         agent = agent.restore()
     
@@ -56,9 +57,7 @@ def test(world, restore=False, show=True, agent_name="test"):
     while(world.is_alive()):
         sensors, reward = world.step(actions)
         actions = agent.step(sensors, reward)
-        world.log(agent)
-        if world.is_time_to_display():          
-            world.vizualize(agent)
+        world.visualize(agent)
     return agent.report_performance()
 
 def profile():

@@ -166,13 +166,13 @@ class Model(object):
     
     def visualize(self, save_eps=True):
         """ Show the internal state of the model in a pictorial format """
-        import viz_utils
-        viz_utils.visualize_array(self.reward_value, 
+        import utils
+        utils.visualize_array(self.reward_value, 
                                   label=self.name + '_reward')
-        #viz_utils.visualize_array(self.reward_uncertainty, 
+        #utils.visualize_array(self.reward_uncertainty, 
         #                          label=self.name + '_reward_uncertainty')
-        viz_utils.visualize_array(np.log(self.count + 1.), 
+        utils.visualize_array(np.log(self.count + 1.), 
                                   label=self.name + '_count')
-        #viz_utils.visualize_model(self, self.num_primitives, 
+        #utils.visualize_model(self, self.num_primitives, 
         #                          self.num_actions, 10)
         return
