@@ -1,0 +1,63 @@
+\chapter{Computational complexity and scaling}
+
+There are two main factors to consider when analyzing how well \textsc{Becca} scales up to large problems. The first is the computational demands of a single time step. The second is how many time steps will be required to achieve desired performance on a given task. These are addressed separately.
+
+\section{Computational complexity per time step}
+
+The per-time-step complexity characterizes how much computational effort  \textsc{Becca} requires to update its internal state with each new set of inputs and to select an action to pass back to the world. 
+
+\subsection{Feature extractor}
+In the feature extractor, computational complexity is dominated by the estimation of co-activity.  This requires the creation and manipulation of several two-dimensional arrays that can be as large as $(N + M) \times (N + M)$, where $N$ is the number of sensor inputs and $M$ is the maximum number of features. This results in an $\mathcal{O}((N+M)^2)$ complexity in the feature extractor. In practice the actual number of features created may be much less than $M$, but $M$ provides an upper bound.
+
+Low-order polynomial complexity is probably the best that can be hoped for in feature extraction without introducing a great deal of domain knowledge. Comparing every member in a set of inputs against every other member is an inherently polynomial operation. Polynomial complexity is typical of other feature extraction methods. 
+
+\subsection{Reinforcement learner}
+In the reinforcement learner, computational complexity is dominated by comparison of the current state with the model. Specifically, it involves operations on an array that is up to $M \times L$, where $M$ is the maximum number of features and $L$ is the maximum number of transitions in the model. This results in an $\mathcal{O}(ML)$ complexity in the feature extractor. In practice the actual number of features created may be much less than $M$ and the number of transitions created may be much less than $L$, but these provide upper bounds.
+
+%The complexity of computation in the reinforcement learner is directly related to the nature of the model it uses. By representing the value function for the task across a high-dimensional, real-valued state-action space using specific high-order transitions, the model makes a trade-off between richness of representation and the size of that representation. By making assumptions about the functional relationship between value and state variables, the model might be parameterized with just  $\mathcal{O}(M)$ parameters. But this would involve the incorporation of a great deal of domain knowledge and the acceptance of assumptions that greatly limit the generality of the approach. On the other hand, explicitly expanding the high-order representation of the transitions would increase the complexity to $\mathcal{O}(M^kL)$, where $k$ is the highest order allowed. This would greatly increase the computational requirements. The selected approach maintains a rich representation, but without creating an infeasibly large model.
+
+\section{Number of time steps required}  
+
+The number of time steps required for \textsc{Becca} to begin performing well on any task is of course highly task dependent. The two main components to this (which are conducted simultaneously) are learning a feature representation and learning a model. In order to perform a task well, the feature representation must be sufficiently sophisticated  and the model must be sufficiently detailed and accurate. There are as yet no performance guarantees for any portion of  \textsc{Becca}, so what follows is based largely on experience gained during its development.
+
+\subsection{Feature extraction}
+The number of time steps required to create new features is determined entirely by the co-activity estimate. The estimate is calculated incrementally, as detailed in Equation~\ref{coactivity_update}. There are several factors in feature extraction rate.
+
+\begin{itemize}
+\item The value of the constant in the update equation greatly influences how features are created. If it is too high, the co-activity estimate becomes noisy and less useful features are created. If the constant is too low, features take too long to create. 
+
+\item The co-activity also depends on the nature of the inputs. If they are highly mutually predictive (e.g. redundant) then their co-activity estimate will increase rapidly. If they are related, but more loosely so, then the co-activity estimate will require more time steps to rise to the point where it will spawn feature extraction. 
+
+\item The frequency with which inputs appear affects how quickly they will be used to create a feature. If two inputs are completely co-active, but appear only rarely, it will take many time steps for the estimate of their co-activity to be incremented to a significant level.
+
+\end{itemize}
+
+After a feature is created, it begins to establish a history of co-activity with all the inputs and other created features as well. This results in second- and later-generation features. The number of generations necessary to create features that are sufficiently sophisticated for the agent to model and succeed at a task is completely task-dependent.
+
+In practice, first generation visual features in the \texttt{image\_nD} worlds begin to be created after a thousand time steps, and second generation features begin to be created after about ten thousand time steps. Performance on the \texttt{image\_1D} and  \texttt{image\_2D} worlds begins to increase with the extraction of the first features, and plateaus after the second generation features have nearly all been created, at a few tens of thousands of time steps. 
+
+\subsection{Model learning}
+
+The model can only be as good as the features upon which it is based. So while the model is being created with every time step, if the existence of a certain feature set is critical to learning a task, it cannot begin to be useful until after that feature set is created. Following this reasoning, the number of time steps required to learn to perform well on a task is most closely related to the {\em sum} of the time step requirements for the feature extractor and the model, even though they are both learning at the same time.
+
+The learning time for just the model is best understood by looking at the case where the feature extractor is inactive. The model learns based on the primitive feature inputs only. The learning time is highly dependent on the particular set of features used and on the inherent difficulty of the task. In the \texttt{grid\_2D} task with 50 discrete states and 9 discrete actions, this time has been shown to be less than 1,000 time steps, with about 10,000 needed to plateau at its best behavior. This is consistent with a few visits, on average, to each position in the state-action space.
+
+\section{How well will it scale?}
+
+The computational complexity per time step is not negligible, but is also not prohibitively high. Computation costs being what they currently are, the $\mathcal{O}((N+M)^2)$ and  $\mathcal{O}(ML)$ calculations are quite feasible to do, for even moderately large values of $L$, $M$, and $N$. And truly large values could be handled at using more exotic architectures with commensurate additional expense. 
+
+In fact, if using \textsc{Becca} with a physical robot, the length of a time step is much more likely to be limited by whatever physical action the robot takes. This leaves the number of time steps  to consider.
+
+The time required to create features does not show a dependence on the number of inputs. This is a reflection of the fact that the the feature extraction process is parallel in its structure. The co-activity between any two inputs is calculated in the same way, regardless of how many other inputs are simultaneously present. This supports cautious extrapolation that the feature extraction process is not a function of the number of inputs. Increasing the number and types of sensors in unlikely to change the rate at which features are created. How the number of time steps required to create features will extrapolate to more challenging tasks is still a matter of some speculation and is likely to be highly task dependent.
+
+The reinforcement learner's rate of learning puts \textsc{Becca} on par with some of the faster reinforcement learning algorithms, including those that use experience playback to help their value functions converge more quickly. Yet these methods still suffer from the criticism that they take too long to learn to apply to many practical problems. There are several reasons to suspect that \textsc{Becca} may be able to overcome these limitations.
+
+\begin{enumerate} 
+%\item{\bf Attention} Focusing attention on a few features at a time allows an agent to simplify its environment. When performed effectively, filtering experience through attention essentially reduces the dimensionality of the agent's state down to the minimum required to execute a task.  \textsc{Becca}'s attention mechanism was intended to do exactly this.
+\item {\bf State generalization} \textsc{Becca}'s action selection heuristic makes use a type of generalization when it looks for contexts that are similar to the current context, rather than restricting itself to exact matches. This allows it to make use of experience that may be loosely relevant or somewhat erroneous, but still a big improvement over knowing nothing at all. Then, as \textsc{Becca} gathers more experience and populates its model more densely, it can rely on increasingly relevant experience as it chooses actions.
+%\item {\bf Temporal generalization} Transitions' representation of contexts and effects, using temporally collapsed state sequences allows for some temporal generalization. Features that are observed in opposite order or with a slight time delay are still recognized as being similar, if not exact matches. This helps to generalize the complex temporal information contained in the transitions.
+\item {\bf Multiple resolution representation} Sensors that represent information, such as pixel values or a joint's position, at different resolutions can speed up the learning process as well. Using the coarse information, it may be possible to learn to perform a task quickly and robustly, but poorly. However, the ability to perform poorly provides a great head start to learning using the finer-resolution sensors, with the result that the agent learns to perform the task well more quickly than it would without the coarse sensors. Having multiple sets of sensors at different resolutions has a strong biological motivation.
+\item {\bf Feature learning} For many learning tasks, once an appropriate feature representation is in place, the task becomes trivial. \textsc{Becca} has the advantage over traditional reinforcement learning techniques that it is paired with a feature extractor that is always trying to represent the structure of its environment in more sophisticated ways. As the reinforcement learner spends time learning a task, it is being supplied with ever higher-level representations of its world.
+\end{enumerate}
+
+Based only on \textsc{Becca}'s demonstrated performance and these considerations, it is too early to be certain how many time steps will be required to learn more complex tasks, but there is reason for cautious optimism. 
