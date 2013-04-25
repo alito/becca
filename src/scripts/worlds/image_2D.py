@@ -150,7 +150,7 @@ class World(BaseWorld):
         self.row_history.append(self.row_position)
         self.column_history.append(self.column_position)
         if (self.timestep % self.VISUALIZE_PERIOD) == 0:
-            print("world is %s timesteps old" % self.timestep)
+            print ' '.join(["world is", str(self.timestep), "timesteps old."])
             fig = plt.figure(11)
             plt.clf()
             plt.plot( self.row_history, 'k.')    

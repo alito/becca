@@ -116,7 +116,7 @@ class World(BaseWorld):
         # Periodically show the state history and inputs as perceived by BECCA
         self.column_history.append(self.column_position)
         if (self.timestep % self.VISUALIZE_PERIOD) == 0:
-            print ''.join(["world is", str(self.timestep), "timesteps old"])
+            print ''.join(["world is ", str(self.timestep), " timesteps old"])
             fig = plt.figure(11)
             plt.clf()
             plt.plot( self.column_history, 'k.')    

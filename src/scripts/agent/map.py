@@ -2,7 +2,6 @@ import itertools
 import numpy as np
 
 import utils as ut
-import utils
 
 class Map(object):
     """ 
@@ -10,10 +9,11 @@ class Map(object):
 
     Transitions are clustered into mutually co-active sets.
     """
-    def __init__(self, num_transitions, max_feature_outputs, name='map_name'):
+    def __init__(self, max_num_inputs, max_feature_outputs, name='map_name'):
         """ Initialize each map, pre-allocating max_feature_outputs """
         self.name = name
-        self.num_transitions = num_transitions
+        self.max_num_inputs = max_num_inputs
+        self.num_inputs = 0
         self.max_feature_outputs = max_feature_outputs
         self.num_features = 0
         
@@ -40,12 +40,12 @@ class Map(object):
         self.ACTIVATION_WEIGHTING_EXPONENT = 10    
                 
         self.features_full = False        
-        self.previous_input = np.zeros((self.num_transitions, 1))
+        self.previous_input = np.zeros((self.max_num_inputs, 1))
         self.feature_activity = np.zeros((self.max_feature_outputs, 1))
         self.feature_map = np.zeros((self.max_feature_outputs, 
-                                     self.num_transitions))
-        self.coactivity = np.zeros((self.num_transitions, 
-                                    self.num_transitions))
+                                     self.max_num_inputs))
+        self.coactivity = np.zeros((self.max_num_inputs, 
+                                    self.max_num_inputs))
         self.combination = (np.ones(self.coactivity.shape) - 
                             np.eye(self.coactivity.shape[0]))
 
@@ -98,6 +98,8 @@ class Map(object):
     
     def create_new_features(self):
         """ If the right conditions have been reached, create a new feature """
+        # Feature space is a scarce resource
+
         mutual_coactivity = np.minimum(self.coactivity, self.coactivity.T)
         # Make sure that disallowed combinations are not used 
         # to nucleate new features
@@ -143,7 +145,7 @@ class Map(object):
             if True:
                 print 'adding feature', self.num_features - 1, \
                         'consiting of transitions:'
-                num_features_lo = np.sqrt(self.num_transitions)
+                num_features_lo = np.sqrt(self.max_num_inputs)
                 for index in added_feature_indices:
                     index_cause = np.floor(index / num_features_lo)
                     index_effect = np.mod(index, num_features_lo)
@@ -183,7 +185,7 @@ class Map(object):
             goal_input = ut.pad(goal_input, (self.max_feature_outputs, 0))
             return ut.bounded_sum(self.feature_map * goal_input, axis=0)
         else:
-            return np.zeros((self.num_transitions, 1))
+            return np.zeros((self.max_num_inputs, 1))
         
     def get_projection(self, feature_index):
         """ Project features down to the transitions they're composed of """
