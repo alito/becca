@@ -80,9 +80,15 @@ class World(BaseWorld):
         return
 
     def visualize(self, agent):
+        """ Show the state of the world and the agent """
         if (self.display_state):
             print ''.join(['state', str(self.simple_state), '  action', 
                            str((self.action[0:2] + 2 * self.action[2:4] - 
                                 self.action[4:6] - 2 * self.action[6:8]).T)])
-        if (self.timestep % self.VISUALIZE_PERIOD) == 0:
-            print("world age is %s timesteps " % self.timestep)
+        if (self.timestep % self.VISUALIZE_PERIOD) != 0:
+            return
+        
+        print("world age is %s timesteps " % self.timestep)
+        agent.visualize()
+        projections = agent.get_projections(to_screen=True)
+        return

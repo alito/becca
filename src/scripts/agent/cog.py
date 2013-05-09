@@ -1,7 +1,7 @@
 import numpy as np
 
-from map import Map
-from model import Model
+from ziptie import ZipTie
+from daisychain import DaisyChain
 
 class Cog(object):
     """ 
@@ -12,52 +12,59 @@ class Cog(object):
     virtue of how they are connected to their fellows, they 
     collectively bring about interesting behavior.  
 
-    Each cog contains two important parts, a model and a map.
-    During upward processing, feature inputs are used to train
-    the model and the map. During downward processing, 
-    the model and map use the goal inputs from the next level to
-    create lower-level goals. 
+    Input channels are similar to cables in that they carry activity 
+    signals that vary over time.
+    Each cog contains two important parts, a daisychain and a ziptie.
+    The daisychain is an object that builds cables into short sequences,
+    and the ziptie is an object that takes the resulting chains
+    and performs clustering on them, creating bundles.
+    During upward processing, cable activities are used to train
+    the daisychain and ziptie, making new bundles, maturing existing 
+    bundles, and calculating the activity in bundle. 
+    During downward processing, 
+    the daisychain and ziptie use the bundle activity goals from 
+    the next level higher to create goals for the cables. 
     """
-    def __init__(self, max_feature_inputs, max_feature_outputs, 
+    def __init__(self, max_cables, max_bundles, 
                  name='anonymous'):
         """ Initialize the cogs with a pre-determined maximum size """
         self.name = name
-        self.max_feature_inputs = max_feature_inputs
-        self.max_feature_outputs = max_feature_outputs
-        self.model = Model(max_feature_inputs, name=name)        
-        if max_feature_outputs > 0:
-            self.map = Map(max_feature_inputs **2, max_feature_outputs, 
-                           name=name)
+        self.max_cables = max_cables
+        self.max_bundles = max_bundles
+        self.daisychain = DaisyChain(max_cables, name=name)        
+        if max_bundles > 0:
+            self.ziptie = ZipTie(max_cables **2, max_bundles, name=name)
 
-    def step_up(self, feature_input, reward):
-        """ Let feature_input percolate upward through the model and map """
-        transition_activities = self.model.update(feature_input, reward) 
-        self.reaction= self.model.get_reaction()
-        self.surprise = self.model.get_surprise()
-        feature_output = self.map.update(transition_activities)
-        return feature_output
+    def step_up(self, cable_activities, reward):
+        """ cable_activities percolate upward through daisychain and ziptie """
+        chain_activities = self.daisychain.update(cable_activities, reward) 
+        self.reaction= self.daisychain.get_reaction()
+        self.surprise = self.daisychain.get_surprise()
+        bundle_activities = self.ziptie.update(chain_activities)
+        return bundle_activities
 
-    def step_down(self, goal_input):
-        """ Let goal_input percolate downward through the map and model """
-        transition_goals = self.map.get_transition_goals(goal_input) 
-        goal_vote = self.model.deliberate(transition_goals)     
-        self.goal_output = self.model.get_goal()
-        return goal_vote
+    def step_down(self, bundle_activity_goals):
+        """ bundle_activity_goals percolate downward """
+        chain_activity_goals = self.ziptie.get_estimated_cable_activities(
+                bundle_activity_goals) 
+        instant_cable_activity_goals = self.daisychain.deliberate(
+                chain_activity_goals)     
+        self.cable_activity_goals = self.daisychain.get_goal()
+        return instant_cable_activity_goals
 
-    def get_projection(self, feature_index):
-        """ Project a feature down through the map and model """
-        map_projection = self.map.get_projection(feature_index)
-        model_projection = self.model.get_projection(map_projection)
-        return model_projection
+    def get_projection(self, bundle_index):
+        """ Project a bundle down through the ziptie and daisychain """
+        chain_projection = self.ziptie.get_projection(bundle_index)
+        cable_projection = self.daisychain.get_projection( chain_projection)
+        return cable_projection
          
     def fraction_filled(self):
-        """ How full is the input set for this cog? """
-        return (float(self.model.num_feature_inputs) / 
-                float(self.max_feature_inputs))
+        """ How full is the set of cables for this cog? """
+        return float(self.daisychain.num_cables) / float(self.max_cables)
         
-    def display(self):
-        """ Show the internal state of the model and map """
-        self.model.visualize()
-        if self.max_feature_outputs > 0:
-            self.map.visualize()
+    def visualize(self):
+        """ Show the internal state of the daisychain and ziptie """
+        self.daisychain.visualize()
+        if self.max_bundles > 0:
+            self.ziptie.visualize()
         return

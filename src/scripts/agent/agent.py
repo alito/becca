@@ -22,7 +22,6 @@ class Agent(object):
         sensors and actions arrays that the agent and the world use to
         communicate with each other. 
         """
-        self.VISUALIZE_PERIOD = 10 ** 3
         self.BACKUP_PERIOD = 10 ** 4
         self.show = show
         self.pickle_filename ="log/" + agent_name + "_agent.pickle"
@@ -40,6 +39,7 @@ class Agent(object):
         self.reward_max = -ut.BIG
         self.reward = 0
         self.cumulative_reward = 0
+        self.time_since_reward_log = 0 
         self.reward_history = []
         self.reward_steps = []
         self.surprise_history = []
@@ -97,7 +97,9 @@ class Agent(object):
                     > action_thresholds)] = 1.
         if (self.timestep % self.BACKUP_PERIOD) == 0:
                 self._save()    
-        self._display(unscaled_reward)
+        # Log reward
+        self.cumulative_reward += unscaled_reward
+        self.time_since_reward_log += 1
         return self.action
 
     def get_projections(self, to_screen=False):
@@ -161,27 +163,28 @@ class Agent(object):
         projection = self._get_projection(level_index - 1, projection)
         return projection
 
-    def _display(self, unscaled_reward):
+    def visualize(self):
         """ Show the current state and some history of the agent """
-        self.cumulative_reward += unscaled_reward
-        if (self.timestep % self.VISUALIZE_PERIOD) == 0:
-            print self.timestep, 'time steps'
-            self.reward_history.append(float(self.cumulative_reward) / 
-                                       self.VISUALIZE_PERIOD)
-            self.cumulative_reward = 0    
-            self.reward_steps.append(self.timestep)
-            self._show_reward_history(save_eps=True)
+        print ' '.join(['agent is', str(self.timestep), 'time steps old'])
+        self.reward_history.append(float(self.cumulative_reward) / 
+                                   self.time_since_reward_log)
+        self.cumulative_reward = 0    
+        self.time_since_reward_log = 0
+        self.reward_steps.append(self.timestep)
+        self._show_reward_history()
+        for level in self.levels:
+            level.visualize()
         return
  
     def report_performance(self):
         """ Report on the reward amassed by the agent """
         performance = np.mean(self.reward_history)
         print("Final performance is %f" % performance)
-        self._show_reward_history(save_eps=True, block=self.show)
+        self._show_reward_history(block=self.show)
         return performance
     
-    def _show_reward_history(self, block=False, save_eps=False,
-                            epsfilename='log/reward_history.eps'):
+    def _show_reward_history(self, block=False, 
+                            filename='log/reward_history.png'):
         """ Show the agent's reward history and save it to a file """
         if self.graphing:
             fig = plt.figure(1)
@@ -190,8 +193,7 @@ class Agent(object):
             plt.ylabel("average reward")
             fig.show()
             fig.canvas.draw()
-            if save_eps:
-                plt.savefig(epsfilename, format='eps')
+            plt.savefig(filename, format='png')
             if block:
                 plt.show()
         return

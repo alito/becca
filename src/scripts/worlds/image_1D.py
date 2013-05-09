@@ -113,6 +113,8 @@ class World(BaseWorld):
         if not self.graphing:
             return
 
+        # Periodically show the agent's internal state and reward history
+        agent.visualize() 
         # Periodically show the state history and inputs as perceived by BECCA
         self.column_history.append(self.column_position)
         if (self.timestep % self.VISUALIZE_PERIOD) == 0:
