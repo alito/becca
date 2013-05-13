@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>becca_world_test</name>
-  <version>0.0.0</version>
-  <description>The becca_world_test package</description>
+  <name>becca</name>
+  <version>0.0.1</version>
+  <description>The becca package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
