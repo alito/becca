@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-import agent.utils as ut
+import core.tools as tools
 
 """
 Utilities shared between several worlds dealing with visual input
@@ -77,13 +77,13 @@ def vizualize_pixel_array_feature(feature, level_index, feature_index,
     fig_title = ('Level ' + level_str + ' Feature ' + feature_str + 
                  ' from ' + world_name)
     fig_name = 'Features from ' + world_name
-    fig = plt.figure(ut.str_to_int(fig_name))
+    fig = plt.figure(tools.str_to_int(fig_name))
     fig.clf()
     num_states = feature.shape[1]
     for state_index in range(num_states):
         feature_sensors = feature[:,state_index]
         # Maximize contrast
-        feature_sensors *= 1 / (np.max(feature_sensors) + ut.EPSILON)
+        feature_sensors *= 1 / (np.max(feature_sensors) + tools.EPSILON)
         pixel_values = ((feature_sensors[ 0:n_pixels] - 
                          feature_sensors[n_pixels:2 * n_pixels]) + 1.0) / 2.0
         feature_pixels = pixel_values.reshape(fov_span, fov_span)
@@ -92,6 +92,7 @@ def vizualize_pixel_array_feature(feature, level_index, feature_index,
                            1/float(num_states), 1.), frame_on=False)
         im = plt.imshow(feature_pixels, vmin=0.0, vmax=1.0, 
                         interpolation='nearest')
+        plt.title(fig_title)
     filename = (filename + '_' + world_name  + '_' + level_str + 
                    '_' + feature_str + '.png')
     fig.savefig(filename, format='png')

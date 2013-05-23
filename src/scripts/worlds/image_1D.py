@@ -19,7 +19,7 @@ class World(BaseWorld):
         """ Set up the world """
         BaseWorld.__init__(self, lifespan)
         self.VISUALIZE_PERIOD = 10 ** 3
-        self.FEATURE_DISPLAY_PERIOD = 10 ** 2
+        self.FEATURE_DISPLAY_PERIOD = 10 ** 3
         self.REWARD_MAGNITUDE = 100.
         self.JUMP_FRACTION = 0.1
         self.STEP_COST = 0.1 * self.REWARD_MAGNITUDE
@@ -113,11 +113,12 @@ class World(BaseWorld):
         if not self.graphing:
             return
 
-        # Periodically show the agent's internal state and reward history
-        agent.visualize() 
         # Periodically show the state history and inputs as perceived by BECCA
         self.column_history.append(self.column_position)
         if (self.timestep % self.VISUALIZE_PERIOD) == 0:
+            # Periodically show the agent's internal state and reward history
+            agent.visualize() 
+
             print ''.join(["world is ", str(self.timestep), " timesteps old"])
             fig = plt.figure(11)
             plt.clf()
@@ -140,15 +141,15 @@ class World(BaseWorld):
             fig.canvas.draw()
         # Periodically visualize the entire feature set
         if (self.timestep % self.FEATURE_DISPLAY_PERIOD) == 0:
-            feature_set = agent.get_projections()
-            level_index = -1
-            for level in feature_set:
-                level_index += 1
+            feature_set = agent.get_projections(to_screen=True)
+            block_index = -1
+            for block in feature_set:
+                block_index += 1
                 feature_index = -1
-                for feature in level:
+                for feature in block:
                     feature_index += 1
                     world_utils.vizualize_pixel_array_feature(
                             feature[self.num_actions:,:], 
-                            level_index, feature_index, 
+                            block_index, feature_index, 
                             world_name=self.name_short)
         return

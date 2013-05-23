@@ -1,5 +1,3 @@
-import numpy as np
-
 from ziptie import ZipTie
 from daisychain import DaisyChain
 
@@ -33,23 +31,31 @@ class Cog(object):
         self.max_bundles = max_bundles
         self.daisychain = DaisyChain(max_cables, name=name)        
         if max_bundles > 0:
+            #debug
+            #self.ziptie = ZipTie(max_cables **2, max_bundles, name=name)
             self.ziptie = ZipTie(max_cables **2, max_bundles, name=name)
 
     def step_up(self, cable_activities, reward):
+        # TODO: fix this so that cogs can gracefully handle more cables 
+        # or else never be assigned them in the first place
+        if cable_activities.size > self.max_cables:
+            cable_activities = cable_activities[:self.max_cables, :]
+            print '-----  Number of max cables exceeded in', self.name, \
+                    '  -----'
         """ cable_activities percolate upward through daisychain and ziptie """
         chain_activities = self.daisychain.update(cable_activities, reward) 
-        self.reaction= self.daisychain.get_reaction()
+        self.reaction= self.daisychain.get_cable_activity_reactions()
         self.surprise = self.daisychain.get_surprise()
         bundle_activities = self.ziptie.update(chain_activities)
         return bundle_activities
 
     def step_down(self, bundle_activity_goals):
         """ bundle_activity_goals percolate downward """
-        chain_activity_goals = self.ziptie.get_estimated_cable_activities(
+        chain_activity_goals = self.ziptie.get_cable_deliberation_vote(
                 bundle_activity_goals) 
         instant_cable_activity_goals = self.daisychain.deliberate(
                 chain_activity_goals)     
-        self.cable_activity_goals = self.daisychain.get_goal()
+        self.cable_activity_goals = self.daisychain.get_cable_deliberation_vote()
         return instant_cable_activity_goals
 
     def get_projection(self, bundle_index):

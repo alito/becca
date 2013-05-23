@@ -37,8 +37,8 @@ class World(BaseWorld):
         """ Take one time step through the world """
         self.action = action.ravel()
         self.timestep += 1
-        self.world_state += (self.action[0:2] + 
-                             self.action[4:6] - 
+        self.world_state += (self.action[0:2] - 
+                             self.action[4:6] + 
                              2 * self.action[2:4] -
                              2 * self.action[6:8]).T
         energy = (np.sum(self.action[0:2]) + 

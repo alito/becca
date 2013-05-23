@@ -2,9 +2,9 @@ import cPickle as pickle
 import matplotlib.pyplot as plt
 import numpy as np
 
-from cog import Cog
-from level import Level
-import utils as ut
+#from cog import Cog
+from block import Block
+import tools
 
 class Agent(object):
     """ 
@@ -17,7 +17,7 @@ class Agent(object):
         """
         Configure the Agent
 
-        num_sensors and num_actions are the only absoluetly necessary
+        num_sensors and num_actions are the only absolutely necessary
         arguments. They define the number of elements in the 
         sensors and actions arrays that the agent and the world use to
         communicate with each other. 
@@ -30,13 +30,14 @@ class Agent(object):
         self.num_actions = num_actions
 
         # Initialize agent infrastructure
-        self.num_levels =  1
-        self.levels = [Level(name='level'+str(self.num_levels - 1))]
+        self.num_blocks =  1
+        first_block_name = ''.join(('block_', str(self.num_blocks - 1)))
+        self.blocks = [Block(name=first_block_name)]
         self.action = np.zeros((self.num_actions,1))
         # Initialize constants for adaptive reward scaling 
         self.REWARD_RANGE_DECAY_RATE = 10 ** -5
-        self.reward_min = ut.BIG
-        self.reward_max = -ut.BIG
+        self.reward_min = tools.BIG
+        self.reward_max = -tools.BIG
         self.reward = 0
         self.cumulative_reward = 0
         self.time_since_reward_log = 0 
@@ -56,45 +57,53 @@ class Agent(object):
         self.reward_max = np.maximum(unscaled_reward, self.reward_max)
         spread = self.reward_max - self.reward_min
         self.reward = ((unscaled_reward - self.reward_min) / 
-                       (spread + ut.EPSILON))
+                       (spread + tools.EPSILON))
         self.reward_min += spread * self.REWARD_RANGE_DECAY_RATE
         self.reward_max -= spread * self.REWARD_RANGE_DECAY_RATE
 
-        # Propogate the new sensor inputs up through the levels
-        feature_inputs = np.vstack((self.action, sensors))
-        for level in self.levels:
-            feature_inputs = level.step_up(feature_inputs, self.reward) 
-        # Create a new level if needed
-        if feature_inputs.size > 0:
-            self.num_levels +=  1
-            self.levels.append(Level(name='level'+str(self.num_levels - 1)))
-            feature_inputs = self.levels[-1].step_up(feature_inputs, 
+        # Propogate the new sensor inputs up through the blocks
+        cable_activities = np.vstack((self.action, sensors))
+        for block in self.blocks:
+            cable_activities = block.step_up(cable_activities, self.reward) 
+        # Create a new block if needed
+        '''if cable_activities.size > 0:
+            self.num_blocks +=  1
+            next_block_name = ''.join(('block_', str(self.num_blocks - 1)))
+            self.blocks.append(Block(name=next_block_name))
+            cable_activities = self.blocks[-1].step_up(cable_activities, 
                                                      self.reward) 
-            print "Added level", self.num_levels - 1
-
-        # Propogate the goals down through the levels
+            print "Added block", self.num_blocks - 1
+        '''
+        # TODO: straighten out cable_activity_goals and deliberation_votes
+        # which to use where in agent?
+        # Which to translate into actions?
+        
+        # Propogate the deliberation_goal_votes down through the blocks
         max_surprise = 0.0
-        goals = np.zeros((feature_inputs.size,1))
-        for level in reversed(self.levels):
-            goal_vote = level.step_down(goals)
-            goals = level.goal_output
-            if level.surprise.size > 0:
-                #if not np.isnan(np.max(level.surprise)): 
-                max_surprise = np.maximum(np.max(level.surprise), 
+        cable_activity_goals = np.zeros((cable_activities.size,1))
+        #deliberation_goal_votes = np.zeros((cable_activities.size,1))
+        for block in reversed(self.blocks):
+            cable_activity_goals = block.step_down(cable_activity_goals)
+            #deliberation_goal_votes = block.get_cable_deliberation_vote()
+            if block.surprise.size > 0:
+                #if not np.isnan(np.max(block.surprise)): 
+                max_surprise = np.maximum(np.max(block.surprise), 
                                           max_surprise)
-                max_arg = np.argmax(level.surprise)
+                max_arg = np.argmax(block.surprise)
         self.surprise_history.append(max_surprise)
 
-        # Strip the actions off the goals to make the current set of actions.
+        # Strip the actions off the deliberation_goal_votes to make the current set of actions.
         # For actions, each goal is a probability threshold. If a roll of
         # dice comes up lower than thegoal value, the action is taken
         # with a magnitude of 1.
-        if goals.size < self.num_actions:
-            goals = ut.pad(goals,(self.num_actions, 0))
         self.action = np.zeros((self.num_actions, 1))
-        action_thresholds = np.random.random_sample((self.num_actions, 1))
-        self.action[np.nonzero(goals[:self.num_actions,:] 
-                    > action_thresholds)] = 1.
+        #action_thresholds = np.random.random_sample((self.num_actions, 1))
+        #self.action[np.nonzero(cable_activity_goals[:self.num_actions,:] 
+        #            > action_thresholds)] = 1.
+        # debug
+        # choose a single random action
+        if np.random.random_sample() < 0.2:
+            self.action[np.random.randint(self.num_actions),0] = 1.             
         if (self.timestep % self.BACKUP_PERIOD) == 0:
                 self._save()    
         # Log reward
@@ -104,64 +113,65 @@ class Agent(object):
 
     def get_projections(self, to_screen=False):
         """
-        Get representations of all the features in each level 
+        Get representations of all the bundles in each block 
         
-        Every feature is projected down through its own level and
-        the levels below it until its projection on sensor inputs 
+        Every feature is projected down through its own block and
+        the blocks below it until its cable_contributions on sensor inputs 
         and actions is obtained. This is a way to represent the
         receptive field of each feature.
 
-        Returns a list containing the projection for each feature 
-        in each level.
+        Returns a list containing the cable_contributions for each feature 
+        in each block.
         """
         all_projections = []
-	for level_index in range(len(self.levels)):
-            level_projections = []
-            num_features = self.levels[level_index].output_map.shape[0]
-            for feature_index in range(num_features):    
-                features = np.zeros((num_features, 1))
-                features[feature_index, 0] = 1.
-                projection = self._get_projection(level_index, features)
-                level_projections.append(projection)
-                # Display the projection in text form if desired
-                if to_screen:
-                    print 'projection', self.levels[level_index].name, \
-                            'feature', feature_index
-                    for i in range(projection.shape[1]):
-                        print np.nonzero(projection)[0][np.where(np.nonzero(
-                                                         projection)[1] == i)]
-            if len(level_projections) > 0:
-                all_projections.append(level_projections)
+        for block_index in range(len(self.blocks)):
+            block_projections = []
+            num_bundles = self.blocks[block_index].max_bundles
+            for bundle_index in range(num_bundles):    
+                bundles = np.zeros((num_bundles, 1))
+                bundles[bundle_index, 0] = 1.
+                cable_contributions = self._get_projection(block_index, bundles)
+                if np.nonzero(cable_contributions)[0].size > 0:
+                    block_projections.append(cable_contributions)
+                    # Display the cable_contributions in text form if desired
+                    if to_screen:
+                        print 'cable_contributions', self.blocks[block_index].name, \
+                                'feature', bundle_index
+                        for i in range(cable_contributions.shape[1]):
+                            print np.nonzero(cable_contributions)[0][np.where(np.nonzero(
+                                                             cable_contributions)[1] == i)]
+            if len(block_projections) > 0:
+                all_projections.append(block_projections)
         return all_projections
   
-    def _get_projection(self, level_index, feature_values):
+    def _get_projection(self, block_index, bundles):
         """
-        Get the projection for feature_values
+        Get the cable_contributions for bundles
         
-        Recursively projects feature_values down through levels
-        until the bottom level is reached. Feature values is a 
+        Recursively projects bundles down through blocks
+        until the bottom block is reached. Feature values is a 
         two-dimensional array and can contain
         several columns. Each column represents a state, and their
-        order represents a temporal progression. During projection
-        to the next lowest level, the number of states
+        order represents a temporal progression. During cable_contributions
+        to the next lowest block, the number of states
         increases by one. 
         
-        Returns the projection in terms of basic sensor inputs and actions. 
+        Returns the cable_contributions in terms of basic sensor inputs and actions. 
         """
-        if level_index == -1:
-            return feature_values
-        projection = np.zeros((self.levels[level_index].num_feature_inputs, 
-                               feature_values.shape[1] + 1))
-        for feature_index in range(feature_values.shape[0]):
-            for state_index in range(feature_values.shape[1]):
-                if feature_values[feature_index, state_index] > 0:
-                    new_contribution = self.levels[
-                            level_index].get_projection(feature_index)
-                    projection[:,state_index:state_index + 2] = np.maximum(
-                            projection[:,state_index:state_index + 2], 
+        if block_index == -1:
+            return bundles
+        cable_contributions = np.zeros((self.blocks[block_index].max_cables, 
+                               bundles.shape[1] + 1))
+        for bundle_index in range(bundles.shape[0]):
+            for time_index in range(bundles.shape[1]):
+                if bundles[bundle_index, time_index] > 0:
+                    new_contribution = self.blocks[
+                            block_index].get_projection(bundle_index)
+                    cable_contributions[:,time_index:time_index + 2] = np.maximum(
+                            cable_contributions[:,time_index:time_index + 2], 
                             new_contribution)
-        projection = self._get_projection(level_index - 1, projection)
-        return projection
+        cable_contributions = self._get_projection(block_index - 1, cable_contributions)
+        return cable_contributions
 
     def visualize(self):
         """ Show the current state and some history of the agent """
@@ -172,8 +182,9 @@ class Agent(object):
         self.time_since_reward_log = 0
         self.reward_steps.append(self.timestep)
         self._show_reward_history()
-        for level in self.levels:
-            level.visualize()
+        for block in self.blocks:
+            #block.visualize()
+            pass
         return
  
     def report_performance(self):
