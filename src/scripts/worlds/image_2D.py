@@ -20,7 +20,7 @@ class World(BaseWorld):
         """ Set up the world """
         BaseWorld.__init__(self, lifespan)
         self.VISUALIZE_PERIOD = 10 ** 3
-        self.FEATURE_DISPLAY_PERIOD = 10 ** 3
+        self.FEATURE_DISPLAY_PERIOD = 10 ** 4
         self.REWARD_MAGNITUDE = 100.
         self.JUMP_FRACTION = 0.1
         self.animate = False
@@ -120,16 +120,15 @@ class World(BaseWorld):
                                     self.column_position + self.fov_width / 2]
         center_surround_pixels = wut.center_surround(fov,self.fov_span)
         unsplit_sensors = center_surround_pixels.ravel()
-        sensors = np.concatenate((np.maximum(unsplit_sensors, 0), 
-                                  np.abs(np.minimum(unsplit_sensors, 0)) ))
-        
+        self.sensors = np.concatenate((np.maximum(unsplit_sensors, 0), 
+                                       np.abs(np.minimum(unsplit_sensors, 0))))
         self.reward = 0
         if ((np.abs(self.column_position - self.TARGET_COLUMN) < 
              self.REWARD_REGION_WIDTH / 2) and 
             (np.abs(self.row_position - self.TARGET_ROW) < 
              self.REWARD_REGION_WIDTH / 2)):
             self.reward += self.REWARD_MAGNITUDE
-        return sensors, self.reward
+        return self.sensors, self.reward
      
     def set_agent_parameters(self, agent):
         agent.reward_min = 0.
@@ -190,7 +189,8 @@ class World(BaseWorld):
                 for feature in level:
                     feature_index += 1
                     wut.vizualize_pixel_array_feature(
-                            feature[self.num_actions:,:], 
+                            feature[self.num_actions:
+                                    self.num_actions + self.num_sensors,:], 
                             level_index, feature_index, 
-                            world_name=self.name_short) 
+                            world_name=self.name_short, save_png=False) 
         return

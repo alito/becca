@@ -19,16 +19,17 @@ Run from the command line, e.g.
 #from worlds.grid_1D_noise import World
 #from worlds.grid_2D import World
 #from worlds.grid_2D_dc import World
-from worlds.image_1D import World
+#from worlds.image_1D import World
 #from worlds.image_2D import World
 
 # If you want to run a world of your own, add the appropriate line here
 #from worlds.hello import World
-#from becca_world_listen.listen import World
+from becca_world_listen.listen import World
+#from becca_world_watch.watch import World
 
 from core.agent import Agent 
 
-def test(world, restore=False, show=True, agent_name="test"):
+def test(world, restore=False, show=True, agent_name=None):
     """ 
     Run BECCA with world.  
     
@@ -40,12 +41,13 @@ def test(world, restore=False, show=True, agent_name="test"):
     To profile BECCA's performance with world, manually set
     profile_flag in the top level script environment to True.
     """
+    if agent_name is None:
+        agent_name = '_'.join((world.name, 'agent'))
     agent = Agent(world.num_sensors, world.num_actions, 
                   agent_name=agent_name, show=show)
-    # debug
-    #if restore:
-    #    agent = agent.restore()
-    
+    if restore:
+        agent = agent.restore()
+
     # If configured to do so, the world sets some BECCA parameters to 
     # modify its behavior. This is a development hack, and 
     # should eventually be removed as BECCA matures and settles on 

@@ -9,6 +9,10 @@ Constants and functions for used across the BECCA core
 # Shared constants
 EPSILON = sys.float_info.epsilon
 BIG = 10. ** 20
+DARK_GREY = (0.2, 0.2, 0.2)
+LIGHT_GREY = (0.9, 0.9, 0.9)
+RED = (0.9, 0.3, 0.3)
+
 def weighted_average(values, weights):
     """ Perform a weighted average of values, using weights """
     weighted_sum_values = np.sum(values * weights, axis=0) 
@@ -49,8 +53,10 @@ def pad(a, shape, val=0.):
     """
     Pad a numpy array to the specified shape
     
-    If any element of shape is <= 0, that size remains unchanged in 
-    that axis. Use val (default 0) to fill in the extra spaces. 
+    If any element of shape is 0, that size remains unchanged in 
+    that axis. If any element of shape is < 0, the size in that
+    axis is incremented by the magnitude of that value.
+    Use val (default 0) to fill in the extra spaces. 
     """
     if shape[0] <= 0:
         rows = a.shape[0] - shape[0]
@@ -100,3 +106,63 @@ def visualize_array(image_data, shape=None, save_eps=False,
     if save_eps:
         fig.savefig(epsfilename, format='eps')
     return
+
+def get_files_with_suffix(dir_name, suffixes):
+    """ Get all of the files with a given suffix in dir recursively """
+    import os
+    found_filenames = []
+    for localpath, directories, filenames in os.walk(dir_name):
+        for filename in filenames:
+            for suffix in suffixes:
+                if filename.endswith(suffix):
+                    found_filenames.append(os.path.join(localpath, filename))
+    found_filenames.sort()
+    return found_filenames
+
+    '''
+def CV_FOURCC(c1, c2, c3, c4) :
+    return ((c1 & 255) + 
+            ((c2 & 255) << 8) + 
+            ((c3 & 255) << 16) + 
+            ((c4 & 255) << 24))
+    '''
+
+def make_video_from_stills(dir_name, filename):
+    #import cv
+    import cv2
+    #import matplotlib.pyplot as plt
+    import os
+    suffixes = ['.png']
+    filenames = get_files_with_suffix(dir_name, suffixes)
+    full_filename = os.path.join(dir_name, filename)
+    image = cv2.imread(filenames[0])
+    height = image.shape[0]
+    width = image.shape[1]
+    frame_size = (width, height)
+    print 'fs', frame_size
+    """ fourCC code for the encoder to use. FFV1 is for FFMPEG """
+    #codec = 'DIB ' # 4MB, OK quality
+    #codec = 'I420' # slanted
+    #codec = 'XVID' # 4MB for 100 images, OK quality
+    #codec = 'FLV1' # 5MB, OK quality
+    #codec = 'PIM1' # 4MB, OK quality
+    codec = 'MJPG' # 12MB, pretty good quality, claims to be boradly supported
+    #codec = 'THEO' # 5MB, excellent quality
+    #codec = 'FFV1' # 19MB, doesn't play on totem movie player
+    #codec = 'LZO1' # 19MB, doesn't play on totem movie player
+    is_color = True
+    fourcc = cv2.cv.CV_FOURCC(codec[0], codec[1], codec[2], codec[3])
+    #fourcc = cv2.cv.CV_FOURCC('D', 'I', 'B', ' ')
+    #fourcc = cv2.cv.CV_FOURCC('I', '4', '2', '0')
+    print '4cc', fourcc
+    fps = 30.
+    video_writer = cv2.VideoWriter(full_filename, fourcc, fps, frame_size, 
+                                   is_color)
+    print 'vw', video_writer
+    for filename in filenames:
+        print 'writing', filename
+        image = cv2.imread(filename)
+        video_writer.write(image)
+    # Close the video_writer by openig a new dummy one
+    #fake_writer = cv2.VideoWriter()
+    

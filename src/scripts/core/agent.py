@@ -11,9 +11,9 @@ class Agent(object):
     A general reinforcement learning agent
     
     Takes in a time series of sensory input vectors and 
-    a scalar reward and puts out a time series of action commands.
-    """
-    def __init__(self, num_sensors, num_actions, show=True, agent_name='my'):
+    a scalar reward and puts out a time series of action commands."""
+    def __init__(self, num_sensors, num_actions, show=True, 
+                 agent_name='test_agent'):
         """
         Configure the Agent
 
@@ -24,7 +24,7 @@ class Agent(object):
         """
         self.BACKUP_PERIOD = 10 ** 4
         self.show = show
-        self.pickle_filename ="log/" + agent_name + "_agent.pickle"
+        self.pickle_filename ="log/" + agent_name + ".pickle"
         # TODO: Automatically adapt to the number of sensors pass in
         self.num_sensors = num_sensors
         self.num_actions = num_actions
@@ -44,6 +44,11 @@ class Agent(object):
         self.reward_history = []
         self.reward_steps = []
         self.surprise_history = []
+        self.recent_surprise_history = [1.2] * 100
+        self.typical_surprise = 1.2
+        self.filtered_surprise = self.typical_surprise
+        self.SURPRISE_DECAY_RATE = 10 ** -1.
+        self.TYPICAL_SURPRISE_DECAY_RATE = 10 ** -2.5
         self.timestep = 0
         self.graphing = True
 
@@ -66,35 +71,71 @@ class Agent(object):
         for block in self.blocks:
             cable_activities = block.step_up(cable_activities, self.reward) 
         # Create a new block if needed
-        '''if cable_activities.size > 0:
+        if np.nonzero(cable_activities)[0].size > 0:
             self.num_blocks +=  1
             next_block_name = ''.join(('block_', str(self.num_blocks - 1)))
             self.blocks.append(Block(name=next_block_name))
             cable_activities = self.blocks[-1].step_up(cable_activities, 
                                                      self.reward) 
             print "Added block", self.num_blocks - 1
-        '''
         # TODO: straighten out cable_activity_goals and deliberation_votes
         # which to use where in agent?
         # Which to translate into actions?
         
         # Propogate the deliberation_goal_votes down through the blocks
-        max_surprise = 0.0
+        # debug
+        #max_surprise = 0.0
+        sum_surprise = 0.0
         cable_activity_goals = np.zeros((cable_activities.size,1))
         #deliberation_goal_votes = np.zeros((cable_activities.size,1))
         for block in reversed(self.blocks):
             cable_activity_goals = block.step_down(cable_activity_goals)
             #deliberation_goal_votes = block.get_cable_deliberation_vote()
-            if block.surprise.size > 0:
-                #if not np.isnan(np.max(block.surprise)): 
-                max_surprise = np.maximum(np.max(block.surprise), 
-                                          max_surprise)
-                max_arg = np.argmax(block.surprise)
-        self.surprise_history.append(max_surprise)
+            #bnba =  block.get_nonbundle_activity()
+            #max_surprise = np.maximum(bnba, max_surprise)
+            if np.nonzero(block.surprise)[0].size > 0:
+                log_surprise = np.log10(block.surprise + 1.)
+                norm_surprise = np.log10(
+                        (np.sum(log_surprise ** 2)) ** 0.5 / 
+                         np.nonzero(block.cable_activities).size)
+                #norm_surprise = np.log10(
+                #        (np.sum(log_surprise ** 2)) ** 0.5 / 
+                #        ((np.sum(block.cable_activities ** 2)) ** 0.5 + 
+                #         tools.EPSILON))
+                #norm_surprise = np.log10((np.sum(log_surprise ** 2)) ** 0.5 / 
+                #                         np.mean(block.cable_activities + 
+                #                                 tools.EPSILON))
+                print block.name, norm_surprise
+                sum_surprise += norm_surprise ** 2
+                #max_surprise = np.maximum(np.max(norm_surprise), 
+                #                          max_surprise)
+                #max_surprise = np.maximum(np.max(block.surprise), 
+                #                          max_surprise)
+                #max_arg = np.argmax(block.surprise)
+                #sum_surprise = np.maximum(np.sum(block.surprise) , 
+                #                          np.nonzero(block.surprise)[0].size) 
+        #self.filtered_surprise *= 1 - self.SURPRISE_DECAY_RATE
+        #self.filtered_surprise += max_surprise * self.SURPRISE_DECAY_RATE
+        #self.typical_surprise *= 1 - self.TYPICAL_SURPRISE_DECAY_RATE
+        #self.typical_surprise += max_surprise * self.TYPICAL_SURPRISE_DECAY_RATE
+        agent_surprise = sum_surprise ** 0.5
+        self.recent_surprise_history.pop(0)
+        self.recent_surprise_history.append(agent_surprise)
+        self.typical_surprise = np.median(np.array(
+                self.recent_surprise_history))
+        #self.surprise_history.append(self.filtered_surprise - 
+        #                             self.typical_surprise)
+        mod_surprise = agent_surprise - self.typical_surprise
+        #mod_surprise = np.log10(np.maximum(
+        #        tools.EPSILON, agent_surprise - self.typical_surprise))
+        self.surprise_history.append(mod_surprise)
+        print 'mod', mod_surprise
+        #self.surprise_history.append(max_surprise)
+        #self.surprise_history.append(sum_surprise)
 
         # Strip the actions off the deliberation_goal_votes to make the current set of actions.
         # For actions, each goal is a probability threshold. If a roll of
-        # dice comes up lower than thegoal value, the action is taken
+        # dice comes up lower than the goal value, the action is taken
         # with a magnitude of 1.
         self.action = np.zeros((self.num_actions, 1))
         #action_thresholds = np.random.random_sample((self.num_actions, 1))
@@ -103,7 +144,8 @@ class Agent(object):
         # debug
         # choose a single random action
         if np.random.random_sample() < 0.2:
-            self.action[np.random.randint(self.num_actions),0] = 1.             
+            if self.num_actions > 0:
+                self.action[np.random.randint(self.num_actions),0] = 1.             
         if (self.timestep % self.BACKUP_PERIOD) == 0:
                 self._save()    
         # Log reward
@@ -124,25 +166,33 @@ class Agent(object):
         in each block.
         """
         all_projections = []
+        all_bundle_activities = []
         for block_index in range(len(self.blocks)):
             block_projections = []
+            block_bundle_activities = []
             num_bundles = self.blocks[block_index].max_bundles
             for bundle_index in range(num_bundles):    
                 bundles = np.zeros((num_bundles, 1))
                 bundles[bundle_index, 0] = 1.
-                cable_contributions = self._get_projection(block_index, bundles)
+                cable_contributions = self._get_projection(block_index,bundles)
                 if np.nonzero(cable_contributions)[0].size > 0:
                     block_projections.append(cable_contributions)
+                    #print (self.blocks[block_index].bundle_activities[bundle_index])
+                    block_bundle_activities.append(self.blocks[block_index].
+                            bundle_activities[bundle_index])
                     # Display the cable_contributions in text form if desired
                     if to_screen:
-                        print 'cable_contributions', self.blocks[block_index].name, \
-                                'feature', bundle_index
+                        print 'cable_contributions', \
+                            self.blocks[block_index].name, \
+                            'feature', bundle_index
                         for i in range(cable_contributions.shape[1]):
-                            print np.nonzero(cable_contributions)[0][np.where(np.nonzero(
-                                                             cable_contributions)[1] == i)]
+                            print np.nonzero(cable_contributions)[0][
+                                    np.where(np.nonzero(
+                                    cable_contributions)[1] == i)]
             if len(block_projections) > 0:
                 all_projections.append(block_projections)
-        return all_projections
+                all_bundle_activities.append(block_bundle_activities)
+        return (all_projections, all_bundle_activities)
   
     def _get_projection(self, block_index, bundles):
         """
@@ -191,10 +241,10 @@ class Agent(object):
         """ Report on the reward amassed by the agent """
         performance = np.mean(self.reward_history)
         print("Final performance is %f" % performance)
-        self._show_reward_history(block=self.show)
+        self._show_reward_history(hold_plot=self.show)
         return performance
     
-    def _show_reward_history(self, block=False, 
+    def _show_reward_history(self, hold_plot=False, 
                             filename='log/reward_history.png'):
         """ Show the agent's reward history and save it to a file """
         if self.graphing:
@@ -205,7 +255,7 @@ class Agent(object):
             fig.show()
             fig.canvas.draw()
             plt.savefig(filename, format='png')
-            if block:
+            if hold_plot:
                 plt.show()
         return
     

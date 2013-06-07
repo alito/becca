@@ -1,5 +1,6 @@
-from ziptie import ZipTie
 from daisychain import DaisyChain
+import tools
+from ziptie import ZipTie
 
 class Cog(object):
     """ 
@@ -31,8 +32,6 @@ class Cog(object):
         self.max_bundles = max_bundles
         self.daisychain = DaisyChain(max_cables, name=name)        
         if max_bundles > 0:
-            #debug
-            #self.ziptie = ZipTie(max_cables **2, max_bundles, name=name)
             self.ziptie = ZipTie(max_cables **2, max_bundles, name=name)
 
     def step_up(self, cable_activities, reward):
@@ -47,6 +46,7 @@ class Cog(object):
         self.reaction= self.daisychain.get_cable_activity_reactions()
         self.surprise = self.daisychain.get_surprise()
         bundle_activities = self.ziptie.update(chain_activities)
+        bundle_activities = tools.pad(bundle_activities, (self.max_bundles, 0))
         return bundle_activities
 
     def step_down(self, bundle_activity_goals):

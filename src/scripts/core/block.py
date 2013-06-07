@@ -23,9 +23,8 @@ class Block(object):
     Internally, a block contains a number of cogs that work in parallel
     to convert cable activities into bundle activities and back again.
     """
-    # debug max_cables hould be 300, max_cogs should be 10
-    def __init__(self, max_cables=200, max_cogs=10,
-                 max_cables_per_cog=20, max_bundles_per_cog=200, 
+    def __init__(self, max_cables=600, max_cogs=60,
+                 max_cables_per_cog=10, max_bundles_per_cog=10, 
                  name='anonymous'):
         """ Initialize the level, defining the dimensions of its cogs """
         self.max_cables_per_cog = max_cables_per_cog
@@ -43,32 +42,38 @@ class Block(object):
             self.cogs.append(Cog(self.max_cables_per_cog, 
                                  self.max_bundles_per_cog,
                                  name='cog'+str(cog_index)))
+        self.cable_activities = np.zeros((self.max_cables, 1))
+        self.ACTIVITY_DECAY_RATE = .5 # real, 0 < x < 1
         # Constants for adaptively rescaling the cable activities
         self.max_vals = np.zeros((self.max_cables, 1)) 
         self.min_vals = np.zeros((self.max_cables, 1))
-        self.RANGE_DECAY_RATE = 10 ** -3
+        self.RANGE_DECAY_RATE = 10 ** -5
         
-    def step_up(self, cable_activities, reward):
-        """ Find bundle_activities that result from the cable_activities """
-        cable_activities = tools.pad(cable_activities, (self.max_cables, 1))
-        # Condition the cable_activities to fall between 0 and 1
-        self.min_vals = np.minimum(cable_activities, self.min_vals)
-        self.max_vals = np.maximum(cable_activities, self.max_vals)
+    def step_up(self, new_cable_activities, reward):
+        """ Find bundle_activities that result from new_cable_activities """
+        new_cable_activities = tools.pad(new_cable_activities, 
+                                         (self.max_cables, 1))
+        # Condition the new_cable_activities to fall between 0 and 1
+        self.min_vals = np.minimum(new_cable_activities, self.min_vals)
+        self.max_vals = np.maximum(new_cable_activities, self.max_vals)
         spread = self.max_vals - self.min_vals
-        cable_activities = ((cable_activities - self.min_vals) / 
+        new_cable_activities = ((new_cable_activities - self.min_vals) / 
                             (self.max_vals - self.min_vals + tools.EPSILON))
         self.min_vals += spread * self.RANGE_DECAY_RATE
         self.max_vals -= spread * self.RANGE_DECAY_RATE
-        
-        # Update the map from cable_activities to cogs
-        self.ziptie.update(cable_activities)
+        # Update cable_activities, incorporating sensing dynamics
+        self.cable_activities = tools.bounded_sum([
+                new_cable_activities, 
+                self.cable_activities * (1. - self.ACTIVITY_DECAY_RATE)])
+
+        # Update the map from self.cable_activities to cogs
+        self.ziptie.update(self.cable_activities)
         # Process the upward pass of each of the cogs in the block
         self.bundle_activities = np.zeros((0, 1))
         for cog_index in range(len(self.cogs)):
             # Pick out the cog's cable_activities, process them, 
             # and assign the results to block's bundle_activities
-            # debug 
-            cog_cable_activities = cable_activities[
+            cog_cable_activities = self.cable_activities[
                     self.ziptie.get_projection(cog_index).ravel().astype(bool)]
             cog_bundle_activities = self.cogs[cog_index].step_up(
                     cog_cable_activities, reward)
@@ -109,14 +114,13 @@ class Block(object):
             #self.reaction[cog_cable_indices] = np.maximum(
             #        tools.pad(cog.reaction, (cog_cable_indices[0].size, 0)),
             #        self.reaction[cog_cable_indices]) 
-            #self.surprise[cog_cable_indices] = np.maximum(
-            #        tools.pad(cog.surprise, (cog_cable_indices[0].size, 0)),
-            #        self.surprise[cog_cable_indices]) 
+            self.surprise[cog_cable_indices] = np.maximum(
+                    cog.surprise, self.surprise[cog_cable_indices]) 
             cog_index += 1
         return instant_cable_activity_goals 
 
     def get_projection(self, bundle_index):
-        """ Represent the one of the bundles in terms of its cables """
+        """ Represent one of the bundles in terms of its cables """
         # Find which cog it belongs to and which output it corresponds to
         cog_index = int(bundle_index / self.max_bundles_per_cog)
         cog_bundle_index = bundle_index - cog_index * self.max_bundles_per_cog
@@ -127,11 +131,35 @@ class Block(object):
         cog_projection = self.cogs[cog_index].get_projection(cog_bundle_index)
         # Then re-sort them to the block's cables
         projection = np.zeros((self.max_cables, 2))
-        # TODO: fix number of cables/bundles between blocks and agent
-        # debug
         projection[cog_cable_indices,:] = cog_projection[:num_cables_in_cog,:]
         return projection
+        ''' 
+    def get_nonbundle_activity(self):
+        sum_nonbundle_activity_fraction = 0.
+        for cog in self.cogs:
+            # TODO: push this to a method in Cog 
+            #print self.name, cog.name, cog.ziptie.nonbundle_activities.ravel()
+            #print self.name, cog.name, cog.ziptie.cable_activities.ravel()
+            cog_nonbundle_activity_fraction = (
+                    np.sum(cog.ziptie.nonbundle_activities)/
+                    (np.sum(cog.ziptie.cable_activities) + tools.EPSILON))
+            sum_nonbundle_activity_fraction += cog_nonbundle_activity_fraction
+        mean_nonbundle_activity_fraction = (sum_nonbundle_activity_fraction /
+                                            (len(self.cogs) + tools.EPSILON))
+        return mean_nonbundle_activity_fraction 
         
+        nz_cable = self.cable_activities[np.nonzero(self.cable_activities)]
+        nz_bundle = self.bundle_activities[np.nonzero(self.bundle_activities)]
+        if nz_bundle.size > 0:
+            mean_cable = np.sum(nz_cable) / nz_cable.size
+            mean_bundle = np.sum(nz_bundle) / nz_bundle.size
+            print 'mc', mean_cable
+            print 'mb', mean_bundle
+            print 'mcmb', mean_cable / (mean_bundle + tools.EPSILON)
+            return mean_cable / (mean_bundle + tools.EPSILON)
+        else:
+            return 0. 
+        '''
     def visualize(self):
         """ Show what's going on inside the level """
         self.ziptie.visualize()

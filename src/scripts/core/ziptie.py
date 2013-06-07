@@ -41,8 +41,6 @@ class ZipTie(object):
         # Coactivity value which, if it's every exceeded, causes a 
         # cable to be added to a bundle
         # real, 0 < x < 1, small
-        #debug
-        #self.JOINING_THRESHOLD = 0.3
         self.JOINING_THRESHOLD = joining_threshold
         # Exponent for calculating the generalized mean of signals in 
         # order to find bundle activities
@@ -65,6 +63,7 @@ class ZipTie(object):
         # The negative exponent weights the lower signals more heavily.
         # At the extreme value of negative infinity, the 
         # generalized mean becomes the minimum operator.
+        self.cable_activities = cable_activities
         shifted_cable_activities = cable_activities + 1.
         activities_to_power = shifted_cable_activities ** self.MEAN_EXPONENT
         mean_activities_to_power = tools.weighted_average(activities_to_power,
@@ -110,9 +109,6 @@ class ZipTie(object):
             self.num_bundles += 1
             if self.num_bundles == self.max_num_bundles:
                 self.bundles_full = True
-            # debug
-            print self.name, 'nf', self.num_bundles, 'ni', cable_index , \
-                    np.mod(cable_index,20), np.floor(cable_index/20)
             self.typical_nonbundle_activity[cable_index, 0] = 0.
         return 
           
@@ -123,15 +119,6 @@ class ZipTie(object):
         # Determine the upper bound on the size of the incremental step 
         # toward the instant co-activity.
         delta_coactivity = instant_coactivity - self.coactivity
-        # for any bundles that are already full, don't change their coactivity
-        # TODO: make this more elegant than enforcing a hard maximum count
-        full_bundles = np.zeros((self.max_num_bundles, 1))
-        cables_per_bundle = np.sum(self.bundle_map, axis=1)[:,np.newaxis]
-        if self.max_num_bundles== 10:
-            print 'cpb', cables_per_bundle.ravel()
-        full_bundles[np.where(cables_per_bundle >= 
-                             self.max_cables_per_bundle)] = 1.
-        delta_coactivity *= 1. - full_bundles
         bundle_coactivity_update_rate = (self.bundle_activities * 
                                          self.COACTIVITY_UPDATE_RATE)
         self.bundle_coactivity += (delta_coactivity * 
@@ -142,8 +129,23 @@ class ZipTie(object):
                                   cable_coactivity_update_rate)
         self.coactivity = np.minimum(self.bundle_coactivity,
                                      self.cable_coactivity)
-        self.bundle_map[np.where(self.coactivity >= 
-                                 self.JOINING_THRESHOLD)] = 1.
+        
+        # for any bundles that are already full, don't change their coactivity
+        # TODO: make this more elegant than enforcing a hard maximum count
+        full_bundles = np.zeros((self.max_num_bundles, 1))
+        cables_per_bundle = np.sum(self.bundle_map, axis=1)[:,np.newaxis]
+        full_bundles[np.where(cables_per_bundle >= 
+                              self.max_cables_per_bundle)] = 1.
+        self.coactivity *= 1. - full_bundles
+        
+	new_candidates = np.where(self.coactivity >= self.JOINING_THRESHOLD)
+	num_candidates =  new_candidates[0].size 
+	if num_candidates > 0:
+	    candidate_index = np.random.randint(num_candidates) 
+	    self.bundle_map[new_candidates[0][candidate_index],
+			    new_candidates[1][candidate_index]]  = 1.
+	#self.bundle_map[np.where(self.coactivity >= 
+        #                         self.JOINING_THRESHOLD)] = 1.
         return
         
     def get_cable_deliberation_vote(self, bundle_activity_goals):

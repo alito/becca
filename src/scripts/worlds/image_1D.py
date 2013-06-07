@@ -149,7 +149,8 @@ class World(BaseWorld):
                 for feature in block:
                     feature_index += 1
                     world_utils.vizualize_pixel_array_feature(
-                            feature[self.num_actions:,:], 
+                            feature[self.num_actions:
+                                    self.num_actions + self.num_sensors,:], 
                             block_index, feature_index, 
-                            world_name=self.name_short)
+                            world_name=self.name_short, save_png=True)
         return

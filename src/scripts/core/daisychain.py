@@ -31,7 +31,7 @@ class DaisyChain(object):
         #
         self.AGING_TIME_CONSTANT = 10 ** 6 # real, large
         self.CHAIN_UPDATE_RATE = 10 ** -1 # real, 0 < x < 1
-        self.PRE_DECAY_RATE = .33 # real, 0 < x < 1
+        #self.PRE_DECAY_RATE = .33 # real, 0 < x < 1
         self.VOTE_DECAY_RATE = 0.1 # real, 0 < x < 1
         self.INITIAL_UNCERTAINTY = 0.5 # real, 0 < x < 1
         
@@ -53,15 +53,19 @@ class DaisyChain(object):
         self.surprise = np.ones((max_num_cables, 1))
 
     def update(self, cable_activities, reward):        
-        """ Train the daisychain using the current cable_activities and reward """
+        """ Train the daisychain using the current cable_activities 
+        and reward """
         self.num_cables = np.maximum(self.num_cables, cable_activities.size)
         # Pad the incoming cable_activities array out to its full size 
-        cable_activities = tools.pad(cable_activities, (self.max_num_cables, 0))
+        cable_activities = tools.pad(cable_activities, 
+                                     (self.max_num_cables, 0))
         self.current_reward = reward
         # The pre is a weighted sum of previous cable_activities, with the most
         # recent cable_activities being weighted the highest
-        self.pre = tools.bounded_sum([
-                self.post, self.pre * (1 - self.PRE_DECAY_RATE)])
+        # debug
+        #self.pre = tools.bounded_sum([
+        #        self.post, self.pre * (1 - self.PRE_DECAY_RATE)])
+        self.pre = self.post
         self.post = cable_activities
         chain_activities = self.pre * self.post.T
         chain_activities[np.nonzero(np.eye(self.pre.size))] = 0.
