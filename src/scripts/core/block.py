@@ -54,6 +54,7 @@ class Block(object):
         new_cable_activities = tools.pad(new_cable_activities, 
                                          (self.max_cables, 1))
         # Condition the new_cable_activities to fall between 0 and 1
+        #debug
         self.min_vals = np.minimum(new_cable_activities, self.min_vals)
         self.max_vals = np.maximum(new_cable_activities, self.max_vals)
         spread = self.max_vals - self.min_vals
@@ -133,33 +134,7 @@ class Block(object):
         projection = np.zeros((self.max_cables, 2))
         projection[cog_cable_indices,:] = cog_projection[:num_cables_in_cog,:]
         return projection
-        ''' 
-    def get_nonbundle_activity(self):
-        sum_nonbundle_activity_fraction = 0.
-        for cog in self.cogs:
-            # TODO: push this to a method in Cog 
-            #print self.name, cog.name, cog.ziptie.nonbundle_activities.ravel()
-            #print self.name, cog.name, cog.ziptie.cable_activities.ravel()
-            cog_nonbundle_activity_fraction = (
-                    np.sum(cog.ziptie.nonbundle_activities)/
-                    (np.sum(cog.ziptie.cable_activities) + tools.EPSILON))
-            sum_nonbundle_activity_fraction += cog_nonbundle_activity_fraction
-        mean_nonbundle_activity_fraction = (sum_nonbundle_activity_fraction /
-                                            (len(self.cogs) + tools.EPSILON))
-        return mean_nonbundle_activity_fraction 
-        
-        nz_cable = self.cable_activities[np.nonzero(self.cable_activities)]
-        nz_bundle = self.bundle_activities[np.nonzero(self.bundle_activities)]
-        if nz_bundle.size > 0:
-            mean_cable = np.sum(nz_cable) / nz_cable.size
-            mean_bundle = np.sum(nz_bundle) / nz_bundle.size
-            print 'mc', mean_cable
-            print 'mb', mean_bundle
-            print 'mcmb', mean_cable / (mean_bundle + tools.EPSILON)
-            return mean_cable / (mean_bundle + tools.EPSILON)
-        else:
-            return 0. 
-        '''
+
     def visualize(self):
         """ Show what's going on inside the level """
         self.ziptie.visualize()

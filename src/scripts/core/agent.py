@@ -44,10 +44,9 @@ class Agent(object):
         self.reward_history = []
         self.reward_steps = []
         self.surprise_history = []
-        self.recent_surprise_history = [1.2] * 100
-        self.typical_surprise = 1.2
+        self.recent_surprise_history = [10.] * 100
+        self.typical_surprise = 10.
         self.filtered_surprise = self.typical_surprise
-        self.SURPRISE_DECAY_RATE = 10 ** -1.
         self.TYPICAL_SURPRISE_DECAY_RATE = 10 ** -2.5
         self.timestep = 0
         self.graphing = True
@@ -84,54 +83,23 @@ class Agent(object):
         
         # Propogate the deliberation_goal_votes down through the blocks
         # debug
-        #max_surprise = 0.0
-        sum_surprise = 0.0
+        max_surprise = 0.0
         cable_activity_goals = np.zeros((cable_activities.size,1))
         #deliberation_goal_votes = np.zeros((cable_activities.size,1))
         for block in reversed(self.blocks):
             cable_activity_goals = block.step_down(cable_activity_goals)
             #deliberation_goal_votes = block.get_cable_deliberation_vote()
-            #bnba =  block.get_nonbundle_activity()
-            #max_surprise = np.maximum(bnba, max_surprise)
             if np.nonzero(block.surprise)[0].size > 0:
-                log_surprise = np.log10(block.surprise + 1.)
-                norm_surprise = np.log10(
-                        (np.sum(log_surprise ** 2)) ** 0.5 / 
-                         np.nonzero(block.cable_activities).size)
-                #norm_surprise = np.log10(
-                #        (np.sum(log_surprise ** 2)) ** 0.5 / 
-                #        ((np.sum(block.cable_activities ** 2)) ** 0.5 + 
-                #         tools.EPSILON))
-                #norm_surprise = np.log10((np.sum(log_surprise ** 2)) ** 0.5 / 
-                #                         np.mean(block.cable_activities + 
-                #                                 tools.EPSILON))
-                print block.name, norm_surprise
-                sum_surprise += norm_surprise ** 2
-                #max_surprise = np.maximum(np.max(norm_surprise), 
-                #                          max_surprise)
-                #max_surprise = np.maximum(np.max(block.surprise), 
-                #                          max_surprise)
-                #max_arg = np.argmax(block.surprise)
-                #sum_surprise = np.maximum(np.sum(block.surprise) , 
-                #                          np.nonzero(block.surprise)[0].size) 
-        #self.filtered_surprise *= 1 - self.SURPRISE_DECAY_RATE
-        #self.filtered_surprise += max_surprise * self.SURPRISE_DECAY_RATE
-        #self.typical_surprise *= 1 - self.TYPICAL_SURPRISE_DECAY_RATE
-        #self.typical_surprise += max_surprise * self.TYPICAL_SURPRISE_DECAY_RATE
-        agent_surprise = sum_surprise ** 0.5
+                norm_surprise = np.sum(block.surprise ** 4)
+                max_surprise = np.maximum(np.max(norm_surprise), 
+                                          max_surprise)
+        agent_surprise = np.log10(max_surprise + 1.)
         self.recent_surprise_history.pop(0)
         self.recent_surprise_history.append(agent_surprise)
         self.typical_surprise = np.median(np.array(
                 self.recent_surprise_history))
-        #self.surprise_history.append(self.filtered_surprise - 
-        #                             self.typical_surprise)
         mod_surprise = agent_surprise - self.typical_surprise
-        #mod_surprise = np.log10(np.maximum(
-        #        tools.EPSILON, agent_surprise - self.typical_surprise))
         self.surprise_history.append(mod_surprise)
-        print 'mod', mod_surprise
-        #self.surprise_history.append(max_surprise)
-        #self.surprise_history.append(sum_surprise)
 
         # Strip the actions off the deliberation_goal_votes to make the current set of actions.
         # For actions, each goal is a probability threshold. If a roll of
@@ -177,7 +145,6 @@ class Agent(object):
                 cable_contributions = self._get_projection(block_index,bundles)
                 if np.nonzero(cable_contributions)[0].size > 0:
                     block_projections.append(cable_contributions)
-                    #print (self.blocks[block_index].bundle_activities[bundle_index])
                     block_bundle_activities.append(self.blocks[block_index].
                             bundle_activities[bundle_index])
                     # Display the cable_contributions in text form if desired
