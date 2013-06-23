@@ -4,7 +4,7 @@ from ziptie import ZipTie
 
 class Cog(object):
     """ 
-    The building block of which levels are composed
+    The basic units of which blocks are composed
 
     Cogs are named for their similarity to clockwork cogwheels.
     They are simple and do the same task over and over, but by
@@ -55,13 +55,13 @@ class Cog(object):
                 bundle_activity_goals) 
         instant_cable_activity_goals = self.daisychain.deliberate(
                 chain_activity_goals)     
-        self.cable_activity_goals = self.daisychain.get_cable_deliberation_vote()
+        self.cable_activity_goals =self.daisychain.get_cable_deliberation_vote()
         return instant_cable_activity_goals
 
     def get_projection(self, bundle_index):
         """ Project a bundle down through the ziptie and daisychain """
         chain_projection = self.ziptie.get_projection(bundle_index)
-        cable_projection = self.daisychain.get_projection( chain_projection)
+        cable_projection = self.daisychain.get_projection(chain_projection)
         return cable_projection
          
     def fraction_filled(self):

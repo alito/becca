@@ -2,7 +2,6 @@ import cPickle as pickle
 import matplotlib.pyplot as plt
 import numpy as np
 
-#from cog import Cog
 from block import Block
 import tools
 
@@ -56,7 +55,7 @@ class Agent(object):
         self.timestep += 1
         if sensors.ndim == 1:
             sensors = sensors[:,np.newaxis]
-        # Modify the reward so that it automatically falls between 0 and 1 
+        # Adapt the reward so that it falls between 0 and 1 
         self.reward_min = np.minimum(unscaled_reward, self.reward_min)
         self.reward_max = np.maximum(unscaled_reward, self.reward_max)
         spread = self.reward_max - self.reward_min
@@ -78,7 +77,7 @@ class Agent(object):
                                                      self.reward) 
             print "Added block", self.num_blocks - 1
         # TODO: straighten out cable_activity_goals and deliberation_votes
-        # which to use where in agent?
+        # Which to use where in agent?
         # Which to translate into actions?
         
         # Propogate the deliberation_goal_votes down through the blocks
@@ -101,7 +100,8 @@ class Agent(object):
         mod_surprise = agent_surprise - self.typical_surprise
         self.surprise_history.append(mod_surprise)
 
-        # Strip the actions off the deliberation_goal_votes to make the current set of actions.
+        # Strip the actions off the deliberation_goal_votes to make 
+        # the current set of actions.
         # For actions, each goal is a probability threshold. If a roll of
         # dice comes up lower than the goal value, the action is taken
         # with a magnitude of 1.
@@ -165,7 +165,7 @@ class Agent(object):
         """
         Get the cable_contributions for bundles
         
-        Recursively projects bundles down through blocks
+        Recursively project bundles down through blocks
         until the bottom block is reached. Feature values is a 
         two-dimensional array and can contain
         several columns. Each column represents a state, and their
@@ -173,7 +173,8 @@ class Agent(object):
         to the next lowest block, the number of states
         increases by one. 
         
-        Returns the cable_contributions in terms of basic sensor inputs and actions. 
+        Return the cable_contributions in terms of basic sensor 
+        inputs and actions. 
         """
         if block_index == -1:
             return bundles
@@ -184,10 +185,12 @@ class Agent(object):
                 if bundles[bundle_index, time_index] > 0:
                     new_contribution = self.blocks[
                             block_index].get_projection(bundle_index)
-                    cable_contributions[:,time_index:time_index + 2] = np.maximum(
+                    cable_contributions[:,time_index:time_index + 2] = (
+                            np.maximum(
                             cable_contributions[:,time_index:time_index + 2], 
                             new_contribution)
-        cable_contributions = self._get_projection(block_index - 1, cable_contributions)
+        cable_contributions = self._get_projection(block_index - 1, 
+                                                   cable_contributions)
         return cable_contributions
 
     def visualize(self):

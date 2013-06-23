@@ -83,7 +83,7 @@ class DaisyChain(object):
                                     self.reward_uncertainty) * update_rate
         update_rate_raw_post = (self.pre * ((1 - self.CHAIN_UPDATE_RATE) / 
                                             (self.pre_count + tools.EPSILON) + 
-		                            self.CHAIN_UPDATE_RATE)) 
+		                                    self.CHAIN_UPDATE_RATE)) 
         update_rate_post = np.minimum(0.5, update_rate_raw_post)
         self.pre_count += self.pre
         self.pre_count -= 1 / (self.AGING_TIME_CONSTANT * self.pre_count +
@@ -91,7 +91,7 @@ class DaisyChain(object):
         self.pre_count = np.maximum(self.pre_count, 0)
         post_difference = np.abs(self.pre * self.post.T - self.expected_post)
         self.expected_post += (self.pre * self.post.T - 
-		               self.expected_post) * update_rate_post
+		                       self.expected_post) * update_rate_post
         self.post_uncertainty += (post_difference - 
                                   self.post_uncertainty) * update_rate_post 
         # Reaction is the expected post, turned into a deliberation_vote
@@ -100,13 +100,14 @@ class DaisyChain(object):
         # the actual one
         self.surprise = tools.weighted_average(
                 np.abs((self.post.T - self.expected_post) / 
-		       (self.post_uncertainty + tools.EPSILON)), 
-		self.pre / (self.post_uncertainty + tools.EPSILON))
+		               (self.post_uncertainty + tools.EPSILON)), 
+		        self.pre / (self.post_uncertainty + tools.EPSILON))
         # Reshape chain activities into a single column
         return chain_activities.ravel()[:,np.newaxis]
    
     def deliberate(self, goal_value_by_chain):
-        """ Choose goals deliberatively, based on deliberation_vote and reward value """
+        """ Choose goals deliberatively, based on deliberation_vote i
+        and reward value """
         # Maintain the internal deliberation_vote set
         deliberation_vote_fulfillment = 1 - self.post
         deliberation_vote_decay = 1 - self.VOTE_DECAY_RATE

@@ -9,11 +9,20 @@ Constants and functions for used across the BECCA core
 """
 # Shared constants
 EPSILON = sys.float_info.epsilon
-BIG = 10. ** 20
+BIG = 10 ** 20
+MAX_INT16 = np.iinfo(np.int16).max
+
 DARK_GREY = (0.2, 0.2, 0.2)
 LIGHT_GREY = (0.9, 0.9, 0.9)
 RED = (0.9, 0.3, 0.3)
-MAX_INT16 = np.iinfo(np.int16).max
+# BECCA pallette
+COPPER_BKG = (255./255., 255./255., 230./255.)
+COPPER_HGH = (255./255., 250./255., 80./255.)
+COPPER = (220./255., 110./255, 55./255.)
+OXIDE = (20./255., 150./255., 150./255.)
+LIGHT_BROWN = (120./255., 60./255., 30./255.)
+BROWN = (80./255., 40./255., 20./255.)
+DARK_BROWN = (60./255., 30./255, 15./255.)
 
 def weighted_average(values, weights):
     """ Perform a weighted average of values, using weights """
@@ -133,9 +142,6 @@ def report_roc(ground_truth_filename, surprise_log_filename, self_name):
         """
         truth = np.loadtxt(ground_truth_filename)
         surprise = np.loadtxt(surprise_log_filename)
-        # debug
-        #log_surprise = np.random.random_sample(surprise[:,0].shape) 
-        #log_surprise = np.log10(surprise[:,0] + 1.)
         log_surprise = surprise[:,0]
         times = surprise[:,1]
         # If a target is identified within delta seconds, that is close enough
