@@ -22,7 +22,7 @@ class Agent(object):
         sensors and actions arrays that the agent and the world use to
         communicate with each other. 
         """
-        self.BACKUP_PERIOD = 10 ** 4
+        self.BACKUP_PERIOD = 10 ** 3
         self.show = show
         self.pickle_filename ="log/" + agent_name + ".pickle"
         # TODO: Automatically adapt to the number of sensors pass in
@@ -119,6 +119,9 @@ class Agent(object):
         # Log reward
         self.cumulative_reward += unscaled_reward
         self.time_since_reward_log += 1
+        # debug
+        if np.random.random_sample() < 0.01:
+            self.visualize()
         return self.action
 
     def get_projections(self, to_screen=False):
@@ -200,7 +203,7 @@ class Agent(object):
         self.reward_steps.append(self.timestep)
         self._show_reward_history()
         for block in self.blocks:
-            #block.visualize()
+            block.visualize()
             pass
         return
  

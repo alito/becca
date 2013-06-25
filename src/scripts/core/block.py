@@ -23,8 +23,8 @@ class Block(object):
     Internally, a block contains a number of cogs that work in parallel
     to convert cable activities into bundle activities and back again.
     """
-    def __init__(self, max_cables=3000, max_cogs=300,
-                 max_cables_per_cog=10, max_bundles_per_cog=10, 
+    def __init__(self, max_cables=200, max_cogs=40,
+                 max_cables_per_cog=5, max_bundles_per_cog=5, 
                  name='anonymous'):
         """ Initialize the level, defining the dimensions of its cogs """
         self.max_cables_per_cog = max_cables_per_cog
@@ -34,8 +34,9 @@ class Block(object):
         self.max_bundles = self.max_cogs * self.max_bundles_per_cog
         self.name = name
         ziptie_name = ''.join(('ziptie_', self.name))
-        self.ziptie = ZipTie(self.max_cables, self.max_cogs, mean_exponent=1.,
-                             joining_threshold=0.005, name=ziptie_name)
+        self.ziptie = ZipTie(self.max_cables, self.max_cogs, 
+                             new_bundle_factor=10**-5, mean_exponent=-2,
+                             joining_threshold=0.02, name=ziptie_name)
         self.cogs = []
         # TODO: only create cogs as needed
         for cog_index in range(max_cogs):
@@ -138,6 +139,6 @@ class Block(object):
     def visualize(self):
         """ Show what's going on inside the level """
         self.ziptie.visualize()
-        for cog in self.cogs:
-            cog.visualize()
+        #for cog in self.cogs:
+        #    cog.visualize()
         return

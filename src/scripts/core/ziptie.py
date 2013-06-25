@@ -15,9 +15,11 @@ class ZipTie(object):
     incrementally, that is, the algorithm updates the estimate after 
     each new set of signals is received. 
     """
+    # debug 
+    # joining_threshold was 0.2 
     def __init__(self, max_num_cables, max_num_bundles, 
-                 max_cables_per_bundle=None, 
-                 mean_exponent=-7, joining_threshold=0.2, name='ziptie_'):
+                 max_cables_per_bundle=None, new_bundle_factor = 10**-5, 
+                 mean_exponent=-4, joining_threshold=0.005, name='ziptie_'):
         """ Initialize each map, pre-allocating max_num_bundles """
         self.name = name
         self.max_num_cables = max_num_cables
@@ -31,13 +33,13 @@ class ZipTie(object):
         # User-defined constants
         #
         # real, 0 < x < 1, small
-        self.COACTIVITY_UPDATE_RATE = 10. ** -2
+        self.COACTIVITY_UPDATE_RATE = 10 ** -4
         # The rate at which the nonbundle_activities thresholds are updated
         # real, 0 < x < 1, small
-        self.NEW_BUNDLE_UPDATE_RATE = 10. ** -4
+        self.NONBUNDLE_ACTIVITY_UPDATE_RATE = 4 * 10 ** -4
         # Constant factor driving the rate at which new bundles are created
         # real, 0 < x < 1, small
-        self.NEW_BUNDLE_FACTOR = 10. ** -2
+        self.NEW_BUNDLE_FACTOR = new_bundle_factor
         # Coactivity value which, if it's every exceeded, causes a 
         # cable to be added to a bundle
         # real, 0 < x < 1, small
@@ -79,9 +81,10 @@ class ZipTie(object):
                                   axis=0)[:,np.newaxis]
         self.nonbundle_activities = np.maximum(0., (cable_activities - 
                                                   combined_weights))
-        self.typical_nonbundle_activity *= 1. - self.NEW_BUNDLE_UPDATE_RATE
-        self.typical_nonbundle_activity += (self.nonbundle_activities * 
-                                            self.NEW_BUNDLE_UPDATE_RATE)
+        self.typical_nonbundle_activity *= (
+                1. - self.NONBUNDLE_ACTIVITY_UPDATE_RATE)
+        self.typical_nonbundle_activity += (
+                self.nonbundle_activities* self.NONBUNDLE_ACTIVITY_UPDATE_RATE)
         # As appropriate update the co-activity estimate and 
         # create new bundles
         if not self.bundles_full:
@@ -94,7 +97,9 @@ class ZipTie(object):
         # Bundle space is a scarce resource
         availability = (float(self.max_num_bundles - self.num_bundles) / 
                         float(self.max_num_bundles)) 
-        new_bundle_thresholds = (self.typical_nonbundle_activity ** 2 * 
+        # debug
+        #print self.name, 'tna', np.max(self.typical_nonbundle_activity)
+        new_bundle_thresholds = (self.typical_nonbundle_activity ** 
                                  availability * self.NEW_BUNDLE_FACTOR)
         cable_indices = np.where(np.random.random_sample(
                 self.typical_nonbundle_activity.shape) <
@@ -180,4 +185,6 @@ class ZipTie(object):
                            save_eps=save_eps)
         tools.visualize_array(self.bundle_map, 
                            label=self.name + '_bundle_map')
+        print self.name, '0', np.nonzero(self.bundle_map)[0]
+        print self.name, '1', np.nonzero(self.bundle_map)[1]
         return
