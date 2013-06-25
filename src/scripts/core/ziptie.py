@@ -69,7 +69,7 @@ class ZipTie(object):
         shifted_cable_activities = cable_activities + 1.
         activities_to_power = shifted_cable_activities ** self.MEAN_EXPONENT
         mean_activities_to_power = tools.weighted_average(activities_to_power,
-                                                    self.bundle_map.T)
+                                                          self.bundle_map.T)
         shifted_bundle_activities = (mean_activities_to_power + 
                                      tools.EPSILON) ** (1./self.MEAN_EXPONENT)
         self.bundle_activities[:self.num_bundles,:] = (
@@ -80,11 +80,10 @@ class ZipTie(object):
         combined_weights = np.sum(final_activated_bundle_map, 
                                   axis=0)[:,np.newaxis]
         self.nonbundle_activities = np.maximum(0., (cable_activities - 
-                                                  combined_weights))
-        self.typical_nonbundle_activity *= (
-                1. - self.NONBUNDLE_ACTIVITY_UPDATE_RATE)
-        self.typical_nonbundle_activity += (
-                self.nonbundle_activities* self.NONBUNDLE_ACTIVITY_UPDATE_RATE)
+                                                    combined_weights))
+        self.typical_nonbundle_activity *= 1. - self.NEW_BUNDLE_UPDATE_RATE
+        self.typical_nonbundle_activity += (self.nonbundle_activities * 
+                                            self.NEW_BUNDLE_UPDATE_RATE)
         # As appropriate update the co-activity estimate and 
         # create new bundles
         if not self.bundles_full:
@@ -149,7 +148,7 @@ class ZipTie(object):
 	    candidate_index = np.random.randint(num_candidates) 
 	    self.bundle_map[new_candidates[0][candidate_index],
 			    new_candidates[1][candidate_index]]  = 1.
-	#self.bundle_map[np.where(self.coactivity >= 
+	    #self.bundle_map[np.where(self.coactivity >= 
         #                         self.JOINING_THRESHOLD)] = 1.
         return
         

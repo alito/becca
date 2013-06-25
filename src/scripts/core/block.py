@@ -1,8 +1,8 @@
 import numpy as np
 
 from cog import Cog
-from ziptie import ZipTie
 import tools
+from ziptie import ZipTie
 
 class Block(object):
     """
@@ -15,7 +15,8 @@ class Block(object):
     The block's input channels (cables) are organized 
     into clusters (bundles)
     whose activities are passed up to the next block in the hierarchy.  
-    Each block performs the same two functions, 1) a step_up 
+    Each block performs the same two functions, 
+    1) a step_up 
     where cable activities are converted to bundle activities and
     passed up the tower and 
     2) a step_down where bundle activity goals are passed back down
@@ -55,7 +56,6 @@ class Block(object):
         new_cable_activities = tools.pad(new_cable_activities, 
                                          (self.max_cables, 1))
         # Condition the new_cable_activities to fall between 0 and 1
-        #debug
         self.min_vals = np.minimum(new_cable_activities, self.min_vals)
         self.max_vals = np.maximum(new_cable_activities, self.max_vals)
         spread = self.max_vals - self.min_vals
