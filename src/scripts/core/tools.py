@@ -142,7 +142,9 @@ def report_roc(ground_truth_filename, surprise_log_filename, self_name):
         """
         truth = np.loadtxt(ground_truth_filename)
         surprise = np.loadtxt(surprise_log_filename)
-        log_surprise = surprise[:,0]
+        # debug
+        #log_surprise = surprise[:,0]
+        log_surprise = np.abs(surprise[:,0])
         times = surprise[:,1]
         # If a target is identified within delta seconds, that is close enough
         delta = 0.2

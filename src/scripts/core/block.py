@@ -24,9 +24,9 @@ class Block(object):
     Internally, a block contains a number of cogs that work in parallel
     to convert cable activities into bundle activities and back again.
     """
-    def __init__(self, max_cables=200, max_cogs=40,
-                 max_cables_per_cog=5, max_bundles_per_cog=5, 
-                 name='anonymous'):
+    def __init__(self, max_cables=240, max_cogs=80,
+                 max_cables_per_cog=10, max_bundles_per_cog=3, 
+                 name='anonymous', level=0):
         """ Initialize the level, defining the dimensions of its cogs """
         self.max_cables_per_cog = max_cables_per_cog
         self.max_bundles_per_cog = max_bundles_per_cog
@@ -34,16 +34,20 @@ class Block(object):
         self.max_cables = max_cables
         self.max_bundles = self.max_cogs * self.max_bundles_per_cog
         self.name = name
+        self.level = level
         ziptie_name = ''.join(('ziptie_', self.name))
         self.ziptie = ZipTie(self.max_cables, self.max_cogs, 
-                             new_bundle_factor=10**-5, mean_exponent=-2,
+                             max_cables_per_bundle=self.max_cables_per_cog,
+                             mean_exponent=-2,
                              joining_threshold=0.02, name=ziptie_name)
         self.cogs = []
         # TODO: only create cogs as needed
         for cog_index in range(max_cogs):
             self.cogs.append(Cog(self.max_cables_per_cog, 
                                  self.max_bundles_per_cog,
-                                 name='cog'+str(cog_index)))
+                                 max_chains_per_bundle=self.max_cables_per_cog,
+                                 name='cog'+str(cog_index), 
+                                 level=self.level))
         self.cable_activities = np.zeros((self.max_cables, 1))
         self.ACTIVITY_DECAY_RATE = .5 # real, 0 < x < 1
         # Constants for adaptively rescaling the cable activities
@@ -67,6 +71,9 @@ class Block(object):
         self.cable_activities = tools.bounded_sum([
                 new_cable_activities, 
                 self.cable_activities * (1. - self.ACTIVITY_DECAY_RATE)])
+        # debug 
+        #print self.name, 'ca', self.cable_activities.shape
+        #print self.cable_activities.ravel()
 
         # Update the map from self.cable_activities to cogs
         self.ziptie.update(self.cable_activities)

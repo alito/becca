@@ -29,6 +29,9 @@ from becca_world_watch.watch import World
 
 from core.agent import Agent 
 
+testing_lifespan = 10 ** 8
+profiling_lifespan = 10 ** 4
+
 def test(world, restore=False, show=True, agent_name=None):
     """ 
     Run BECCA with world.  
@@ -64,7 +67,8 @@ def test(world, restore=False, show=True, agent_name=None):
 
 def profile():
     """ Profile BECCA's performance """
-    cProfile.run('test(World(), restore=True)', 'tester_profile')
+    cProfile.run('test(World(lifespan=profiling lifespan), restore=True)', 
+                 'tester_profile')
     p = pstats.Stats('tester_profile')
     p.strip_dirs().sort_stats('time', 'cum').print_stats(30)
     
@@ -73,4 +77,4 @@ if __name__ == '__main__':
     if profile_flag:
         profile()
     else:
-        test(World(lifespan=10**6), restore=True)
+        test(World(lifespan=testing_lifespan), restore=True)

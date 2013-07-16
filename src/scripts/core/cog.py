@@ -24,15 +24,19 @@ class Cog(object):
     the daisychain and ziptie use the bundle activity goals from 
     the next level higher to create goals for the cables. 
     """
-    def __init__(self, max_cables, max_bundles, 
-                 name='anonymous'):
+    def __init__(self, max_cables, max_bundles, max_chains_per_bundle=None,
+                 name='anonymous', level=0):
         """ Initialize the cogs with a pre-determined maximum size """
         self.name = name
         self.max_cables = max_cables
         self.max_bundles = max_bundles
+        if max_chains_per_bundle is None:
+            max_chains_per_bundle = int(max_cables ** 2 / max_bundles)
         self.daisychain = DaisyChain(max_cables, name=name)        
         if max_bundles > 0:
-            self.ziptie = ZipTie(max_cables **2, max_bundles, name=name)
+            self.ziptie = ZipTie(max_cables **2, max_bundles, 
+                                 max_cables_per_bundle=max_chains_per_bundle, 
+                                 name=name)
 
     def step_up(self, cable_activities, reward):
         # TODO: fix this so that cogs can gracefully handle more cables 

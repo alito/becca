@@ -21,7 +21,7 @@ class Agent(object):
         sensors and actions arrays that the agent and the world use to
         communicate with each other. 
         """
-        self.BACKUP_PERIOD = 10 ** 3
+        self.BACKUP_PERIOD = 10 ** 4
         self.show = show
         self.pickle_filename ="log/" + agent_name + ".pickle"
         # TODO: Automatically adapt to the number of sensors pass in
@@ -43,9 +43,8 @@ class Agent(object):
         self.reward_history = []
         self.reward_steps = []
         self.surprise_history = []
-        self.recent_surprise_history = [10.] * 100
-        self.typical_surprise = 10.
-        self.filtered_surprise = self.typical_surprise
+        self.recent_surprise_history = [0.] * 100
+        self.typical_surprise = 0.
         self.TYPICAL_SURPRISE_DECAY_RATE = 10 ** -2.5
         self.timestep = 0
         self.graphing = True
@@ -72,7 +71,8 @@ class Agent(object):
         if np.nonzero(cable_activities)[0].size > 0:
             self.num_blocks +=  1
             next_block_name = ''.join(('block_', str(self.num_blocks - 1)))
-            self.blocks.append(Block(name=next_block_name))
+            self.blocks.append(Block(name=next_block_name, 
+                                     level=self.num_blocks))
             cable_activities = self.blocks[-1].step_up(cable_activities, 
                                                      self.reward) 
             print "Added block", self.num_blocks - 1
@@ -82,7 +82,8 @@ class Agent(object):
         
         # Propogate the deliberation_goal_votes down through the blocks
         # debug
-        max_surprise = 0.0
+        sum_surprise = 0.0
+        #max_surprise = 0.0
         cable_activity_goals = np.zeros((cable_activities.size,1))
         #deliberation_goal_votes = np.zeros((cable_activities.size,1))
         for block in reversed(self.blocks):
@@ -90,9 +91,11 @@ class Agent(object):
             #deliberation_goal_votes = block.get_cable_deliberation_vote()
             if np.nonzero(block.surprise)[0].size > 0:
                 norm_surprise = np.sum(block.surprise ** 4)
-                max_surprise = np.maximum(np.max(norm_surprise), 
-                                          max_surprise)
-        agent_surprise = np.log10(max_surprise + 1.)
+                #max_surprise = np.maximum(np.max(norm_surprise), 
+                #                          max_surprise)
+                sum_surprise += norm_surprise
+        #agent_surprise = np.log10(max_surprise + 1.)
+        agent_surprise = np.log10(sum_surprise + 1.)
         self.recent_surprise_history.pop(0)
         self.recent_surprise_history.append(agent_surprise)
         self.typical_surprise = np.median(np.array(
@@ -120,7 +123,7 @@ class Agent(object):
         self.cumulative_reward += unscaled_reward
         self.time_since_reward_log += 1
         # debug
-        if np.random.random_sample() < 0.01:
+        if np.random.random_sample() < 0.001:
             self.visualize()
         return self.action
 
@@ -191,7 +194,7 @@ class Agent(object):
                     cable_contributions[:,time_index:time_index + 2] = (
                             np.maximum(
                             cable_contributions[:,time_index:time_index + 2], 
-                            new_contribution)
+                            new_contribution))
         cable_contributions = self._get_projection(block_index - 1, 
                                                    cable_contributions)
         return cable_contributions

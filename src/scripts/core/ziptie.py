@@ -18,8 +18,9 @@ class ZipTie(object):
     # debug 
     # joining_threshold was 0.2 
     def __init__(self, max_num_cables, max_num_bundles, 
-                 max_cables_per_bundle=None, new_bundle_factor = 10**-5, 
-                 mean_exponent=-4, joining_threshold=0.005, name='ziptie_'):
+                 max_cables_per_bundle=None,
+                 mean_exponent=-4, joining_threshold=0.005, 
+                 speedup = 1., name='ziptie_'):
         """ Initialize each map, pre-allocating max_num_bundles """
         self.name = name
         self.max_num_cables = max_num_cables
@@ -33,13 +34,13 @@ class ZipTie(object):
         # User-defined constants
         #
         # real, 0 < x < 1, small
-        self.COACTIVITY_UPDATE_RATE = 10 ** -4
+        self.COACTIVITY_UPDATE_RATE = 10 ** -4 * speedup
         # The rate at which the nonbundle_activities thresholds are updated
         # real, 0 < x < 1, small
-        self.NONBUNDLE_ACTIVITY_UPDATE_RATE = 4 * 10 ** -4
+        self.NONBUNDLE_ACTIVITY_UPDATE_RATE = 4 * 10 ** -4 * speedup
         # Constant factor driving the rate at which new bundles are created
         # real, 0 < x < 1, small
-        self.NEW_BUNDLE_FACTOR = new_bundle_factor
+        self.NEW_BUNDLE_FACTOR = 10 ** -5
         # Coactivity value which, if it's every exceeded, causes a 
         # cable to be added to a bundle
         # real, 0 < x < 1, small
@@ -74,6 +75,15 @@ class ZipTie(object):
                                      tools.EPSILON) ** (1./self.MEAN_EXPONENT)
         self.bundle_activities[:self.num_bundles,:] = (
                 shifted_bundle_activities - 1.)[:self.num_bundles]
+        # debug
+        # Winner take all within the ziptie
+        # TODO: Move to a cable-energy approach, rather than the crude
+        # winner take all. WTA is probably appropriate for
+        # small cogs, but not necessarily so for larger cogs in which
+        # multiple disjoint features may be active simultaneously.
+        #self.bundle_activities[np.where(self.bundle_activities != 
+        #                       np.max(self.bundle_activities))] = 0.
+        
         # Calculate how much energy each signal has left to contribute 
         # to the co-activity estimate
         final_activated_bundle_map = self.bundle_activities * self.bundle_map
@@ -81,9 +91,10 @@ class ZipTie(object):
                                   axis=0)[:,np.newaxis]
         self.nonbundle_activities = np.maximum(0., (cable_activities - 
                                                     combined_weights))
-        self.typical_nonbundle_activity *= 1. - self.NEW_BUNDLE_UPDATE_RATE
-        self.typical_nonbundle_activity += (self.nonbundle_activities * 
-                                            self.NEW_BUNDLE_UPDATE_RATE)
+        self.typical_nonbundle_activity *= (
+                1. - self.NONBUNDLE_ACTIVITY_UPDATE_RATE)
+        self.typical_nonbundle_activity += (
+                self.nonbundle_activities *self.NONBUNDLE_ACTIVITY_UPDATE_RATE)
         # As appropriate update the co-activity estimate and 
         # create new bundles
         if not self.bundles_full:
@@ -179,11 +190,12 @@ class ZipTie(object):
         
     def visualize(self, save_eps=False):
         """ Show the internal state of the map in a pictorial format """
-        tools.visualize_array(self.coactivity, 
-                           label=self.name + '_coactivity', 
-                           save_eps=save_eps)
-        tools.visualize_array(self.bundle_map, 
-                           label=self.name + '_bundle_map')
+        # debug
+        #tools.visualize_array(self.coactivity, 
+        #                   label=self.name + '_coactivity', 
+        #                   save_eps=save_eps)
+        #tools.visualize_array(self.bundle_map, 
+        #                   label=self.name + '_bundle_map')
         print self.name, '0', np.nonzero(self.bundle_map)[0]
         print self.name, '1', np.nonzero(self.bundle_map)[1]
         return

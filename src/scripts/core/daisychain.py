@@ -28,10 +28,9 @@ class DaisyChain(object):
         self.name = name
 
         # User-defined constants
-        #
         self.AGING_TIME_CONSTANT = 10 ** 6 # real, large
-        self.CHAIN_UPDATE_RATE = 10 ** -1 # real, 0 < x < 1
-        #self.PRE_DECAY_RATE = .33 # real, 0 < x < 1
+        # debug was -1
+        self.CHAIN_UPDATE_RATE = 10 ** -5 # real, 0 < x < 1
         self.VOTE_DECAY_RATE = 0.1 # real, 0 < x < 1
         self.INITIAL_UNCERTAINTY = 0.5 # real, 0 < x < 1
         
@@ -43,7 +42,7 @@ class DaisyChain(object):
         self.post_uncertainty = np.zeros(daisychain_shape)
         self.reward_value = np.zeros(daisychain_shape)
         self.reward_uncertainty = (np.ones(daisychain_shape) *
-				   self.INITIAL_UNCERTAINTY)
+				  self.INITIAL_UNCERTAINTY)
         state_shape = (max_num_cables,1)
         self.pre = np.zeros(state_shape)
         self.post = np.zeros(state_shape)
@@ -75,7 +74,8 @@ class DaisyChain(object):
                             self.CHAIN_UPDATE_RATE))
         update_rate = np.minimum(0.5, update_rate_raw)
         self.count += chain_activities
-        self.count -= 1 / (self.AGING_TIME_CONSTANT * self.count + tools.EPSILON)
+        self.count -= 1 / (self.AGING_TIME_CONSTANT * self.count + 
+                           tools.EPSILON)
         self.count = np.maximum(self.count, 0)
         reward_difference = np.abs(reward - self.reward_value)
         self.reward_value += (reward - self.reward_value) * update_rate
@@ -91,7 +91,7 @@ class DaisyChain(object):
         self.pre_count = np.maximum(self.pre_count, 0)
         post_difference = np.abs(self.pre * self.post.T - self.expected_post)
         self.expected_post += (self.pre * self.post.T - 
-		                       self.expected_post) * update_rate_post
+		               self.expected_post) * update_rate_post
         self.post_uncertainty += (post_difference - 
                                   self.post_uncertainty) * update_rate_post 
         # Reaction is the expected post, turned into a deliberation_vote
