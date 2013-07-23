@@ -34,7 +34,12 @@ class ZipTie(object):
         # User-defined constants
         #
         # real, 0 < x < 1, small
-        self.COACTIVITY_UPDATE_RATE = 10 ** -4 * speedup
+        self.COACTIVITY_UPDATE_RATE = 10 ** -2 * speedup
+        # The rate at which affinity is updated
+        # Affinity is the potentiation of a cable to being included in a
+        # bundle. It increases over time when the cable is inactive and
+        # decreases when the cable is active. 
+        self.AFFINITY_UPDATE_RATE = 10 ** -2
         # The rate at which the nonbundle_activities thresholds are updated
         # real, 0 < x < 1, small
         self.NONBUNDLE_ACTIVITY_UPDATE_RATE = 4 * 10 ** -4 * speedup
@@ -49,9 +54,12 @@ class ZipTie(object):
         # order to find bundle activities
         # real, x != 0
         self.MEAN_EXPONENT = mean_exponent
-        
+        # Exponent controlling the strength of inhibition between bundles
+        self.ACTIVATION_WEIGHTING_EXPONENT = 6.
+
         self.bundles_full = False        
         self.bundle_activities = np.zeros((self.max_num_bundles, 1))
+        self.affinity = np.ones((self.max_num_cables, 1))
         map_size = (self.max_num_bundles, self.max_num_cables)
         self.bundle_map = np.zeros(map_size)
         self.bundle_coactivity = np.zeros(map_size)
@@ -66,8 +74,11 @@ class ZipTie(object):
         # The negative exponent weights the lower signals more heavily.
         # At the extreme value of negative infinity, the 
         # generalized mean becomes the minimum operator.
+        # Shifting by one helps handle zero-valued cable activities.
         self.cable_activities = cable_activities
-        shifted_cable_activities = cable_activities + 1.
+        # debug
+        # weighted mean 
+        '''shifted_cable_activities = cable_activities + 1.
         activities_to_power = shifted_cable_activities ** self.MEAN_EXPONENT
         mean_activities_to_power = tools.weighted_average(activities_to_power,
                                                           self.bundle_map.T)
@@ -75,22 +86,91 @@ class ZipTie(object):
                                      tools.EPSILON) ** (1./self.MEAN_EXPONENT)
         self.bundle_activities[:self.num_bundles,:] = (
                 shifted_bundle_activities - 1.)[:self.num_bundles]
-        # debug
+        '''
+        # debug      
+        """ Make a first pass at the bundle activation levels by 
+        multiplying across the bundle map.
+        """
+        #print self.name
+        #print 'ca', self.cable_activities.shape
+        #print 'nb', self.num_bundles
+        #print 'bm', self.bundle_map.shape
+        #print 'bm-sized', self.bundle_map [:self.num_bundles, 
+        #                                   :self.cable_activities.size] 
+       
+        initial_bundle_activities = np.dot(self.bundle_map,
+                                           self.cable_activities)
+        #initial_bundle_activities = np.dot(
+        #        self.bundle_map [:self.num_bundles, 
+        #                         :self.cable_activities.size], 
+        #        self.cable_activities)
+        #print 'iba', initial_bundle_activities.shape
+
+        """ Find the activity levels of the bundles contributed to 
+        by each cable.
+        """
+        bundle_contribution_map = np.zeros(self.bundle_map.shape)
+        #bundle_contribution_map = np.zeros((self.num_bundles, 
+        #                                    self.cable_activities.size))
+        bundle_contribution_map[np.nonzero(self.bundle_map)] = 1.
+        #print 'bcm', bundle_contribution_map.shape
+        activated_bundle_map = (initial_bundle_activities * 
+                                bundle_contribution_map)
+        #print 'abm', activated_bundle_map.shape                                                
+        """ Find the largest bundle activity that each input contributes to """
+        max_activation = np.max(activated_bundle_map, axis=0) + tools.EPSILON
+        #print 'ma', max_activation
+        """ Divide the energy that each input contributes to each bundle """
+        input_inhibition_map = np.power(activated_bundle_map / max_activation, 
+                                        self.ACTIVATION_WEIGHTING_EXPONENT)
+        #print 'iim', input_inhibition_map.shape
+        """ Find the effective strength of each cable to each bundle 
+        after inhibition.
+        """
+        inhibited_inputs = (input_inhibition_map * 
+                            self.cable_activities.transpose())
+        #print 'ii', inhibited_inputs.shape
+        #print 'di', (self.cable_activities - inhibited_inputs).ravel()
+        final_bundle_activities = np.sum(self.bundle_map * inhibited_inputs, 
+                                         axis=1)
+        #final_bundle_activities = np.sum(
+        #        self.bundle_map[:self.num_bundles,:self.cable_activities.size] *
+        #        inhibited_inputs, axis=1)
+        #print 'fba', final_bundle_activities.shape
+        self.bundle_activity= final_bundle_activities
+        #self.bundle_activity[:self.num_bundles,0] = (
+        #        final_bundle_activities[:self.num_bundles])
+        #print 'ba', self.bundle_activities.shape
+        """ Calculate how much energy each input has left to contribute 
+        to the co-activity estimate. 
+        """
+        final_activated_bundle_map = (final_bundle_activities[:,np.newaxis] * 
+                                      bundle_contribution_map)
+        #print 'fabm', final_activated_bundle_map.shape
+        #combined_weights = (np.sum(final_activated_bundle_map, axis=0) + 
+        #                    tools.EPSILON)
+        # combination method 1: exponential weighting
+        #coactivity_inputs = self.cable_activities * 2 ** (
+        #    -combined_weights[:, np.newaxis] * self.DISSIPATION_FACTOR)
+        
         # Winner take all within the ziptie
         # TODO: Move to a cable-energy approach, rather than the crude
         # winner take all. WTA is probably appropriate for
         # small cogs, but not necessarily so for larger cogs in which
-        # multiple disjoint features may be active simultaneously.
+        # multiple disjoint bundles may be active simultaneously.
         #self.bundle_activities[np.where(self.bundle_activities != 
         #                       np.max(self.bundle_activities))] = 0.
         
         # Calculate how much energy each signal has left to contribute 
         # to the co-activity estimate
-        final_activated_bundle_map = self.bundle_activities * self.bundle_map
+        #final_activated_bundle_map = self.bundle_activities * self.bundle_map
+        # combination method 2: straight sum
         combined_weights = np.sum(final_activated_bundle_map, 
                                   axis=0)[:,np.newaxis]
+        #print 'cw', combined_weights.shape
         self.nonbundle_activities = np.maximum(0., (cable_activities - 
                                                     combined_weights))
+        #print 'nba', self.nonbundle_activities.shape
         self.typical_nonbundle_activity *= (
                 1. - self.NONBUNDLE_ACTIVITY_UPDATE_RATE)
         self.typical_nonbundle_activity += (
@@ -138,12 +218,29 @@ class ZipTie(object):
                                          self.COACTIVITY_UPDATE_RATE)
         self.bundle_coactivity += (delta_coactivity * 
                                    bundle_coactivity_update_rate)
-        cable_coactivity_update_rate = (self.nonbundle_activities.T * 
+        #debug
+        #print 'nba', self.nonbundle_activities.shape
+        #print 'aff', self.affinity.shape
+        #print 'ca', self.cable_activities.shape
+        #print 'ca_full', self.cable_activities.ravel()
+
+        cable_coactivity_update_rate = (self.nonbundle_activities.T *
                                         self.COACTIVITY_UPDATE_RATE)
+        #cable_coactivity_update_rate = (self.nonbundle_activities.T *
+        #                                self.affinity.T * 
+        #                                self.COACTIVITY_UPDATE_RATE)
         self.cable_coactivity += (delta_coactivity * 
                                   cable_coactivity_update_rate)
         self.coactivity = np.minimum(self.bundle_coactivity,
                                      self.cable_coactivity)
+        # Update affinity
+        self.affinity *= 1. - self.cable_activities
+        self.affinity += 1. - self.affinity * self.AFFINITY_UPDATE_RATE
+        #print "affinity", self.affinity.ravel()
+        # debug
+        # Turn off affinity
+        self.affinity = np.ones(self.affinity.shape)
+        
         
         # for any bundles that are already full, don't change their coactivity
         # TODO: make this more elegant than enforcing a hard maximum count
