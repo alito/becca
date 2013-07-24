@@ -78,15 +78,10 @@ class ZipTie(object):
         self.cable_activities = cable_activities
         # debug
         # weighted mean 
-        '''shifted_cable_activities = cable_activities + 1.
-        activities_to_power = shifted_cable_activities ** self.MEAN_EXPONENT
-        mean_activities_to_power = tools.weighted_average(activities_to_power,
-                                                          self.bundle_map.T)
-        shifted_bundle_activities = (mean_activities_to_power + 
-                                     tools.EPSILON) ** (1./self.MEAN_EXPONENT)
-        self.bundle_activities[:self.num_bundles,:] = (
-                shifted_bundle_activities - 1.)[:self.num_bundles]
-        '''
+        #initial_bundle_activities_gm = tools.generalized_mean(
+        #        self.cable_activities, self.bundle_map.T, 1)
+        initial_bundle_activities = tools.generalized_mean(
+                self.cable_activities, self.bundle_map.T, self.MEAN_EXPONENT)
         # debug      
         """ Make a first pass at the bundle activation levels by 
         multiplying across the bundle map.
@@ -98,14 +93,13 @@ class ZipTie(object):
         #print 'bm-sized', self.bundle_map [:self.num_bundles, 
         #                                   :self.cable_activities.size] 
        
-        initial_bundle_activities = np.dot(self.bundle_map,
-                                           self.cable_activities)
-        #initial_bundle_activities = np.dot(
-        #        self.bundle_map [:self.num_bundles, 
-        #                         :self.cable_activities.size], 
-        #        self.cable_activities)
+        #initial_bundle_activities = np.dot(self.bundle_map,
+        #                                   self.cable_activities)
         #print 'iba', initial_bundle_activities.shape
-
+        #print self.name
+        #print 'ibag', initial_bundle_activities_gm.ravel()
+        #print 'iba', initial_bundle_activities.ravel()
+        #print 'diba', (initial_bundle_activities_gm - initial_bundle_activities).ravel()
         """ Find the activity levels of the bundles contributed to 
         by each cable.
         """
@@ -130,22 +124,30 @@ class ZipTie(object):
         inhibited_cable_activities = (input_inhibition_map * 
                                       self.cable_activities.T)
         #print 'ii', inhibited_cable_activities.shape
+        #print 'bm', self.bundle_map.shape
         #print 'di', np.nonzero(inhibited_cable_activities)
-        final_bundle_activities = np.sum(self.bundle_map * 
-                                         inhibited_cable_activities, axis=1)
+        final_bundle_activities = tools.generalized_mean(
+                inhibited_cable_activities.T, self.bundle_map.T, 
+                self.MEAN_EXPONENT)
+        #final_bundle_activities = np.sum(self.bundle_map * 
+        #                                 inhibited_cable_activities, axis=1)
         #final_bundle_activities = np.sum(
         #        self.bundle_map[:self.num_bundles,:self.cable_activities.size] *
         #        inhibited_cable_activities, axis=1)
         #print 'fba', final_bundle_activities.shape
-        self.bundle_activities = final_bundle_activities[:,np.newaxis]
+        #self.bundle_activities = final_bundle_activities[:,np.newaxis]
+        self.bundle_activities = final_bundle_activities
         #self.bundle_activities[:self.num_bundles,0] = (
         #        final_bundle_activities[:self.num_bundles])
         #print 'ba', self.bundle_activities.shape
         """ Calculate how much energy each input has left to contribute 
         to the co-activity estimate. 
         """
-        final_activated_bundle_map = (final_bundle_activities[:,np.newaxis] * 
+        final_activated_bundle_map = (final_bundle_activities * 
                                       bundle_contribution_map)
+
+        #final_activated_bundle_map = (final_bundle_activities[:,np.newaxis] * 
+        #                              bundle_contribution_map)
         #print 'fabm', final_activated_bundle_map.shape
         #combined_weights = (np.sum(final_activated_bundle_map, axis=0) + 
         #                    tools.EPSILON)

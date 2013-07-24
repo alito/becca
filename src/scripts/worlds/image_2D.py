@@ -188,6 +188,7 @@ class World(BaseWorld):
                 feature_index = -1
                 for feature in level:
                     feature_index += 1
+                    print self.num_actions, self.num_sensors
                     wut.vizualize_pixel_array_feature(
                             feature[self.num_actions:
                                     self.num_actions + self.num_sensors,:], 

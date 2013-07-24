@@ -26,9 +26,41 @@ DARK_BROWN = (60./255., 30./255, 15./255.)
 
 def weighted_average(values, weights):
     """ Perform a weighted average of values, using weights """
+    #print 'wav', values.shape
+    #print 'waw', weights.shape
     weighted_sum_values = np.sum(values * weights, axis=0) 
+    #print 'wawsv', weighted_sum_values.shape
     sum_of_weights = np.sum(weights, axis=0) 
+    #print 'wasow', sum_of_weights.shape
+    #print 'war',  (weighted_sum_values / (sum_of_weights + EPSILON))[:,np.newaxis].shape
     return (weighted_sum_values / (sum_of_weights + EPSILON))[:,np.newaxis]
+
+def generalized_mean(values, weights, exponent):
+    #print 'v', values.ravel()
+    shifted_values = values + 1.
+    #print 'sv', shifted_values.ravel()
+    values_to_power = shifted_values ** exponent
+    #print 'vp', values_to_power.ravel()
+    #print 'vp', values_to_power.shape
+    #print 'w', weights.shape
+    mean_values_to_power = weighted_average(values_to_power, weights)
+    #print 'mvp', mean_values_to_power.ravel()
+    #print 'mvp', mean_values_to_power.shape
+    shifted_mean = (mean_values_to_power + EPSILON) ** (1./exponent)
+    #print 'sm', shifted_mean.ravel()
+    mean = shifted_mean - 1.
+    #print 'm', mean.ravel()
+    # Find means for which all weights are zero. These are undefined.
+    # Set them equal to zero.
+    sum_weights = np.sum(weights, axis=0)
+    #print 'sw', sum_weights.ravel()
+    #print 'sw', sum_weights.shape
+    zero_indices = np.where(np.abs(sum_weights) < EPSILON)
+    #print 'zi', zero_indices
+    mean[zero_indices] = 0.
+    #print 'mz', mean
+    #print 'mz', mean.shape
+    return mean
 
 def map_one_to_inf(a):
     """ ZipTie values from [0, 1] onto [0, inf) and map values 

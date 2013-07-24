@@ -24,7 +24,7 @@ class Block(object):
     Internally, a block contains a number of cogs that work in parallel
     to convert cable activities into bundle activities and back again.
     """
-    def __init__(self, max_cables=200, max_cogs=20,
+    def __init__(self, max_cables=240, max_cogs=24,
                  max_cables_per_cog=10, max_bundles_per_cog=10, 
                  name='anonymous', level=0):
         """ Initialize the level, defining the dimensions of its cogs """
