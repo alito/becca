@@ -20,7 +20,7 @@ class ZipTie(object):
     def __init__(self, max_num_cables, max_num_bundles, 
                  max_cables_per_bundle=None,
                  mean_exponent=-4, joining_threshold=0.005, 
-                 speedup = 1., name='ziptie_'):
+                 speedup = 10., name='ziptie_'):
         """ Initialize each map, pre-allocating max_num_bundles """
         self.name = name
         self.max_num_cables = max_num_cables
