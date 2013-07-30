@@ -23,8 +23,9 @@ class World(BaseWorld):
         self.ENERGY_COST = 0.05 * self.REWARD_MAGNITUDE
         self.JUMP_FRACTION = 0.1
         self.display_state = True
-        self.name = 'two dimensional grid world'
-        print "Entering", self.name
+        self.name = 'grid_2D'
+        self.name_long = 'two dimensional grid world'
+        print "Entering", self.name_long
         self.num_actions = 9            
         self.world_size = 5
         self.num_sensors = self.world_size ** 2

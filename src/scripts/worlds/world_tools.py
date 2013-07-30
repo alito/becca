@@ -109,3 +109,31 @@ def vizualize_pixel_array_feature(feature, block_index=-1, feature_index=-1,
         fig.show()
         fig.canvas.draw()
         return
+
+def print_pixel_array_features(projections, directory='log', world_name=''):        
+    num_blocks = len(projections)
+    for block_index in range(num_blocks - 1):
+        for feature_index in range(len(projections[block_index])):
+            states_per_feature = block_index + 2
+            plt.close(99)
+            feature_fig = plt.figure(num=99)
+            projection_image_list = (vizualize_pixel_array_feature(projections[
+                    block_index][feature_index][:self.num_sensors,:], array_only=True)) 
+            for state_index in range(states_per_feature): 
+                left =  (float(state_index) / float(states_per_feature))
+                bottom = 0.
+                width =  1. /  float(states_per_feature)
+                height =  1
+                rect = (left, bottom, width, height)
+                ax = feature_fig.add_axes(rect)
+                plt.gray()
+                ax.imshow(projection_image_list[state_index], interpolation='nearest', 
+                          vmin=0., vmax=1.)
+            # create a plot of individual features
+            filename = '_'.join(('block', str(block_index).zfill(2),
+                                 'feature',str(feature_index).zfill(4),
+                                 world_name, 'world.png'))
+            full_filename = os.path.join(directory, 'log', filename)
+            plt.title(filename)
+            plt.savefig(full_filename, format='png') 
+    return

@@ -20,7 +20,7 @@ class ZipTie(object):
     def __init__(self, max_num_cables, max_num_bundles, 
                  max_cables_per_bundle=None,
                  mean_exponent=-4, joining_threshold=0.005, 
-                 speedup = 1., name='ziptie_'):
+                 speedup = 100., name='ziptie_'):
         """ Initialize each map, pre-allocating max_num_bundles """
         self.name = name
         self.max_num_cables = max_num_cables
@@ -34,22 +34,25 @@ class ZipTie(object):
         # User-defined constants
         #
         # real, 0 < x < 1, small
-        self.COACTIVITY_UPDATE_RATE = 10 ** -4 * speedup
+        #self.COACTIVITY_UPDATE_RATE = 10 ** -4 * speedup
+        self.AGGLOMERATION_ENERGY_RATE = 10 ** -4 * speedup
         # The rate at which affinity is updated
         # Affinity is the potentiation of a cable to being included in a
         # bundle. It increases over time when the cable is inactive and
         # decreases when the cable is active. 
-        self.AFFINITY_UPDATE_RATE = 10 ** -2
+        #self.AFFINITY_UPDATE_RATE = 10 ** -2
         # The rate at which the nonbundle_activities thresholds are updated
         # real, 0 < x < 1, small
-        self.NONBUNDLE_ACTIVITY_UPDATE_RATE = 4 * 10 ** -4 * speedup
+        #self.NONBUNDLE_ACTIVITY_UPDATE_RATE = 4 * 10 ** -4 * speedup
         # Constant factor driving the rate at which new bundles are created
         # real, 0 < x < 1, small
-        self.NEW_BUNDLE_FACTOR = 10 ** -5
+        #self.NEW_BUNDLE_FACTOR = 10 ** -5
+        self.NUCLEATION_ENERGY_RATE = 10 ** -6 * speedup
         # Coactivity value which, if it's every exceeded, causes a 
         # cable to be added to a bundle
         # real, 0 < x < 1, small
         self.JOINING_THRESHOLD = joining_threshold
+        self.NUCLEATION_THRESHOLD = joining_threshold
         # Exponent for calculating the generalized mean of signals in 
         # order to find bundle activities
         # real, x != 0
@@ -59,13 +62,15 @@ class ZipTie(object):
 
         self.bundles_full = False        
         self.bundle_activities = np.zeros((self.max_num_bundles, 1))
-        self.affinity = np.ones((self.max_num_cables, 1))
+        #self.affinity = np.ones((self.max_num_cables, 1))
         map_size = (self.max_num_bundles, self.max_num_cables)
         self.bundle_map = np.zeros(map_size)
-        self.bundle_coactivities = np.zeros(map_size)
-        self.cable_coactivities = np.zeros(map_size)
-        self.coactivities = np.zeros(map_size)
-        self.typical_nonbundle_activities = np.zeros((self.max_num_cables, 1))
+        #self.bundle_coactivities = np.zeros(map_size)
+        #self.cable_coactivities = np.zeros(map_size)
+        #self.coactivities = np.zeros(map_size)
+        self.agglomeration_energy = np.zeros(map_size)
+        #self.typical_nonbundle_activities = np.zeros((self.max_num_cables, 1))
+        self.nucleation_energy = np.zeros((self.max_num_cables, 1))
 
     def update(self, cable_activities):
         """ Update co-activity estimates and calculate bundle activity """
@@ -88,6 +93,7 @@ class ZipTie(object):
         """
         #print self.name
         #print 'ca', self.cable_activities.shape
+        #print 'ca', self.cable_activities.ravel()
         #print 'nb', self.num_bundles
         #print 'bm', self.bundle_map.shape
         #print 'bm-sized', self.bundle_map [:self.num_bundles, 
@@ -162,13 +168,14 @@ class ZipTie(object):
         combined_weights = np.sum(final_activated_bundle_map, 
                                   axis=0)[:,np.newaxis]
         #print 'cw', combined_weights.shape
+        #print 'cw', combined_weights.ravel()
         self.nonbundle_activities = np.maximum(0., (cable_activities - 
                                                     combined_weights))
         #print 'nba', self.nonbundle_activities.shape
-        self.typical_nonbundle_activities *= (
-                1. - self.NONBUNDLE_ACTIVITY_UPDATE_RATE)
-        self.typical_nonbundle_activities += (
-                self.nonbundle_activities *self.NONBUNDLE_ACTIVITY_UPDATE_RATE)
+        #self.typical_nonbundle_activities *= (
+        #        1. - self.NONBUNDLE_ACTIVITY_UPDATE_RATE)
+        #self.typical_nonbundle_activities += (
+        #        self.nonbundle_activities *self.NONBUNDLE_ACTIVITY_UPDATE_RATE)
         #print 'tnba', self.typical_nonbundle_activities.ravel()
         # As appropriate update the co-activity estimate and 
         # create new bundles
@@ -184,11 +191,18 @@ class ZipTie(object):
                         float(self.max_num_bundles)) 
         # debug
         #print self.name, 'tna', np.max(self.typical_nonbundle_activities)
-        new_bundle_thresholds = (self.typical_nonbundle_activities ** 
-                                 availability * self.NEW_BUNDLE_FACTOR)
-        cable_indices = np.where(np.random.random_sample(
-                self.typical_nonbundle_activities.shape) <
-                new_bundle_thresholds) 
+        #new_bundle_thresholds = (self.typical_nonbundle_activities ** 
+        #                         availability * self.NEW_BUNDLE_FACTOR)
+        #cable_indices = np.where(np.random.random_sample(
+        #        self.typical_nonbundle_activities.shape) <
+        #        new_bundle_thresholds) 
+        self.nucleation_energy += (self.nonbundle_activities * 
+                                   self.NUCLEATION_ENERGY_RATE * 
+                                   (1. - self.nucleation_energy))
+        #print 'nba', self.nonbundle_activities.ravel()
+        #print 'ne', self.nucleation_energy.ravel()
+        cable_indices = np.where(self.nucleation_energy * availability > 
+                                 self.NUCLEATION_THRESHOLD)
         # Add a new bundle if appropriate
         if cable_indices[0].size > 0:
             # Randomly pick a new cable from the candidates, 
@@ -199,44 +213,52 @@ class ZipTie(object):
             self.num_bundles += 1
             if self.num_bundles == self.max_num_bundles:
                 self.bundles_full = True
-            self.typical_nonbundle_activities[cable_index, 0] = 0.
+            #self.typical_nonbundle_activities[cable_index, 0] = 0.
+            print self.name, 'ci', cable_index, 'added as a bundle nucleus'
+            self.nucleation_energy[cable_index, 0] = 0.
+            self.agglomeration_energy[:, cable_index] = 0.
         return 
           
     def _update_coactivity(self):
         """ Update an estimate of co-activity between all cables """
         #print 'ba', self.bundle_activities.shape
         #print 'nba', self.nonbundle_activities.shape
-        instant_coactivities = np.dot(self.bundle_activities, 
-                                    self.nonbundle_activities.T)
+        coactivities = np.dot(self.bundle_activities, 
+                              self.nonbundle_activities.T)
+        self.agglomeration_energy += (coactivities * 
+                                      self.AGGLOMERATION_ENERGY_RATE * 
+                                      (1. - self.agglomeration_energy))
         # Determine the upper bound on the size of the incremental step 
         # toward the instant co-activity.
-        delta_coactivities = instant_coactivities - self.coactivities
-        bundle_coactivities_update_rate = (self.bundle_activities * 
-                                         self.COACTIVITY_UPDATE_RATE)
-        self.bundle_coactivities += (delta_coactivities * 
-                                   bundle_coactivities_update_rate)
+        #instant_coactivities = np.dot(self.bundle_activities, 
+        #                              self.nonbundle_activities.T)
+        #delta_coactivities = instant_coactivities - self.coactivities
+        #bundle_coactivities_update_rate = (self.bundle_activities * 
+        #                                 self.COACTIVITY_UPDATE_RATE)
+        #self.bundle_coactivities += (delta_coactivities * 
+        #                           bundle_coactivities_update_rate)
         #debug
         #print 'nba', self.nonbundle_activities.shape
         #print 'aff', self.affinity.shape
         #print 'ca', self.cable_activities.shape
         #print 'ca_full', self.cable_activities.ravel()
 
-        cable_coactivities_update_rate = (self.nonbundle_activities.T *
-                                        self.COACTIVITY_UPDATE_RATE)
+        #cable_coactivities_update_rate = (self.nonbundle_activities.T *
+        #                                self.COACTIVITY_UPDATE_RATE)
         #cable_coactivities_update_rate = (self.nonbundle_activities.T *
         #                                self.affinity.T * 
         #                                self.COACTIVITY_UPDATE_RATE)
-        self.cable_coactivities += (delta_coactivities * 
-                                  cable_coactivities_update_rate)
-        self.coactivities = np.minimum(self.bundle_coactivities,
-                                       self.cable_coactivities)
+        #self.cable_coactivities += (delta_coactivities * 
+        #                          cable_coactivities_update_rate)
+        #self.coactivities = np.minimum(self.bundle_coactivities,
+        #                               self.cable_coactivities)
         # Update affinity
-        self.affinity *= 1. - self.cable_activities
-        self.affinity += 1. - self.affinity * self.AFFINITY_UPDATE_RATE
+        #self.affinity *= 1. - self.cable_activities
+        #self.affinity += 1. - self.affinity * self.AFFINITY_UPDATE_RATE
         #print "affinity", self.affinity.ravel()
         # debug
         # Turn off affinity
-        self.affinity = np.ones(self.affinity.shape)
+        #self.affinity = np.ones(self.affinity.shape)
         
         
         # for any bundles that are already full, don't change their coactivity
@@ -245,16 +267,23 @@ class ZipTie(object):
         cables_per_bundle = np.sum(self.bundle_map, axis=1)[:,np.newaxis]
         full_bundles[np.where(cables_per_bundle >= 
                               self.max_cables_per_bundle)] = 1.
-        self.coactivities *= 1. - full_bundles
-        
-	new_candidates = np.where(self.coactivities >= self.JOINING_THRESHOLD)
-	num_candidates =  new_candidates[0].size 
-	if num_candidates > 0:
-	    candidate_index = np.random.randint(num_candidates) 
-	    self.bundle_map[new_candidates[0][candidate_index],
-			    new_candidates[1][candidate_index]]  = 1.
-	    #self.bundle_map[np.where(self.coactivities >= 
-        #                         self.JOINING_THRESHOLD)] = 1.
+        #self.coactivities *= 1. - full_bundles
+        self.agglomeration_energy *= 1 - full_bundles
+
+        #new_candidates = np.where(self.coactivities >= self.JOINING_THRESHOLD)
+        new_candidates = np.where(self.agglomeration_energy >= 
+                                  self.JOINING_THRESHOLD)
+        num_candidates =  new_candidates[0].size 
+        if num_candidates > 0:
+            candidate_index = np.random.randint(num_candidates) 
+            candidate_cable = new_candidates[1][candidate_index]
+            candidate_bundle = new_candidates[0][candidate_index]
+            self.bundle_map[candidate_bundle, candidate_cable] = 1.
+            #self.bundle_map[np.where(self.coactivities >= 
+            #                         self.JOINING_THRESHOLD)] = 1.
+            self.nucleation_energy[candidate_cable, 0] = 0.
+            self.agglomeration_energy[:, candidate_cable] = 0.
+            print self.name, 'cable', candidate_cable, 'added to bundle', candidate_bundle
         return
         
     def get_cable_deliberation_vote(self, bundle_activity_goals):

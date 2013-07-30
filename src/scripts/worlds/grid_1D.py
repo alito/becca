@@ -22,8 +22,9 @@ class World(BaseWorld):
         self.REWARD_MAGNITUDE = 100.
         self.ENERGY_COST = 0.01 * self.REWARD_MAGNITUDE
         self.JUMP_FRACTION = 0.1
-        self.name = 'one dimensional grid world'
-        print "Entering", self.name
+        self.name = 'grid_1D'
+        self.name_long = 'one dimensional grid world'
+        print "Entering", self.name_long
         self.num_sensors = 9
         self.num_actions = 9
         self.action = np.zeros((self.num_actions,1))

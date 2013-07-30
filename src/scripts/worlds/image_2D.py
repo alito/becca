@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 from worlds.base_world import World as BaseWorld
-import worlds.world_utils as wut
+import worlds.world_tools as wtools
 
 class World(BaseWorld):
     """ 
@@ -19,15 +20,15 @@ class World(BaseWorld):
     def __init__(self, lifespan=None):
         """ Set up the world """
         BaseWorld.__init__(self, lifespan)
-        self.VISUALIZE_PERIOD = 10 ** 3
-        self.FEATURE_DISPLAY_PERIOD = 10 ** 4
+        self.VISUALIZE_PERIOD = 3 * 10 ** 3
+        self.FEATURE_DISPLAY_PERIOD = 3 * 10 ** 2
         self.REWARD_MAGNITUDE = 100.
         self.JUMP_FRACTION = 0.1
         self.animate = False
         self.graphing = True
-        self.name = 'two dimensional visual world'
-        self.name_short = 'image_2D'
-        print "Entering", self.name
+        self.name = 'image_2D'
+        self.name_long = 'two dimensional visual world'
+        print "Entering", self.name_long
 
         self.fov_span = 10 
         # Initialize the block_image_data to be used as the environment 
@@ -118,7 +119,7 @@ class World(BaseWorld):
                                     self.row_position + self.fov_height / 2, 
                                     self.column_position - self.fov_width / 2: 
                                     self.column_position + self.fov_width / 2]
-        center_surround_pixels = wut.center_surround(fov,self.fov_span)
+        center_surround_pixels = wtools.center_surround(fov,self.fov_span)
         unsplit_sensors = center_surround_pixels.ravel()
         self.sensors = np.concatenate((np.maximum(unsplit_sensors, 0), 
                                        np.abs(np.minimum(unsplit_sensors, 0))))
@@ -181,17 +182,41 @@ class World(BaseWorld):
 
         # Periodcally show the entire feature set 
         if self.timestep % self.FEATURE_DISPLAY_PERIOD == 0:
-            feature_set = agent.get_projections()
-            level_index = -1
-            for level in feature_set:
-                level_index += 1
+            (feature_set, feature_activities) = agent.get_projections()
+            wtools.print_pixel_array_features(feature_set, directory='log', 
+                                              world_name=self.name)  
+            '''block_index = -1
+            for block in feature_set:
+                block_index += 1
+                states_per_feature = block_index + 2
                 feature_index = -1
-                for feature in level:
+                for feature in block:
                     feature_index += 1
-                    print self.num_actions, self.num_sensors
-                    wut.vizualize_pixel_array_feature(
+                    plt.close(99)
+                    feature_fig = plt.figure(num=99)
+                    #print self.num_actions, self.num_sensors
+                    #print 'feature', feature
+                    projection_image_list = wtools.vizualize_pixel_array_feature(
                             feature[self.num_actions:
                                     self.num_actions + self.num_sensors,:], 
-                            level_index, feature_index, 
-                            world_name=self.name_short, save_png=False) 
+                            block_index, feature_index, array_only=True) 
+                    for state_index in range(states_per_feature):
+                        left = (float(state_index) /
+                                float(states_per_feature))
+                        bottom = 0.
+                        width = 1. / float(states_per_feature)
+                        height = 1.
+                        rect = (left, bottom, width, height)
+                        ax = feature_fig.add_axes(rect)
+                        plt.gray()
+                        ax.imshow(projection_image_list[state_index],
+                                  interpolation='nearest',
+                                  vmin=0., vmax=1.)
+                    filename = '_'.join(('block', str(block_index).zfill(2),
+                                         'feature', str(feature_index).zfill(4),
+                                         'image_2D', 'world.png'))
+                    full_filename = os.path.join('log', filename)
+                    plt.title(filename)
+                    plt.savefig(full_filename, format='png')
+            '''
         return

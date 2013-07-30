@@ -20,7 +20,8 @@ class World(Grid_2D_World):
     def __init__(self, lifespan=None):
         """ Set up the world """    
         Grid_2D_World.__init__(self, lifespan)
-        self.name = 'decoupled two dimensional grid world'
+        self.name = 'grid_2D_dc'
+        self.name_long = 'decoupled two dimensional grid world'
         print "--decoupled"
         self.num_sensors = self.world_size * 2
         self.VISUALIZE_PERIOD = 10 ** 3

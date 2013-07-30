@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from worlds.base_world import World as BaseWorld
-import worlds.world_utils as world_utils
+import worlds.world_tools as wtools
 
 class World(BaseWorld):
     """ 
@@ -19,15 +19,15 @@ class World(BaseWorld):
         """ Set up the world """
         BaseWorld.__init__(self, lifespan)
         self.VISUALIZE_PERIOD = 10 ** 3
-        self.FEATURE_DISPLAY_PERIOD = 10 ** 3
+        self.FEATURE_DISPLAY_PERIOD = 10 ** 2
         self.REWARD_MAGNITUDE = 100.
         self.JUMP_FRACTION = 0.1
         self.STEP_COST = 0.1 * self.REWARD_MAGNITUDE
         self.animate = False 
         self.graphing = True
-        self.name = 'one dimensional visual world'
-        self.name_short = 'image_1D'
-        print "Entering", self.name
+        self.name_long = 'one dimensional visual world'
+        self.name = 'image_1D'
+        print "Entering", self.name_long
         self.step_counter = 0
         self.fov_span = 5 
         self.num_sensors = 2 * self.fov_span ** 2
@@ -86,7 +86,7 @@ class World(BaseWorld):
         # Create the sensory input vector
         fov = self.data[:, self.column_position - self.fov_width / 2: 
                            self.column_position + self.fov_width / 2]
-        center_surround_pixels = world_utils.center_surround(fov, 
+        center_surround_pixels = wtools.center_surround(fov, 
                                                              self.fov_span)
         unsplit_sensors = center_surround_pixels.ravel()        
         self.sensors = np.concatenate((np.maximum(unsplit_sensors, 0), 
@@ -142,15 +142,18 @@ class World(BaseWorld):
         # Periodically visualize the entire feature set
         if (self.timestep % self.FEATURE_DISPLAY_PERIOD) == 0:
             feature_set = agent.get_projections(to_screen=True)
-            block_index = -1
+            wtools.print_pixel_array_features(feature_set, directory='log', 
+                                              world_name=self.name)  
+            '''block_index = -1
             for block in feature_set:
                 block_index += 1
                 feature_index = -1
                 for feature in block:
                     feature_index += 1
-                    world_utils.vizualize_pixel_array_feature(
+                    wtools.vizualize_pixel_array_feature(
                             feature[self.num_actions:
                                     self.num_actions + self.num_sensors,:], 
                             block_index, feature_index, 
                             world_name=self.name_short, save_png=True)
+            '''        
         return
