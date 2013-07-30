@@ -20,12 +20,11 @@ class World(BaseWorld):
     def __init__(self, lifespan=None):
         """ Set up the world """
         BaseWorld.__init__(self, lifespan)
-        self.VISUALIZE_PERIOD = 3 * 10 ** 3
-        self.FEATURE_DISPLAY_PERIOD = 3 * 10 ** 2
+        self.VISUALIZE_PERIOD = 10 ** 3
         self.REWARD_MAGNITUDE = 100.
         self.JUMP_FRACTION = 0.1
+        self.print_all_features = True
         self.animate = False
-        self.graphing = True
         self.name = 'image_2D'
         self.name_long = 'two dimensional visual world'
         print "Entering", self.name_long
@@ -138,85 +137,50 @@ class World(BaseWorld):
 
     def visualize(self, agent):
         """ Show what is going on in BECCA and in the world """
+        self.row_history.append(self.row_position)
+        self.column_history.append(self.column_position)
         if self.animate:
             print ''.join([str(self.row_position), ', ', 
                            str(self.column_position), 
                            '-row and col position  ', 
                            str(self.reward), '-reward'])
-        if not self.graphing:
+        # Periodically display the history and inputs as perceived by BECCA
+        if (self.timestep % self.VISUALIZE_PERIOD) != 0:
             return
 
-        # Periodically display the history and inputs as perceived by BECCA
-        self.row_history.append(self.row_position)
-        self.column_history.append(self.column_position)
-        if (self.timestep % self.VISUALIZE_PERIOD) == 0:
-            print ' '.join(["world is", str(self.timestep), "timesteps old."])
-            fig = plt.figure(11)
-            plt.clf()
-            plt.plot( self.row_history, 'k.')    
-            plt.title("Row history")
-            plt.xlabel('time step')
-            plt.ylabel('position (pixels)')
-            fig.show()
-            fig.canvas.draw()
+        print ' '.join(["world is", str(self.timestep), "timesteps old."])
+        fig = plt.figure(11)
+        plt.clf()
+        plt.plot( self.row_history, 'k.')    
+        plt.title("Row history")
+        plt.xlabel('time step')
+        plt.ylabel('position (pixels)')
+        fig.show()
+        fig.canvas.draw()
 
-            fig = plt.figure(12)
-            plt.clf()
-            plt.plot( self.column_history, 'k.')    
-            plt.title("Column history")
-            plt.xlabel('time step')
-            plt.ylabel('position (pixels)')
-            fig.show()
-            fig.canvas.draw()
+        fig = plt.figure(12)
+        plt.clf()
+        plt.plot( self.column_history, 'k.')    
+        plt.title("Column history")
+        plt.xlabel('time step')
+        plt.ylabel('position (pixels)')
+        fig.show()
+        fig.canvas.draw()
 
-            fig = plt.figure(13)
-            sensed_image = np.reshape(0.5 * (
-                    self.sensors[:len(self.sensors)/2] - 
-                    self.sensors[len(self.sensors)/2:] + 1), 
-                    (self.fov_span, self.fov_span))
-            plt.gray()
-            plt.imshow(sensed_image, interpolation='nearest')
-            plt.title("Image sensed")
-            fig.show()
-            fig.canvas.draw()
+        fig = plt.figure(13)
+        sensed_image = np.reshape(0.5 * (
+                self.sensors[:len(self.sensors)/2] - 
+                self.sensors[len(self.sensors)/2:] + 1), 
+                (self.fov_span, self.fov_span))
+        plt.gray()
+        plt.imshow(sensed_image, interpolation='nearest')
+        plt.title("Image sensed")
+        fig.show()
+        fig.canvas.draw()
 
         # Periodcally show the entire feature set 
-        if self.timestep % self.FEATURE_DISPLAY_PERIOD == 0:
+        if self.print_all_features:
             (feature_set, feature_activities) = agent.get_projections()
-            wtools.print_pixel_array_features(feature_set, directory='log', 
-                                              world_name=self.name)  
-            '''block_index = -1
-            for block in feature_set:
-                block_index += 1
-                states_per_feature = block_index + 2
-                feature_index = -1
-                for feature in block:
-                    feature_index += 1
-                    plt.close(99)
-                    feature_fig = plt.figure(num=99)
-                    #print self.num_actions, self.num_sensors
-                    #print 'feature', feature
-                    projection_image_list = wtools.vizualize_pixel_array_feature(
-                            feature[self.num_actions:
-                                    self.num_actions + self.num_sensors,:], 
-                            block_index, feature_index, array_only=True) 
-                    for state_index in range(states_per_feature):
-                        left = (float(state_index) /
-                                float(states_per_feature))
-                        bottom = 0.
-                        width = 1. / float(states_per_feature)
-                        height = 1.
-                        rect = (left, bottom, width, height)
-                        ax = feature_fig.add_axes(rect)
-                        plt.gray()
-                        ax.imshow(projection_image_list[state_index],
-                                  interpolation='nearest',
-                                  vmin=0., vmax=1.)
-                    filename = '_'.join(('block', str(block_index).zfill(2),
-                                         'feature', str(feature_index).zfill(4),
-                                         'image_2D', 'world.png'))
-                    full_filename = os.path.join('log', filename)
-                    plt.title(filename)
-                    plt.savefig(full_filename, format='png')
-            '''
+            wtools.print_pixel_array_features(feature_set, self.num_sensors,
+                                              directory='log', world_name=self.name)  
         return

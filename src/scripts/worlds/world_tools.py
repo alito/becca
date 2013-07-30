@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 import core.tools as tools
 
@@ -110,7 +111,7 @@ def vizualize_pixel_array_feature(feature, block_index=-1, feature_index=-1,
         fig.canvas.draw()
         return
 
-def print_pixel_array_features(projections, directory='log', world_name=''):        
+def print_pixel_array_features(projections, num_sensors, directory='log', world_name=''):
     num_blocks = len(projections)
     for block_index in range(num_blocks - 1):
         for feature_index in range(len(projections[block_index])):
@@ -118,7 +119,7 @@ def print_pixel_array_features(projections, directory='log', world_name=''):
             plt.close(99)
             feature_fig = plt.figure(num=99)
             projection_image_list = (vizualize_pixel_array_feature(projections[
-                    block_index][feature_index][:self.num_sensors,:], array_only=True)) 
+                    block_index][feature_index][:num_sensors,:], array_only=True)) 
             for state_index in range(states_per_feature): 
                 left =  (float(state_index) / float(states_per_feature))
                 bottom = 0.
@@ -133,7 +134,7 @@ def print_pixel_array_features(projections, directory='log', world_name=''):
             filename = '_'.join(('block', str(block_index).zfill(2),
                                  'feature',str(feature_index).zfill(4),
                                  world_name, 'world.png'))
-            full_filename = os.path.join(directory, 'log', filename)
+            full_filename = os.path.join(directory, filename)
             plt.title(filename)
             plt.savefig(full_filename, format='png') 
     return

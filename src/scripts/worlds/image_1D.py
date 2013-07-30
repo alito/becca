@@ -19,7 +19,7 @@ class World(BaseWorld):
         """ Set up the world """
         BaseWorld.__init__(self, lifespan)
         self.VISUALIZE_PERIOD = 10 ** 3
-        self.FEATURE_DISPLAY_PERIOD = 10 ** 2
+        self.print_feature_set = True
         self.REWARD_MAGNITUDE = 100.
         self.JUMP_FRACTION = 0.1
         self.STEP_COST = 0.1 * self.REWARD_MAGNITUDE
@@ -139,21 +139,9 @@ class World(BaseWorld):
             plt.title("Image sensed")
             fig.show()
             fig.canvas.draw()
-        # Periodically visualize the entire feature set
-        if (self.timestep % self.FEATURE_DISPLAY_PERIOD) == 0:
-            feature_set = agent.get_projections(to_screen=True)
-            wtools.print_pixel_array_features(feature_set, directory='log', 
-                                              world_name=self.name)  
-            '''block_index = -1
-            for block in feature_set:
-                block_index += 1
-                feature_index = -1
-                for feature in block:
-                    feature_index += 1
-                    wtools.vizualize_pixel_array_feature(
-                            feature[self.num_actions:
-                                    self.num_actions + self.num_sensors,:], 
-                            block_index, feature_index, 
-                            world_name=self.name_short, save_png=True)
-            '''        
+            # Periodically visualize the entire feature set
+            if self.print_feature_set:
+                (feature_set, feature_activities) = agent.get_projections()
+                wtools.print_pixel_array_features(feature_set, self.num_sensors, 
+                                                  directory='log', world_name=self.name)
         return
