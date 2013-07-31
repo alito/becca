@@ -182,5 +182,6 @@ class World(BaseWorld):
         if self.print_all_features:
             (feature_set, feature_activities) = agent.get_projections()
             wtools.print_pixel_array_features(feature_set, self.num_sensors,
+                                              self.num_actions,
                                               directory='log', world_name=self.name)  
         return

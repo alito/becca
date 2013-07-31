@@ -19,7 +19,7 @@ class ZipTie(object):
     # joining_threshold was 0.2 
     def __init__(self, max_num_cables, max_num_bundles, 
                  max_cables_per_bundle=None,
-                 mean_exponent=-4, joining_threshold=0.005, 
+                 mean_exponent=-4, joining_threshold=0.2, 
                  speedup = 10., name='ziptie_'):
         """ Initialize each map, pre-allocating max_num_bundles """
         self.name = name
@@ -35,7 +35,7 @@ class ZipTie(object):
         #
         # real, 0 < x < 1, small
         #self.COACTIVITY_UPDATE_RATE = 10 ** -4 * speedup
-        self.AGGLOMERATION_ENERGY_RATE = 10 ** -4 * speedup
+        self.AGGLOMERATION_ENERGY_RATE = 10 ** -3 * speedup
         # The rate at which affinity is updated
         # Affinity is the potentiation of a cable to being included in a
         # bundle. It increases over time when the cable is inactive and
@@ -141,6 +141,7 @@ class ZipTie(object):
         #        self.bundle_map[:self.num_bundles,:self.cable_activities.size] *
         #        inhibited_cable_activities, axis=1)
         #print 'fba', final_bundle_activities.shape
+        #print 'fba', final_bundle_activities.ravel()
         #self.bundle_activities = final_bundle_activities[:,np.newaxis]
         self.bundle_activities = final_bundle_activities
         #self.bundle_activities[:self.num_bundles,0] = (
@@ -171,7 +172,6 @@ class ZipTie(object):
         #print 'cw', combined_weights.ravel()
         self.nonbundle_activities = np.maximum(0., (cable_activities - 
                                                     combined_weights))
-        #print 'nba', self.nonbundle_activities.shape
         #self.typical_nonbundle_activities *= (
         #        1. - self.NONBUNDLE_ACTIVITY_UPDATE_RATE)
         #self.typical_nonbundle_activities += (
@@ -181,7 +181,7 @@ class ZipTie(object):
         # create new bundles
         if not self.bundles_full:
             self._create_new_bundles()
-        self._update_coactivity()
+        self._grow_bundles()
         return self.bundle_activities[:self.num_bundles,:]
 
     def _create_new_bundles(self):
@@ -219,15 +219,26 @@ class ZipTie(object):
             self.agglomeration_energy[:, cable_index] = 0.
         return 
           
-    def _update_coactivity(self):
+    def _grow_bundles(self):
         """ Update an estimate of co-activity between all cables """
+        #print self.name
         #print 'ba', self.bundle_activities.shape
         #print 'nba', self.nonbundle_activities.shape
         coactivities = np.dot(self.bundle_activities, 
                               self.nonbundle_activities.T)
-        self.agglomeration_energy += (coactivities * 
+        #print 'ca', coactivities.shape
+        #print coactivities
+        # Each cable's nonbundle activity is distributed to agglomeration energy 
+        # with each bundle proportionally to their coactivities.
+        proportions_by_bundle = self.bundle_activities / np.sum(self.bundle_activities + 
+                                                               tools.EPSILON)
+        proportions_by_cable = np.dot(proportions_by_bundle, self.nonbundle_activities.T)
+        #print 'ppb', proportions_by_bundle.ravel()
+        #print 'ppc', proportions_by_cable.ravel()
+        self.agglomeration_energy += (proportions_by_cable * coactivities * 
                                       self.AGGLOMERATION_ENERGY_RATE * 
                                       (1. - self.agglomeration_energy))
+        #print self.agglomeration_energy
         # Determine the upper bound on the size of the incremental step 
         # toward the instant co-activity.
         #instant_coactivities = np.dot(self.bundle_activities, 

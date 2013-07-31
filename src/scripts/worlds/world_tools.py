@@ -111,7 +111,8 @@ def vizualize_pixel_array_feature(feature, block_index=-1, feature_index=-1,
         fig.canvas.draw()
         return
 
-def print_pixel_array_features(projections, num_sensors, directory='log', world_name=''):
+def print_pixel_array_features(projections, num_sensors, num_actions, 
+                               directory='log', world_name=''):
     num_blocks = len(projections)
     for block_index in range(num_blocks - 1):
         for feature_index in range(len(projections[block_index])):
@@ -119,7 +120,8 @@ def print_pixel_array_features(projections, num_sensors, directory='log', world_
             plt.close(99)
             feature_fig = plt.figure(num=99)
             projection_image_list = (vizualize_pixel_array_feature(projections[
-                    block_index][feature_index][:num_sensors,:], array_only=True)) 
+                    block_index][feature_index][
+                    num_actions:num_actions + num_sensors,:], array_only=True)) 
             for state_index in range(states_per_feature): 
                 left =  (float(state_index) / float(states_per_feature))
                 bottom = 0.

@@ -21,7 +21,7 @@ class Agent(object):
         sensors and actions arrays that the agent and the world use to
         communicate with each other. 
         """
-        self.BACKUP_PERIOD = 10 ** 4
+        self.BACKUP_PERIOD = 10 ** 3
         self.show = show
         self.pickle_filename ="log/" + agent_name + ".pickle"
         # TODO: Automatically adapt to the number of sensors pass in
@@ -203,7 +203,7 @@ class Agent(object):
         """ Show the current state and some history of the agent """
         print ' '.join(['agent is', str(self.timestep), 'time steps old'])
         self.reward_history.append(float(self.cumulative_reward) / 
-                                   self.time_since_reward_log)
+                                   (self.time_since_reward_log + 1))
         self.cumulative_reward = 0    
         self.time_since_reward_log = 0
         self.reward_steps.append(self.timestep)
