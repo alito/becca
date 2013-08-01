@@ -20,12 +20,13 @@ class World(BaseWorld):
     def __init__(self, lifespan=None):
         """ Set up the world """
         BaseWorld.__init__(self, lifespan)
-        self.VISUALIZE_PERIOD = 10 ** 3
+        self.VISUALIZE_PERIOD = 10 ** 4
         self.REWARD_MAGNITUDE = 100.
         self.JUMP_FRACTION = 0.1
-        self.print_all_features = True
+        self.print_feature_set = True
         self.animate = False
         self.name = 'image_2D'
+        #self.name = 'image_2D_fast'
         self.name_long = 'two dimensional visual world'
         print "Entering", self.name_long
 
@@ -179,7 +180,7 @@ class World(BaseWorld):
         fig.canvas.draw()
 
         # Periodcally show the entire feature set 
-        if self.print_all_features:
+        if self.print_feature_set:
             (feature_set, feature_activities) = agent.get_projections()
             wtools.print_pixel_array_features(feature_set, self.num_sensors,
                                               self.num_actions,

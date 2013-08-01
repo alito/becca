@@ -21,7 +21,7 @@ class Agent(object):
         sensors and actions arrays that the agent and the world use to
         communicate with each other. 
         """
-        self.BACKUP_PERIOD = 10 ** 3
+        self.BACKUP_PERIOD = 10 ** 4
         self.show = show
         self.pickle_filename ="log/" + agent_name + ".pickle"
         # TODO: Automatically adapt to the number of sensors pass in

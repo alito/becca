@@ -19,8 +19,8 @@ class ZipTie(object):
     # joining_threshold was 0.2 
     def __init__(self, max_num_cables, max_num_bundles, 
                  max_cables_per_bundle=None,
-                 mean_exponent=-4, joining_threshold=0.2, 
-                 speedup = 10., name='ziptie_'):
+                 mean_exponent=-4, joining_threshold=0.4, 
+                 speedup = 100., name='ziptie_'):
         """ Initialize each map, pre-allocating max_num_bundles """
         self.name = name
         self.max_num_cables = max_num_cables
@@ -47,7 +47,8 @@ class ZipTie(object):
         # Constant factor driving the rate at which new bundles are created
         # real, 0 < x < 1, small
         #self.NEW_BUNDLE_FACTOR = 10 ** -5
-        self.NUCLEATION_ENERGY_RATE = 10 ** -6 * speedup
+        self.NUCLEATION_ENERGY_RATE = 10 ** -5 * speedup
+        self.ENERGY_DECAY_RATE = 10 ** -2
         # Coactivity value which, if it's every exceeded, causes a 
         # cable to be added to a bundle
         # real, 0 < x < 1, small
@@ -196,6 +197,10 @@ class ZipTie(object):
         #cable_indices = np.where(np.random.random_sample(
         #        self.typical_nonbundle_activities.shape) <
         #        new_bundle_thresholds) 
+        # Decay the energy        
+        self.nucleation_energy -= (self.nucleation_energy * 
+                                   self.NUCLEATION_ENERGY_RATE * 
+                                   self.ENERGY_DECAY_RATE)
         self.nucleation_energy += (self.nonbundle_activities * 
                                    self.NUCLEATION_ENERGY_RATE * 
                                    (1. - self.nucleation_energy))
@@ -235,6 +240,10 @@ class ZipTie(object):
         proportions_by_cable = np.dot(proportions_by_bundle, self.nonbundle_activities.T)
         #print 'ppb', proportions_by_bundle.ravel()
         #print 'ppc', proportions_by_cable.ravel()
+        # Decay the energy        
+        self.agglomeration_energy -= (self.agglomeration_energy * 
+                                      self.AGGLOMERATION_ENERGY_RATE * 
+                                      self.ENERGY_DECAY_RATE)
         self.agglomeration_energy += (proportions_by_cable * coactivities * 
                                       self.AGGLOMERATION_ENERGY_RATE * 
                                       (1. - self.agglomeration_energy))

@@ -114,7 +114,7 @@ def vizualize_pixel_array_feature(feature, block_index=-1, feature_index=-1,
 def print_pixel_array_features(projections, num_sensors, num_actions, 
                                directory='log', world_name=''):
     num_blocks = len(projections)
-    for block_index in range(num_blocks - 1):
+    for block_index in range(num_blocks):
         for feature_index in range(len(projections[block_index])):
             states_per_feature = block_index + 2
             plt.close(99)
@@ -130,8 +130,8 @@ def print_pixel_array_features(projections, num_sensors, num_actions,
                 rect = (left, bottom, width, height)
                 ax = feature_fig.add_axes(rect)
                 plt.gray()
-                ax.imshow(projection_image_list[state_index], interpolation='nearest', 
-                          vmin=0., vmax=1.)
+                ax.imshow(projection_image_list[state_index], 
+                          interpolation='nearest', vmin=0., vmax=1.)
             # create a plot of individual features
             filename = '_'.join(('block', str(block_index).zfill(2),
                                  'feature',str(feature_index).zfill(4),
