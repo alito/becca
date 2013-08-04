@@ -19,8 +19,8 @@ class ZipTie(object):
     # joining_threshold was 0.2 
     def __init__(self, max_num_cables, max_num_bundles, 
                  max_cables_per_bundle=None,
-                 mean_exponent=-4, joining_threshold=0.4, 
-                 speedup = 100., name='ziptie_'):
+                 mean_exponent=-4, joining_threshold=0.05, 
+                 speedup = 10., name='ziptie_'):
         """ Initialize each map, pre-allocating max_num_bundles """
         self.name = name
         self.max_num_cables = max_num_cables
@@ -48,7 +48,7 @@ class ZipTie(object):
         # real, 0 < x < 1, small
         #self.NEW_BUNDLE_FACTOR = 10 ** -5
         self.NUCLEATION_ENERGY_RATE = 10 ** -5 * speedup
-        self.ENERGY_DECAY_RATE = 10 ** -2
+        self.ENERGY_DECAY_RATE = 10 ** -4#3
         # Coactivity value which, if it's every exceeded, causes a 
         # cable to be added to a bundle
         # real, 0 < x < 1, small

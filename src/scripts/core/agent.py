@@ -86,15 +86,13 @@ class Agent(object):
         #max_surprise = 0.0
         cable_activity_goals = np.zeros((cable_activities.size,1))
         #deliberation_goal_votes = np.zeros((cable_activities.size,1))
+       
         for block in reversed(self.blocks):
             cable_activity_goals = block.step_down(cable_activity_goals)
             #deliberation_goal_votes = block.get_cable_deliberation_vote()
             if np.nonzero(block.surprise)[0].size > 0:
                 norm_surprise = np.sum(block.surprise ** 4)
-                #max_surprise = np.maximum(np.max(norm_surprise), 
-                #                          max_surprise)
                 sum_surprise += norm_surprise
-        #agent_surprise = np.log10(max_surprise + 1.)
         agent_surprise = np.log10(sum_surprise + 1.)
         self.recent_surprise_history.pop(0)
         self.recent_surprise_history.append(agent_surprise)
@@ -265,8 +263,9 @@ class Agent(object):
             # print a message, and keep the just-initialized agent.
             if((loaded_agent.num_sensors == self.num_sensors) and 
                (loaded_agent.num_actions == self.num_actions)):
-                print("Agent restored at timestep " + 
-                      str(loaded_agent.timestep))
+                print(''.join(('Agent restored at timestep ', 
+                               str(loaded_agent.timestep),
+                               ' from ', self.pickle_filename)))
                 restored_agent = loaded_agent
             else:
                 print("The agent " + self.pickle_filename + " does not have " +
