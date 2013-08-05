@@ -31,7 +31,8 @@ class Agent(object):
         # Initialize agent infrastructure
         self.num_blocks =  1
         first_block_name = ''.join(('block_', str(self.num_blocks - 1)))
-        self.blocks = [Block(name=first_block_name)]
+        self.blocks = [Block(self.num_actions + self.num_sensors, 
+                             name=first_block_name)]
         self.action = np.zeros((self.num_actions,1))
         # Initialize constants for adaptive reward scaling 
         self.REWARD_RANGE_DECAY_RATE = 10 ** -5
@@ -71,7 +72,8 @@ class Agent(object):
         if np.nonzero(cable_activities)[0].size > 0:
             self.num_blocks +=  1
             next_block_name = ''.join(('block_', str(self.num_blocks - 1)))
-            self.blocks.append(Block(name=next_block_name, 
+            self.blocks.append(Block(self.num_actions + self.num_sensors,
+                                     name=next_block_name, 
                                      level=self.num_blocks))
             cable_activities = self.blocks[-1].step_up(cable_activities, 
                                                      self.reward) 
