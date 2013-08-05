@@ -18,7 +18,7 @@ class World(BaseWorld):
     def __init__(self, lifespan=None):
         """ Set up the world """
         BaseWorld.__init__(self, lifespan)
-        self.VISUALIZE_PERIOD = 10 ** 3
+        self.VISUALIZE_PERIOD = 10 ** 4
         self.print_feature_set = True
         self.REWARD_MAGNITUDE = 100.
         self.JUMP_FRACTION = 0.1
@@ -26,7 +26,9 @@ class World(BaseWorld):
         self.animate = False 
         self.graphing = True
         self.name_long = 'one dimensional visual world'
-        self.name = 'image_1D'
+        #self.name = 'image_1D'
+        self.name = 'image_1D_slow_fast_decay'
+        #self.name = 'image_1D_fast'
         print "Entering", self.name_long
         self.step_counter = 0
         self.fov_span = 5 

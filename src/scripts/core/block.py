@@ -24,17 +24,18 @@ class Block(object):
     Internally, a block contains a number of cogs that work in parallel
     to convert cable activities into bundle activities and back again.
     """
-    def __init__(self, max_cables=60, max_cogs=12,
-                 max_cables_per_cog=10, max_bundles_per_cog=5, 
-                 name='anonymous', level=0):
-        #def __init__(self, max_cables=240, max_cogs=120,
-        #             max_cables_per_cog=10, max_bundles_per_cog=2, 
-        #             name='anonymous', level=0):
+    def __init__(self, min_cables, name='anonymous', level=0):
+    #def __init__(self, max_cables=1400, max_cogs=280,
+    #             max_cables_per_cog=10, max_bundles_per_cog=5, 
+    #             name='anonymous', level=0):
+    #def __init__(self, max_cables=250, max_cogs=50,
+    #             max_cables_per_cog=10, max_bundles_per_cog=5, 
+    #             name='anonymous', level=0):
         """ Initialize the level, defining the dimensions of its cogs """
-        self.max_cables_per_cog = max_cables_per_cog
-        self.max_bundles_per_cog = max_bundles_per_cog
-        self.max_cogs = max_cogs
-        self.max_cables = max_cables
+        self.max_cables = int(2 ** np.ceil(np.log2(min_cables)))
+        self.max_cables_per_cog = 8
+        self.max_bundles_per_cog = 4
+        self.max_cogs = self.max_cables / self.max_bundles_per_cog
         self.max_bundles = self.max_cogs * self.max_bundles_per_cog
         self.name = name
         self.level = level
@@ -42,10 +43,10 @@ class Block(object):
         self.ziptie = ZipTie(self.max_cables, self.max_cogs, 
                              max_cables_per_bundle=self.max_cables_per_cog,
                              mean_exponent=-2,
-                             joining_threshold=0.2, name=ziptie_name)
+                             joining_threshold=0.4, name=ziptie_name)
         self.cogs = []
         # TODO: only create cogs as needed
-        for cog_index in range(max_cogs):
+        for cog_index in range(self.max_cogs):
             self.cogs.append(Cog(self.max_cables_per_cog, 
                                  self.max_bundles_per_cog,
                                  max_chains_per_bundle=self.max_cables_per_cog,
