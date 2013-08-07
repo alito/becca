@@ -47,7 +47,7 @@ class ZipTie(object):
         # Constant factor driving the rate at which new bundles are created
         # real, 0 < x < 1, small
         #self.NEW_BUNDLE_FACTOR = 10 ** -5
-        self.NUCLEATION_ENERGY_RATE = 10 ** -5 * speedup
+        self.NUCLEATION_ENERGY_RATE = 10 ** -4 * speedup
         self.ENERGY_DECAY_RATE = 10 ** -4#3
         # Coactivity value which, if it's every exceeded, causes a 
         # cable to be added to a bundle

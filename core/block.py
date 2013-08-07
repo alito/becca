@@ -43,7 +43,7 @@ class Block(object):
         self.ziptie = ZipTie(self.max_cables, self.max_cogs, 
                              max_cables_per_bundle=self.max_cables_per_cog,
                              mean_exponent=-2,
-                             joining_threshold=0.4, name=ziptie_name)
+                             joining_threshold=0.1, name=ziptie_name)
         self.cogs = []
         # TODO: only create cogs as needed
         for cog_index in range(self.max_cogs):
