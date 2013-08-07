@@ -1,4 +1,4 @@
-![Alt text](/src/scripts/doc/logos/becca_logo_12.png)
+![Alt text](/doc/logos/becca_logo_12.png)
 
 BECCA is a general learning program for use in any robot or embodied system. It consists of an automatic feature creator and a model-based reinforcement learner. When using BECCA, a robot learns to do whatever it is rewarded to do, and continues learning throughout its lifetime.
 
