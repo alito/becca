@@ -1,3 +1,5 @@
+import numpy as np
+
 from daisychain import DaisyChain
 import tools
 from ziptie import ZipTie
@@ -38,7 +40,7 @@ class Cog(object):
                                  max_cables_per_bundle=max_chains_per_bundle, 
                                  name=name)
 
-    def step_up(self, cable_activities, reward):
+    def step_up(self, cable_activities, reward, enough_cables):
         # TODO: fix this so that cogs can gracefully handle more cables 
         # or else never be assigned them in the first place
         if cable_activities.size > self.max_cables:
@@ -49,7 +51,10 @@ class Cog(object):
         chain_activities = self.daisychain.update(cable_activities, reward) 
         self.reaction= self.daisychain.get_cable_activity_reactions()
         self.surprise = self.daisychain.get_surprise()
-        bundle_activities = self.ziptie.update(chain_activities)
+        if enough_cables is True:
+            bundle_activities = self.ziptie.update(chain_activities)
+        else:
+            bundle_activities = np.zeros((0,1))
         bundle_activities = tools.pad(bundle_activities, (self.max_bundles, 0))
         return bundle_activities
 
@@ -71,7 +76,11 @@ class Cog(object):
     def fraction_filled(self):
         """ How full is the set of cables for this cog? """
         return float(self.daisychain.num_cables) / float(self.max_cables)
-        
+
+    def num_bundles(self):
+        """ How many bundles have been created in this cog? """
+        return self.ziptie.num_bundles
+            
     def visualize(self):
         """ Show the internal state of the daisychain and ziptie """
         self.daisychain.visualize()

@@ -43,7 +43,7 @@ class Block(object):
         self.ziptie = ZipTie(self.max_cables, self.max_cogs, 
                              max_cables_per_bundle=self.max_cables_per_cog,
                              mean_exponent=-2,
-                             joining_threshold=0.1, name=ziptie_name)
+                             joining_threshold=0.05, name=ziptie_name)
         self.cogs = []
         # TODO: only create cogs as needed
         for cog_index in range(self.max_cogs):
@@ -63,6 +63,7 @@ class Block(object):
         """ Find bundle_activities that result from new_cable_activities """
         new_cable_activities = tools.pad(new_cable_activities, 
                                          (self.max_cables, 1))
+        '''
         # Condition the new_cable_activities to fall between 0 and 1
         self.min_vals = np.minimum(new_cable_activities, self.min_vals)
         self.max_vals = np.maximum(new_cable_activities, self.max_vals)
@@ -71,6 +72,7 @@ class Block(object):
                             (self.max_vals - self.min_vals + tools.EPSILON))
         self.min_vals += spread * self.RANGE_DECAY_RATE
         self.max_vals -= spread * self.RANGE_DECAY_RATE
+        '''
         # Update cable_activities, incorporating sensing dynamics
         self.cable_activities = tools.bounded_sum([
                 new_cable_activities, 
@@ -88,10 +90,12 @@ class Block(object):
             # and assign the results to block's bundle_activities
             cog_cable_activities = self.cable_activities[
                     self.ziptie.get_projection(cog_index).ravel().astype(bool)]
+            enough_cables = (self.ziptie.cable_fraction_in_bundle(cog_index)
+                             > 0.7)
             cog_bundle_activities = self.cogs[cog_index].step_up(
-                    cog_cable_activities, reward)
+                    cog_cable_activities, reward, enough_cables)
             self.bundle_activities = np.concatenate((self.bundle_activities, 
-                                                 cog_bundle_activities))
+                                                     cog_bundle_activities))
         return self.bundle_activities
 
     def step_down(self, bundle_activity_goals):
@@ -146,6 +150,15 @@ class Block(object):
         projection = np.zeros((self.max_cables, 2))
         projection[cog_cable_indices,:] = cog_projection[:num_cables_in_cog,:]
         return projection
+
+    def bundles_created(self):
+        total = 0.
+        for cog in self.cogs:
+            # Check whether all cogs have created all their bundles
+                total += cog.num_bundles()
+        if np.random.random_sample() < 0.01:
+            print total, 'bundles in', self.name, ', max of', self.max_bundles
+        return total
 
     def visualize(self):
         """ Show what's going on inside the level """

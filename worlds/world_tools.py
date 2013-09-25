@@ -1,3 +1,4 @@
+import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -140,3 +141,41 @@ def print_pixel_array_features(projections, num_sensors, num_actions,
             plt.title(filename)
             plt.savefig(full_filename, format='png') 
     return
+
+def make_movie(stills_directory, movie_filename=''):
+    if not movie_filename:
+        movie_filename = ''.join((stills_directory, '.avi'))
+    stills_filenames = []
+    extensions = ['.png', '.jpg']
+    stills_filenames = tools.get_files_with_suffix(stills_directory, extensions)
+    stills_filenames.sort()
+    print 'mf', movie_filename
+    print 'st', len(stills_filenames)
+
+    image = cv2.imread(stills_filenames[0])
+    (height, width, depth) = image.shape
+    frame_size = (width, height)
+    """ fourCC code for the encoder to use"""
+    codec = 'MJPG' # pretty good quality, claims to be broadly supported
+    fourcc = cv2.cv.CV_FOURCC(codec[0], codec[1], codec[2], codec[3])
+    fps = 30.
+    is_color = True
+    video_writer = cv2.VideoWriter(movie_filename, fourcc, fps, 
+                                   frame_size, is_color)
+    for filename in stills_filenames:
+        print 'writing', filename
+        image = cv2.imread(filename)
+        resized_image = resample2D(image, height, width)
+        video_writer.write(resized_image)
+        video_writer.write(resized_image)
+        video_writer.write(resized_image)
+
+def resample2D(array, num_rows, num_cols):
+    """ Return resampled array that is num_rows by num_cols """
+    rows = (np.linspace(0., .9999999, num_rows) * 
+            array.shape[0]).astype(np.int) 
+    cols = (np.linspace(0., .9999999, num_cols) * 
+            array.shape[1]).astype(np.int) 
+    resampled_array = array[rows, :,:]
+    resampled_array = resampled_array[:, cols,:]
+    return resampled_array

@@ -99,9 +99,12 @@ class DaisyChain(object):
         # Surprise is the difference between the expected post and
         # the actual one
         self.surprise = tools.weighted_average(
-                np.abs((self.post.T - self.expected_post) / 
-		               (self.post_uncertainty + tools.EPSILON)), 
+                np.abs(self.post.T - self.expected_post), 
 		        self.pre / (self.post_uncertainty + tools.EPSILON))
+        #self.surprise = tools.weighted_average(
+        #        np.abs((self.post.T - self.expected_post) / 
+		#               (self.post_uncertainty + tools.EPSILON)), 
+		#        self.pre / (self.post_uncertainty + tools.EPSILON))
         # Reshape chain activities into a single column
         return chain_activities.ravel()[:,np.newaxis]
    

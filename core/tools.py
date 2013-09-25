@@ -163,118 +163,117 @@ def get_files_with_suffix(dir_name, suffixes):
     return found_filenames
 
 def report_roc(ground_truth_filename, surprise_log_filename, self_name):
-        """
-        Report the Receiver Operating Characteristic curve
+    """
+    Report the Receiver Operating Characteristic curve
 
-        Plot the true positive rate (the number of correctly identified
-        targets divided by the total number of targets) against the
-        false positive rate (the number of data points erroneously 
-        identified as targets divided by the total number of 
-        non-target data points).
-        """
-        truth = np.loadtxt(ground_truth_filename)
-        surprise = np.loadtxt(surprise_log_filename)
-        # debug
-        #log_surprise = surprise[:,0]
-        log_surprise = np.abs(surprise[:,0])
-        times = surprise[:,1]
-        # If a target is identified within delta seconds, that is close enough
-        delta = 0.2
-        # Include a time delay (seconds) to account for the time it takes for 
-        # information to move up levels in the hierarchy
-        delay = 0.2
-        starts = truth[:,0] - delta + delay
-        ends = truth[:,1] + delta + delay
-        total_num_targets = starts.size
-        # Total up potential false positives.
-        total_non_target_points = 0
-        for time in times:
+    Plot the true positive rate (the number of correctly identified
+    targets divided by the total number of targets) against the
+    false positive rate (the number of data points erroneously 
+    identified as targets divided by the total number of 
+    non-target data points).
+    """
+    truth = np.loadtxt(ground_truth_filename)
+    surprise = np.loadtxt(surprise_log_filename)
+    # debug
+    abs_surprise = np.abs(surprise[:,0])
+    times = surprise[:,1]
+    # If a target is identified within delta seconds, that is close enough
+    delta = 0.#1
+    # Include a time delay (seconds) to account for the time it takes for 
+    # information to move up levels in the hierarchy
+    delay = 0.#2
+    starts = truth[:,0] - delta + delay
+    ends = truth[:,1] + delta + delay
+    total_num_targets = starts.size
+    # Total up potential false positives.
+    total_non_target_points = 0
+    for time in times:
+        after_start = np.where(time > starts, True, False)
+        before_end = np.where(time < ends, True, False)
+        target_match = np.logical_and(after_start, before_end)
+        if not target_match.any():
+            total_non_target_points += 1
+
+    false_positive_rate = []
+    true_positive_rate = []
+    thresholds = np.linspace(np.min(abs_surprise), np.max(abs_surprise), 
+                             num=100)
+    for threshold in thresholds:
+        # Determine the false positive rate, i.e. how many
+        # of all possible false positives were reported
+        above_threshold_indices = np.where(abs_surprise > threshold)
+        above_threshold_times = times[above_threshold_indices]
+        num_false_positives = 0
+        for time in above_threshold_times:
             after_start = np.where(time > starts, True, False)
             before_end = np.where(time < ends, True, False)
             target_match = np.logical_and(after_start, before_end)
             if not target_match.any():
-                total_non_target_points += 1
+                num_false_positives += 1
+        false_positive_rate.append(float(num_false_positives) /
+                                   (float(total_non_target_points) +
+                                    EPSILON))
+        # Determine the true positive rate, i.e.
+        # what fraction of the targets were identified 
+        num_targets_identified = 0
+        for indx in range(total_num_targets):
+            after_start = np.where(times[above_threshold_indices] > 
+                                   starts[indx], True, False)
+            before_end = np.where(times[above_threshold_indices] < 
+                                  ends[indx], True, False)
+            target_match = np.logical_and(after_start, before_end)
+            if target_match.any():
+                num_targets_identified += 1
+        true_positive_rate.append(float(num_targets_identified)/
+                                          (float(total_num_targets) + 
+                                           EPSILON))
+    # Calculate a single number to characterize the ROC curve:
+    # the area under the curve 
+    num_points = 1000
+    fpr_fine = np.linspace(0., 1., num=num_points)
+    tpr_fine = np.interp(fpr_fine, np.array(false_positive_rate)[::-1], 
+                         np.array(true_positive_rate)[::-1], 
+                         left=0., right=1.)
+    roc_integral = np.sum(tpr_fine) / num_points
 
-        false_positive_rate = []
-        true_positive_rate = []
-        thresholds = np.linspace(np.min(log_surprise), np.max(log_surprise), 
-                                 num=100)
-        for threshold in thresholds:
-            # Determine the false positive rate, i.e. how many
-            # of all possible false positives were reported
-            above_threshold_indices = np.where(log_surprise > threshold)
-            above_threshold_times = times[above_threshold_indices]
-            num_false_positives = 0
-            for time in above_threshold_times:
-                after_start = np.where(time > starts, True, False)
-                before_end = np.where(time < ends, True, False)
-                target_match = np.logical_and(after_start, before_end)
-                if not target_match.any():
-                    num_false_positives += 1
-            false_positive_rate.append(float(num_false_positives) /
-                                       (float(total_non_target_points) +
-                                        EPSILON))
-            # Determine the true positive rate, i.e.
-            # what fraction of the targets were identified 
-            num_targets_identified = 0
-            for indx in range(total_num_targets):
-                after_start = np.where(times[above_threshold_indices] > 
-                                       starts[indx], True, False)
-                before_end = np.where(times[above_threshold_indices] < 
-                                      ends[indx], True, False)
-                target_match = np.logical_and(after_start, before_end)
-                if target_match.any():
-                    num_targets_identified += 1
-            true_positive_rate.append(float(num_targets_identified)/
-                                              (float(total_num_targets) + 
-                                               EPSILON))
-        # Calculate a single number to characterize the ROC curve:
-        # the area under the curve 
-        num_points = 1000
-        fpr_fine = np.linspace(0., 1., num=num_points)
-        tpr_fine = np.interp(fpr_fine, np.array(false_positive_rate)[::-1], 
-                             np.array(true_positive_rate)[::-1], 
-                             left=0., right=1.)
-        roc_integral = np.sum(tpr_fine) / num_points
-
-        # Show surprise over time 
-        fig = plt.figure(str_to_int('surprise'))
-        fig.clf()
-        plt.plot(times, log_surprise)
-        plt.title('Novel target identification signal')
-        plt.xlabel('Time (s)')
-        plt.ylabel('Estimated novelty strength')
-        plt.hold(True)
-        ax = plt.gca()
-        # Show the temporal locations of the targets
-        for target_index in range(total_num_targets):
-            ax.add_patch(mpatches.Rectangle(
-                    (starts[target_index], np.min(log_surprise)), 
-                    ends[target_index] - starts[target_index], 
-                    np.max(log_surprise) - np.min(log_surprise), 
-                    facecolor=LIGHT_GREY, edgecolor=DARK_GREY))
-        # Save the surprise history plot
-        filename =  ''.join((self_name, '_novelty_vs_targets.png'))
-        full_filename = os.path.join('log', filename)
-        plt.savefig(full_filename, format='png') 
-            
-        # Show the ROC curve
-        fig = plt.figure(str_to_int('roc'))
-        fig.clf()
-        plt.plot(false_positive_rate, true_positive_rate)
-        title_text = ''.join(('Receiver operating characteristic (ROC)',
-                              ' curve for ', self_name))
-        body_text = ''.join(('Area under the ROC curve = ', 
-                             '%0.3f' % roc_integral))
-        plt.title(title_text)
-        plt.text(0.4, 0.2, body_text, color=DARK_GREY, size=10)
-        plt.xlabel('False positive rate')
-        plt.ylabel('True positive rate')
-        plt.axis((-0.1, 1.1, -0.1, 1.1))
-        # Save the ROC plot
-        filename =  ''.join((self_name, '_roc.png'))
-        full_filename = os.path.join('log', filename)
-        plt.savefig(full_filename, format='png') 
-        plt.ioff()
-        plt.show()    
-        return roc_integral
+    # Show surprise over time 
+    fig = plt.figure(str_to_int('surprise'))
+    fig.clf()
+    plt.plot(times, abs_surprise)
+    plt.title('Novel target identification signal')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Estimated novelty strength')
+    plt.hold(True)
+    ax = plt.gca()
+    # Show the temporal locations of the targets
+    for target_index in range(total_num_targets):
+        ax.add_patch(mpatches.Rectangle(
+                (starts[target_index], np.min(abs_surprise)), 
+                ends[target_index] - starts[target_index], 
+                np.max(abs_surprise) - np.min(abs_surprise), 
+                facecolor=LIGHT_GREY, edgecolor=DARK_GREY))
+    # Save the surprise history plot
+    filename =  ''.join((self_name, '_novelty_vs_targets.png'))
+    full_filename = os.path.join('log', filename)
+    plt.savefig(full_filename, format='png') 
+        
+    # Show the ROC curve
+    fig = plt.figure(str_to_int('roc'))
+    fig.clf()
+    plt.plot(false_positive_rate, true_positive_rate)
+    title_text = ''.join(('Receiver operating characteristic (ROC)',
+                          ' curve for ', self_name))
+    body_text = ''.join(('Area under the ROC curve = ', 
+                         '%0.3f' % roc_integral))
+    plt.title(title_text)
+    plt.text(0.4, 0.2, body_text, color=DARK_GREY, size=10)
+    plt.xlabel('False positive rate')
+    plt.ylabel('True positive rate')
+    plt.axis((-0.1, 1.1, -0.1, 1.1))
+    # Save the ROC plot
+    filename =  ''.join((self_name, '_roc.png'))
+    full_filename = os.path.join('log', filename)
+    plt.savefig(full_filename, format='png') 
+    plt.ioff()
+    plt.show()    
+    return roc_integral

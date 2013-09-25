@@ -34,7 +34,11 @@ class Agent(object):
         self.blocks = [Block(self.num_actions + self.num_sensors, 
                              name=first_block_name)]
         self.action = np.zeros((self.num_actions,1))
-        # Initialize constants for adaptive reward scaling 
+        # Constants for adaptively rescaling the cable activities
+        self.max_vals = np.zeros((self.num_sensors, 1)) 
+        self.min_vals = np.zeros((self.num_sensors, 1))
+        self.RANGE_DECAY_RATE = 10 ** -5
+        # Constants for adaptive reward scaling 
         self.REWARD_RANGE_DECAY_RATE = 10 ** -5
         self.reward_min = tools.BIG
         self.reward_max = -tools.BIG
@@ -44,9 +48,7 @@ class Agent(object):
         self.reward_history = []
         self.reward_steps = []
         self.surprise_history = []
-        self.recent_surprise_history = [0.] * 100
-        self.typical_surprise = 0.
-        self.TYPICAL_SURPRISE_DECAY_RATE = 10 ** -2.5
+        self.recent_surprise_history = [0.5] * 100
         self.timestep = 0
         self.graphing = True
 
@@ -55,6 +57,14 @@ class Agent(object):
         self.timestep += 1
         if sensors.ndim == 1:
             sensors = sensors[:,np.newaxis]
+        # Condition the sensors to fall between 0 and 1
+        self.min_vals = np.minimum(sensors, self.min_vals)
+        self.max_vals = np.maximum(sensors, self.max_vals)
+        spread = self.max_vals - self.min_vals
+        sensors = ((sensors - self.min_vals) / 
+                   (self.max_vals - self.min_vals + tools.EPSILON))
+        self.min_vals += spread * self.RANGE_DECAY_RATE
+        self.max_vals -= spread * self.RANGE_DECAY_RATE
         # Adapt the reward so that it falls between 0 and 1 
         self.reward_min = np.minimum(unscaled_reward, self.reward_min)
         self.reward_max = np.maximum(unscaled_reward, self.reward_max)
@@ -68,8 +78,10 @@ class Agent(object):
         cable_activities = np.vstack((self.action, sensors))
         for block in self.blocks:
             cable_activities = block.step_up(cable_activities, self.reward) 
-        # Create a new block if needed
-        if np.nonzero(cable_activities)[0].size > 0:
+        # Create a new block if the top block has had enough bundles assigned
+        block_bundles_full = (float(block.bundles_created()) / 
+                              float(block.max_bundles))
+        if block_bundles_full > 1./2.:
             self.num_blocks +=  1
             next_block_name = ''.join(('block_', str(self.num_blocks - 1)))
             self.blocks.append(Block(self.num_actions + self.num_sensors,
@@ -84,7 +96,7 @@ class Agent(object):
         
         # Propogate the deliberation_goal_votes down through the blocks
         # debug
-        sum_surprise = 0.0
+        agent_surprise = 0.0
         #max_surprise = 0.0
         cable_activity_goals = np.zeros((cable_activities.size,1))
         #deliberation_goal_votes = np.zeros((cable_activities.size,1))
@@ -93,9 +105,7 @@ class Agent(object):
             cable_activity_goals = block.step_down(cable_activity_goals)
             #deliberation_goal_votes = block.get_cable_deliberation_vote()
             if np.nonzero(block.surprise)[0].size > 0:
-                norm_surprise = np.sum(block.surprise ** 4)
-                sum_surprise += norm_surprise
-        agent_surprise = np.log10(sum_surprise + 1.)
+                agent_surprise += np.sum(block.surprise)
         self.recent_surprise_history.pop(0)
         self.recent_surprise_history.append(agent_surprise)
         self.typical_surprise = np.median(np.array(
