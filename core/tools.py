@@ -16,13 +16,12 @@ DARK_GREY = (0.2, 0.2, 0.2)
 LIGHT_GREY = (0.9, 0.9, 0.9)
 RED = (0.9, 0.3, 0.3)
 # BECCA pallette
-COPPER_BKG = (255./255., 255./255., 230./255.)
-COPPER_HGH = (255./255., 250./255., 80./255.)
-COPPER = (220./255., 110./255, 55./255.)
-OXIDE = (20./255., 150./255., 150./255.)
-LIGHT_BROWN = (120./255., 60./255., 30./255.)
-BROWN = (80./255., 40./255., 20./255.)
-DARK_BROWN = (60./255., 30./255, 15./255.)
+COPPER_HIGHLIGHT = (253./255., 249./255., 240./255.)
+LIGHT_COPPER = (242./255., 166./255., 108./255.)
+COPPER = (175./255., 102./255, 53./255.)
+DARK_COPPER = (132./255., 73./255., 36./255.)
+COPPER_SHADOW = (25./255., 22./255, 20./255.)
+OXIDE = (20./255., 120./255., 150./255.)
 
 def weighted_average(values, weights):
     """ Perform a weighted average of values, using weights """
@@ -251,7 +250,7 @@ def report_roc(ground_truth_filename, surprise_log_filename, self_name):
                 (starts[target_index], np.min(abs_surprise)), 
                 ends[target_index] - starts[target_index], 
                 np.max(abs_surprise) - np.min(abs_surprise), 
-                facecolor=LIGHT_GREY, edgecolor=DARK_GREY))
+                facecolor=LIGHT_COPPER, edgecolor=COPPER_SHADOW))
     # Save the surprise history plot
     filename =  ''.join((self_name, '_novelty_vs_targets.png'))
     full_filename = os.path.join('log', filename)
@@ -266,7 +265,7 @@ def report_roc(ground_truth_filename, surprise_log_filename, self_name):
     body_text = ''.join(('Area under the ROC curve = ', 
                          '%0.3f' % roc_integral))
     plt.title(title_text)
-    plt.text(0.4, 0.2, body_text, color=DARK_GREY, size=10)
+    plt.text(0.4, 0.2, body_text, color=COPPER_SHADOW, size=10)
     plt.xlabel('False positive rate')
     plt.ylabel('True positive rate')
     plt.axis((-0.1, 1.1, -0.1, 1.1))

@@ -9,7 +9,7 @@ import core.tools as tools
 Utilities shared between several worlds dealing with visual input
 """
 
-def center_surround(fov, fov_span, verbose=False):
+def center_surround(fov, fov_horz_span, fov_vert_span, verbose=False):
     """ 
     Convert a 2D array of b/w pixel values to center-surround 
     
@@ -19,18 +19,18 @@ def center_surround(fov, fov_span, verbose=False):
     """ 
     fov_height = fov.shape[0]
     fov_width = fov.shape[1]
-    block_width = np.round(fov_width / (fov_span + 2))
-    block_height = np.round(fov_height / (fov_span + 2))
-    super_pixels = np.zeros((fov_span + 2, fov_span + 2))
-    center_surround_pixels = np.zeros((fov_span, fov_span))
+    block_width = np.round(fov_width / (fov_horz_span + 2))
+    block_height = np.round(fov_height / (fov_vert_span + 2))
+    super_pixels = np.zeros((fov_vert_span + 2, fov_horz_span + 2))
+    center_surround_pixels = np.zeros((fov_vert_span, fov_horz_span))
     # Create the superpixels by averaging pixel blocks
-    for row in range(fov_span + 2):
-        for column in range(fov_span + 2):
+    for row in range(fov_vert_span + 2):
+        for column in range(fov_horz_span + 2):
             super_pixels[row][column] = np.mean(
                     fov[row * block_height:(row + 1) * block_height,
                         column * block_width: (column + 1) * block_width ])
-    for row in range(fov_span):
-        for column in range(fov_span):
+    for row in range(fov_vert_span):
+        for column in range(fov_horz_span):
             # Calculate a center-surround value that represents
             # the difference between the pixel and its surroundings.
             center_surround_pixels[row][column] = \
@@ -67,13 +67,17 @@ def center_surround(fov, fov_span, verbose=False):
         plt.draw() 
     return center_surround_pixels
 
-def vizualize_pixel_array_feature(feature, block_index=-1, feature_index=-1, 
+def visualize_pixel_array_feature(feature, 
+                                 fov_horz_span=None, fov_vert_span=None,
+                                  block_index=-1, feature_index=-1, 
                                   world_name=None, save_png=False, 
                                   filename='log/feature', array_only=False):
     """ Show a visual approximation of an array of center-surround features """
     # Calculate the number of pixels that span the field of view
     n_pixels = feature.shape[0]/ 2
-    fov_span = np.sqrt(n_pixels)
+    if fov_horz_span is None:
+        fov_horz_span = np.sqrt(n_pixels)
+        fov_vert_span = np.sqrt(n_pixels)
     if array_only:
         pixel_array = []
     else:
@@ -91,7 +95,7 @@ def vizualize_pixel_array_feature(feature, block_index=-1, feature_index=-1,
         feature_sensors *= 1 / (np.max(feature_sensors) + tools.EPSILON)
         pixel_values = ((feature_sensors[ 0:n_pixels] - 
                          feature_sensors[n_pixels:2 * n_pixels]) + 1.0) / 2.0
-        feature_pixels = pixel_values.reshape(fov_span, fov_span)
+        feature_pixels = pixel_values.reshape(fov_vert_span, fov_horz_span)
         if array_only:
             pixel_array.append(feature_pixels)
         else:
@@ -113,6 +117,7 @@ def vizualize_pixel_array_feature(feature, block_index=-1, feature_index=-1,
         return
 
 def print_pixel_array_features(projections, num_sensors, num_actions, 
+                               fov_horz_span, fov_vert_span, 
                                directory='log', world_name=''):
     num_blocks = len(projections)
     for block_index in range(num_blocks):
@@ -120,9 +125,10 @@ def print_pixel_array_features(projections, num_sensors, num_actions,
             states_per_feature = block_index + 2
             plt.close(99)
             feature_fig = plt.figure(num=99)
-            projection_image_list = (vizualize_pixel_array_feature(projections[
+            projection_image_list = (visualize_pixel_array_feature(projections[
                     block_index][feature_index][
-                    num_actions:num_actions + num_sensors,:], array_only=True)) 
+                    num_actions:num_actions + num_sensors,:], fov_horz_span,
+                    fov_vert_span, array_only=True)) 
             for state_index in range(states_per_feature): 
                 left =  (float(state_index) / float(states_per_feature))
                 bottom = 0.

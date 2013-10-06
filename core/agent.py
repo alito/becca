@@ -48,7 +48,7 @@ class Agent(object):
         self.reward_history = []
         self.reward_steps = []
         self.surprise_history = []
-        self.recent_surprise_history = [0.5] * 100
+        self.recent_surprise_history = [0.] * 100
         self.timestep = 0
         self.graphing = True
 
@@ -97,7 +97,6 @@ class Agent(object):
         # Propogate the deliberation_goal_votes down through the blocks
         # debug
         agent_surprise = 0.0
-        #max_surprise = 0.0
         cable_activity_goals = np.zeros((cable_activities.size,1))
         #deliberation_goal_votes = np.zeros((cable_activities.size,1))
        
@@ -105,7 +104,7 @@ class Agent(object):
             cable_activity_goals = block.step_down(cable_activity_goals)
             #deliberation_goal_votes = block.get_cable_deliberation_vote()
             if np.nonzero(block.surprise)[0].size > 0:
-                agent_surprise += np.sum(block.surprise)
+                agent_surprise = np.sum(block.surprise)
         self.recent_surprise_history.pop(0)
         self.recent_surprise_history.append(agent_surprise)
         self.typical_surprise = np.median(np.array(
@@ -248,9 +247,15 @@ class Agent(object):
     def _save(self):
         """ Archive a copy of the agent object for future use """
         success = False
+        make_backup = True
+        print "Attempting to save agent..."
         try:
             with open(self.pickle_filename, 'wb') as agent_data:
                 pickle.dump(self, agent_data)
+            if make_backup:
+                with open(''.join((self.pickle_filename, '.bak')), 
+                          'wb') as agent_data_bak:
+                    pickle.dump(self, agent_data_bak)
             print("Agent data saved at " + str(self.timestep) + " time steps")
         except IOError as err:
             print("File error: " + str(err) + 
