@@ -148,7 +148,7 @@ def print_pixel_array_features(projections, num_sensors, num_actions,
             plt.savefig(full_filename, format='png') 
     return
 
-def make_movie(stills_directory, movie_filename=''):
+def make_movie(stills_directory, movie_filename='', frames_per_still = 1):
     if not movie_filename:
         movie_filename = ''.join((stills_directory, '.avi'))
     stills_filenames = []
@@ -172,9 +172,8 @@ def make_movie(stills_directory, movie_filename=''):
         print 'writing', filename
         image = cv2.imread(filename)
         resized_image = resample2D(image, height, width)
-        video_writer.write(resized_image)
-        video_writer.write(resized_image)
-        video_writer.write(resized_image)
+        for frame_counter in range(frames_per_still):
+            video_writer.write(resized_image)
 
 def resample2D(array, num_rows, num_cols):
     """ Return resampled array that is num_rows by num_cols """
