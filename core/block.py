@@ -25,12 +25,6 @@ class Block(object):
     to convert cable activities into bundle activities and back again.
     """
     def __init__(self, min_cables, name='anonymous', level=0):
-    #def __init__(self, max_cables=1400, max_cogs=280,
-    #             max_cables_per_cog=10, max_bundles_per_cog=5, 
-    #             name='anonymous', level=0):
-    #def __init__(self, max_cables=250, max_cogs=50,
-    #             max_cables_per_cog=10, max_bundles_per_cog=5, 
-    #             name='anonymous', level=0):
         """ Initialize the level, defining the dimensions of its cogs """
         self.max_cables = int(2 ** np.ceil(np.log2(min_cables)))
         self.max_cables_per_cog = 8
@@ -53,26 +47,27 @@ class Block(object):
                                  name='cog'+str(cog_index), 
                                  level=self.level))
         self.cable_activities = np.zeros((self.max_cables, 1))
-        self.ACTIVITY_DECAY_RATE = .5 # real, 0 < x < 1
+        self.hub_cable_goals = np.zeros((self.max_cables, 1))
+        self.ACTIVITY_DECAY_RATE = 1.#.5 # real, 0 < x < 1
         # Constants for adaptively rescaling the cable activities
         self.max_vals = np.zeros((self.max_cables, 1)) 
         self.min_vals = np.zeros((self.max_cables, 1))
         self.RANGE_DECAY_RATE = 10 ** -5
         
-    def step_up(self, new_cable_activities, reward):
+    #def step_up(self, new_cable_activities, reward):
+    def step_up(self, new_cable_activities):
         """ Find bundle_activities that result from new_cable_activities """
-        new_cable_activities = tools.pad(new_cable_activities, 
-                                         (self.max_cables, 1))
-        '''
-        # Condition the new_cable_activities to fall between 0 and 1
+        # Condition the cable activities to fall between 0 and 1
+        if new_cable_activities.size < self.max_cables:
+            new_cable_activities = tools.pad(new_cable_activities, 
+                                             (self.max_cables, 1))
         self.min_vals = np.minimum(new_cable_activities, self.min_vals)
         self.max_vals = np.maximum(new_cable_activities, self.max_vals)
         spread = self.max_vals - self.min_vals
         new_cable_activities = ((new_cable_activities - self.min_vals) / 
-                            (self.max_vals - self.min_vals + tools.EPSILON))
+                   (self.max_vals - self.min_vals + tools.EPSILON))
         self.min_vals += spread * self.RANGE_DECAY_RATE
         self.max_vals -= spread * self.RANGE_DECAY_RATE
-        '''
         # Update cable_activities, incorporating sensing dynamics
         self.cable_activities = tools.bounded_sum([
                 new_cable_activities, 
@@ -82,49 +77,54 @@ class Block(object):
         #print self.cable_activities.ravel()
 
         # Update the map from self.cable_activities to cogs
-        self.ziptie.update(self.cable_activities)
+        self.ziptie.step_up(self.cable_activities)
         # Process the upward pass of each of the cogs in the block
         self.bundle_activities = np.zeros((0, 1))
         for cog_index in range(len(self.cogs)):
             # Pick out the cog's cable_activities, process them, 
             # and assign the results to block's bundle_activities
             cog_cable_activities = self.cable_activities[
-                    self.ziptie.get_projection(cog_index).ravel().astype(bool)]
+                    self.ziptie.get_index_projection(
+                    cog_index).ravel().astype(bool)]
+            # Cogs are only allowed to start forming bundles once 
+            # the number of cables exceeds the fill_fraction_threshold
+            fill_fraction_threshold = 0.7
             enough_cables = (self.ziptie.cable_fraction_in_bundle(cog_index)
-                             > 0.7)
+                             > fill_fraction_threshold)
             cog_bundle_activities = self.cogs[cog_index].step_up(
-                    cog_cable_activities, reward, enough_cables)
+                    cog_cable_activities, enough_cables)
             self.bundle_activities = np.concatenate((self.bundle_activities, 
                                                      cog_bundle_activities))
+        # Goal fulfillment and decay
+        self.hub_cable_goals -= self.cable_activities
+        self.hub_cable_goals *= self.ACTIVITY_DECAY_RATE
+        self.hub_cable_goals = np.maximum(self.hub_cable_goals, 0.)
+         
         return self.bundle_activities
 
-    def step_down(self, bundle_activity_goals):
-        """ Find cable_activity_goals, given a set of bundle_activity_goals """
-        bundle_activity_goals = tools.pad(bundle_activity_goals, 
-                                          (self.max_bundles, 1))
-        instant_cable_activity_goals = np.zeros((self.max_cables, 1))
+    def step_down(self, bundle_goals):
+        """ Find cable_activity_goals, given a set of bundle_goals """
+        bundle_goals = tools.pad(bundle_goals, (self.max_bundles, 1))
+        cable_goals = np.zeros((self.max_cables, 1))
         #self.cable_activity_goals = np.zeros((self.max_cables, 1))
-        #self.reaction = np.zeros((self.max_cables, 1))
         self.surprise = np.zeros((self.max_cables, 1))
         # Process the downward pass of each of the cogs in the level
         cog_index = 0
         for cog in self.cogs:
             # Gather the goal inputs for each cog
-            cog_bundle_activity_goals = bundle_activity_goals[
+            cog_bundle_goals = bundle_goals[
                     cog_index * self.max_bundles_per_cog:
                     cog_index + 1 * self.max_bundles_per_cog,:]
             # Update the downward outputs for the level 
-            instant_cable_activity_goals_by_cog = cog.step_down(
-                    cog_bundle_activity_goals)
-            cog_cable_indices = self.ziptie.get_projection(
+            cable_goals_by_cog = cog.step_down(cog_bundle_goals)
+            cog_cable_indices = self.ziptie.get_index_projection(
                     cog_index).ravel().astype(bool)
-            #instant_cable_activity_goals[cog_cable_indices] = np.maximum(
-            #        tools.pad(instant_cable_activity_goals_by_cog, 
+            #cable_goals[cog_cable_indices] = np.maximum(
+            #        tools.pad(cable_goals_by_cog, 
             #                  (cog_cable_indices[0].size, 0)),
-            #        instant_cable_activity_goals[cog_cable_indices]) 
-            instant_cable_activity_goals[cog_cable_indices] = np.maximum(
-                    instant_cable_activity_goals_by_cog, 
-                    instant_cable_activity_goals[cog_cable_indices]) 
+            #        cable_goals[cog_cable_indices]) 
+            cable_goals[cog_cable_indices] = np.maximum(
+                    cable_goals_by_cog, cable_goals[cog_cable_indices]) 
             #self.cable_activity_goals[cog_cable_indices] = np.maximum(
             #        tools.pad(cog.goal_output, (cog_cable_indices[0].size, 0)),
             #        self.cable_activity_goals[cog_cable_indices]) 
@@ -134,18 +134,24 @@ class Block(object):
             self.surprise[cog_cable_indices] = np.maximum(
                     cog.surprise, self.surprise[cog_cable_indices]) 
             cog_index += 1
-        return instant_cable_activity_goals 
+        #print 'cg', cable_goals[:18].ravel()
+        #print 'hcg before', self.hub_cable_goals[:18].ravel()
+        #self.hub_cable_goals = tools.bounded_sum([self.hub_cable_goals, 
+        #                                          cable_goals])
+        #print 'hcg after', self.hub_cable_goals[:18].ravel()
+        return self.hub_cable_goals 
 
-    def get_projection(self, bundle_index):
+    def get_index_projection(self, bundle_index):
         """ Represent one of the bundles in terms of its cables """
         # Find which cog it belongs to and which output it corresponds to
         cog_index = int(bundle_index / self.max_bundles_per_cog)
         cog_bundle_index = bundle_index - cog_index * self.max_bundles_per_cog
         # Find the projection to the cog's own cables
-        cog_cable_indices = self.ziptie.get_projection(
+        cog_cable_indices = self.ziptie.get_index_projection(
                 cog_index).ravel().astype(bool)
         num_cables_in_cog = np.sum(cog_cable_indices)
-        cog_projection = self.cogs[cog_index].get_projection(cog_bundle_index)
+        cog_projection = self.cogs[cog_index].get_index_projection(
+                cog_bundle_index)
         # Then re-sort them to the block's cables
         projection = np.zeros((self.max_cables, 2))
         projection[cog_cable_indices,:] = cog_projection[:num_cables_in_cog,:]

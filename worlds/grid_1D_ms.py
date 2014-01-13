@@ -21,7 +21,7 @@ class World(BaseWorld):
         self.VISUALIZE_PERIOD = 10 ** 4
         self.REWARD_MAGNITUDE = 100.
         self.ENERGY_COST = 0.01 * self.REWARD_MAGNITUDE
-        self.JUMP_FRACTION = 0.1
+        self.JUMP_FRACTION = 0.10
         self.display_state = True 
         self.name = 'grid_1D_ms'
         self.name_long = 'multi-step one dimensional grid world'
@@ -46,6 +46,9 @@ class World(BaseWorld):
         self.world_state -= self.num_sensors * np.floor_divide(
                 self.world_state, self.num_sensors)
         self.simple_state = int(np.floor(self.world_state))
+        # TODO do this more elegantly
+        if self.simple_state == 9:
+            self.simple_state = 0
         # Assign sensors as zeros or ones. 
         # Represent the presence or absence of the current position in the bin.
         sensors = np.zeros(self.num_sensors)

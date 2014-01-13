@@ -71,7 +71,7 @@ class ZipTie(object):
         #self.typical_nonbundle_activities = np.zeros((self.max_num_cables, 1))
         self.nucleation_energy = np.zeros((self.max_num_cables, 1))
 
-    def update(self, cable_activities):
+    def step_up(self, cable_activities):
         """ Update co-activity estimates and calculate bundle activity """
         # Find bundle activities by taking the generalized mean of
         # the signals with a negative exponent.
@@ -88,9 +88,9 @@ class ZipTie(object):
         initial_bundle_activities = tools.generalized_mean(
                 self.cable_activities, self.bundle_map.T, self.MEAN_EXPONENT)
         # debug      
-        """ Make a first pass at the bundle activation levels by 
-        multiplying across the bundle map.
-        """
+        # Make a first pass at the bundle activation levels by 
+        # multiplying across the bundle map.
+
         #print self.name
         #print 'ca', self.cable_activities.shape
         #print 'ca', self.cable_activities.ravel()
@@ -106,9 +106,9 @@ class ZipTie(object):
         #print 'ibag', initial_bundle_activities_gm.ravel()
         #print 'iba', initial_bundle_activities.ravel()
         #print 'diba', (initial_bundle_activities_gm - initial_bundle_activities).ravel()
-        """ Find the activity levels of the bundles contributed to 
-        by each cable.
-        """
+        # Find the activity levels of the bundles contributed to 
+        # by each cable.
+        
         bundle_contribution_map = np.zeros(self.bundle_map.shape)
         #bundle_contribution_map = np.zeros((self.num_bundles, 
         #                                    self.cable_activities.size))
@@ -117,16 +117,15 @@ class ZipTie(object):
         activated_bundle_map = (initial_bundle_activities * 
                                 bundle_contribution_map)
         #print 'abm', activated_bundle_map.shape                                                
-        """ Find the largest bundle activity that each input contributes to """
+        # Find the largest bundle activity that each input contributes to
         max_activation = np.max(activated_bundle_map, axis=0) + tools.EPSILON
         #print 'ma', max_activation
-        """ Divide the energy that each input contributes to each bundle """
+        # Divide the energy that each input contributes to each bundle
         input_inhibition_map = np.power(activated_bundle_map / max_activation, 
                                         self.ACTIVATION_WEIGHTING_EXPONENT)
         #print 'iim', input_inhibition_map.shape
-        """ Find the effective strength of each cable to each bundle 
-        after inhibition.
-        """
+        # Find the effective strength of each cable to each bundle 
+        # after inhibition.
         inhibited_cable_activities = (input_inhibition_map * 
                                       self.cable_activities.T)
         #print 'ii', inhibited_cable_activities.shape
@@ -147,9 +146,8 @@ class ZipTie(object):
         #self.bundle_activities[:self.num_bundles,0] = (
         #        final_bundle_activities[:self.num_bundles])
         #print 'ba', self.bundle_activities.shape
-        """ Calculate how much energy each input has left to contribute 
-        to the co-activity estimate. 
-        """
+        # Calculate how much energy each input has left to contribute 
+        # to the co-activity estimate. 
         final_activated_bundle_map = (final_bundle_activities * 
                                       bundle_contribution_map)
 
@@ -309,10 +307,11 @@ class ZipTie(object):
             #                         self.JOINING_THRESHOLD)] = 1.
             self.nucleation_energy[candidate_cable, 0] = 0.
             self.agglomeration_energy[:, candidate_cable] = 0.
-            print self.name, 'cable', candidate_cable, 'added to bundle', candidate_bundle
+            print self.name, 'cable', candidate_cable, 'added to bundle', \
+                    candidate_bundle
         return
         
-    def get_cable_deliberation_vote(self, bundle_activity_goals):
+    def step_down(self, bundle_goals):
         """ 
         Project the bundle goal values to the appropriate cables
 
@@ -320,17 +319,16 @@ class ZipTie(object):
         to them, and perform a bounded sum over all bundles to get 
         the estimated activity associated with each cable.
         """
-        if bundle_activity_goals.size > 0:
-            bundle_activity_goals = tools.pad(bundle_activity_goals, 
-                                       (self.max_num_bundles, 0))
+        if bundle_goals.size > 0:
+            bundle_goals = tools.pad(bundle_goals, (self.max_num_bundles, 0))
             cable_activity_goals = tools.bounded_sum(self.bundle_map * 
-                                              bundle_activity_goals, axis=0)
+                                                     bundle_goals, axis=0)
         else:
             cable_activity_goals = np.zeros((self.max_num_cables, 1))
         return cable_activity_goals
         
-    def get_projection(self, bundle_index):
-        """ Project bundles down to the cables they're composed of """
+    def get_index_projection(self, bundle_index):
+        """ Project bundle indices down to their cable indices """
         bundle = np.zeros((self.max_num_bundles, 1))
         bundle[bundle_index, 0] = 1.
         projection = np.sign(np.max(self.bundle_map * bundle, 

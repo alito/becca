@@ -30,6 +30,6 @@ class World(Grid_2D_World):
     def assign_sensors(self):
         """ Construct the sensor array from the state information """
         sensors = np.zeros(self.num_sensors)
-        sensors[self.simple_state[0]] = 1
-        sensors[self.simple_state[1] + self.world_size] = 1
+        sensors[self.world_state[0]] = 1
+        sensors[self.world_state[1] + self.world_size] = 1
         return sensors

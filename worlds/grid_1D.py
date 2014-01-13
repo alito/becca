@@ -46,7 +46,7 @@ class World(BaseWorld):
                  3 * self.action[6] - 
                  4 * self.action[7])
         # Action cost is an approximation of metabolic energy
-        energy    = (self.action[0] + 
+        self.energy=(self.action[0] + 
                  2 * self.action[1] + 
                  3 * self.action[2] + 
                  4 * self.action[3] + 
@@ -62,17 +62,29 @@ class World(BaseWorld):
         self.world_state -= self.num_sensors * np.floor_divide(
                 self.world_state, self.num_sensors)
         self.simple_state = int(np.floor(self.world_state))
+        if self.simple_state == 9:
+            self.simple_state = 0
         # Assign basic_feature_input elements as binary. 
         # Represent the presence or absence of the current position in the bin.
         sensors = np.zeros(self.num_sensors)
         sensors[self.simple_state] = 1
-        # Assign reward based on the current state 
+        reward = self.assign_reward(sensors)
+        '''# Assign reward based on the current state 
         reward = sensors[8] * (-self.REWARD_MAGNITUDE)
         reward += sensors[3] * ( self.REWARD_MAGNITUDE)
         # Punish actions just a little
         reward -= energy  * self.ENERGY_COST
         reward = np.maximum(reward, -self.REWARD_MAGNITUDE)
+        '''
         return sensors, reward
+
+    def assign_reward(self, sensors):
+        """ Assign reward based on the current state """
+        reward = sensors[8] * (-self.REWARD_MAGNITUDE)
+        reward += sensors[3] * ( self.REWARD_MAGNITUDE)
+        # Punish actions just a little
+        reward -= self.energy  * self.ENERGY_COST
+        reward = np.maximum(reward, -self.REWARD_MAGNITUDE)
         
     def set_agent_parameters(self, agent):
         """ Turn a few of the knobs to adjust BECCA for this world """
@@ -86,7 +98,7 @@ class World(BaseWorld):
             state_image = ['.'] * (self.num_sensors + self.num_actions + 2)
             state_image[self.simple_state] = 'O'
             state_image[self.num_sensors:self.num_sensors + 2] = '||'
-            action_index = np.nonzero(self.action)[0]
+            action_index = np.where(self.action > 0.1)[0]
             if action_index.size > 0:
                 for i in range(action_index.size):
                     state_image[self.num_sensors + 2 + action_index[i]] = 'x'

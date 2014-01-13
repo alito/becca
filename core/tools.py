@@ -88,6 +88,9 @@ def bounded_sum(a, axis=0):
             total += map_one_to_inf(item)
         return map_inf_to_one(total)
     else:
+        # handle the case where a is a one-dimensional array
+        if len(a.shape) == 1:
+            a = a[:, np.newaxis]
         bounded_total = map_inf_to_one(np.sum(map_one_to_inf(a), axis=axis))
         return bounded_total[:,np.newaxis]
 
@@ -151,7 +154,6 @@ def visualize_array(image_data, shape=None, save_eps=False,
 
 def get_files_with_suffix(dir_name, suffixes):
     """ Get all of the files with a given suffix in dir recursively """
-    import os
     found_filenames = []
     for localpath, directories, filenames in os.walk(dir_name):
         for filename in filenames:

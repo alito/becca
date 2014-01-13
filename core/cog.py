@@ -40,7 +40,8 @@ class Cog(object):
                                  max_cables_per_bundle=max_chains_per_bundle, 
                                  name=name)
 
-    def step_up(self, cable_activities, reward, enough_cables):
+    #def step_up(self, cable_activities, reward, enough_cables):
+    def step_up(self, cable_activities, enough_cables):
         # TODO: fix this so that cogs can gracefully handle more cables 
         # or else never be assigned them in the first place
         if cable_activities.size > self.max_cables:
@@ -48,29 +49,26 @@ class Cog(object):
             print '-----  Number of max cables exceeded in', self.name, \
                     '  -----'
         """ cable_activities percolate upward through daisychain and ziptie """
-        chain_activities = self.daisychain.update(cable_activities, reward) 
-        self.reaction= self.daisychain.get_cable_activity_reactions()
+        chain_activities = self.daisychain.step_up(cable_activities)
         self.surprise = self.daisychain.get_surprise()
         if enough_cables is True:
-            bundle_activities = self.ziptie.update(chain_activities)
+            bundle_activities = self.ziptie.step_up(chain_activities)
         else:
             bundle_activities = np.zeros((0,1))
         bundle_activities = tools.pad(bundle_activities, (self.max_bundles, 0))
         return bundle_activities
 
-    def step_down(self, bundle_activity_goals):
-        """ bundle_activity_goals percolate downward """
-        chain_activity_goals = self.ziptie.get_cable_deliberation_vote(
-                bundle_activity_goals) 
-        instant_cable_activity_goals = self.daisychain.deliberate(
-                chain_activity_goals)     
-        self.cable_activity_goals =self.daisychain.get_cable_deliberation_vote()
-        return instant_cable_activity_goals
+    def step_down(self, bundle_goals):
+        """ bundle_goals percolate downward """
+        chain_goals = self.ziptie.step_down(bundle_goals) 
+        cable_goals = self.daisychain.step_down(chain_goals)     
+        return cable_goals
 
-    def get_projection(self, bundle_index):
+    def get_index_projection(self, bundle_index):
         """ Project a bundle down through the ziptie and daisychain """
-        chain_projection = self.ziptie.get_projection(bundle_index)
-        cable_projection = self.daisychain.get_projection(chain_projection)
+        chain_projection = self.ziptie.get_index_projection(bundle_index)
+        cable_projection = self.daisychain.get_index_projection(
+                chain_projection)
         return cable_projection
          
     def fraction_filled(self):

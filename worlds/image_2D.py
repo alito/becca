@@ -20,17 +20,17 @@ class World(BaseWorld):
     def __init__(self, lifespan=None):
         """ Set up the world """
         BaseWorld.__init__(self, lifespan)
-        self.VISUALIZE_PERIOD = 10 ** 4
+        self.VISUALIZE_PERIOD = 10 ** 6
         self.REWARD_MAGNITUDE = 100.
-        self.JUMP_FRACTION = 0.1
-        self.print_feature_set = True
+        self.JUMP_FRACTION = 0.01
+        self.print_feature_set = False
         self.animate = False
         self.name = 'image_2D'
         #self.name = 'image_2D_fast'
         self.name_long = 'two dimensional visual world'
         print "Entering", self.name_long
 
-        self.fov_span = 10 
+        self.fov_span = 7
         # Initialize the block_image_data to be used as the environment 
         self.block_image_filename = "./images/block_test.png" 
         self.block_image_data = plt.imread(self.block_image_filename)
@@ -114,15 +114,27 @@ class World(BaseWorld):
                                                              self.column_max)
             self.row_position = np.random.random_integers(self.row_min, 
                                                           self.row_max)
+        # debug
+        self.sensors = np.zeros(self.sensors.shape)
+        row_sensor_index = int(self.row_position / 100.) - 3
+        col_sensor_index = int(self.column_position / 100.) - 3
+        self.sensors[row_sensor_index + col_sensor_index * self.fov_span] = 1.
+        #self.sensors[row_sensor_index] = 1.
+        #self.sensors[col_sensor_index] = 1.
+        #print 'rsi', row_sensor_index, 'csi', col_sensor_index
+
+        '''
         # Create the sensory input vector
         fov = self.block_image_data[self.row_position - self.fov_height / 2: 
                                     self.row_position + self.fov_height / 2, 
                                     self.column_position - self.fov_width / 2: 
                                     self.column_position + self.fov_width / 2]
-        center_surround_pixels = wtools.center_surround(fov,self.fov_span)
+        center_surround_pixels = wtools.center_surround(fov, self.fov_span, 
+                                                             self.fov_span)
         unsplit_sensors = center_surround_pixels.ravel()
         self.sensors = np.concatenate((np.maximum(unsplit_sensors, 0), 
                                        np.abs(np.minimum(unsplit_sensors, 0))))
+        '''
         self.reward = 0
         if ((np.abs(self.column_position - self.TARGET_COLUMN) < 
              self.REWARD_REGION_WIDTH / 2) and 
@@ -181,8 +193,10 @@ class World(BaseWorld):
 
         # Periodcally show the entire feature set 
         if self.print_feature_set:
-            (feature_set, feature_activities) = agent.get_projections()
+            (feature_set, feature_activities) = agent.get_index_projections()
             wtools.print_pixel_array_features(feature_set, self.num_sensors,
                                               self.num_actions,
-                                              directory='log', world_name=self.name)  
+                                              self.fov_span, self.fov_span,
+                                              directory='log', 
+                                              world_name=self.name)  
         return

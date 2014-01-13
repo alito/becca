@@ -26,9 +26,7 @@ class World(BaseWorld):
         self.animate = False 
         self.graphing = True
         self.name_long = 'one dimensional visual world'
-        #self.name = 'image_1D'
-        self.name = 'image_1D_slow_fast_decay'
-        #self.name = 'image_1D_fast'
+        self.name = 'image_1D'
         print "Entering", self.name_long
         self.step_counter = 0
         self.fov_span = 5 
@@ -88,7 +86,7 @@ class World(BaseWorld):
         # Create the sensory input vector
         fov = self.data[:, self.column_position - self.fov_width / 2: 
                            self.column_position + self.fov_width / 2]
-        center_surround_pixels = wtools.center_surround(fov, 
+        center_surround_pixels = wtools.center_surround(fov, self.fov_span,
                                                              self.fov_span)
         unsplit_sensors = center_surround_pixels.ravel()        
         self.sensors = np.concatenate((np.maximum(unsplit_sensors, 0), 
@@ -143,8 +141,11 @@ class World(BaseWorld):
             fig.canvas.draw()
             # Periodically visualize the entire feature set
             if self.print_feature_set:
-                (feature_set, feature_activities) = agent.get_projections()
+                (feature_set, feature_activities) = \
+                        agent.get_index_projections()
                 wtools.print_pixel_array_features(feature_set, self.num_sensors,
                                                   self.num_actions, 
-                                                  directory='log', world_name=self.name)
+                                                  self.fov_span, self.fov_span,
+                                                  directory='log', 
+                                                  world_name=self.name)
         return

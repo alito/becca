@@ -38,7 +38,7 @@ class World(BaseWorld):
 
     def step(self, action): 
         """ Take one time step through the world """
-        self.action = action.ravel()
+        self.action = action.copy().ravel()
         self.timestep += 1 
         step_size = self.action[0] - self.action[1]
         # An approximation of metabolic energy
@@ -79,7 +79,7 @@ class World(BaseWorld):
                                    self.num_actions + 2)
             state_image[self.simple_state] = 'O'
             state_image[self.num_real_sensors:self.num_real_sensors + 2] = '||'
-            action_index = np.nonzero(self.action)[0]
+            action_index = np.where(self.action > 0.1)[0]
             if action_index.size > 0:
                 state_image[self.num_real_sensors + 2 + action_index[0]] = 'x'
             print(''.join(state_image))
