@@ -22,7 +22,7 @@ class World(BaseWorld):
         BaseWorld.__init__(self, lifespan)
         self.VISUALIZE_PERIOD = 10 ** 6
         self.REWARD_MAGNITUDE = 100.
-        self.JUMP_FRACTION = 0.01
+        self.JUMP_FRACTION = 1. / 10.
         self.print_feature_set = False
         self.animate = False
         self.name = 'image_2D'
@@ -30,7 +30,7 @@ class World(BaseWorld):
         self.name_long = 'two dimensional visual world'
         print "Entering", self.name_long
 
-        self.fov_span = 7
+        self.fov_span = 10
         # Initialize the block_image_data to be used as the environment 
         self.block_image_filename = "./images/block_test.png" 
         self.block_image_data = plt.imread(self.block_image_filename)
@@ -115,6 +115,7 @@ class World(BaseWorld):
             self.row_position = np.random.random_integers(self.row_min, 
                                                           self.row_max)
         # debug
+        '''
         self.sensors = np.zeros(self.sensors.shape)
         row_sensor_index = int(self.row_position / 100.) - 3
         col_sensor_index = int(self.column_position / 100.) - 3
@@ -134,7 +135,7 @@ class World(BaseWorld):
         unsplit_sensors = center_surround_pixels.ravel()
         self.sensors = np.concatenate((np.maximum(unsplit_sensors, 0), 
                                        np.abs(np.minimum(unsplit_sensors, 0))))
-        '''
+
         self.reward = 0
         if ((np.abs(self.column_position - self.TARGET_COLUMN) < 
              self.REWARD_REGION_WIDTH / 2) and 

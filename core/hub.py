@@ -21,11 +21,11 @@ class Hub(object):
         self.INITIAL_VARIANCE = 2. # real, 0 < x < 1
         self.INITIAL_REWARD = 1.0 # real, 0 < x < 1
         self.UPDATE_RATE = 10 ** -1.
-        self.REWARD_DECAY_RATE = .5 # real, 0 < x < 1
-        self.TRACE_LENGTH = 5
+        self.REWARD_DECAY_RATE = .3 # real, 0 < x < 1
+        self.TRACE_LENGTH = 10
         self.EXPLORATION = 0.
         #self.CONSISTENCY_WEIGHT = 10. 
-        self.VARIANCE_PENALTY_CONSTANT = .1
+        self.VARIANCE_PENALTY_CONSTANT = - (2 / np.pi) ** .5
         self.VARIANCE_PENALTY_STOCHASTIC = 1.
         #self.UNC_WEIGHT = 1./3.
         #self.UNC_WEIGHT = 1./10.
@@ -75,11 +75,23 @@ class Hub(object):
         self.pre.append(self.cable_activities.copy())
         # Collect all the cable activities
         cable_index = 0
+        multiplier = 1.
+        block_index = 0
+        keepers = [0, 1, 2]
         for block in blocks:
             block_size =  block.cable_activities.size
-            self.cable_activities[cable_index: cable_index + block_size] = \
-                    block.cable_activities.copy()
+            if block_index in keepers:
+                self.cable_activities[cable_index: cable_index + block_size] = \
+                        block.cable_activities.copy() * multiplier
+            else:
+                self.cable_activities[cable_index: cable_index + block_size] = \
+                        np.zeros(block.cable_activities.shape)
+            multiplier *= 1.
+
             cable_index += block_size 
+            block_index += 1
+        # debug
+        #self.cable_activities[:self.num_cables * 2.] = 0.
 
         # Update the reward model.
         # It has a structure similar to the chain transtion model in daisychain
@@ -148,6 +160,9 @@ class Hub(object):
                 self.VARIANCE_PENALTY_CONSTANT + 
                 self.VARIANCE_PENALTY_STOCHASTIC * 
                 np.abs(np.random.normal(size=self.reward_variance.shape)))
+        #variance_penalty = self.reward_variance * (
+        #        self.VARIANCE_PENALTY_STOCHASTIC * 
+        #        np.random.normal(size=self.reward_variance.shape))
         #print 'rn', variance_penalty
         #estimated_reward_value = (self.reward_value + consistency_reward + 
         #                          reward_uncertainty)
