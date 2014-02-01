@@ -19,9 +19,9 @@ class World(BaseWorld):
         """ Set up the world """
         BaseWorld.__init__(self, lifespan)
         self.VISUALIZE_PERIOD = 10 ** 4
-        self.print_feature_set = True
+        self.print_feature_set = False
         self.REWARD_MAGNITUDE = 100.
-        self.JUMP_FRACTION = 0.1
+        self.JUMP_FRACTION = 1. / 10.
         self.STEP_COST = 0.1 * self.REWARD_MAGNITUDE
         self.animate = False 
         self.graphing = True
@@ -29,7 +29,7 @@ class World(BaseWorld):
         self.name = 'image_1D'
         print "Entering", self.name_long
         self.step_counter = 0
-        self.fov_span = 5 
+        self.fov_span = 7 
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_actions = 9
 
@@ -76,6 +76,7 @@ class World(BaseWorld):
         column_step = np.round(column_step * (
                 1 + self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0 - 
                 self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0))
+        self.column_step = column_step
         self.column_position = self.column_position + int(column_step)
         self.column_position = max(self.column_position, self.column_min)
         self.column_position = min(self.column_position, self.column_max)
@@ -83,6 +84,17 @@ class World(BaseWorld):
         if np.random.random_sample() < self.JUMP_FRACTION:
             self.column_position = np.random.random_integers(self.column_min, 
                                                              self.column_max)
+            #print 'jump---'
+        # debug
+        ''' 
+        self.sensors = np.zeros(self.sensors.shape)
+        sensor_index = int(self.column_position / 20.) 
+        self.sensors[sensor_index] = 1.
+        #self.sensors[row_sensor_index] = 1.
+        #self.sensors[col_sensor_index] = 1.
+        #print 'rsi', row_sensor_index, 'csi', col_sensor_index
+
+        '''
         # Create the sensory input vector
         fov = self.data[:, self.column_position - self.fov_width / 2: 
                            self.column_position + self.fov_width / 2]
@@ -91,6 +103,7 @@ class World(BaseWorld):
         unsplit_sensors = center_surround_pixels.ravel()        
         self.sensors = np.concatenate((np.maximum(unsplit_sensors, 0), 
                                   np.abs(np.minimum(unsplit_sensors, 0)) ))
+        
         # Calculate the reward
         self.reward = 0
         if (np.abs(self.column_position - self.TARGET_COLUMN) < 
@@ -109,7 +122,8 @@ class World(BaseWorld):
         """ Keep track of what's going on in the world and display it """
         if self.animate:
             print ''.join(['column_position: ', str(self.column_position), 
-                           '  self.reward: ', str(self.reward)])
+                           '  self.reward: ', str(self.reward), 
+                           '  self.column_step: ', str(self.column_step)])
         if not self.graphing:
             return
 
@@ -123,7 +137,7 @@ class World(BaseWorld):
             fig = plt.figure(11)
             plt.clf()
             plt.plot( self.column_history, 'k.')    
-            plt.title("Column history")
+            plt.title(''.join(['Column history for ', self.name]))
             plt.xlabel('time step')
             plt.ylabel('position (pixels)')
             fig.show()

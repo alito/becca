@@ -30,8 +30,8 @@ class World(BaseWorld):
         self.world_size = 5
         self.num_sensors = self.world_size ** 2
         self.world_state = np.array([1, 1])
-        self.target = (3,3)
-        self.obstacle = (1,1)
+        self.targets = [(1,1), (3,3)]
+        self.obstacles = [(1,3), (3,1)]
     
     def step(self, action): 
         """ Take one time step through the world """
@@ -54,10 +54,12 @@ class World(BaseWorld):
         self.world_state = np.remainder(self.world_state, self.world_size)
         sensors = self.assign_sensors()
         reward = 0
-        if tuple(self.world_state.flatten()) == self.obstacle:
-            reward = - self.REWARD_MAGNITUDE
-        elif tuple(self.world_state.flatten()) == self.target:
-            reward = self.REWARD_MAGNITUDE
+        for obstacle in self.obstacles:
+            if tuple(self.world_state.flatten()) == obstacle:
+                reward = - self.REWARD_MAGNITUDE
+        for target in self.targets:
+            if tuple(self.world_state.flatten()) == target:
+                reward = self.REWARD_MAGNITUDE
         reward -= self.ENERGY_COST * energy
         return sensors, reward
 

@@ -20,9 +20,9 @@ class World(BaseWorld):
         BaseWorld.__init__(self, lifespan)
         self.VISUALIZE_PERIOD = 10 ** 4
         self.REWARD_MAGNITUDE = 100.
-        self.ENERGY_COST = 0.01 * self.REWARD_MAGNITUDE
+        self.ENERGY_COST =  self.REWARD_MAGNITUDE / 100.
         self.JUMP_FRACTION = 0.1
-        self.name = 'grid_1D'
+        self.name = 'grid_1D_a'
         self.name_long = 'one dimensional grid world'
         print "Entering", self.name_long
         self.num_sensors = 9
@@ -69,22 +69,17 @@ class World(BaseWorld):
         sensors = np.zeros(self.num_sensors)
         sensors[self.simple_state] = 1
         reward = self.assign_reward(sensors)
-        '''# Assign reward based on the current state 
-        reward = sensors[8] * (-self.REWARD_MAGNITUDE)
-        reward += sensors[3] * ( self.REWARD_MAGNITUDE)
-        # Punish actions just a little
-        reward -= energy  * self.ENERGY_COST
-        reward = np.maximum(reward, -self.REWARD_MAGNITUDE)
-        '''
         return sensors, reward
 
     def assign_reward(self, sensors):
         """ Assign reward based on the current state """
-        reward = sensors[8] * (-self.REWARD_MAGNITUDE)
-        reward += sensors[3] * ( self.REWARD_MAGNITUDE)
+        reward = 0.
+        reward -= sensors[8] * self.REWARD_MAGNITUDE
+        reward += sensors[3] * self.REWARD_MAGNITUDE
         # Punish actions just a little
         reward -= self.energy  * self.ENERGY_COST
         reward = np.maximum(reward, -self.REWARD_MAGNITUDE)
+        return reward
         
     def set_agent_parameters(self, agent):
         """ Turn a few of the knobs to adjust BECCA for this world """

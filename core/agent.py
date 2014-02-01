@@ -24,6 +24,7 @@ class Agent(object):
         """
         self.BACKUP_PERIOD = 10 ** 4
         self.show = show
+        self.name = agent_name
         self.pickle_filename ="log/" + agent_name + ".pickle"
         # TODO: Automatically adapt to the number of sensors pass in
         self.num_sensors = num_sensors
@@ -217,7 +218,7 @@ class Agent(object):
 
     def visualize(self):
         """ Show the current state and some history of the agent """
-        print ' '.join(['agent is', str(self.timestep), 'time steps old'])
+        print ' '.join([self.name, 'is', str(self.timestep), 'time steps old'])
         self.reward_history.append(float(self.cumulative_reward) / 
                                    (self.time_since_reward_log + 1))
         self.cumulative_reward = 0    
@@ -244,6 +245,7 @@ class Agent(object):
             plt.plot(self.reward_steps, self.reward_history)
             plt.xlabel("time step")
             plt.ylabel("average reward")
+            plt.title(''.join(('Reward history for ', self.name)))
             fig.show()
             fig.canvas.draw()
             plt.savefig(filename, format='png')
