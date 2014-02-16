@@ -69,8 +69,6 @@ class World(BaseWorld):
     
     def set_agent_parameters(self, agent):
         """ Make some adjustements, as necessary, to the agent """
-        #agent.reward_min = -100.
-        #agent.reward_max = 100.
         pass
 
     def visualize(self, agent):

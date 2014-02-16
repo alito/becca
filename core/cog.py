@@ -40,15 +40,14 @@ class Cog(object):
                                  max_cables_per_bundle=max_chains_per_bundle, 
                                  name=name)
 
-    #def step_up(self, cable_activities, reward, enough_cables):
     def step_up(self, cable_activities, enough_cables):
+        """ cable_activities percolate upward through daisychain and ziptie """
         # TODO: fix this so that cogs can gracefully handle more cables 
         # or else never be assigned them in the first place
         if cable_activities.size > self.max_cables:
             cable_activities = cable_activities[:self.max_cables, :]
             print '-----  Number of max cables exceeded in', self.name, \
                     '  -----'
-        """ cable_activities percolate upward through daisychain and ziptie """
         chain_activities = self.daisychain.step_up(cable_activities)
         self.surprise = self.daisychain.get_surprise()
         if enough_cables is True:

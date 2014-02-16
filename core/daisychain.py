@@ -1,6 +1,6 @@
-import tools
-
 import numpy as np
+
+import tools
 
 class DaisyChain(object):
     """
@@ -26,13 +26,10 @@ class DaisyChain(object):
         """ Initialize the daisychain, preallocating all data structures """
         self.max_num_cables = max_num_cables
         self.name = name
-
         # User-defined constants
         self.AGING_TIME_CONSTANT = 10 ** 6 # real, large
-        # debug was -1
-        self.CHAIN_UPDATE_RATE = 10 ** -5 # real, 0 < x < 1
-        #self.VOTE_DECAY_RATE = 0.1 # real, 0 < x < 1
-        
+        self.CHAIN_UPDATE_RATE = 10 ** -1 # real, 0 < x < 1
+        # Initialize variables
         self.time_steps = 0
         daisychain_shape = (max_num_cables, max_num_cables)        
         self.count = np.zeros(daisychain_shape)
@@ -43,8 +40,7 @@ class DaisyChain(object):
         self.pre_count = np.zeros(state_shape)
         self.post = np.zeros(state_shape)
         self.num_cables = 0
-             
-        self.deliberation_vote = np.zeros((max_num_cables, 1))
+        #self.deliberation_vote = np.zeros((max_num_cables, 1))
         self.surprise = np.ones((max_num_cables, 1))
 
     def step_up(self, cable_activities):        
@@ -72,7 +68,7 @@ class DaisyChain(object):
         self.pre_count = np.maximum(self.pre_count, 0)
         post_difference = np.abs(self.pre * self.post.T - self.expected_post)
         self.expected_post += (self.pre * self.post.T - 
-		               self.expected_post) * update_rate_post
+		                       self.expected_post) * update_rate_post
         self.post_uncertainty += (post_difference - 
                                   self.post_uncertainty) * update_rate_post 
         # Reaction is the expected post, turned into a deliberation_vote
@@ -94,18 +90,11 @@ class DaisyChain(object):
         cable_goals = tools.bounded_sum([upstream_goals, self.reaction])
         return cable_goals[:self.num_cables]
 
-    '''def get_cable_deliberation_vote(self):
-        return self.deliberation_vote[:self.num_cables]
-
-    def get_cable_activity_reactions(self):
-        return self.reaction[:self.num_cables]
-    '''
     def get_surprise(self):
         return self.surprise[:self.num_cables]
 
     def get_index_projection(self, map_projection):
         """ Find the projection from chain activities to cable signals """
-        #num_cables = self.reward_value.shape[0]
         num_cables = np.int(map_projection.size ** .5)
         projection = np.zeros((num_cables,2))
         chains = np.reshape(map_projection, (num_cables,num_cables))

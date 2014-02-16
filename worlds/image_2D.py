@@ -26,7 +26,6 @@ class World(BaseWorld):
         self.print_feature_set = False
         self.animate = False
         self.name = 'image_2D'
-        #self.name = 'image_2D_fast'
         self.name_long = 'two dimensional visual world'
         print "Entering", self.name_long
 
@@ -58,7 +57,6 @@ class World(BaseWorld):
                                                          self.column_max)
         self.row_position = np.random.random_integers(self.row_min, 
                                                       self.row_max)
-
         self.num_sensors = 2 * self.fov_span ** 2
         self.num_actions = 17
         self.sensors = np.zeros(self.num_sensors)
@@ -95,12 +93,9 @@ class World(BaseWorld):
                                action[15] * self.MAX_STEP_SIZE / 16)
         
         row_step = np.round(row_step * (
-                1 + * np.random.random_sample(scale=self.NOISE_MAGNITUDE)))
+                1 + np.random.normal(scale=self.NOISE_MAGNITUDE)))
         column_step = np.round(column_step * (
-                1 + * np.random.random_sample(scale=self.NOISE_MAGNITUDE)))
-        #column_step = np.round(column_step * (
-        #        1 + self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0 - 
-        #        self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0))
+                1 + np.random.normal(scale=self.NOISE_MAGNITUDE)))
         self.row_position = self.row_position + int(row_step)
         self.column_position = self.column_position + int(column_step)
         # Respect the boundaries of the block_image_data
@@ -115,17 +110,7 @@ class World(BaseWorld):
                                                              self.column_max)
             self.row_position = np.random.random_integers(self.row_min, 
                                                           self.row_max)
-        # debug
-        '''
-        self.sensors = np.zeros(self.sensors.shape)
-        row_sensor_index = int(self.row_position / 100.) - 3
-        col_sensor_index = int(self.column_position / 100.) - 3
-        self.sensors[row_sensor_index + col_sensor_index * self.fov_span] = 1.
-        #self.sensors[row_sensor_index] = 1.
-        #self.sensors[col_sensor_index] = 1.
-        #print 'rsi', row_sensor_index, 'csi', col_sensor_index
 
-        '''
         # Create the sensory input vector
         fov = self.block_image_data[self.row_position - self.fov_height / 2: 
                                     self.row_position + self.fov_height / 2, 
@@ -146,8 +131,6 @@ class World(BaseWorld):
         return self.sensors, self.reward
      
     def set_agent_parameters(self, agent):
-        #agent.reward_min = 0.
-        #agent.reward_max = 100.
         pass
 
     def visualize(self, agent):

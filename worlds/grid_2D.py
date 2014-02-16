@@ -12,7 +12,6 @@ class World(BaseWorld):
     horizontal or vertical step taken. Horizonal and vertical 
     positions are reported separately as basic features, 
     rather than raw sensory inputs.
-    See Chapter 4 of the Users Guide for details.  
     Optimal performance is a reward of about 90 per time step.
     """
     def __init__(self, lifespan=None):
@@ -72,8 +71,6 @@ class World(BaseWorld):
     
     def set_agent_parameters(self, agent):
         """ Set a few parameters in the agent """
-        #agent.reward_min = -self.REWARD_MAGNITUDE
-        #agent.reward_max = self.REWARD_MAGNITUDE
         pass
 
     def visualize(self, agent):

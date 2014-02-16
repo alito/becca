@@ -1,5 +1,5 @@
 """
-benchmark 0.4.5
+benchmark 0.5.0
 
 A suite of worlds to characterize the performance of BECCA variants.
 Other agents may use this benchmark as well, as long as they have the 
@@ -10,7 +10,7 @@ benchmark will be version numbered.
 Run at the command line as a script with no argmuments:
 > python benchmark.py
 
-For N_RUNS = 7, Becca 0.4.5 scored 78.5
+For N_RUNS = 7, Becca 0.5.0 scored xxx
 """
 import tester
 from core.agent import Agent

@@ -14,7 +14,6 @@ class World(Grid_2D_World):
     is punished.  There is also a lesser penalty of for each horizontal
     or vertical step taken. Horizonal and vertical positions are 
     reported separately as basic features, rather than raw sensory inputs. 
-    See Chapter 4 of the Users Guide for details.
     Optimal performance is a reward of between 90 per time step.
     """
     def __init__(self, lifespan=None):

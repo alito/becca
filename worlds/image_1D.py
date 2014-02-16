@@ -84,17 +84,6 @@ class World(BaseWorld):
         if np.random.random_sample() < self.JUMP_FRACTION:
             self.column_position = np.random.random_integers(self.column_min, 
                                                              self.column_max)
-            #print 'jump---'
-        # debug
-        ''' 
-        self.sensors = np.zeros(self.sensors.shape)
-        sensor_index = int(self.column_position / 20.) 
-        self.sensors[sensor_index] = 1.
-        #self.sensors[row_sensor_index] = 1.
-        #self.sensors[col_sensor_index] = 1.
-        #print 'rsi', row_sensor_index, 'csi', col_sensor_index
-
-        '''
         # Create the sensory input vector
         fov = self.data[:, self.column_position - self.fov_width / 2: 
                            self.column_position + self.fov_width / 2]
@@ -114,8 +103,6 @@ class World(BaseWorld):
             
     def set_agent_parameters(self, agent):
         """ Initalize some of BECCA's parameters to ensure smooth running """
-        #agent.reward_min = 0.
-        #agent.reward_max = 100.
         pass
 
     def visualize(self, agent):

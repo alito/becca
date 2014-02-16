@@ -6,7 +6,7 @@ import os
 import core.tools as tools
 
 """
-Utilities shared between several worlds dealing with visual input
+Tools shared between several worlds
 """
 
 def center_surround(fov, fov_horz_span, fov_vert_span, verbose=False):
@@ -33,16 +33,16 @@ def center_surround(fov, fov_horz_span, fov_vert_span, verbose=False):
         for column in range(fov_horz_span):
             # Calculate a center-surround value that represents
             # the difference between the pixel and its surroundings.
-            center_surround_pixels[row][column] = \
-                super_pixels[row + 1][column + 1] - \
-                super_pixels[row    ][column + 1] / 6 - \
-                super_pixels[row + 2][column + 1] / 6 - \
-                super_pixels[row + 1][column    ] / 6 - \
-                super_pixels[row + 1][column + 2] / 6 - \
-                super_pixels[row    ][column    ] / 12 - \
-                super_pixels[row + 2][column    ] / 12 - \
-                super_pixels[row    ][column + 2] / 12 - \
-                super_pixels[row + 2][column + 2] / 12
+            center_surround_pixels[row][column] = (
+                super_pixels[row + 1][column + 1] -
+                super_pixels[row    ][column + 1] / 6 -
+                super_pixels[row + 2][column + 1] / 6 -
+                super_pixels[row + 1][column    ] / 6 -
+                super_pixels[row + 1][column + 2] / 6 -
+                super_pixels[row    ][column    ] / 12 -
+                super_pixels[row + 2][column    ] / 12 -
+                super_pixels[row    ][column + 2] / 12 -
+                super_pixels[row + 2][column + 2] / 12)
     if verbose:
         # Display the field of view clipped from the original image
         plt.figure("fov")
@@ -68,7 +68,7 @@ def center_surround(fov, fov_horz_span, fov_vert_span, verbose=False):
     return center_surround_pixels
 
 def visualize_pixel_array_feature(feature, 
-                                 fov_horz_span=None, fov_vert_span=None,
+                                  fov_horz_span=None, fov_vert_span=None,
                                   block_index=-1, feature_index=-1, 
                                   world_name=None, save_png=False, 
                                   filename='log/feature', array_only=False):
@@ -119,6 +119,7 @@ def visualize_pixel_array_feature(feature,
 def print_pixel_array_features(projections, num_pixels, start_index, 
                                fov_horz_span, fov_vert_span, 
                                directory='log', world_name=''):
+    """  Interpret an array of center-surround pixels as an image """
     num_blocks = len(projections)
     for block_index in range(num_blocks):
         for feature_index in range(len(projections[block_index])):
@@ -149,6 +150,7 @@ def print_pixel_array_features(projections, num_pixels, start_index,
     return
 
 def make_movie(stills_directory, movie_filename='', frames_per_still = 1):
+    """ Make a movie out of a sequence of still frames """
     if not movie_filename:
         movie_filename = ''.join((stills_directory, '.avi'))
     stills_filenames = []
@@ -174,9 +176,10 @@ def make_movie(stills_directory, movie_filename='', frames_per_still = 1):
         resized_image = resample2D(image, height, width)
         for frame_counter in range(frames_per_still):
             video_writer.write(resized_image)
+    return
 
 def resample2D(array, num_rows, num_cols):
-    """ Return resampled array that is num_rows by num_cols """
+    """ Resample an array at num_rows by num_cols """
     rows = (np.linspace(0., .9999999, num_rows) * 
             array.shape[0]).astype(np.int) 
     cols = (np.linspace(0., .9999999, num_cols) * 

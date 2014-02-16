@@ -64,7 +64,6 @@ class Agent(object):
         # Propogate the new sensor inputs up through the blocks
         cable_activities = np.vstack((self.action, sensors))
         for block in self.blocks:
-            #cable_activities = block.step_up(cable_activities, self.reward) 
             cable_activities = block.step_up(cable_activities) 
         # Create a new block if the top block has had enough bundles assigned
         block_bundles_full = (float(block.bundles_created()) / 
@@ -86,11 +85,9 @@ class Agent(object):
         # debug
         agent_surprise = 0.0
         cable_goals = np.zeros((cable_activities.size,1))
-        #deliberation_goal_votes = np.zeros((cable_activities.size,1))
        
         for block in reversed(self.blocks):
             cable_goals = block.step_down(cable_goals)
-            #deliberation_goal_votes = block.get_cable_deliberation_vote()
             if np.nonzero(block.surprise)[0].size > 0:
                 agent_surprise = np.sum(block.surprise)
         self.recent_surprise_history.pop(0)
@@ -106,11 +103,6 @@ class Agent(object):
         # dice comes up lower than the goal value, the action is taken
         # with a magnitude of 1.
         self.action = cable_goals[:self.num_actions,:] 
-        # debug
-        # choose a single random action
-        #if np.random.random_sample() < 0.2:
-        #    if self.num_actions > 0:
-        #        self.action[np.random.randint(self.num_actions),0] = 1.             
         if (self.timestep % self.BACKUP_PERIOD) == 0:
                 self._save()    
         # Log reward

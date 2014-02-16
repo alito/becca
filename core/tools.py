@@ -25,51 +25,32 @@ OXIDE = (20./255., 120./255., 150./255.)
 
 def weighted_average(values, weights):
     """ Perform a weighted average of values, using weights """
-    #print 'wav', values.shape
-    #print 'waw', weights.shape
     weighted_sum_values = np.sum(values * weights, axis=0) 
-    #print 'wawsv', weighted_sum_values.shape
     sum_of_weights = np.sum(weights, axis=0) 
-    #print 'wasow', sum_of_weights.shape
-    #print 'war',  (weighted_sum_values / (sum_of_weights + EPSILON))[:,np.newaxis].shape
     return (weighted_sum_values / (sum_of_weights + EPSILON))[:,np.newaxis]
 
 def generalized_mean(values, weights, exponent):
-    #print 'v', values.ravel()
     shifted_values = values + 1.
-    #print 'sv', shifted_values.ravel()
     values_to_power = shifted_values ** exponent
-    #print 'vp', values_to_power.ravel()
-    #print 'vp', values_to_power.shape
-    #print 'w', weights.shape
     mean_values_to_power = weighted_average(values_to_power, weights)
-    #print 'mvp', mean_values_to_power.ravel()
-    #print 'mvp', mean_values_to_power.shape
     shifted_mean = (mean_values_to_power + EPSILON) ** (1./exponent)
-    #print 'sm', shifted_mean.ravel()
     mean = shifted_mean - 1.
-    #print 'm', mean.ravel()
     # Find means for which all weights are zero. These are undefined.
     # Set them equal to zero.
     sum_weights = np.sum(weights, axis=0)
-    #print 'sw', sum_weights.ravel()
-    #print 'sw', sum_weights.shape
     zero_indices = np.where(np.abs(sum_weights) < EPSILON)
-    #print 'zi', zero_indices
     mean[zero_indices] = 0.
-    #print 'mz', mean
-    #print 'mz', mean.shape
     return mean
 
 def map_one_to_inf(a):
-    """ ZipTie values from [0, 1] onto [0, inf) and map values 
+    """ Map values from [0, 1] onto [0, inf) and map values 
     from [-1, 0] onto (-inf, 0] """
     eps = np.finfo(np.double).eps
     a_prime = np.sign(a) / (1 - np.abs(a) + eps) - np.sign(a)
     return a_prime
 
 def map_inf_to_one(a_prime):
-    """ ZipTie values from [0, inf) onto [0, 1] and map values 
+    """ Map values from [0, inf) onto [0, 1] and map values 
     from  (-inf, 0] onto [-1, 0] """
     a = np.sign(a_prime) * (1 - 1 / (np.abs(a_prime) + 1))
     return a
@@ -121,7 +102,6 @@ def pad(a, shape, val=0.):
                             ' pad to ', str(cols), 'cols.'])
     padded = np.ones((rows,cols)) * val
     padded[:a.shape[0], :a.shape[1]] = a
-
     return padded
 
 def str_to_int(exp):
@@ -175,7 +155,6 @@ def report_roc(ground_truth_filename, surprise_log_filename, self_name):
     """
     truth = np.loadtxt(ground_truth_filename)
     surprise = np.loadtxt(surprise_log_filename)
-    # debug
     abs_surprise = np.abs(surprise[:,0])
     times = surprise[:,1]
     # If a target is identified within delta seconds, that is close enough
