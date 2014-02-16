@@ -47,7 +47,7 @@ class World(BaseWorld):
         self.TARGET_ROW = im_height / 2
         self.REWARD_REGION_WIDTH = im_size / 8
         self.NOISE_MAGNITUDE = 0.1
-        self.FIELD_OF_VIEW_FRACTION = 0.5;
+        self.FIELD_OF_VIEW_FRACTION = 0.5
         self.fov_height =  im_size * self.FIELD_OF_VIEW_FRACTION
         self.fov_width = self.fov_height
         self.column_min = np.ceil(self.fov_width / 2)
@@ -95,11 +95,12 @@ class World(BaseWorld):
                                action[15] * self.MAX_STEP_SIZE / 16)
         
         row_step = np.round(row_step * (
-                1 + self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0 - 
-                self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0))
+                1 + * np.random.random_sample(scale=self.NOISE_MAGNITUDE)))
         column_step = np.round(column_step * (
-                1 + self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0 - 
-                self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0))
+                1 + * np.random.random_sample(scale=self.NOISE_MAGNITUDE)))
+        #column_step = np.round(column_step * (
+        #        1 + self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0 - 
+        #        self.NOISE_MAGNITUDE * np.random.random_sample() * 2.0))
         self.row_position = self.row_position + int(row_step)
         self.column_position = self.column_position + int(column_step)
         # Respect the boundaries of the block_image_data
@@ -145,9 +146,9 @@ class World(BaseWorld):
         return self.sensors, self.reward
      
     def set_agent_parameters(self, agent):
-        agent.reward_min = 0.
-        agent.reward_max = 100.
-        return
+        #agent.reward_min = 0.
+        #agent.reward_max = 100.
+        pass
 
     def visualize(self, agent):
         """ Show what is going on in BECCA and in the world """

@@ -60,26 +60,6 @@ class Agent(object):
         self.timestep += 1
         if sensors.ndim == 1:
             sensors = sensors[:,np.newaxis]
-        '''
-        # Condition the sensors to fall between 0 and 1
-        self.min_vals = np.minimum(sensors, self.min_vals)
-        self.max_vals = np.maximum(sensors, self.max_vals)
-        spread = self.max_vals - self.min_vals
-        sensors = ((sensors - self.min_vals) / 
-                   (self.max_vals - self.min_vals + tools.EPSILON))
-        self.min_vals += spread * self.RANGE_DECAY_RATE
-        self.max_vals -= spread * self.RANGE_DECAY_RATE
-        '''
-        '''
-        # Adapt the reward so that it falls between 0 and 1 
-        self.reward_min = np.minimum(unscaled_reward, self.reward_min)
-        self.reward_max = np.maximum(unscaled_reward, self.reward_max)
-        spread = self.reward_max - self.reward_min
-        self.reward = ((unscaled_reward - self.reward_min) / 
-                       (spread + tools.EPSILON))
-        self.reward_min += spread * self.REWARD_RANGE_DECAY_RATE
-        self.reward_max -= spread * self.REWARD_RANGE_DECAY_RATE
-        '''
         self.reward = unscaled_reward
         # Propogate the new sensor inputs up through the blocks
         cable_activities = np.vstack((self.action, sensors))
@@ -96,8 +76,6 @@ class Agent(object):
             self.blocks.append(Block(self.num_actions + self.num_sensors,
                                      name=next_block_name, 
                                      level=self.num_blocks))
-            #cable_activities = self.blocks[-1].step_up(cable_activities, 
-            #                                         self.reward) 
             cable_activities = self.blocks[-1].step_up(cable_activities) 
             self.hub.add_cables(self.blocks[-1].max_cables)
             print "Added block", self.num_blocks - 1

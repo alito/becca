@@ -114,9 +114,9 @@ class World(BaseWorld):
             
     def set_agent_parameters(self, agent):
         """ Initalize some of BECCA's parameters to ensure smooth running """
-        agent.reward_min = 0.
-        agent.reward_max = 100.
-        return   
+        #agent.reward_min = 0.
+        #agent.reward_max = 100.
+        pass
 
     def visualize(self, agent):
         """ Keep track of what's going on in the world and display it """

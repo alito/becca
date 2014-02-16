@@ -167,7 +167,8 @@ class Hub(object):
     def _display(self):
         """ Give a visual update of the internal workings of the hub """
         DISPLAY_PERIOD = 1000.
-        if np.random.random_sample() < 1. / DISPLAY_PERIOD:
+        #if np.random.random_sample() < 1. / DISPLAY_PERIOD:
+        if False:
 
             # Plot reward value
             fig311 = plt.figure(311)

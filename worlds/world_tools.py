@@ -116,7 +116,7 @@ def visualize_pixel_array_feature(feature,
         fig.canvas.draw()
         return
 
-def print_pixel_array_features(projections, num_sensors, num_actions, 
+def print_pixel_array_features(projections, num_pixels, start_index, 
                                fov_horz_span, fov_vert_span, 
                                directory='log', world_name=''):
     num_blocks = len(projections)
@@ -127,7 +127,7 @@ def print_pixel_array_features(projections, num_sensors, num_actions,
             feature_fig = plt.figure(num=99)
             projection_image_list = (visualize_pixel_array_feature(projections[
                     block_index][feature_index][
-                    num_actions:num_actions + num_sensors,:], fov_horz_span,
+                    start_index:start_index + num_pixels,:], fov_horz_span,
                     fov_vert_span, array_only=True)) 
             for state_index in range(states_per_feature): 
                 left =  (float(state_index) / float(states_per_feature))
@@ -181,6 +181,10 @@ def resample2D(array, num_rows, num_cols):
             array.shape[0]).astype(np.int) 
     cols = (np.linspace(0., .9999999, num_cols) * 
             array.shape[1]).astype(np.int) 
-    resampled_array = array[rows, :,:]
-    resampled_array = resampled_array[:, cols,:]
+    if len(array.shape) == 2:
+        resampled_array = array[rows, :]
+        resampled_array = resampled_array[:, cols]
+    if len(array.shape) == 3:
+        resampled_array = array[rows, :,:]
+        resampled_array = resampled_array[:, cols,:]
     return resampled_array

@@ -63,8 +63,9 @@ class World(BaseWorld):
 
     def set_agent_parameters(self, agent):
         """ Turn a few of the knobs to adjust BECCA for this world """
-        agent.reward_min = -100.
-        agent.reward_max = 100.
+        #agent.reward_min = -100.
+        #agent.reward_max = 100.
+        pass
 
     def visualize(self, agent):
         """ Provide an intuitive display of the current state of the World """

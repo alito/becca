@@ -84,8 +84,9 @@ class World(BaseWorld):
     def set_agent_parameters(self, agent):
         """ Turn a few of the knobs to adjust BECCA for this world """
         # Prevent the agent from forming any groups
-        agent.reward_min = -100.
-        agent.reward_max = 100.
+        #agent.reward_min = -100.
+        #agent.reward_max = 100.
+        pass
         
     def visualize(self, agent):
         """ Show what's going on in the world """

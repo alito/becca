@@ -72,9 +72,9 @@ class World(BaseWorld):
     
     def set_agent_parameters(self, agent):
         """ Set a few parameters in the agent """
-        agent.reward_min = -self.REWARD_MAGNITUDE
-        agent.reward_max = self.REWARD_MAGNITUDE
-        return
+        #agent.reward_min = -self.REWARD_MAGNITUDE
+        #agent.reward_max = self.REWARD_MAGNITUDE
+        pass
 
     def visualize(self, agent):
         """ Show the state of the world and the agent """
