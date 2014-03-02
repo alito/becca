@@ -112,9 +112,9 @@ The generalized mean, $M_p$, is given by:
 M_p(x) = {\frac{1}{n}\left( \sum_{i=1}^{n}x_i^p  \right)}^{\frac{1}{p}} 
 \end{equation*}
 
-For $p = 1$, $M_p$ is the arithmetic mean. For $\lim_{p \to 0}$ it is the geometric mean. For $\lim_{p \to \infty}$ it gives the maximum value. And for   $\lim_{p \to -\infty}$ it gives the minimum.
+For $p = 1$, $M_p$ is the arithmetic mean. For $\lim_{p \to 0}$ it is the geometric mean. For $\lim_{p \to \infty}$ it gives the maximum value. And for   $\lim_{p \to -\infty}$ it gives the minimum. A negative exponent weights the lower cable activities more heavily. 
 
-A negative exponent weights the lower cable activities more heavily. Ziptie makes a first pass at each bundle's activity .
+Ziptie makes a first pass at each bundle's activity .
 
 \begin{eqnarray*}
 a &=& M_m(c)\\ 
@@ -151,9 +151,9 @@ Non-bundle cable activity is accumulated over time. If it accumulates to a high 
 
 \begin{eqnarray*}
 g &=& g + (f  (1 - g)  - c  g  p )  q\\ 
-c &:& \mbox{cable activity}\\
 f &:& \mbox{non-bundle activity}\\
 g &:& \mbox{nucleation energy}\\
+c &:& \mbox{cable activity}\\
 p &:& \mbox{energy decay rate} = .01\\
 q &:& \mbox{nucleation energy rate} = .0001
 \end{eqnarray*}
@@ -166,9 +166,9 @@ Bundles accumulate agglomeration energy from cables whose non-bundle activity is
 
 \begin{eqnarray*}
 h &=& fa\\ 
-a &:& \mbox{bundle activity}\\
-f &:& \mbox{non-bundle activity}\\
 h &:& \mbox{co-activity}\\
+f &:& \mbox{non-bundle activity}\\
+a &:& \mbox{bundle activity}\\
 \end{eqnarray*}
 
 Each cable's non-bundle activity is distributed to agglomeration energy with each bundle proportionally to their co-activities.
@@ -203,7 +203,11 @@ The bounded sum function, $S$, never produces a total greater than one, given th
 \begin{eqnarray*}
 S(x) & = & A \left (\sum B(x) \right ) \\
 A(x) & = & 1 - \frac{1}{x + 1} \\ 
-B(x) & = & \frac{x}{1 - x} - 1
+B(x) & = & \frac{x}{1 - x} - 1 \\
+A&:& \mbox{maps the interval} [0, \infty)\\
+&& \mbox{onto the interval} [0, 1) \\
+B&:& \mbox{maps the interval} [0, 1)\\
+&& \mbox{onto the interval} [0,\infty ) \\
 \end{eqnarray*}
 
 
@@ -244,7 +248,7 @@ f &:& \mbox{aging time constant} = 10^6 \\
 \begin{eqnarray*}
 g &= & g + b - \frac{1}{gk}\\ 
 g &:& \mbox{accumulated cable activity} \\
-b &:& \mbox{ previous cable activity} \\
+b &:& \mbox{previous cable activity} \\
 k &:& \mbox{chain update rate} = .1 \\
 \end{eqnarray*}
 

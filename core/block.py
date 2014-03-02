@@ -85,8 +85,7 @@ class Block(object):
             # Cogs are only allowed to start forming bundles once 
             # the number of cables exceeds the fill_fraction_threshold
             enough_cables = (self.ziptie.cable_fraction_in_bundle(cog_index)
-                             >.7) 
-                             #> self.fill_fraction_threshold)
+                             > self.fill_fraction_threshold)
             cog_bundle_activities = self.cogs[cog_index].step_up(
                     cog_cable_activities, enough_cables)
             self.bundle_activities = np.concatenate((self.bundle_activities, 
