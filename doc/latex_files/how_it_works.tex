@@ -75,6 +75,8 @@ The block takes a set of cable activities as inputs. The ziptie organizes them i
 
 The cable activities are normalized such that they fall on an interval from zero (the lowest cable activity ever experienced on that cable) to one (the highest). This helps keep every bock  insensitive to the range of cable activities it takes in, including sensor values from the world.
 
+The number of blocks in the tower grows as higher-level features are created. Once the number of bundles created collectively by all the cogs in block $n$ exceeds a fraction threshold of the block's total capacity (.5), then block $n+1$ is created automatically. This allows the feature hierarchy to adaptively scale to represent arbitrary complexity in the data being observed. 
+
 \section*{\color{copper} COG}
 
 Like their mechanical counterparts, cogs are relatively simple devices whose true value is realized when they are used in parallel with a number of their fellows. Each cog consists of a daisychain and a ziptie. (Figure~\ref{cog}) 
@@ -315,7 +317,7 @@ n &:& \mbox{predicted cable activity} \\
 
 \section*{\color{copper} HUB}
 
-The hub is where reinforcement learning is implemented and decisions are made. It takes in copies of all blocks' input cable activities, as well as the reward. It maintains an estimate of expected reward for every cable activity sequence, or chain, similar to the daisychain's estimate of future cable activity for every cable activity chain within a block. The hub also keeps a running total of each chain's activity. (Figure~\ref{hub})  
+The hub is where reinforcement learning is implemented and decisions are made. It takes in copies of all blocks' input cable activities, as well as the reward. It maintains an estimate of expected reward for every cable activity-cable goal sequence, or chain, similar to the daisychain's estimate of future cable activity for every cable activity chain within a block. The hub also keeps a running total of each chain's activity. (Figure~\ref{hub})  
 
 \begin{figure}[ht]
 \centering
@@ -324,9 +326,9 @@ The hub is where reinforcement learning is implemented and decisions are made. I
 \label{hub}
 \end{figure}
 
-The reward signal is normalized such that it falls on an interval from zero (the lowest reward ever experienced) to one (the highest). This way, \textsc{Becca} is insensitive to the range of reward values covered by the world. It is one less assumption that the agent needs to make. The  difference in reward between one time step and the next is actually the quantity that the hub estimates. In this way it detects {\em changes} in reward, rather than constant values. The chains that consistently result in changes in reward are identified and exploited in planning. 
+The reward signal is normalized such that it falls on an interval from zero (the lowest reward ever experienced) to one (the highest). This way, \textsc{Becca} is insensitive to the range of reward values covered by the world. It is one less assumption that the agent needs to make. The  difference in reward between one time step and the next is actually the quantity that the hub estimates. In this way it detects {\em changes} in reward, rather than constant values. The chains that consistently result in changes in reward are identified and exploited in planning and deliberation. 
  
-The hub gathers cable activities from all the blocks. Using the current set of cable activities, it chooses a cable goal at each time step. It then associates changes in reward with each activity-goal pair. This is where the hub differs from daisychain. The transition chains in daisychain are from cable activity to next cable activity, rather than from cable activity to next cable goal. Like ziptie, the hub does this incrementally, adjusting the estimate by a small amount each time. It also creates a running sum of each chain's activity history, which slowly decays over time. This calculation is very similar to the one used in ziptie.
+The hub gathers cable activities from all the blocks. Using the current set of cable activities, it chooses a cable goal at each time step. It then associates changes in reward with each activity-goal pair. This is where the hub differs from daisychain. The transition chains in daisychain are from cable activity to next cable activity, rather than from cable activity to next cable goal. Like daisychain, the hub does this incrementally, adjusting the estimate by a small amount each time. It also creates a running sum of each chain's activity history, which slowly decays over time. This calculation is very similar to the one used in daisychain.
 
 \begin{eqnarray*}
 c &= & ab\\ 
@@ -391,7 +393,7 @@ The estimated reward value for all the chains are weighted by the current cable 
 w &= & \mbox{argmax} ( \max (cs) + \min (cs) )\\ 
 w &:& \mbox{goal cable} \\
 s &:& \mbox{estimated reward value at this time step} \\
-c &:& \mbox{previous cable activity} \\
+c &:& \mbox{cable activity} \\
 \end{eqnarray*}
 
 To ensure that the effects of intentionally-selected goals don`t warp estimates, they are masked from the cable activities of the next time step. The activity of those cables is set to zero.
@@ -409,10 +411,10 @@ Figure~\ref{becca} shows the entire architecture at a glance. It's a bit unwield
 
 
 
-\begin{figure}[ht]
-\centering
-\includegraphics[height=1.5cm]{figs/logo_plate.png}
-\end{figure}
+%\begin{figure}[ht]
+%\centering
+%\includegraphics[height=1.5cm]{figs/logo_plate.png}
+%\end{figure}
 
 
 %\bibliographystyle{plain}
