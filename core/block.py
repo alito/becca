@@ -36,8 +36,7 @@ class Block(object):
         ziptie_name = ''.join(('ziptie_', self.name))
         self.ziptie = ZipTie(self.max_cables, self.max_cogs, 
                              max_cables_per_bundle=self.max_cables_per_cog,
-                             mean_exponent=-2,
-                             joining_threshold=0.05, name=ziptie_name)
+                             mean_exponent=-2, name=ziptie_name)
         self.cogs = []
         # TODO: only create cogs as needed
         for cog_index in range(self.max_cogs):
@@ -86,7 +85,8 @@ class Block(object):
             # Cogs are only allowed to start forming bundles once 
             # the number of cables exceeds the fill_fraction_threshold
             enough_cables = (self.ziptie.cable_fraction_in_bundle(cog_index)
-                             > self.fill_fraction_threshold)
+                             >.7) 
+                             #> self.fill_fraction_threshold)
             cog_bundle_activities = self.cogs[cog_index].step_up(
                     cog_cable_activities, enough_cables)
             self.bundle_activities = np.concatenate((self.bundle_activities, 

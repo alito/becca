@@ -37,15 +37,6 @@ class Agent(object):
                              name=first_block_name)]
         self.hub = Hub(self.blocks[0].max_cables)
         self.action = np.zeros((self.num_actions,1))
-        # Constants for adaptively rescaling the cable activities
-        self.max_vals = np.zeros((self.num_sensors, 1)) 
-        self.min_vals = np.zeros((self.num_sensors, 1))
-        self.RANGE_DECAY_RATE = 10 ** -5
-        # Constants for adaptive reward scaling 
-        self.REWARD_RANGE_DECAY_RATE = 10 ** -5
-        self.reward_min = tools.BIG
-        self.reward_max = -tools.BIG
-        self.reward = 0
         self.cumulative_reward = 0
         self.time_since_reward_log = 0 
         self.reward_history = []
@@ -55,12 +46,12 @@ class Agent(object):
         self.timestep = 0
         self.graphing = True
 
-    def step(self, sensors, unscaled_reward):
+    def step(self, sensors, reward):
         """ Step through one time interval of the agent's operation """
         self.timestep += 1
         if sensors.ndim == 1:
             sensors = sensors[:,np.newaxis]
-        self.reward = unscaled_reward
+        self.reward = reward
         # Propogate the new sensor inputs up through the blocks
         cable_activities = np.vstack((self.action, sensors))
         for block in self.blocks:
@@ -106,7 +97,7 @@ class Agent(object):
         if (self.timestep % self.BACKUP_PERIOD) == 0:
                 self._save()    
         # Log reward
-        self.cumulative_reward += unscaled_reward
+        self.cumulative_reward += reward
         self.time_since_reward_log += 1
         # debug
         if np.random.random_sample() < 0.001:

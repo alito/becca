@@ -33,7 +33,7 @@ class Hub(object):
         self.old_reward = 0.
         self.count = np.zeros((self.num_cables, self.num_cables))
         self.reward_trace = [0.] * self.TRACE_LENGTH
-        self.reward_value = (np.ones((self.num_cables, self.num_cables)) *
+        self.expected_reward = (np.ones((self.num_cables, self.num_cables)) *
                              self.INITIAL_REWARD)
         self.cable_activities = np.zeros((self.num_cables, 1))
         # pre represents the feature and sensor activities at a given
@@ -94,21 +94,22 @@ class Hub(object):
         update_rate = np.minimum(0.5, update_rate_raw)
         # Collapse the reward history into a single value for this time step
         reward_array = np.array(self.reward_trace)
+        # TODO: substitute np.arange in this statement
         decay_exponents = (1. - self.REWARD_DECAY_RATE) ** (
                 np.cumsum(np.ones(self.TRACE_LENGTH)) - 1.)
         decayed_array = reward_array.ravel() * decay_exponents
         reward = np.sum(decayed_array.ravel())
-        reward_difference = reward - self.reward_value 
-        self.reward_value += reward_difference * update_rate
+        reward_difference = reward - self.expected_reward 
+        self.expected_reward += reward_difference * update_rate
         # Decay the reward value gradually to encourage re-exploration 
-        self.reward_value *= 1. - self.FORGETTING_RATE
+        self.expected_reward *= 1. - self.FORGETTING_RATE
         # Use the count to estimate the uncertainty in the expected 
         # value of the reward estimate.
         # Use this to scale additive random noise to the reward estimate,
         # encouraging exploration.
         reward_uncertainty = (np.random.normal(size=self.count.shape) *
                               self.EXPLORATION / (self.count + 1.))
-        self.estimated_reward_value = self.reward_value + reward_uncertainty
+        self.estimated_reward_value = self.expected_reward + reward_uncertainty
 
         # Select a goal cable.
         # First find the estimated reward associated with each chain.   
@@ -152,7 +153,7 @@ class Hub(object):
     def add_cables(self, num_new_cables):
         """ Add new cables to the hub when new blocks are created """ 
         self.num_cables = self.num_cables + num_new_cables
-        self.reward_value = tools.pad(self.reward_value, 
+        self.expected_reward = tools.pad(self.expected_reward, 
                                       (self.num_cables, self.num_cables), 
                                       val=self.INITIAL_REWARD)
         self.cable_activities = tools.pad(self.cable_activities, 
@@ -173,7 +174,7 @@ class Hub(object):
             # Plot reward value
             fig311 = plt.figure(311)
             plt.gray()
-            plt.imshow(self.reward_value, interpolation='nearest')
+            plt.imshow(self.expected_reward, interpolation='nearest')
             plt.title('reward')
             fig311.show()
             fig311.canvas.draw()

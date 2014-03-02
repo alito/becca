@@ -10,7 +10,7 @@ benchmark will be version numbered.
 Run at the command line as a script with no argmuments:
 > python benchmark.py
 
-For N_RUNS = 7, Becca 0.5.0 scored xxx
+For N_RUNS = 7, Becca 0.5.0 scored 49
 """
 import tester
 from core.agent import Agent

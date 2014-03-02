@@ -33,7 +33,7 @@ class DaisyChain(object):
         self.time_steps = 0
         daisychain_shape = (max_num_cables, max_num_cables)        
         self.count = np.zeros(daisychain_shape)
-        self.expected_post = np.zeros(daisychain_shape)
+        self.expected_cable_activities = np.zeros(daisychain_shape)
         self.post_uncertainty = np.zeros(daisychain_shape)
         state_shape = (max_num_cables,1)
         self.pre = np.zeros(state_shape)
@@ -44,8 +44,7 @@ class DaisyChain(object):
         self.surprise = np.ones((max_num_cables, 1))
 
     def step_up(self, cable_activities):        
-        """ Train the daisychain using the current cable_activities 
-        and reward """
+        """ Train the daisychain using the current cable_activities """
         self.num_cables = np.maximum(self.num_cables, cable_activities.size)
         # Pad the incoming cable_activities array out to its full size 
         cable_activities = tools.pad(cable_activities, 
@@ -66,17 +65,19 @@ class DaisyChain(object):
         self.pre_count -= 1 / (self.AGING_TIME_CONSTANT * self.pre_count +
                                tools.EPSILON)
         self.pre_count = np.maximum(self.pre_count, 0)
-        post_difference = np.abs(self.pre * self.post.T - self.expected_post)
-        self.expected_post += (self.pre * self.post.T - 
-		                       self.expected_post) * update_rate_post
+        post_difference = np.abs(self.pre * self.post.T - 
+                                 self.expected_cable_activities)
+        self.expected_cable_activities += update_rate_post * (
+                self.pre * self.post.T - self.expected_cable_activities)
         self.post_uncertainty += (post_difference - 
                                   self.post_uncertainty) * update_rate_post 
         # Reaction is the expected post, turned into a deliberation_vote
-        self.reaction = tools.weighted_average(self.expected_post, self.pre)
+        self.reaction = tools.weighted_average(self.expected_cable_activities, 
+                                               self.pre)
         # Surprise is the difference between the expected post and
         # the actual one
         self.surprise = tools.weighted_average(
-                np.abs(self.post.T - self.expected_post), 
+                np.abs(self.post.T - self.expected_cable_activities), 
 		        self.pre / (self.post_uncertainty + tools.EPSILON))
         # Reshape chain activities into a single column
         return chain_activities.ravel()[:,np.newaxis]
