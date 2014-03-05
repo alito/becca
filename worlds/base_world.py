@@ -1,42 +1,38 @@
-
 import numpy as np
 
 class World(object):
     """ The base class for creating a new world """
-
-    def __init__(self):
+    def __init__(self, lifespan=None):
+        """ Initialize a new world with some benign default values """
+        if lifespan is None:
+            self.LIFESPAN = 10 ** 4
+        else:
+            self.LIFESPAN = lifespan
         self.timestep = 0
-        self.LIFESPAN = 10 ** 4
         self.name = 'abstract base world'
-
-        """ These will likely be overridden in any subclass."""
+        # These will likely be overridden in any subclass
         self.num_sensors = 0
-        self.num_primitives = 0
         self.num_actions = 0
         
-        self.MAX_NUM_FEATURES = None
-        
-
     def step(self, action):
+        """ Take a timestep through an empty world that does nothing """
         self.timestep += 1
         sensors = np.zeros(self.num_sensors)
-        primitives = np.zeros(self.num_primitives)
         reward = 0
-        return sensors, primitives, reward
-
+        return sensors, reward
     
     def set_agent_parameters(self, agent):
+        """ If desired, manually adjust BECCA's internal parameters """
         pass
     
-    
     def is_alive(self):
+        """ Returns True when the world has come to an end """
         if(self.timestep < self.LIFESPAN):
             return True
         else:
             return False
-        
-    def announce(self):
-        print "Entering", self.name
-        
-    
-    
+   
+    def visualize(self, agent):
+        """ Let the world show BECCA's internal state as well as its own"""
+        print self.timestep, 'timesteps'
+        return

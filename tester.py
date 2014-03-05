@@ -1,72 +1,81 @@
-
+import cProfile
 import numpy as np
-from agent.agent import Agent
-from agent import viz_utils
-        
-"""  Select the World that the Agent will be placed in. One of these import lines should be uncommented. """
+import pstats
+
+"""
+Run a BECCA agent with a world.
+
+To use this module as a top level script, select the World that the Agent 
+will be placed in.
+Make sure the appropriate import line is included and uncommented below. 
+Run from the command line, e.g. 
+> python tester.py
+"""
+
+# Worlds from the benchmark
 #from worlds.base_world import World
-#from worlds.grid_1D import World
+from worlds.grid_1D import World
 #from worlds.grid_1D_ms import World
 #from worlds.grid_1D_noise import World
 #from worlds.grid_2D import World
 #from worlds.grid_2D_dc import World
-from worlds.image_1D import World
+#from worlds.image_1D import World
 #from worlds.image_2D import World
 
-""" If you want to run a world of your own, add the appropriate line here """
+# If you want to run a world of your own, add the appropriate line here
 #from worlds.hello import World
+#from becca_world_listen.listen import World
+#from becca_world_watch.watch import World
+#from becca_world_find_square.find_square import World
 
-def test(world, restore=False, agent_name="test", show=True):
-    """ Run 'world' """
-    if world.MAX_NUM_FEATURES is None:
-        MAX_NUM_FEATURES = 100
-    else:
-        MAX_NUM_FEATURES = world.MAX_NUM_FEATURES
+from core.agent import Agent 
 
-    agent = Agent(world.num_sensors, world.num_primitives, 
-                  world.num_actions, MAX_NUM_FEATURES, agent_name=agent_name)
+testing_lifespan = 10 ** 8
+profiling_lifespan = 10 ** 4
 
+def test(world, restore=False, show=True, agent_name=None):
+    """ 
+    Run BECCA with world.  
+    
+    If restore=True, this method loads a saved agent if it can find one.
+    Otherwise it creates a new one. It connects the agent and
+    the world together and runs them for as long as the 
+    world dictates.
+    
+    To profile BECCA's performance with world, manually set
+    profile_flag in the top level script environment to True.
+    """
+    if agent_name is None:
+        agent_name = '_'.join((world.name, 'agent'))
+    agent = Agent(world.num_sensors, world.num_actions, 
+                  agent_name=agent_name, show=show)
     if restore:
         agent = agent.restore()
-    
-    """ If configured to do so, the world sets some Becca parameters to 
-    modify its behavior. This is a development hack, and should eventually be 
-    removed as Becca matures and settles on a good, general purpose
-    set of parameters.
-    """
+
+    # If configured to do so, the world sets some BECCA parameters to 
+    # modify its behavior. This is a development hack, and 
+    # should eventually be removed as BECCA matures and settles on 
+    # a good, general purpose set of parameters.
     world.set_agent_parameters(agent)
-         
     actions = np.zeros((world.num_actions,1))
     
-    """ Repeat the loop through the duration of the existence of the world """
+    # Repeat the loop through the duration of the existence of the world 
     while(world.is_alive()):
-        sensors, primitives, reward = world.step(actions)
-        actions = agent.step(sensors, primitives, reward)
-        
-        """ If the world has the appropriate method, use it to display the feature set """
-        try:
-            if world.is_time_to_display():                
-                world.vizualize_feature_set(
-                  viz_utils.reduce_feature_set(agent.perceiver, agent.num_primitives, agent.num_actions))
-                viz_utils.force_redraw()
-        except AttributeError:
-            pass
-    
-    return agent.report_performance(show)
-
+        sensors, reward = world.step(actions)
+        world.visualize(agent)
+        actions = agent.step(sensors, reward)
+    return agent.report_performance()
 
 def profile():
     """ Profile BECCA's performance """
-    import cProfile
-    import pstats
-    cProfile.run('test(World())', 'tester_profile')
+    cProfile.run('test(World(lifespan=profiling lifespan), restore=True)', 
+                 'tester_profile')
     p = pstats.Stats('tester_profile')
     p.strip_dirs().sort_stats('time', 'cum').print_stats(30)
-    
     
 if __name__ == '__main__':
     profile_flag = False
     if profile_flag:
         profile()
     else:
-        test(World())
+        test(World(lifespan=testing_lifespan), restore=True)
