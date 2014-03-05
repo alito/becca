@@ -53,7 +53,7 @@ class Agent(object):
             sensors = sensors[:,np.newaxis]
         self.reward = reward
         # Propogate the new sensor inputs up through the blocks
-        cable_activities = np.vstack((self.action, sensors))
+        cable_activities = np.vstack((self.action, sensors, reward))
         for block in self.blocks:
             cable_activities = block.step_up(cable_activities) 
         # Create a new block if the top block has had enough bundles assigned
