@@ -36,7 +36,7 @@ class Block(object):
         ziptie_name = ''.join(('ziptie_', self.name))
         self.ziptie = ZipTie(self.max_cables, self.max_cogs, 
                              max_cables_per_bundle=self.max_cables_per_cog,
-                             mean_exponent=-2, name=ziptie_name)
+                             name=ziptie_name, in_block=True)
         self.cogs = []
         # TODO: only create cogs as needed
         for cog_index in range(self.max_cogs):
@@ -46,10 +46,17 @@ class Block(object):
                                  name='cog'+str(cog_index), 
                                  level=self.level))
         self.cable_activities = np.zeros((self.max_cables, 1))
+        self.bundle_activities = np.zeros((self.max_bundles, 1))
+        self.raw_cable_activities = np.zeros((self.max_cables, 1))
+        self.previous_cable_activities = np.zeros((self.max_cables, 1))
         self.hub_cable_goals = np.zeros((self.max_cables, 1))
-        self.fill_fraction_threshold = .7
+        self.fill_fraction_threshold = 0.
+        self.step_multiplier = int(2 ** self.level)
+        self.step_counter = 1000000
         self.ACTIVITY_DECAY_RATE = 1.# real, 0 < x < 1
         # Constants for adaptively rescaling the cable activities
+        #self.mean = np.ones((self.max_cables, 1)) * tools.BIG
+        #self.mae = np.ones((self.max_cables, 1)) * tools.BIG ** .5
         self.max_vals = np.zeros((self.max_cables, 1)) 
         self.min_vals = np.zeros((self.max_cables, 1))
         self.RANGE_DECAY_RATE = 10 ** -5
@@ -60,20 +67,45 @@ class Block(object):
         if new_cable_activities.size < self.max_cables:
             new_cable_activities = tools.pad(new_cable_activities, 
                                              (self.max_cables, 1))
-        self.min_vals = np.minimum(new_cable_activities, self.min_vals)
-        self.max_vals = np.maximum(new_cable_activities, self.max_vals)
+        # Update cable_activities, incorporating sensing dynamics
+        #self.cable_activities = tools.bounded_sum([
+        #        new_cable_activities, 
+        #        self.cable_activities * (1. - self.ACTIVITY_DECAY_RATE)])
+        self.raw_cable_activities *= 1. - (self.ACTIVITY_DECAY_RATE /
+                                           float(self.step_multiplier))
+        self.raw_cable_activities += new_cable_activities
+        self.step_counter += 1
+        if self.step_counter < self.step_multiplier:
+            return self.bundle_activities
+
+        #self.mean = (self.mean * (1 - self.RANGE_DECAY_RATE) + 
+        #             self.cable_activities * self.RANGE_DECAY_RATE)
+        #self.mae = (self.mae * (1 - self.RANGE_DECAY_RATE ** .5) + 
+        #            np.abs(self.cable_activities - self.mean) * 
+        #            self.RANGE_DECAY_RATE ** .5)
+        #print self.mean.ravel()
+        #print self.cable_activities.ravel()
+        #print self.cable_activities.ravel()
+        #self.cable_activities = (tools.map_inf_to_one(
+        #        (self.cable_activities - self.mean) / self.mae) + 1.) / 2.
+        self.min_vals = np.minimum(self.raw_cable_activities, self.min_vals)
+        self.max_vals = np.maximum(self.raw_cable_activities, self.max_vals)
         spread = self.max_vals - self.min_vals
-        new_cable_activities = ((new_cable_activities - self.min_vals) / 
+        self.cable_activities = ((self.raw_cable_activities - self.min_vals) / 
                    (self.max_vals - self.min_vals + tools.EPSILON))
         self.min_vals += spread * self.RANGE_DECAY_RATE
         self.max_vals -= spread * self.RANGE_DECAY_RATE
-        # Update cable_activities, incorporating sensing dynamics
-        self.cable_activities = tools.bounded_sum([
-                new_cable_activities, 
-                self.cable_activities * (1. - self.ACTIVITY_DECAY_RATE)])
+        #print self.cable_activities.ravel()
+        cluster_training_activities = np.maximum(
+                self.previous_cable_activities, self.cable_activities)
+        #print 'pc', self.previous_cable_activities.ravel()[:12]
+        #print 'ca', self.cable_activities.ravel()[:12]
+        #print 'ct', cluster_training_activities.ravel()[:12]
 
+        self.previous_cable_activities = self.cable_activities.copy() 
         # Update the map from self.cable_activities to cogs
-        self.ziptie.step_up(self.cable_activities)
+        #self.ziptie.step_up(self.cable_activities)
+        self.ziptie.step_up(cluster_training_activities)
         # Process the upward pass of each of the cogs in the block
         self.bundle_activities = np.zeros((0, 1))
         for cog_index in range(len(self.cogs)):
@@ -82,6 +114,8 @@ class Block(object):
             cog_cable_activities = self.cable_activities[
                     self.ziptie.get_index_projection(
                     cog_index).ravel().astype(bool)]
+            #if np.where(cog_cable_activities > .3)[0].size > 0:
+            #    print cog_cable_activities
             # Cogs are only allowed to start forming bundles once 
             # the number of cables exceeds the fill_fraction_threshold
             enough_cables = (self.ziptie.cable_fraction_in_bundle(cog_index)
@@ -98,6 +132,13 @@ class Block(object):
 
     def step_down(self, bundle_goals):
         """ Find cable_activity_goals, given a set of bundle_goals """
+        if self.step_counter < self.step_multiplier:
+            if 'self.hub_bundle_goals' not in locals():
+                self.hub_bundle_goals = np.zeros((self.max_cables, 1))
+            return self.hub_bundle_goals
+        else:
+            self.step_counter = 0
+
         bundle_goals = tools.pad(bundle_goals, (self.max_bundles, 1))
         cable_goals = np.zeros((self.max_cables, 1))
         self.surprise = np.zeros((self.max_cables, 1))
@@ -151,6 +192,7 @@ class Block(object):
 
     def visualize(self):
         """ Show what's going on inside the level """
+        print self.name
         self.ziptie.visualize()
         #for cog in self.cogs:
         #    cog.visualize()

@@ -39,6 +39,7 @@ class Cog(object):
             self.ziptie = ZipTie(max_cables **2, max_bundles, 
                                  max_cables_per_bundle=max_chains_per_bundle, 
                                  name=name)
+        return
 
     def step_up(self, cable_activities, enough_cables):
         """ cable_activities percolate upward through daisychain and ziptie """
@@ -80,7 +81,7 @@ class Cog(object):
             
     def visualize(self):
         """ Show the internal state of the daisychain and ziptie """
-        self.daisychain.visualize()
+        #self.daisychain.visualize()
         if self.max_bundles > 0:
             self.ziptie.visualize()
         return

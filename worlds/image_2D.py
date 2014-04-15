@@ -20,10 +20,10 @@ class World(BaseWorld):
     def __init__(self, lifespan=None):
         """ Set up the world """
         BaseWorld.__init__(self, lifespan)
-        self.VISUALIZE_PERIOD = 10 ** 6
+        self.VISUALIZE_PERIOD = 10 ** 4
         self.REWARD_MAGNITUDE = 100.
         self.JUMP_FRACTION = 1. / 10.
-        self.print_feature_set = False
+        self.print_feature_set = True
         self.animate = False
         self.name = 'image_2D'
         self.name_long = 'two dimensional visual world'

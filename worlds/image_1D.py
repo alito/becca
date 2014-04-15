@@ -19,7 +19,7 @@ class World(BaseWorld):
         """ Set up the world """
         BaseWorld.__init__(self, lifespan)
         self.VISUALIZE_PERIOD = 10 ** 4
-        self.print_feature_set = False
+        self.print_feature_set = True
         self.REWARD_MAGNITUDE = 100.
         self.JUMP_FRACTION = 1. / 10.
         self.STEP_COST = 0.1 * self.REWARD_MAGNITUDE

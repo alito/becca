@@ -25,8 +25,10 @@ Run from the command line, e.g.
 # If you want to run a world of your own, add the appropriate line here
 #from worlds.hello import World
 #from becca_world_listen.listen import World
-#from becca_world_watch.watch import World
-from becca_world_find_square.find_square import World
+from becca_world_watch.watch import World
+#from becca_world_whitestripes.whitestripes import World
+#from becca_world_find_square.find_square import World
+#from becca_world_track.track import World
 
 from core.agent import Agent 
 

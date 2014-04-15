@@ -33,7 +33,7 @@ class Agent(object):
         # Initialize agent infrastructure
         self.num_blocks =  1
         first_block_name = ''.join(('block_', str(self.num_blocks - 1)))
-        self.blocks = [Block(self.num_actions + self.num_sensors, 
+        self.blocks = [Block(self.num_actions + self.num_sensors + 1, 
                              name=first_block_name)]
         self.hub = Hub(self.blocks[0].max_cables)
         self.action = np.zeros((self.num_actions,1))
@@ -55,20 +55,23 @@ class Agent(object):
         # Propogate the new sensor inputs up through the blocks
         cable_activities = np.vstack((self.action, sensors, reward))
         for block in self.blocks:
+            #print cable_activities[::10].ravel()
             cable_activities = block.step_up(cable_activities) 
         # Create a new block if the top block has had enough bundles assigned
-        block_bundles_full = (float(block.bundles_created()) / 
-                              float(block.max_bundles))
-        block_initialization_threshold = .5
-        if block_bundles_full > block_initialization_threshold:
-            self.num_blocks +=  1
-            next_block_name = ''.join(('block_', str(self.num_blocks - 1)))
+        #block_bundles_full = (float(block.bundles_created()) / 
+        #                      float(block.max_bundles))
+        #block_initialization_threshold = .1
+        # debug
+        #if block_bundles_full > block_initialization_threshold:
+        if block.bundles_created() > 1:
+            next_block_name = ''.join(('block_', str(self.num_blocks)))
             self.blocks.append(Block(self.num_actions + self.num_sensors,
                                      name=next_block_name, 
                                      level=self.num_blocks))
             cable_activities = self.blocks[-1].step_up(cable_activities) 
             self.hub.add_cables(self.blocks[-1].max_cables)
-            print "Added block", self.num_blocks - 1
+            print "Added block", self.num_blocks
+            self.num_blocks +=  1
 
         self.hub.step(self.blocks, self.reward) 
         
@@ -79,6 +82,7 @@ class Agent(object):
        
         for block in reversed(self.blocks):
             cable_goals = block.step_down(cable_goals)
+            #print cable_goals[::10].ravel()
             if np.nonzero(block.surprise)[0].size > 0:
                 agent_surprise = np.sum(block.surprise)
         self.recent_surprise_history.pop(0)
@@ -94,6 +98,13 @@ class Agent(object):
         # dice comes up lower than the goal value, the action is taken
         # with a magnitude of 1.
         self.action = cable_goals[:self.num_actions,:] 
+
+        # debug
+        # Choose a single random action 
+        #self.action = np.zeros(self.action.shape)
+        #random_action_index = np.random.randint(self.action.size)
+        #self.action[random_action_index] = 1. 
+
         if (self.timestep % self.BACKUP_PERIOD) == 0:
                 self._save()    
         # Log reward
@@ -162,17 +173,17 @@ class Agent(object):
         """
         if block_index == -1:
             return bundles
+        time_steps = bundles.shape[1] 
         cable_contributions = np.zeros((self.blocks[block_index].max_cables, 
-                               bundles.shape[1] + 1))
+                                        time_steps * 2))
         for bundle_index in range(bundles.shape[0]):
-            for time_index in range(bundles.shape[1]):
+            for time_index in range(time_steps):
                 if bundles[bundle_index, time_index] > 0:
                     new_contribution = self.blocks[
                             block_index].get_index_projection(bundle_index)
-                    cable_contributions[:,time_index:time_index + 2] = (
-                            np.maximum(
-                            cable_contributions[:,time_index:time_index + 2], 
-                            new_contribution))
+                    cable_contributions[:, 2*time_index: 2*time_index + 2] = ( 
+                            np.maximum(cable_contributions[:, 
+                            2*time_index: 2*time_index + 2], new_contribution))
         cable_contributions = self._get_index_projection(block_index - 1, 
                                                    cable_contributions)
         return cable_contributions

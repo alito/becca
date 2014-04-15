@@ -123,7 +123,7 @@ def print_pixel_array_features(projections, num_pixels, start_index,
     num_blocks = len(projections)
     for block_index in range(num_blocks):
         for feature_index in range(len(projections[block_index])):
-            states_per_feature = block_index + 2
+            states_per_feature = 2 ** (block_index + 1)
             plt.close(99)
             feature_fig = plt.figure(num=99)
             projection_image_list = (visualize_pixel_array_feature(projections[
@@ -149,7 +149,8 @@ def print_pixel_array_features(projections, num_pixels, start_index,
             plt.savefig(full_filename, format='png') 
     return
 
-def make_movie(stills_directory, movie_filename='', frames_per_still = 1):
+def make_movie(stills_directory, movie_filename='', frames_per_still=1,
+               stills_per_frame=1):
     """ Make a movie out of a sequence of still frames """
     if not movie_filename:
         movie_filename = ''.join((stills_directory, '.avi'))
@@ -170,12 +171,23 @@ def make_movie(stills_directory, movie_filename='', frames_per_still = 1):
     is_color = True
     video_writer = cv2.VideoWriter(movie_filename, fourcc, fps, 
                                    frame_size, is_color)
+    images = []
+    num_stills_this_frame = 0
     for filename in stills_filenames:
         print 'writing', filename
         image = cv2.imread(filename)
         resized_image = resample2D(image, height, width)
-        for frame_counter in range(frames_per_still):
-            video_writer.write(resized_image)
+        images.append(resized_image)
+        num_stills_this_frame += 1
+        if num_stills_this_frame == stills_per_frame:
+            image = np.zeros(images[0].shape)
+            for image_ in images:
+                image += image_
+            image = (image / len(images)).astype('uint8')
+            for frame_counter in range(frames_per_still):
+                video_writer.write(image)
+            num_stills_this_frame = 0
+            images = []
     return
 
 def resample2D(array, num_rows, num_cols):

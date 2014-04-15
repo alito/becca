@@ -29,6 +29,7 @@ class DaisyChain(object):
         # User-defined constants
         self.AGING_TIME_CONSTANT = 10 ** 6 # real, large
         self.CHAIN_UPDATE_RATE = 10 ** -1 # real, 0 < x < 1
+        #self.ACTIVITY_DECAY_RATE = .5# real, 0 < x < 1
         # Initialize variables
         self.time_steps = 0
         daisychain_shape = (max_num_cables, max_num_cables)        
@@ -36,6 +37,7 @@ class DaisyChain(object):
         self.expected_cable_activities = np.zeros(daisychain_shape)
         self.post_uncertainty = np.zeros(daisychain_shape)
         state_shape = (max_num_cables,1)
+        self.cable_activities = np.zeros(state_shape)
         self.pre = np.zeros(state_shape)
         self.pre_count = np.zeros(state_shape)
         self.post = np.zeros(state_shape)
@@ -49,8 +51,21 @@ class DaisyChain(object):
         # Pad the incoming cable_activities array out to its full size 
         cable_activities = tools.pad(cable_activities, 
                                      (self.max_num_cables, 0))
-        self.pre = self.post.copy()
-        self.post = cable_activities.copy()
+        #self.pre = self.post.copy()
+        # debug
+        # Update cable_activities, incorporating sensing dynamics
+        # debug
+        self.pre = self.cable_activities.copy()
+        self.cable_activities = cable_activities.copy()
+        self.post = np.maximum(0., self.cable_activities - self.pre)
+        #print self.name
+        #print 'pre', self.pre.ravel()
+        #print 'post', self.post.ravel()
+
+        #self.pre = tools.bounded_sum([self.post.copy(),
+        #        self.pre * (1. - self.ACTIVITY_DECAY_RATE)])
+        #self.post = cable_activities.copy()
+
         chain_activities = self.pre * self.post.T
         chain_activities[np.nonzero(np.eye(self.pre.size))] = 0.
         self.count += chain_activities
@@ -105,12 +120,10 @@ class DaisyChain(object):
     
     def visualize(self, save_eps=True):
         """ Show the internal state of the daisychain in a pictorial format """
-        tools.visualize_array(self.reward_value, 
-                                  label=self.name + '_reward')
-        #tools.visualize_array(self.reward_uncertainty, 
-        #                          label=self.name + '_reward_uncertainty')
+        tools.visualize_array(self.expected_cable_activities, 
+                                  label=self.name + '_exp_cable_act')
+        tools.visualize_array(self.post_uncertainty, 
+                                  label=self.name + '_post_uncert')
         tools.visualize_array(np.log(self.count + 1.), 
                                   label=self.name + '_count')
-        #tools.visualize_daisychain(self, self.num_primitives, 
-        #                          self.num_actions, 10)
         return
