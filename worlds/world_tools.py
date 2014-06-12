@@ -19,30 +19,32 @@ def center_surround(fov, fov_horz_span, fov_vert_span, verbose=False):
     """ 
     fov_height = fov.shape[0]
     fov_width = fov.shape[1]
-    block_width = np.round(fov_width / (fov_horz_span + 2))
-    block_height = np.round(fov_height / (fov_vert_span + 2))
+    block_width = float(fov_width) / float(fov_horz_span + 2)
+    block_height = float(fov_height) / float(fov_vert_span + 2)
     super_pixels = np.zeros((fov_vert_span + 2, fov_horz_span + 2))
     center_surround_pixels = np.zeros((fov_vert_span, fov_horz_span))
     # Create the superpixels by averaging pixel blocks
     for row in range(fov_vert_span + 2):
-        for column in range(fov_horz_span + 2):
-            super_pixels[row][column] = np.mean(
-                    fov[row * block_height:(row + 1) * block_height,
-                        column * block_width: (column + 1) * block_width ])
+        for col in range(fov_horz_span + 2):
+            super_pixels[row][col] = np.mean(
+                    fov[int(float(row)     * block_height): 
+                        int(float(row + 1) * block_height),
+                        int(float(col)     * block_width) : 
+                        int(float(col + 1) * block_width) ])
     for row in range(fov_vert_span):
-        for column in range(fov_horz_span):
+        for col in range(fov_horz_span):
             # Calculate a center-surround value that represents
             # the difference between the pixel and its surroundings.
-            center_surround_pixels[row][column] = (
-                super_pixels[row + 1][column + 1] -
-                super_pixels[row    ][column + 1] / 6 -
-                super_pixels[row + 2][column + 1] / 6 -
-                super_pixels[row + 1][column    ] / 6 -
-                super_pixels[row + 1][column + 2] / 6 -
-                super_pixels[row    ][column    ] / 12 -
-                super_pixels[row + 2][column    ] / 12 -
-                super_pixels[row    ][column + 2] / 12 -
-                super_pixels[row + 2][column + 2] / 12)
+            center_surround_pixels[row][col] = (
+                    super_pixels[row + 1][col + 1] -
+                    super_pixels[row    ][col + 1] / 6 -
+                    super_pixels[row + 2][col + 1] / 6 -
+                    super_pixels[row + 1][col    ] / 6 -
+                    super_pixels[row + 1][col + 2] / 6 -
+                    super_pixels[row    ][col    ] / 12 -
+                    super_pixels[row + 2][col    ] / 12 -
+                    super_pixels[row    ][col + 2] / 12 -
+                    super_pixels[row + 2][col + 2] / 12)
     if verbose:
         # Display the field of view clipped from the original image
         plt.figure("fov")
@@ -116,9 +118,10 @@ def visualize_pixel_array_feature(feature,
         fig.canvas.draw()
         return
 
-def print_pixel_array_features(projections, num_pixels, start_index, 
+def print_pixel_array_features(projections, num_pixels_x2, start_index, 
                                fov_horz_span, fov_vert_span, 
-                               directory='log', world_name=''):
+                               directory='log', world_name='', name='',
+                               interp='nearest'):
     """  Interpret an array of center-surround pixels as an image """
     num_blocks = len(projections)
     for block_index in range(num_blocks):
@@ -128,7 +131,7 @@ def print_pixel_array_features(projections, num_pixels, start_index,
             feature_fig = plt.figure(num=99)
             projection_image_list = (visualize_pixel_array_feature(projections[
                     block_index][feature_index][
-                    start_index:start_index + num_pixels,:], fov_horz_span,
+                    start_index:start_index + num_pixels_x2,:], fov_horz_span,
                     fov_vert_span, array_only=True)) 
             for state_index in range(states_per_feature): 
                 left =  (float(state_index) / float(states_per_feature))
@@ -139,11 +142,11 @@ def print_pixel_array_features(projections, num_pixels, start_index,
                 ax = feature_fig.add_axes(rect)
                 plt.gray()
                 ax.imshow(projection_image_list[state_index], 
-                          interpolation='nearest', vmin=0., vmax=1.)
+                          interpolation=interp, vmin=0., vmax=1.)
             # create a plot of individual features
             filename = '_'.join(('block', str(block_index).zfill(2),
                                  'feature',str(feature_index).zfill(4),
-                                 world_name, 'world.png'))
+                                 world_name, 'world', name, 'image.png'))
             full_filename = os.path.join(directory, filename)
             plt.title(filename)
             plt.savefig(full_filename, format='png') 
@@ -203,3 +206,52 @@ def resample2D(array, num_rows, num_cols):
         resampled_array = array[rows, :,:]
         resampled_array = resampled_array[:, cols,:]
     return resampled_array
+
+def duration_string(time_in_sec):
+    """ Convert time in seconds to a human readable date string """
+    sec_per_min = 60
+    min_per_hr = 60
+    hr_per_day = 24
+    day_per_mon = 30
+    mon_per_yr = 12
+    # Calculate seconds
+    #print 'tis', time_in_sec
+    sec = time_in_sec - sec_per_min * int(time_in_sec / sec_per_min)
+    time_in_min = (time_in_sec - sec) / sec_per_min
+    duration = ''.join(('%0.2f' % (sec), 's'))
+    #print 's', duration
+    if time_in_min == 0:
+        return duration
+    # Calculate minutes
+    min = time_in_min - min_per_hr * int(time_in_min / min_per_hr)
+    time_in_hr = (time_in_min - min) / min_per_hr
+    duration = ''.join((str(int(min)), 'm ', duration))
+    #print 'm', duration
+    if time_in_hr == 0:
+        return duration
+    # Calculate hours
+    hr = time_in_hr - hr_per_day * int(time_in_hr / hr_per_day)
+    time_in_day = (time_in_hr - hr) / hr_per_day
+    duration = ''.join((str(int(hr)), 'h ', duration))
+    #print 'h', duration
+    if time_in_day == 0:
+        return duration
+    # Calculate days
+    day = time_in_day - day_per_mon * int(time_in_day / day_per_mon)
+    time_in_mon = (time_in_day - day) / day_per_mon
+    duration = ''.join((str(int(day)), 'd ', duration))
+    #print 'd', duration
+    if time_in_mon == 0:
+        return duration
+    # Calculate months
+    mon = time_in_mon - mon_per_yr * int(time_in_mon / mon_per_yr)
+    time_in_yr = (time_in_mon - mon) / mon_per_yr
+    duration = ''.join((str(int(mon)), 'l ', duration))
+    #print 'd', duration
+    if time_in_yr == 0:
+        return duration
+    else:
+        duration = ''.join((str(int(time_in_yr)), 'y ', duration))
+        return duration
+
+    print 'dont reach', 'dur', duration

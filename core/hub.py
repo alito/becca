@@ -123,7 +123,13 @@ class Hub(object):
         goal_votes = hi_end + lo_end
         potential_winners = np.where(goal_votes == np.max(goal_votes))[0] 
         # Break any ties by lottery
-        winner = potential_winners[np.random.randint(potential_winners.size)]
+        if potential_winners.size < 1:
+            print 'npw', potential_winners.size
+            print 'max', np.max(goal_votes)
+            winner = 0
+        else:
+            winner = potential_winners[np.random.randint(
+                    potential_winners.size)]
         # Figure out which block the goal cable belongs to 
         goal_cable = np.remainder(winner, self.cable_activities.size)
         cable_index = goal_cable

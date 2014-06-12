@@ -25,15 +25,15 @@ Run from the command line, e.g.
 # If you want to run a world of your own, add the appropriate line here
 #from worlds.hello import World
 #from becca_world_listen.listen import World
-from becca_world_watch.watch import World
 #from becca_world_whitestripes.whitestripes import World
 #from becca_world_find_square.find_square import World
+from becca_world_watch.watch import World
 #from becca_world_track.track import World
 
 from core.agent import Agent 
 
-testing_lifespan = 10 ** 8
-profiling_lifespan = 10 ** 4
+testing_lifespan = 1e8
+profiling_lifespan = 1e2
 
 def test(world, restore=False, show=True, agent_name=None):
     """ 
@@ -70,10 +70,12 @@ def test(world, restore=False, show=True, agent_name=None):
 
 def profile():
     """ Profile BECCA's performance """
-    cProfile.run('test(World(lifespan=profiling lifespan), restore=True)', 
+    print 'profiling BECCA\'s performance...'
+    cProfile.run('test(World(lifespan=profiling_lifespan), restore=True)', 
                  'tester_profile')
     p = pstats.Stats('tester_profile')
-    p.strip_dirs().sort_stats('time', 'cum').print_stats(30)
+    #p.strip_dirs().sort_stats('time', 'cum').print_stats(30)
+    p.strip_dirs().sort_stats('time', 'cumulative').print_stats(30)
     
 if __name__ == '__main__':
     profile_flag = False

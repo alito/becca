@@ -57,7 +57,9 @@ class DaisyChain(object):
         # debug
         self.pre = self.cable_activities.copy()
         self.cable_activities = cable_activities.copy()
-        self.post = np.maximum(0., self.cable_activities - self.pre)
+        # Don't just learn cable activity changes
+        #self.post = np.maximum(0., self.cable_activities - self.pre)
+        self.post = self.cable_activities.copy()
         #print self.name
         #print 'pre', self.pre.ravel()
         #print 'post', self.post.ravel()
@@ -67,7 +69,8 @@ class DaisyChain(object):
         #self.post = cable_activities.copy()
 
         chain_activities = self.pre * self.post.T
-        chain_activities[np.nonzero(np.eye(self.pre.size))] = 0.
+        # Allow self-transitions
+        #chain_activities[np.nonzero(np.eye(self.pre.size))] = 0.
         self.count += chain_activities
         self.count -= 1 / (self.AGING_TIME_CONSTANT * self.count + 
                            tools.EPSILON)
