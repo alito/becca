@@ -1,6 +1,7 @@
 import cPickle as pickle
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 from block import Block
 from hub import Hub
@@ -25,6 +26,8 @@ class Agent(object):
         self.BACKUP_PERIOD = 10 ** 4
         self.show = show
         self.name = agent_name
+        if not os.path.isdir('log'):
+            os.makedirs('log')
         self.pickle_filename ="log/" + agent_name + ".pickle"
         # TODO: Automatically adapt to the number of sensors pass in
         self.num_sensors = num_sensors
