@@ -227,7 +227,7 @@ class Agent(object):
             fig.show()
             fig.canvas.draw()
             if filename is None:
-                filename = os.path.join(self.log_dir, reward_history.png)
+                filename = os.path.join(self.log_dir, 'reward_history.png')
             plt.savefig(filename, format='png')
             if hold_plot:
                 plt.show()
