@@ -28,7 +28,7 @@ class Hub(object):
         self.EXPLORATION = .1
         
         # Initialize variables for later use
-        self.reward_min = tools.BIG
+        #self.reward_min = tools.BIG
         self.reward_max = -tools.BIG
         self.old_reward = 0.
         self.count = np.zeros((self.num_cables, self.num_cables))
@@ -51,6 +51,7 @@ class Hub(object):
         4. Modify the goal in the block
         """
         # Adapt the reward so that it falls between -1 and 1 
+        '''
         self.reward_min = np.minimum(unscaled_reward, self.reward_min)
         self.reward_max = np.maximum(unscaled_reward, self.reward_max)
         spread = self.reward_max - self.reward_min
@@ -58,7 +59,11 @@ class Hub(object):
                        (spread + tools.EPSILON))
         self.reward_min += spread * self.FORGETTING_RATE
         self.reward_max -= spread * self.FORGETTING_RATE
-
+        '''
+        self.reward_max = np.maximum(np.abs(unscaled_reward), self.reward_max)
+        new_reward = unscaled_reward / (self.reward_max + tools.EPSILON)
+        self.reward_max *= (1. - self.FORGETTING_RATE)
+        
         # Use change in reward, rather than absolute reward
         delta_reward = new_reward - self.old_reward
         self.old_reward = new_reward
