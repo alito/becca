@@ -18,23 +18,17 @@ class Hub(object):
     """
     def __init__(self, initial_size):
         self.num_cables = initial_size 
-
         # Set constants that adjust the behavior of the hub
         self.INITIAL_REWARD = 1.0
         self.UPDATE_RATE = 10 ** -2.
-        self.REWARD_DECAY_RATE = .3
         self.FORGETTING_RATE = 10 ** -8
         self.TRACE_LENGTH = 10
         self.EXPLORATION = .1
         
         # Initialize variables for later use
-        #self.reward_min = tools.BIG
-        self.reward_max = -tools.BIG
-        self.old_reward = 0.
         self.count = np.zeros((self.num_cables, self.num_cables))
-        self.reward_trace = [0.] * self.TRACE_LENGTH
         self.expected_reward = (np.ones((self.num_cables, self.num_cables)) *
-                             self.INITIAL_REWARD)
+                                self.INITIAL_REWARD)
         self.cable_activities = np.zeros((self.num_cables, 1))
         # pre represents the feature and sensor activities at a given
         # time step.
@@ -43,34 +37,13 @@ class Hub(object):
         self.post = [np.zeros((self.num_cables, 1))] * (self.TRACE_LENGTH)
         return
     
-    def step(self, blocks, unscaled_reward):
+    def step(self, blocks, reward):
         """ Advance the hub one step:
         1. Comb tower of blocks, collecting cable activities from each
         2. Update all-to-all reward model
         3. Select a goal
         4. Modify the goal in the block
         """
-        # Adapt the reward so that it falls between -1 and 1 
-        '''
-        self.reward_min = np.minimum(unscaled_reward, self.reward_min)
-        self.reward_max = np.maximum(unscaled_reward, self.reward_max)
-        spread = self.reward_max - self.reward_min
-        new_reward = ((unscaled_reward - self.reward_min) / 
-                       (spread + tools.EPSILON))
-        self.reward_min += spread * self.FORGETTING_RATE
-        self.reward_max -= spread * self.FORGETTING_RATE
-        '''
-        self.reward_max = np.maximum(np.abs(unscaled_reward), self.reward_max)
-        new_reward = unscaled_reward / (self.reward_max + tools.EPSILON)
-        self.reward_max *= (1. - self.FORGETTING_RATE)
-        
-        # Use change in reward, rather than absolute reward
-        delta_reward = new_reward - self.old_reward
-        self.old_reward = new_reward
-        # Update the reward trace, a brief history of reward
-        self.reward_trace.append(delta_reward)
-        self.reward_trace.pop(0)
-        
         # Gather the cable activities from all the blocks
         cable_index = 0
         block_index = 0
@@ -97,13 +70,7 @@ class Hub(object):
                                                (self.count + tools.EPSILON) + 
 		                                       self.UPDATE_RATE)) 
         update_rate = np.minimum(0.5, update_rate_raw)
-        # Collapse the reward history into a single value for this time step
-        reward_array = np.array(self.reward_trace)
-        # TODO: substitute np.arange in this statement
-        decay_exponents = (1. - self.REWARD_DECAY_RATE) ** (
-                np.cumsum(np.ones(self.TRACE_LENGTH)) - 1.)
-        decayed_array = reward_array.ravel() * decay_exponents
-        reward = np.sum(decayed_array.ravel())
+
         reward_difference = reward - self.expected_reward 
         self.expected_reward += reward_difference * update_rate
         # Decay the reward value gradually to encourage re-exploration 
@@ -178,7 +145,7 @@ class Hub(object):
 
     def _display(self):
         """ Give a visual update of the internal workings of the hub """
-        DISPLAY_PERIOD = 1000.
+        #DISPLAY_PERIOD = 1000.
         #if np.random.random_sample() < 1. / DISPLAY_PERIOD:
         if False:
 

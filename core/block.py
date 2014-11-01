@@ -61,7 +61,7 @@ class Block(object):
         self.min_vals = np.zeros((self.max_cables, 1))
         self.RANGE_DECAY_RATE = 10 ** -3
         
-    def step_up(self, new_cable_activities):
+    def step_up(self, new_cable_activities, reward):
         """ Find bundle_activities that result from new_cable_activities """
         # Condition the cable activities to fall between 0 and 1
         if new_cable_activities.size < self.max_cables:
@@ -105,7 +105,7 @@ class Block(object):
         self.previous_cable_activities = self.cable_activities.copy() 
         # Update the map from self.cable_activities to cogs
         #self.ziptie.step_up(self.cable_activities)
-        self.ziptie.step_up(cluster_training_activities)
+        self.ziptie.step_up(cluster_training_activities, reward)
         # Process the upward pass of each of the cogs in the block
         self.bundle_activities = np.zeros((0, 1))
         for cog_index in range(len(self.cogs)):
@@ -119,7 +119,7 @@ class Block(object):
             enough_cables = (self.ziptie.cable_fraction_in_bundle(cog_index)
                              > self.fill_fraction_threshold)
             cog_bundle_activities = self.cogs[cog_index].step_up(
-                    cog_cable_activities, enough_cables)
+                    cog_cable_activities, enough_cables, reward)
             self.bundle_activities = np.concatenate((self.bundle_activities, 
                                                      cog_bundle_activities))
         # Goal fulfillment and decay

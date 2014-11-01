@@ -59,9 +59,10 @@ class ZipTie(object):
         self.agglomeration_energy = np.zeros(map_size)
         self.nucleation_energy = np.zeros((self.max_num_cables, 1))
 
-    def step_up(self, cable_activities):
+    def step_up(self, cable_activities, reward):
         """ Update co-activity estimates and calculate bundle activity """
         self.cable_activities = cable_activities
+        self.reward = reward
         # Find bundle activities by taking the generalized mean of
         # the signals with a negative exponent.
         # The negative exponent weights the lower signals more heavily.
@@ -122,12 +123,14 @@ class ZipTie(object):
         """ If the right conditions have been reached, create a new bundle """
         # Bundle space is a scarce resource
         # Decay the energy        
+        nucleation_energy_rate = self.NUCLEATION_ENERGY_RATE * (1. + 
+                np.abs(self.reward))
         self.nucleation_energy -= (self.cable_activities *
                                    self.nucleation_energy * 
-                                   self.NUCLEATION_ENERGY_RATE)
+                                   nucleation_energy_rate)
         self.nucleation_energy += (self.nonbundle_activities * 
                                    (1. - self.nucleation_energy) *
-                                   self.NUCLEATION_ENERGY_RATE)
+                                   nucleation_energy_rate) 
         cable_indices = np.where(self.nucleation_energy > 
                                  self.NUCLEATION_THRESHOLD)
         # Add a new bundle if appropriate
@@ -170,12 +173,14 @@ class ZipTie(object):
         #                              coactivities * 
         #                              (1. - self.agglomeration_energy) *
         #                              self.AGGLOMERATION_ENERGY_RATE)
+        agglomeration_energy_rate = self.AGGLOMERATION_ENERGY_RATE * (1. + 
+                np.abs(self.reward))
         self.agglomeration_energy -= (self.cable_activities.T *
                                       self.agglomeration_energy * 
-                                      self.AGGLOMERATION_ENERGY_RATE)
+                                      agglomeration_energy_rate)
         self.agglomeration_energy += (coactivities * 
                                       (1. - self.agglomeration_energy) *
-                                      self.AGGLOMERATION_ENERGY_RATE)
+                                      agglomeration_energy_rate)
         # For any bundles that are already full, don't change their coactivity
         # TODO: make this more elegant than enforcing a hard maximum count
         full_bundles = np.zeros((self.max_num_bundles, 1))

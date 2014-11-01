@@ -45,7 +45,7 @@ class DaisyChain(object):
         #self.deliberation_vote = np.zeros((max_num_cables, 1))
         self.surprise = np.ones((max_num_cables, 1))
 
-    def step_up(self, cable_activities):        
+    def step_up(self, cable_activities, reward):        
         """ Train the daisychain using the current cable_activities """
         self.num_cables = np.maximum(self.num_cables, cable_activities.size)
         # Pad the incoming cable_activities array out to its full size 
@@ -75,9 +75,10 @@ class DaisyChain(object):
         self.count -= 1 / (self.AGING_TIME_CONSTANT * self.count + 
                            tools.EPSILON)
         self.count = np.maximum(self.count, 0)
-        update_rate_raw_post = (self.pre * ((1 - self.CHAIN_UPDATE_RATE) / 
+        chain_update_rate = self.CHAIN_UPDATE_RATE * (1. + np.abs(reward))
+        update_rate_raw_post = (self.pre * ((1 - chain_update_rate) / 
                                             (self.pre_count + tools.EPSILON) + 
-		                                    self.CHAIN_UPDATE_RATE)) 
+		                                    chain_update_rate)) 
         update_rate_post = np.minimum(0.5, update_rate_raw_post)
         self.pre_count += self.pre
         self.pre_count -= 1 / (self.AGING_TIME_CONSTANT * self.pre_count +

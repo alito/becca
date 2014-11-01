@@ -44,22 +44,55 @@ class Agent(object):
         self.time_since_reward_log = 0 
         self.reward_history = []
         self.reward_steps = []
+        #self.reward_min = tools.BIG
+        self.reward_max = -tools.BIG
+        self.old_reward = 0.
+        self.REWARD_DECAY_RATE = .3
+        self.TRACE_LENGTH = 10
+        self.FORGETTING_RATE = 10 ** -8
+        self.reward_trace = [0.] * self.TRACE_LENGTH
         self.surprise_history = []
         self.recent_surprise_history = [0.] * 100
         self.timestep = 0
         self.graphing = True
 
-    def step(self, sensors, reward):
+    def step(self, sensors, unscaled_reward):
         """ Step through one time interval of the agent's operation """
+        # Adapt the reward so that it falls between -1 and 1 
+        '''
+        self.reward_min = np.minimum(unscaled_reward, self.reward_min)
+        self.reward_max = np.maximum(unscaled_reward, self.reward_max)
+        spread = self.reward_max - self.reward_min
+        raw_reward = ((unscaled_reward - self.reward_min) / 
+                       (spread + tools.EPSILON))
+        self.reward_min += spread * self.FORGETTING_RATE
+        self.reward_max -= spread * self.FORGETTING_RATE
+        '''
+        self.reward_max = np.maximum(np.abs(unscaled_reward), self.reward_max)
+        self.raw_reward = unscaled_reward / (self.reward_max + tools.EPSILON)
+        self.reward_max *= (1. - self.FORGETTING_RATE)
         self.timestep += 1
         if sensors.ndim == 1:
             sensors = sensors[:,np.newaxis]
-        self.reward = reward
+        # Use change in reward, rather than absolute reward
+        delta_reward = self.raw_reward - self.old_reward
+        self.old_reward = self.raw_reward
+        # Update the reward trace, a brief history of reward
+        self.reward_trace.append(delta_reward)
+        self.reward_trace.pop(0)
+        # Collapse the reward history into a single value for this time step
+        reward_array = np.array(self.reward_trace)
+        # TODO: substitute np.arange in this statement
+        decay_exponents = (1. - self.REWARD_DECAY_RATE) ** (
+                np.cumsum(np.ones(self.TRACE_LENGTH)) - 1.)
+        decayed_array = reward_array.ravel() * decay_exponents
+        self.reward = np.sum(decayed_array.ravel())
         # Propogate the new sensor inputs up through the blocks
-        cable_activities = np.vstack((self.action, sensors, reward))
+        cable_activities = np.vstack((self.action, sensors, self.reward))
         for block in self.blocks:
             #print cable_activities[::10].ravel()
-            cable_activities = block.step_up(cable_activities) 
+            cable_activities = block.step_up(cable_activities, self.reward) 
+            #cable_activities = block.step_up(cable_activities, 0.) 
         # Create a new block if the top block has had enough bundles assigned
         #block_bundles_full = (float(block.bundles_created()) / 
         #                      float(block.max_bundles))
@@ -111,7 +144,7 @@ class Agent(object):
         if (self.timestep % self.BACKUP_PERIOD) == 0:
                 self._save()    
         # Log reward
-        self.cumulative_reward += reward
+        self.cumulative_reward += unscaled_reward
         self.time_since_reward_log += 1
         # debug
         if np.random.random_sample() < 0.001:
