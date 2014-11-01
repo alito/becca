@@ -28,7 +28,8 @@ Run from the command line, e.g.
 #from becca_world_whitestripes.whitestripes import World
 #from becca_world_find_square.find_square import World
 #from becca_world_watch.watch import World
-from becca_world_track.track import World
+#from becca_world_track.track import World
+from becca_world_chase_ball.chase import World
 
 from core.agent import Agent 
 

@@ -23,7 +23,7 @@ class Hub(object):
         self.INITIAL_REWARD = 1.0
         self.UPDATE_RATE = 10 ** -2.
         self.REWARD_DECAY_RATE = .3
-        self.FORGETTING_RATE = 10 ** -5
+        self.FORGETTING_RATE = 10 ** -8
         self.TRACE_LENGTH = 10
         self.EXPLORATION = .1
         
