@@ -4,46 +4,52 @@ import numpy as np
 import tools
 
 class Hub(object):
-    """ The hub is the central action selection mechanism 
+    """ The hub is the central long term memory and action selection mechanism 
     
     The analogy of the hub and spoke stucture is suggested by 
     the fact that the hub has a connection to each
     of the blocks. In the course of each timestep it 
     1) reads in a copy of the input cable activities to 
         each of the blocks
-    2) updates its reward distribution estimate for all 
-        the goals it could select
-    3) selects a goal and
-    4) declares that goal in the appropriate block.
+    2) creates new transitions if warranted
+    3) updates the amount of priming for each transition
+    4) updates the reward estimate for current transitions
+    #5) selects a goal and
+    #6) declares that goal in the appropriate block.
     """
     def __init__(self, initial_size):
-        self.num_cables = initial_size 
+        self.num_cables = initial_size
         # Set constants that adjust the behavior of the hub
-        self.INITIAL_REWARD = 1.0
-        self.UPDATE_RATE = 10 ** -2.
-        self.FORGETTING_RATE = 10 ** -8
+        self.INITIAL_REWARD = 0.
+        # Features with activities above this threshold are considered 
+        # 'active' for the purpose of updating transitions.
+        self.ACTIVITY_THRESHOLD = .5
+        self.PRIMING_DECAY_RATE = .5
+        self.REWARD_LEARNING_RATE = 1e-2
+        self.STRENGTH_LEARNING_RATE = 1e-2
+        # Keep a history of reward and active features to account for 
+        # delayed reward.
         self.TRACE_LENGTH = 10
-        self.EXPLORATION = .1
-        
+
         # Initialize variables for later use
-        self.count = np.zeros((self.num_cables, self.num_cables))
-        self.expected_reward = (np.ones((self.num_cables, self.num_cables)) *
-                                self.INITIAL_REWARD)
-        self.cable_activities = np.zeros((self.num_cables, 1))
-        # pre represents the feature and sensor activities at a given
-        # time step.
-        # post represents the goal or action that was taken following. 
-        self.pre = [np.zeros((self.num_cables, 1))] * (self.TRACE_LENGTH) 
-        self.post = [np.zeros((self.num_cables, 1))] * (self.TRACE_LENGTH)
-        return
-    
-    def step(self, blocks, reward):
-        """ Advance the hub one step:
-        1. Comb tower of blocks, collecting cable activities from each
-        2. Update all-to-all reward model
-        3. Select a goal
-        4. Modify the goal in the block
-        """
+        self.reward_history = list(np.zeros(self.TRACE_LENGTH))
+        self.old_reward = 0.
+        feature_shape = (self.num_cables, 1)
+        self.cable_activities = np.zeros(feature_shape)
+        self.activity_history = [np.zeros(feature_shape)] * (
+                self.TRACE_LENGTH + 1)
+        # strength, priming, and reward are the three properties of 
+        # every transition. In this 2D array representation, each row
+        # represents a cause feature, and each column represents 
+        # an effect feature. Element [i,j] represents the transition
+        # from feature i to feature j.
+        transition_shape = (self.num_cables, self.num_cables)
+        self.priming = np.zeros(transition_shape)
+        self.reward = np.ones(transition_shape) * self.INITIAL_REWARD
+        self.strength = np.zeros(transition_shape)
+
+    def step(self, blocks, raw_reward):
+        """ Advance the hub one step """
         # Gather the cable activities from all the blocks
         cable_index = 0
         block_index = 0
@@ -53,89 +59,66 @@ class Hub(object):
                     block.cable_activities.copy()
             cable_index += block_size 
             block_index += 1
-
-        # Update the reward model.
-        # It has a structure similar to the chain transtion model 
-        # in daisychain.
-        # pre is composed of all the cable activities.
-        # post is the selected goal that followed.
-        self.chain_activities = self.pre[0] * self.post[0].T
-        # Update the count of how often each feature has been active
-        self.count = self.count + self.chain_activities
-        # Decay the count gradually to encourage occasional re-exploration 
-        self.count *= 1. - self.FORGETTING_RATE
-        self.count = np.maximum(self.count, 0)
-        # Calculate the rate at which to update the reward estimate
-        update_rate_raw = (self.chain_activities * ((1 - self.UPDATE_RATE) / 
-                                               (self.count + tools.EPSILON) + 
-		                                       self.UPDATE_RATE)) 
-        update_rate = np.minimum(0.5, update_rate_raw)
-
-        reward_difference = reward - self.expected_reward 
-        self.expected_reward += reward_difference * update_rate
-        # Decay the reward value gradually to encourage re-exploration 
-        self.expected_reward *= 1. - self.FORGETTING_RATE
-        # Use the count to estimate the uncertainty in the expected 
-        # value of the reward estimate.
-        # Use this to scale additive random noise to the reward estimate,
-        # encouraging exploration.
-        reward_uncertainty = (np.random.normal(size=self.count.shape) *
-                              self.EXPLORATION / (self.count + 1.))
-        self.estimated_reward_value = self.expected_reward + reward_uncertainty
-
-        # Select a goal cable.
-        # First find the estimated reward associated with each chain.   
-        chain_votes = (self.cable_activities * self.estimated_reward_value + 
-                       tools.EPSILON)
-        # Find the maximum estimated reward associated with each potential goal
-        hi_end = np.max(chain_votes, axis=0)
-        # And the minimum estimated reward associated with each potential goal
-        lo_end = np.min(chain_votes, axis=0)
-        # Sum the maxes and mins to find the goal with the highest mid-range  
-        goal_votes = hi_end + lo_end
-        potential_winners = np.where(goal_votes == np.max(goal_votes))[0] 
-        # Break any ties by lottery
-        if potential_winners.size < 1:
-            print 'npw', potential_winners.size
-            print 'max', np.max(goal_votes)
-            winner = 0
-        else:
-            winner = potential_winners[np.random.randint(
-                    potential_winners.size)]
-        # Figure out which block the goal cable belongs to 
-        goal_cable = np.remainder(winner, self.cable_activities.size)
-        cable_index = goal_cable
-        for block in blocks:
-            block_size =  block.hub_cable_goals.size
-            if cable_index >= block_size:
-                cable_index -= block_size
-                continue
-            else:
-                # Activate the goal
-                block.hub_cable_goals[cable_index] = 1.
-                new_post  = np.zeros(self.post[0].shape)
-                new_post[goal_cable] = 1.
-                # Remove deliberate goals and actions from pre
-                new_pre = np.maximum(self.cable_activities.copy() - 
-                                     self.post[-1].copy(), 0.)
-                # Update pre and post
-                self.pre.append(new_pre)
-                self.pre.pop(0)
-                self.post.append(new_post)
-                self.post.pop(0)
-                self._display()
-                return
-        print 'No goal chosen'
-        return 
+        # Determine which features are 'active' for the purpose of 
+        # updating transitions.
+        active_features = np.zeros(self.cable_activities.shape)
+        active_features[np.where(self.cable_activities > 
+                                 self.ACTIVITY_THRESHOLD)] = 1.
+        # Update the active features history
+        self.activity_history.append(active_features)
+        self.activity_history.pop(0)
         
+        # Update the strength of active transitions
+        current_cause = self.activity_history[-1]
+        current_effect = self.activity_history[-2]
+        self.strength += (current_cause * 
+                          (current_effect.T - self.strength) * 
+                          self.STRENGTH_LEARNING_RATE)
+
+        # Update the priming
+        # Decay the previous priming and add the new priming
+        rate = 1. - self.PRIMING_DECAY_RATE
+        self.priming = (self.priming * rate + 
+                        self.cable_activities * self.strength)
+        # Update the reward trace, a decayed sum of recent rewards.
+        # Use change in reward, rather than absolute reward.
+        raw_reward = float(raw_reward)
+        delta_reward = raw_reward - self.old_reward
+        self.old_reward = raw_reward
+        # Update the reward history
+        self.reward_history.append(delta_reward)
+        self.reward_history.pop(0)
+        # Collapse the reward history into a single value for this time step
+        reward_trace = 0.
+        for tau in range(self.TRACE_LENGTH):
+            # Work from the beginning of the list, from the oldest
+            # to the most recent, decaying future values the further
+            # they are away from the cause and effect that occurred
+            # TRACE_LENGTH time steps ago.
+            # Work from the end of the list, from the most recent
+            # to the oldest.
+            #i = self.TRACE_LENGTH - tau - 1
+            #reward_trace += self.reward_history[i] / int(tau + 1)
+            reward_trace += self.reward_history[tau] / int(tau + 1)
+
+        # Update the expected reward
+        trace_cause = self.activity_history[0]
+        trace_effect = self.activity_history[1]
+        self.reward += ((reward_trace - self.reward) * 
+                       trace_cause) * trace_effect.T * self.REWARD_LEARNING_RATE
+        self._display()
+        return
+
     def add_cables(self, num_new_cables):
         """ Add new cables to the hub when new blocks are created """ 
         self.num_cables = self.num_cables + num_new_cables
-        self.expected_reward = tools.pad(self.expected_reward, 
-                                      (self.num_cables, self.num_cables), 
-                                      val=self.INITIAL_REWARD)
-        self.cable_activities = tools.pad(self.cable_activities, 
-                                          (self.num_cables, 1))
+        features_shape = (self.num_cables, 1)
+        transition_shape = (self.num_cables, self.num_cables) 
+        self.priming = tools.pad(self.priming, transition_shape)
+        self.strength = tools.pad(self.strength, transition_shape)
+        self.reward = tools.pad(self.reward, transition_shape,
+                                val=self.INITIAL_REWARD)
+        self.cable_activities = tools.pad(self.cable_activities, features_shape)
 
         self.count = tools.pad(self.count, (self.num_cables, self.num_cables))
         # All the cable activities from all the blocks, at the current time
@@ -145,52 +128,27 @@ class Hub(object):
 
     def _display(self):
         """ Give a visual update of the internal workings of the hub """
-        #DISPLAY_PERIOD = 1000.
-        #if np.random.random_sample() < 1. / DISPLAY_PERIOD:
-        if False:
+        DISPLAY_PERIOD = 10000.
+        if np.random.random_sample() < 1. / DISPLAY_PERIOD:
 
             # Plot reward value
             fig311 = plt.figure(311)
+            plt.subplot(2,2,1)
             plt.gray()
-            plt.imshow(self.expected_reward, interpolation='nearest')
+            #plt.imshow(np.zeros((32,32)), interpolation='nearest')
+            plt.imshow(self.reward.astype(np.float), interpolation='nearest')
             plt.title('reward')
-            fig311.show()
-            fig311.canvas.draw()
-            plt.savefig('log/reward_image.png', bbox_inches=0.)
-            
-            # Plot weighted chain votes
-            fig313 = plt.figure(313)
+            plt.subplot(2,2,2)
             plt.gray()
-            plt.imshow(np.maximum(self.cable_activities * 
-                                  self.estimated_reward_value, 0.), 
-                       interpolation='nearest')
-            plt.title('cable activities * reward')
-            fig313.show()
-            fig313.canvas.draw()
-            
-            # Plot the count 
-            fig314 = plt.figure(314)
+            plt.imshow(self.strength, interpolation='nearest')
+            plt.title('strength')
+            plt.subplot(2,2,3)
             plt.gray()
-            plt.imshow(1. / (self.count + 1.), interpolation='nearest')
-            plt.title('1 / count')
-            fig314.show()
-            fig314.canvas.draw()
-            
-            # Plot the reward value plus exploration
-            fig315 = plt.figure(315)
-            plt.gray()
-            plt.imshow(np.maximum(self.estimated_reward_value, 0.), 
-                       interpolation='nearest')
-            plt.title('estimated_reward_value')
-            fig315.show()
-            fig315.canvas.draw()
-            plt.savefig('log/estimated_reward_image.png', bbox_inches=0.)
-            
-            # Plot the chain activities 
-            fig316 = plt.figure(316)
-            plt.gray()
-            plt.imshow(self.chain_activities, interpolation='nearest')
-            plt.title('chain_activities')
-            fig316.show()
-            fig316.canvas.draw()
+            plt.imshow(self.priming, interpolation='nearest')
+            plt.title('priming')
+            #fig311.show()
+            #fig311.canvas.draw()
+            plt.show()
 
+            #plt.savefig('log/reward_image.png', bbox_inches=0.)
+            

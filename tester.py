@@ -14,7 +14,7 @@ Run from the command line, e.g.
 
 # Worlds from the benchmark
 #from worlds.base_world import World
-#from worlds.grid_1D import World
+from worlds.grid_1D import World
 #from worlds.grid_1D_ms import World
 #from worlds.grid_1D_noise import World
 #from worlds.grid_2D import World
@@ -29,7 +29,7 @@ Run from the command line, e.g.
 #from becca_world_find_square.find_square import World
 #from becca_world_watch.watch import World
 #from becca_world_track.track import World
-from becca_world_chase_ball.chase import World
+#from becca_world_chase_ball.chase import World
 
 from core.agent import Agent 
 
