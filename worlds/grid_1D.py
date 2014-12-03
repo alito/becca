@@ -57,7 +57,7 @@ class World(BaseWorld):
         self.world_state = self.world_state + step_size        
         # At random intervals, jump to a random position in the world
         if np.random.random_sample() < self.JUMP_FRACTION:
-	    self.world_state = self.num_sensors * np.random.random_sample()
+	        self.world_state = self.num_sensors * np.random.random_sample()
         # Ensure that the world state falls between 0 and 9
         self.world_state -= self.num_sensors * np.floor_divide(
                 self.world_state, self.num_sensors)

@@ -57,11 +57,15 @@ class Agent(object):
         self.reward_max = np.maximum(np.abs(unscaled_reward), self.reward_max)
         self.raw_reward = unscaled_reward / (self.reward_max + tools.EPSILON)
         self.reward_max *= (1. - self.FORGETTING_RATE)
+        # Separate out positive reward and negative reward (punishment)
+        pos_reward = np.maximum(0., self.raw_reward)
+        neg_reward = np.maximum(0., -self.raw_reward)
         self.timestep += 1
         if sensors.ndim == 1:
             sensors = sensors[:,np.newaxis]
         # Propogate the new sensor inputs up through the blocks
-        cable_activities = np.vstack((self.action, sensors, self.raw_reward))
+        cable_activities = np.vstack((self.action, sensors, 
+                                      pos_reward, neg_reward))
         for block in self.blocks:
         # Create a new block if the top block has had enough bundles assigned
             cable_activities = block.step_up(cable_activities) 
@@ -101,11 +105,13 @@ class Agent(object):
         # with a magnitude of 1.
         self.action = cable_goals[:self.num_actions,:] 
 
+        '''
         # debug
         # Choose a single random action 
         self.action = np.zeros(self.action.shape)
         random_action_index = np.random.randint(self.action.size)
         self.action[random_action_index] = 1. 
+        '''
 
         if (self.timestep % self.BACKUP_PERIOD) == 0:
                 self._save()    
