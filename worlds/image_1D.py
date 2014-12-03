@@ -1,8 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+mod_path = os.path.dirname(os.path.abspath(__file__))
 
-from worlds.base_world import World as BaseWorld
-import worlds.world_tools as wtools
+from base_world import World as BaseWorld
+import world_tools as wtools
 
 class World(BaseWorld):
     """ 
@@ -34,7 +36,8 @@ class World(BaseWorld):
         self.num_actions = 9
 
         # Initialize the image to be used as the environment
-        self.block_image_filename = "./images/bar_test.png" 
+        self.block_image_filename = os.path.join(mod_path, 'images', 
+                                                 'bar_test.png') 
         self.data = plt.imread(self.block_image_filename)
         # Convert it to grayscale if it's in color
         if self.data.shape[2] == 3:

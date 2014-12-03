@@ -1,6 +1,6 @@
 import numpy as np
 
-from worlds.grid_2D import World as Grid_2D_World
+from grid_2D import World as Grid_2D_World
 
 class World(Grid_2D_World):
     """ Two-dimensional grid task

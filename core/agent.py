@@ -2,6 +2,7 @@ import cPickle as pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+mod_path = os.path.dirname(os.path.abspath(__file__))
 
 from block import Block
 from hub import Hub
@@ -27,9 +28,11 @@ class Agent(object):
         self.FORGETTING_RATE = 10 ** -8
         self.show = show
         self.name = agent_name
-        if not os.path.isdir('log'):
-            os.makedirs('log')
-        self.pickle_filename ="log/" + agent_name + ".pickle"
+        self.log_dir = os.path.normpath(os.path.join(mod_path, '..', 'log'))
+        if not os.path.isdir(self.log_dir):
+            os.makedirs(self.log_dir)
+        self.pickle_filename = os.path.join(
+                self.log_dir, '.'.join([agent_name, 'pickle']))
         # TODO: Automatically adapt to the number of sensors pass in
         self.num_sensors = num_sensors
         self.num_actions = num_actions
@@ -218,7 +221,7 @@ class Agent(object):
         return performance
     
     def _show_reward_history(self, hold_plot=False, 
-                            filename='log/reward_history.png'):
+                            filename=None):
         """ Show the agent's reward history and save it to a file """
         if self.graphing:
             fig = plt.figure(1)
@@ -228,6 +231,8 @@ class Agent(object):
             plt.title(''.join(('Reward history for ', self.name)))
             fig.show()
             fig.canvas.draw()
+            if filename is None:
+                filename = os.path.join(self.log_dir, 'reward_history.png')
             plt.savefig(filename, format='png')
             if hold_plot:
                 plt.show()

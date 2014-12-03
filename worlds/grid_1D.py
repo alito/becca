@@ -1,6 +1,6 @@
 import numpy as np
 
-from worlds.base_world import World as BaseWorld
+from base_world import World as BaseWorld
 
 class World(BaseWorld):
     """ 
