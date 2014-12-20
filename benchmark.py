@@ -27,23 +27,24 @@ import numpy as np
 
 def main():
     N_RUNS = 7
+    benchmark_lifespan = 2e4
     overall_performance = []
     # Run all the worlds in the benchmark and tabulate their performance
     for i in range(N_RUNS):
         performance = []
-        world = World_grid_1D()
+        world = World_grid_1D(lifespan=benchmark_lifespan)
         performance.append(tester.test(world, show=False))
-        world = World_grid_1D_ms()
+        world = World_grid_1D_ms(lifespan=benchmark_lifespan)
         performance.append(tester.test(world, show=False))
-        world = World_grid_1D_noise()
+        world = World_grid_1D_noise(lifespan=benchmark_lifespan)
         performance.append(tester.test(world, show=False))
-        world = World_grid_2D()
+        world = World_grid_2D(lifespan=benchmark_lifespan)
         performance.append(tester.test(world, show=False))
-        world = World_grid_2D_dc()
+        world = World_grid_2D_dc(lifespan=benchmark_lifespan)
         performance.append(tester.test(world, show=False))
-        world = World_image_1D()
+        world = World_image_1D(lifespan=benchmark_lifespan)
         performance.append(tester.test(world, show=False))
-        world = World_image_2D()
+        world = World_image_2D(lifespan=benchmark_lifespan)
         performance.append(tester.test(world, show=False))
 
         print "Individual benchmark scores: " , performance

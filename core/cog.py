@@ -6,7 +6,7 @@ from ziptie import ZipTie
 
 class Cog(object):
     """ 
-    The basic units of which blocks are composed
+    The basic units of which gearboxes are composed
 
     Cogs are named for their similarity to clockwork cogwheels.
     They are simple and do the same task over and over, but by

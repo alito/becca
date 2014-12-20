@@ -17,12 +17,12 @@ class ZipTie(object):
     """
     def __init__(self, max_num_cables, max_num_bundles, 
                  max_cables_per_bundle=None,
-                 name='ziptie_', in_block=False):
+                 name='ziptie_', in_gearbox=False):
         """ Initialize each map, pre-allocating max_num_bundles """
         self.name = name
-        # Identify whether the ziptie is located in a block or in a cog.
+        # Identify whether the ziptie is located in a gearbox or in a cog.
         # This changes several aspects of its operation. 
-        self.in_block = in_block
+        self.in_gearbox = in_gearbox
         self.max_num_cables = max_num_cables
         self.max_num_bundles = max_num_bundles
         if max_cables_per_bundle is None:
@@ -32,7 +32,7 @@ class ZipTie(object):
             self.max_cables_per_bundle = max_cables_per_bundle
         self.num_bundles = 0
         # User-defined constants
-        if self.in_block:
+        if self.in_gearbox:
             # These seem to strike a nice balance between 
             # feature quality and learning speed
             self.NUCLEATION_THRESHOLD = .1
@@ -104,7 +104,7 @@ class ZipTie(object):
         combined_weights = np.sum(final_activated_bundle_map, 
                                   axis=0)[:,np.newaxis]
         
-        if self.in_block:
+        if self.in_gearbox:
             self.nonbundle_activities = (cable_activities * 
                     2 ** -np.sum(self.bundle_map, axis=0)[:,np.newaxis])
         else:

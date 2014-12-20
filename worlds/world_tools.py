@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-import becca.core.tools as tools
+#import becca.core.tools as tools
+import core.tools as tools
 
 """
 Tools shared between several worlds
