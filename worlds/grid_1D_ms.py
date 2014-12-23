@@ -1,22 +1,22 @@
-import numpy as np
+"""
+A multi-step variation on the one-dimensional grid task
 
+This is intended to be as similar as possible to the 
+one-dimensional grid task, but requires multi-step planning 
+or time-delayed reward assignment for optimal behavior.
+"""
+import numpy as np
 from .base_world import World as BaseWorld
 
 class World(BaseWorld):
     """
-    One-dimensional grid task, multi-step variation
+    One-dimensional grid world, multi-step variation
 
-    In this task, the agent steps forward and backward along a line. 
+    In this world, the agent steps forward and backward along a line. 
     The fourth position is rewarded and the ninth position is punished. 
-    This is intended to be as similar as possible to the 
-    one-dimensional grid task, but require multi-step planning 
-    for optimal behavior.
-    See Chapter 4 of the Users Guide for details.
     Optimal performance is a reward of about 85 per time step.
     """
-
     def __init__(self, lifespan=None):
-        """ Set up the world """
         BaseWorld.__init__(self, lifespan)
         self.VISUALIZE_PERIOD = 10 ** 4
         self.REWARD_MAGNITUDE = 100.
@@ -33,7 +33,6 @@ class World(BaseWorld):
         self.simple_state = 0
             
     def step(self, action): 
-        """ Take one time step through the world """
         self.action = action.ravel()
         self.timestep += 1 
         energy = self.action[0] + self.action[1]
@@ -61,12 +60,7 @@ class World(BaseWorld):
         reward = np.max(reward, -1)
         return sensors, reward
 
-    def set_agent_parameters(self, agent):
-        """ Turn a few of the knobs to adjust BECCA for this world """
-        pass
-
     def visualize(self, agent):
-        """ Provide an intuitive display of the current state of the World """
         if (self.display_state):
             state_image = ['.'] * self.num_sensors
             state_image[self.simple_state] = 'O'

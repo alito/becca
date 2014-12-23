@@ -1,5 +1,5 @@
+""" the Daisychain class """
 import numpy as np
-
 import tools
 
 class DaisyChain(object):
@@ -29,7 +29,6 @@ class DaisyChain(object):
         # User-defined constants
         self.AGING_TIME_CONSTANT = 10 ** 6 # real, large
         self.CHAIN_UPDATE_RATE = 10 ** -1 # real, 0 < x < 1
-        #self.ACTIVITY_DECAY_RATE = .5# real, 0 < x < 1
         # Initialize variables
         self.time_steps = 0
         daisychain_shape = (max_num_cables, max_num_cables)        
@@ -51,26 +50,11 @@ class DaisyChain(object):
         # Pad the incoming cable_activities array out to its full size 
         cable_activities = tools.pad(cable_activities, 
                                      (self.max_num_cables, 0))
-        #self.pre = self.post.copy()
-        # debug
         # Update cable_activities, incorporating sensing dynamics
-        # debug
         self.pre = self.cable_activities.copy()
         self.cable_activities = cable_activities.copy()
-        # Don't just learn cable activity changes
-        #self.post = np.maximum(0., self.cable_activities - self.pre)
         self.post = self.cable_activities.copy()
-        #print self.name
-        #print 'pre', self.pre.ravel()
-        #print 'post', self.post.ravel()
-
-        #self.pre = tools.bounded_sum([self.post.copy(),
-        #        self.pre * (1. - self.ACTIVITY_DECAY_RATE)])
-        #self.post = cable_activities.copy()
-
         chain_activities = self.pre * self.post.T
-        # Allow self-transitions
-        #chain_activities[np.nonzero(np.eye(self.pre.size))] = 0.
         self.count += chain_activities
         self.count -= 1 / (self.AGING_TIME_CONSTANT * self.count + 
                            tools.EPSILON)
@@ -94,9 +78,11 @@ class DaisyChain(object):
                                                self.pre)
         # Surprise is the difference between the expected post and
         # the actual one
+        surprise_weights = (self.pre / (self.post_uncertainty + tools.EPSILON)
+                            + tools.EPSILON)
         self.surprise = tools.weighted_average(
-                np.abs(self.post.T - self.expected_cable_activities), 
-		        self.pre / (self.post_uncertainty + tools.EPSILON))
+                np.abs(self.post.T - self.expected_cable_activities),
+                surprise_weights) 
         # Reshape chain activities into a single column
         return chain_activities.ravel()[:,np.newaxis]
    
@@ -129,4 +115,3 @@ class DaisyChain(object):
                                   label=self.name + '_post_uncert')
         tools.visualize_array(np.log(self.count + 1.), 
                                   label=self.name + '_count')
-        return

@@ -1,26 +1,28 @@
+"""
+Two-dimensional visual servo task
+
+Like the 1D visual srvo task, this task gives BECCA a chance 
+to build a comparatively large number of sensors into 
+a few informative features. 
+"""
 import inspect
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 mod_path = os.path.dirname(os.path.abspath(__file__))
-
 from base_world import World as BaseWorld
 import world_tools as wtools
 
 class World(BaseWorld):
     """ 
-    Two-dimensional visual servo task
+    Two-dimensional visual servo world
     
-    In this task, BECCA can direct its gaze up, down, left, and
+    In this world, BECCA can direct its gaze up, down, left, and
     right, saccading about an block_image_data of a black square on a white
     background. It is rewarded for directing it near the center.
-    The mural is not represented using basic features, but rather
-    using raw inputs, which BECCA must build into features. 
-    See Chapter 4 of the Users Guide for details.
     Optimal performance is a reward of around 90 reward per time step.
     """
     def __init__(self, lifespan=None):
-        """ Set up the world """
         BaseWorld.__init__(self, lifespan)
         self.VISUALIZE_PERIOD = 10 ** 4
         self.REWARD_MAGNITUDE = 100.
@@ -30,10 +32,8 @@ class World(BaseWorld):
         self.name = 'image_2D'
         self.name_long = 'two dimensional visual world'
         print "Entering", self.name_long
-
         self.fov_span = 10
         # Initialize the block_image_data to be used as the environment 
-
         self.block_image_filename = os.path.join(mod_path, 'images', 
                                                  'block_test.png') 
         self.block_image_data = plt.imread(self.block_image_filename)
@@ -70,7 +70,6 @@ class World(BaseWorld):
         self.step_counter = 0
 
     def step(self, action): 
-        """ Take one time step through the world """
         self.timestep += 1
         self.action = action.ravel()
         # Actions 0-3 move the field of view to a higher-numbered 
@@ -134,9 +133,6 @@ class World(BaseWorld):
             self.reward += self.REWARD_MAGNITUDE
         return self.sensors, self.reward
      
-    def set_agent_parameters(self, agent):
-        pass
-
     def visualize(self, agent):
         """ Show what is going on in BECCA and in the world """
         self.row_history.append(self.row_position)
@@ -188,4 +184,3 @@ class World(BaseWorld):
                                               self.fov_span, self.fov_span,
                                               directory='log', 
                                               world_name=self.name)  
-        return

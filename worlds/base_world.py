@@ -21,10 +21,6 @@ class World(object):
         reward = 0
         return sensors, reward
     
-    def set_agent_parameters(self, agent):
-        """ If desired, manually adjust BECCA's internal parameters """
-        pass
-    
     def is_alive(self):
         """ Returns True when the world has come to an end """
         if(self.timestep < self.LIFESPAN):
@@ -35,4 +31,3 @@ class World(object):
     def visualize(self, agent):
         """ Let the world show BECCA's internal state as well as its own"""
         print self.timestep, 'timesteps'
-        return

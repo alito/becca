@@ -1,16 +1,16 @@
+""" the Hub class """
 import matplotlib.pyplot as plt
 import numpy as np
-
 import tools
 
 class Hub(object):
-    """ The hub is the central long term memory and action selection mechanism 
+    """ 
+    The central long term memory and action selection mechanism 
     
     The analogy of the hub and spoke stucture is suggested by 
     the fact that the hub has a connection to each
     of the gearboxes. In the course of each timestep it 
-    1) reads in a copy of the input cable activities to 
-        each of the gearboxes
+    1) reads in a copy of the input cable activities to each of the gearboxes
     2) updates the reward estimate for current transitions
     3) selects a goal and
     4) declares that goal in the appropriate gearbox.
@@ -41,28 +41,16 @@ class Hub(object):
     def step(self, feature_activities, raw_reward):
         """ Advance the hub one step """
         # Update the reward trace, a decayed sum of recent rewards.
-        # Use change in reward, rather than absolute reward.
-        '''
-        raw_reward = float(raw_reward)
-        delta_reward = raw_reward - self.old_reward
-        self.old_reward = raw_reward
-        # Update the reward history
-        self.reward_history.append(delta_reward)
-        '''
         self.reward_history.append(raw_reward)
-
         self.reward_history.pop(0)
         # Collapse the reward history into a single value for this time step
         reward_trace = 0.
         for tau in range(self.TRACE_LENGTH):
-            # Work from the beginning of the list, from the oldest
-            # to the most recent, decaying future values the further
+            # Work from the end of the list, from the most recent
+            # to the oldest, decaying future values the further
             # they are away from the cause and effect that occurred
             # TRACE_LENGTH time steps ago.
-            # Work from the end of the list, from the most recent
-            # to the oldest.
             reward_trace += self.reward_history[tau] / float(tau + 1)
-            #reward_trace += self.reward_history[tau] * (4. ** (-tau))
 
         # Update the expected reward
         state = self.activity_history[0]
@@ -82,8 +70,12 @@ class Hub(object):
         best_reward = np.max(expected_reward)
         potential_winners = np.where(expected_reward == best_reward)[0] 
         # Break any ties by lottery
-        goal_cable = potential_winners[np.random.randint(
-                potential_winners.size)]
+        if potential_winners.size > 0:
+            goal_cable = potential_winners[np.random.randint(
+                    potential_winners.size)]
+        else:
+            goal_cable = np.random.randint(goal.size)
+
         return goal_cable, best_reward
        
     def update(self, feature_activities, issued_goal_index): 
@@ -115,19 +107,16 @@ class Hub(object):
 
     def visualize(self):
         """ Give a visual update of the internal workings of the hub """
-        DISPLAY_PERIOD = 10000.
-        if np.random.random_sample() < 1. / DISPLAY_PERIOD:
-
-            # Plot reward value
-            plt.figure(311)
-            plt.subplot(1,2,1)
-            plt.gray()
-            plt.imshow(self.reward.astype(np.float), interpolation='nearest')
-            plt.title('reward')
-            #plt.subplot(1,2,2)
-            #plt.gray()
-            #plt.imshow(primed_reward, interpolation='nearest')
-            #plt.title('primed reward')
-            plt.show()
-            #plt.savefig('log/reward_image.png', bbox_inches=0.)
+        # Plot reward value
+        plt.figure(311)
+        plt.subplot(1,2,1)
+        plt.gray()
+        plt.imshow(self.reward.astype(np.float), interpolation='nearest')
+        plt.title('reward')
+        #plt.subplot(1,2,2)
+        #plt.gray()
+        #plt.imshow(primed_reward, interpolation='nearest')
+        #plt.title('primed reward')
+        plt.show()
+        #plt.savefig('log/reward_image.png', bbox_inches=0.)
             

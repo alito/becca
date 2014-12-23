@@ -1,9 +1,9 @@
+""" the Agent class """
 import cPickle as pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 mod_path = os.path.dirname(os.path.abspath(__file__))
-
 import arborkey
 import drivetrain
 import hub
@@ -15,8 +15,9 @@ class Agent(object):
     """ 
     A general reinforcement learning agent
     
-    Takes in a time series of sensory input vectors and 
-    a scalar reward and puts out a time series of action commands."""
+    It takes in an array of sensor values and 
+    a reward and puts out an array of action commands at each time step.
+    """
     def __init__(self, num_sensors, num_actions, show=True, 
                  agent_name='test_agent'):
         """
@@ -27,7 +28,7 @@ class Agent(object):
         sensors and actions arrays that the agent and the world use to
         communicate with each other. 
         """
-        self.BACKUP_PERIOD = 10 ** 4
+        self.BACKUP_PERIOD = 1e4
         self.FORGETTING_RATE = 1e-3
         self.show = show
         self.name = agent_name
@@ -36,14 +37,13 @@ class Agent(object):
             os.makedirs(self.log_dir)
         self.pickle_filename = os.path.join(
                 self.log_dir, '.'.join([agent_name, 'pickle']))
-        # TODO: Automatically adapt to the number of sensors pass in
         self.num_sensors = num_sensors
         self.num_actions = num_actions
 
-        # Initialize agent infrastructure
+        # Initialize agent infrastructure.
         # Choose min_cables to account for all sensors, actions, 
         # and two reward sensors, at a minimum.
-        min_cables = self.num_actions + self.num_sensors + 2
+        min_cables = self.num_actions + self.num_sensors
         self.drivetrain = drivetrain.Drivetrain(min_cables)
         num_cables = self.drivetrain.cables_per_gearbox
         self.hub = hub.Hub(num_cables)
@@ -60,7 +60,6 @@ class Agent(object):
         self.graphing = True
 
     def step(self, sensors, unscaled_reward):
-        """ Step through one time interval of the agent's operation """
         # Adapt the reward so that it falls between -1 and 1 
         self.reward_max = np.maximum(np.abs(unscaled_reward), self.reward_max)
         self.raw_reward = unscaled_reward / (self.reward_max + tools.EPSILON)
@@ -69,8 +68,7 @@ class Agent(object):
         if sensors.ndim == 1:
             sensors = sensors[:,np.newaxis]
         # Propogate the new sensor inputs through the drivetrain
-        feature_activities = self.drivetrain.step_up(self.action, sensors,
-                                                     self.raw_reward)
+        feature_activities = self.drivetrain.step_up(self.action, sensors)
         # The drivetrain will grow over time as the agent gains experience.
         # If the drivetrain added a new gearbox, scale the hub up appropriately.
         if self.drivetrain.gearbox_added:
@@ -91,20 +89,18 @@ class Agent(object):
         self.mainspring.step(attended_index, attended_activity, 
                              self.raw_reward)
         # Pass the hub goal on to the arborkey for further evaluation
-        #goal_cable = self.arborkey.step(hub_goal, hub_reward)
         goal_cable = self.arborkey.step(hub_goal, mainspring_reward, 
                                         self.raw_reward)
         self.hub.update(feature_activities, goal_cable)
         if goal_cable is not None:
             self.drivetrain.assign_goal(goal_cable)
         self.action = self.drivetrain.step_down()
-        '''
-        # debug
-        # Choose a single random action 
-        self.action = np.zeros(self.action.shape)
-        random_action_index = np.random.randint(self.action.size)
-        self.action[random_action_index] = 1. 
-        '''
+        # debug: Choose a single random action 
+        random_action = False
+        if random_action:
+            self.action = np.zeros(self.action.shape)
+            random_action_index = np.random.randint(self.action.size)
+            self.action[random_action_index] = 1. 
 
         if (self.timestep % self.BACKUP_PERIOD) == 0:
                 self._save()    
@@ -134,10 +130,8 @@ class Agent(object):
         #self.hub.visualize()
         #self.mainspring.visualize()
         self.arborkey.visualize()
-        return
  
     def report_performance(self):
-        """ Report on the reward amassed by the agent """
         performance = np.mean(self.reward_history)
         print("Final performance is %f" % performance)
         self._show_reward_history(hold_plot=self.show)
@@ -159,7 +153,6 @@ class Agent(object):
             plt.savefig(filename, format='png')
             if hold_plot:
                 plt.show()
-        return
     
     def _save(self):
         """ Archive a copy of the agent object for future use """

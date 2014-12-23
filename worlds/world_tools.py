@@ -1,22 +1,23 @@
+"""
+A few functions that are useful to mutliple worlds
+"""
+
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-
-#import becca.core.tools as tools
 import core.tools as tools
-
-"""
-Tools shared between several worlds
-"""
 
 def center_surround(fov, fov_horz_span, fov_vert_span, verbose=False):
     """ 
     Convert a 2D array of b/w pixel values to center-surround 
     
-    fov (field of view) is the 2D array of pixel values and 
-    fov_span is the number of center-surround superpixel rows and columns.
-    Returns a 2D array of the center surround vales.
+    Args:
+        fov: field of view, 2D array of pixel values
+        fov_horz_span: desired number of center-surround superpixel columns
+        fov_vert_span: desired number of center-surround superpixel rows
+    Returns: 
+        a 2D array of the center surround values
     """ 
     fov_height = fov.shape[0]
     fov_width = fov.shape[1]
@@ -36,6 +37,9 @@ def center_surround(fov, fov_horz_span, fov_vert_span, verbose=False):
         for col in range(fov_horz_span):
             # Calculate a center-surround value that represents
             # the difference between the pixel and its surroundings.
+            # Weight the N, S, E, and W pixels by 1/6 and
+            # the NW, NE, SW, and SE pixels by 1/12, and 
+            # subtract from the center.
             center_surround_pixels[row][col] = (
                     super_pixels[row + 1][col + 1] -
                     super_pixels[row    ][col + 1] / 6 -
@@ -77,7 +81,7 @@ def visualize_pixel_array_feature(feature,
                                   filename='log/feature', array_only=False):
     """ Show a visual approximation of an array of center-surround features """
     # Calculate the number of pixels that span the field of view
-    n_pixels = feature.shape[0]/ 2
+    n_pixels = feature.shape[0] / 2
     if fov_horz_span is None:
         fov_horz_span = np.sqrt(n_pixels)
         fov_vert_span = np.sqrt(n_pixels)
@@ -117,7 +121,6 @@ def visualize_pixel_array_feature(feature,
             fig.savefig(filename, format='png')
         fig.show()
         fig.canvas.draw()
-        return
 
 def print_pixel_array_features(projections, num_pixels_x2, start_index, 
                                fov_horz_span, fov_vert_span, 
@@ -151,7 +154,6 @@ def print_pixel_array_features(projections, num_pixels_x2, start_index,
             full_filename = os.path.join(directory, filename)
             plt.title(filename)
             plt.savefig(full_filename, format='png') 
-    return
 
 def make_movie(stills_directory, movie_filename='', frames_per_still=1,
                stills_per_frame=1):
@@ -169,7 +171,8 @@ def make_movie(stills_directory, movie_filename='', frames_per_still=1,
     (height, width, depth) = image.shape
     frame_size = (width, height)
     """ fourCC code for the encoder to use"""
-    codec = 'MJPG' # pretty good quality, claims to be broadly supported
+    # MJPG is pretty good quality and claims to be broadly supported
+    codec = 'MJPG' 
     fourcc = cv2.cv.CV_FOURCC(codec[0], codec[1], codec[2], codec[3])
     fps = 30.
     is_color = True
@@ -192,10 +195,9 @@ def make_movie(stills_directory, movie_filename='', frames_per_still=1,
                 video_writer.write(image)
             num_stills_this_frame = 0
             images = []
-    return
 
 def resample2D(array, num_rows, num_cols):
-    """ Resample an array at num_rows by num_cols """
+    """ Resample a 2D array to get one that has num_rows and num_cols """
     rows = (np.linspace(0., .9999999, num_rows) * 
             array.shape[0]).astype(np.int) 
     cols = (np.linspace(0., .9999999, num_cols) * 

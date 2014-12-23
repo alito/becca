@@ -1,17 +1,23 @@
-import numpy as np
+"""
+One-dimensional grid task with noise
 
+In this task, the agent has the challenge of discriminating between
+actual informative state sensors, and a comparatively large number
+of sensors that are pure noise distractors. Many learning methods
+make the implicit assumption that all sensors are informative.
+This task is intended to break them.
+"""
+import numpy as np
 from base_world import World as BaseWorld
 
 class World(BaseWorld):
     """ 
-    One-dimensional grid task with noise
+    One-dimensional grid world with noise
     
-    In this task, the agent steps forward and backward 
+    In this world, the agent steps forward and backward 
     along three positions on a line. The second position is rewarded 
     and the first and third positions are punished. Also, any actions 
-    are penalized to a lesser degree. It also includes 
-    some basic feature inputs that are pure noise. 
-    See Chapter 4 of the Users Guide for details.
+    are penalized somewhat. It also includes some inputs that are pure noise. 
     Optimal performance is a reward of between 90 per time step.
     """
     
