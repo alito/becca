@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="768"
+   height="568"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.2 r9819"
+   sodipodi:docname="daisychain.png">
+  <defs
+     id="defs4">
+    <marker
+       inkscape:stockid="Arrow2Lend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow2Lend"
+       style="overflow:visible">
+      <path
+         id="path3793"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         inkscape:connector-curvature="0" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.7"
+     inkscape:cx="402.49312"
+     inkscape:cy="347.46005"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:snap-global="true"
+     inkscape:window-width="1276"
+     inkscape:window-height="756"
+     inkscape:window-x="4"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3765"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(223,-262.84375)">
+    <rect
+       style="fill:#fdf9f0;fill-opacity:1;fill-rule:nonzero;stroke:#191614;stroke-width:8;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect3655"
+       width="760"
+       height="560"
+       x="-219"
+       y="266.84662"
+       ry="11.428573"
+       rx="11.428574" />
+    <text
+       xml:space="preserve"
+       style="font-size:64px;font-style:normal;font-weight:normal;line-height:79.00000215%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="72.96357"
+       y="762.89148"
+       id="text2985"
+       sodipodi:linespacing="79.000002%"
+       transform="scale(1.1649647,0.85839509)"><tspan
+         sodipodi:role="line"
+         id="tspan2987"
+         x="72.96357"
+         y="762.89148"
+         style="font-size:64px;font-weight:bold;text-align:center;line-height:79.00000215%;text-anchor:middle;fill:#ffffff;fill-opacity:1;-inkscape-font-specification:Sans Bold" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:56px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="530.12732"
+       y="398.16104"
+       id="text4217"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4219"
+         x="530.12732"
+         y="398.16104" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:64px;font-style:normal;font-weight:bold;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans Bold"
+       x="241"
+       y="741.53455"
+       id="text5063"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan5065"
+         x="241"
+         y="741.53455"
+         style="font-size:40px;font-weight:normal;text-align:end;text-anchor:end;-inkscape-font-specification:Sans">cable</tspan><tspan
+         sodipodi:role="line"
+         x="241"
+         y="791.53455"
+         id="tspan5067"
+         style="font-size:40px;font-weight:normal;text-align:end;text-anchor:end;-inkscape-font-specification:Sans">activities</tspan></text>
+    <text
+       sodipodi:linespacing="125%"
+       id="text5069"
+       y="741.53455"
+       x="361"
+       style="font-size:64px;font-style:normal;font-weight:bold;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans Bold"
+       xml:space="preserve"><tspan
+         style="font-size:40px;font-weight:normal;text-align:start;text-anchor:start;-inkscape-font-specification:Sans"
+         y="741.53455"
+         x="361"
+         id="tspan5071"
+         sodipodi:role="line">cable</tspan><tspan
+         style="font-size:40px;font-weight:normal;text-align:start;text-anchor:start;-inkscape-font-specification:Sans"
+         id="tspan5073"
+         y="791.53455"
+         x="361"
+         sodipodi:role="line">goals</tspan></text>
+    <path
+       inkscape:connector-curvature="0"
+       id="path5075"
+       d="m 321,681.53454 0,140"
+       style="fill:none;stroke:#000000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Lend)" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path5077"
+       d="m 281,821.53455 0,-140"
+       style="fill:none;stroke:#000000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Lend)" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:3.99999976;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Lend)"
+       d="m 321,266.8466 0,274.68797"
+       id="path4495"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:4.00000048;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Lend)"
+       d="M 281,541.53467 281,266.8466"
+       id="path4497"
+       inkscape:connector-curvature="0" />
+    <rect
+       style="fill:#af6635;fill-opacity:1;fill-rule:nonzero;stroke:#191614;stroke-width:4;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:2.29999995;stroke-opacity:1;stroke-dasharray:none"
+       id="rect4576"
+       width="640"
+       height="139.99977"
+       x="-159"
+       y="541.53455"
+       ry="0"
+       rx="11.428574" />
+    <text
+       transform="scale(1.0327956,0.9682458)"
+       sodipodi:linespacing="125%"
+       id="text4578"
+       y="378.87756"
+       x="-153.95108"
+       style="font-size:57.83655167px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       xml:space="preserve"><tspan
+         style="font-size:66.09892273px;font-weight:bold;text-align:start;text-anchor:start;-inkscape-font-specification:Sans Bold"
+         y="378.87756"
+         x="-153.95108"
+         sodipodi:role="line"
+         id="tspan4580">daisychain</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:64px;font-style:normal;font-weight:bold;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans Bold"
+       x="241"
+       y="461.53455"
+       id="text4582"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4584"
+         x="241"
+         y="461.53455"
+         style="font-size:40px;font-weight:normal;text-align:end;text-anchor:end;-inkscape-font-specification:Sans">chain</tspan><tspan
+         sodipodi:role="line"
+         x="241"
+         y="511.53455"
+         id="tspan4586"
+         style="font-size:40px;font-weight:normal;text-align:end;text-anchor:end;-inkscape-font-specification:Sans">activities</tspan></text>
+    <text
+       sodipodi:linespacing="125%"
+       id="text4588"
+       y="461.53455"
+       x="361"
+       style="font-size:64px;font-style:normal;font-weight:bold;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans Bold"
+       xml:space="preserve"><tspan
+         style="font-size:40px;font-weight:normal;text-align:start;text-anchor:start;-inkscape-font-specification:Sans"
+         y="461.53455"
+         x="361"
+         id="tspan4590"
+         sodipodi:role="line">chain</tspan><tspan
+         style="font-size:40px;font-weight:normal;text-align:start;text-anchor:start;-inkscape-font-specification:Sans"
+         id="tspan4592"
+         y="511.53455"
+         x="361"
+         sodipodi:role="line">goals</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="-119"
+       y="626.84662"
+       id="text3272"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3274"
+         x="-119"
+         y="626.84662"
+         style="font-size:40px">expected cable activities</tspan></text>
+  </g>
+</svg>

@@ -38,7 +38,7 @@ class Hub(object):
         transition_shape = (self.num_cables, self.num_cables)
         self.reward = np.ones(transition_shape) * self.INITIAL_REWARD
 
-    def step(self, feature_activities, raw_reward):
+    def step(self, cable_activities, raw_reward):
         """ Advance the hub one step """
         # Update the reward trace, a decayed sum of recent rewards.
         self.reward_history.append(raw_reward)
@@ -64,7 +64,7 @@ class Hub(object):
         
         # Choose a goal at every timestep
         goal = np.zeros((self.num_cables, 1))
-        state_weight = feature_activities ** 2
+        state_weight = cable_activities ** 2
         weighted_reward = state_weight * self.reward
         expected_reward = np.sum(weighted_reward, axis=0) / np.sum(state_weight)
         best_reward = np.max(expected_reward)
@@ -78,13 +78,13 @@ class Hub(object):
 
         return goal_cable, best_reward
        
-    def update(self, feature_activities, issued_goal_index): 
+    def update(self, cable_activities, issued_goal_index): 
         """ Assign the goal to train on, based on the goal that was issued """
         goal = np.zeros((self.num_cables, 1))
         if issued_goal_index is not None:
             goal[issued_goal_index] = 1.
         # Update the activity and action history
-        self.activity_history.append(np.copy(feature_activities))
+        self.activity_history.append(np.copy(cable_activities))
         self.activity_history.pop(0)
         self.action_history.append(goal)
         self.action_history.pop(0)
