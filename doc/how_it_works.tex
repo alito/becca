@@ -19,9 +19,9 @@
 
 \section*{\color{copper} \huge How BECCA works}
 
-\textsc{Becca} 0.5.0 
+\textsc{Becca} 0.6.0 
 
-Brandon Rohrer, March 2014
+Brandon Rohrer, December 2014
 
 \textsc{Becca}'s long term goals are captured in its name: brain-emulating cognition and control architecture. This is a detailed description of the architecture and the algorithms that underlie it. It is a summary of the python code. If any discrepancies exist, the code is the authoritative source. This description omits some of the details of implementation and computational bookkeeping that aren't essential to understanding its principles of operation.  
 
@@ -47,35 +47,35 @@ To be more precise, \textsc{Becca} consists of both an unsupervised learning alg
 
 \section*{\color{copper} AGENT}
 
-The agent is, in essence, the brain. Everything else---the hardware, the sensors, and the rest of the universe---is included in the world. Even any system-specific pre-processing of sensor inputs and post-processing of actions are part of the world. The agent handles only sensor and reward inputs and produces action outputs. It does this in discrete time steps.  
+The agent is, in essence, the brain. Everything else---the hardware, the sensors, and the rest of the universe---is included in the world. In fact, any system-specific pre-processing of sensor inputs and post-processing of actions are part of the world. The agent handles only sensor and reward inputs and produces action outputs. It does this in discrete time steps.  
 
 \begin{figure}[ht]
 \centering
-\includegraphics[height=7.0cm]{figs/agent.png}
-\caption{The agent consists of a hierarchy of blocks (the unsupervised learner), all of which are connected to a central hub (the reinforcement learner).}
+\includegraphics[height=6.0cm]{figs/agent.png}
+\caption{The agent consists of a hierarchy of gearboxes, arranged to form the drivetrain (the unsupervised learner), all of which are connected to a central complex of consisting of the hub, spindle, mainspring, and arborkey (the reinforcement learner).}
 \label{agent}
 \end{figure}
 
-The agent contains one or more blocks in a hierarchical arrangement and a central hub that is connected to them all. (Figure~\ref{agent}) The blocks build the sensory information into spatio-temporal features whose complexity and extent grows greater in each subsequent block. The first block takes an array of cable activities as inputs at each time step, which are composed of the latest sensor activities, and a copy of the actions from the previous time step. Here, cables are a physical metaphor for channels or lines that carry a signal. Cable activities are the set of signal values on an array of cables at one point in time. Each block takes a set of cable activities as inputs and produces a set of cable activities as outputs. They are cascaded, such that the cable activity outputs of one block are also the inputs to the next.
+The agent contains one or more gearboxes in a hierarchical arrangement. A central collection of elements--the hub, spindle, mainspring, and arborkey--is connected to them all. (Figure~\ref{agent}) The gearboxes build the sensory information into spatio-temporal features whose complexity and extent grows greater in each subsequent level. The first gearbox takes an array of cable activities as inputs at each time step, which are composed of the latest sensor activities, and a copy of the actions from the previous time step. Here, cables are a physical metaphor for channels or lines that carry a signal. Cable activities are the set of signal values on an array of cables at one point in time. Each gearbox takes a set of cable activities as inputs and produces a set of cable activities as outputs. They are cascaded, such that the cable activity outputs of one gearbox are also the inputs to the next.
 
-At each time step, the cable activities are propagated upward through the tower of blocks. Then, copies of the cable activity inputs to each block are sent to the hub. These, together with the reward, are used to select a hub cable goal for one of the blocks. This centrally-selected goal is analogous to deliberate behavior in humans. The blocks then propagate this goal downward through the tower, together with any internal goals (similar to reactions or auto-pilot behavior in humans) that they generate. A subset of the cable goals that emerge from the lowest block correspond to an array of actions. These are passed back to the world. They are they only decisions or influence that the agent has on the world around it.
+At each time step, the cable activities are propagated upward through the entire drivetrain. Then, copies of the cable activity inputs to each gearbox are sent to the hub, spindle, and mainspring. The hub uses cable activities together with the reward to select a hub cable goal for one of the gearboxes. The spindle chooses one cable to attend to. The mainspring uses the attended cable and reward as a basis for constructing short term and long term memory and for learning delayed rewards. The arborkey evaluates potential goals from the hub with the help of the mainspring and periodically issues one of those goals back to the drivetrain. This centrally-selected goal is analogous to deliberate behavior in humans. The gearboxes then propagate this goal downward through the drivetrain, together with any internal goals (similar to reactions or auto-pilot behavior in humans) that they generate. A subset of the cable goals that emerge from the lowest gearbox correspond to an array of actions. These are passed back to the world. They are they only decisions or influence that the agent has on the world around it.
 
-\section*{\color{copper} BLOCK}
+\section*{\color{copper} GEARBOX}
 
-Blocks are so named because they are core structural elements of the architecture and naturally form a hierarchy or tower, in which each is supported by the one below. Each block contains some cogs and a ziptie, a cable-clustering element. (Figure~\ref{block}) 
+Gearboxes are core structural elements of the architecture and naturally form a hierarchy, the drivetrain, in which each is supported by the one below. Each gearbox contains some cogs and a ziptie, a cable-clustering element. (Figure~\ref{gearbox}) 
 
 \begin{figure}[ht]
 \centering
-\includegraphics[height=6.0cm]{figs/blocks.png}
-\caption{Each block consists of a ziptie cable clusterer and a number of cogs, all operating in parallel.}
-\label{block}
+\includegraphics[height=6.0cm]{figs/gearbox.png}
+\caption{Each gearbox consists of a ziptie cable clusterer and a number of cogs, all operating in parallel.}
+\label{gearbox}
 \end{figure}
 
-The block takes a set of cable activities as inputs. The ziptie organizes them into groups over time and assigns each group of cables to a single cog. Cogs are where cable activities are combined together across cables and over time to build spatio-temporal features. They take arrays of cable activities as inputs and combine those into bundles. Their outputs are the activities in each of those bundles. The bundle activities of all the cogs are combined together into a single array to form the output of the block.
+The gearbox takes a set of cable activities as inputs. The ziptie organizes them into groups over time and assigns each group of cables to a single cog. Cogs are where cable activities are combined together across cables and over time to build spatio-temporal features. They take arrays of cable activities as inputs and combine those into bundles. Their outputs are the activities in each of those bundles. The bundle activities of all the cogs are combined together into a single array to form the output of the gearbox.
 
 The cable activities are normalized such that they fall on an interval from zero (the lowest cable activity ever experienced on that cable) to one (the highest). This helps keep every bock  insensitive to the range of cable activities it takes in, including sensor values from the world.
 
-The number of blocks in the tower grows as higher-level features are created. Once the number of bundles created collectively by all the cogs in block $n$ exceeds a fraction threshold of the block's total capacity (.5), then block $n+1$ is created automatically. This allows the feature hierarchy to adaptively scale to represent arbitrary complexity in the data being observed. 
+The number of gearboxes in the drivetrain grows as higher-level features are created. Once the number of bundles created collectively by all the cogs in gearbox $n$ exceeds a fraction threshold of the gearbox's total capacity (.5), then gearbox $n+1$ is created automatically. This allows the feature hierarchy to adaptively scale to represent arbitrary complexity in the data being observed. 
 
 \section*{\color{copper} COG}
 
@@ -92,7 +92,7 @@ The daisychain identifies the relative prevalence of all possible cable activity
 
 \section*{\color{copper} ZIPTIE}
 
-Ziptie is a clustering algorithm used throughout \textsc{Becca}. In contrast to many unsupervised learning algorithms which cluster individual data points, ziptie clusters signals or time series of data points. This is analogous to bundling groups of cables with zipties. Like all algorithms in \textsc{Becca}, it is incremental, performing its functions iteratively at each time step. Ziptie identifies cables whose activities tend to be high at the same time. Although at any given moment the cable activities may be very different, over time they will tend to be co-active. 
+Ziptie is a clustering algorithm used throughout \textsc{Becca}. In contrast to many unsupervised learning algorithms which cluster individual data points, ziptie clusters signals or time series of data points or dimensions in many-dimensional input stream. This is analogous to bundling groups of cables with zipties. Like all algorithms in \textsc{Becca}, it is incremental, performing its functions iteratively at each time step. Ziptie identifies cables whose activities tend to be high at the same time. Although at any given moment the cable activities may be very different, over time they will tend to be co-active. 
 
 The ziptie updates and maintains a map from cables to bundles. (Figure~\ref{ziptie}) This map dictates how cable activities are translated into bundle activities and how bundle goals are translated into cable goals. 
 
@@ -192,7 +192,7 @@ When the agglomeration energy exceeds a threshold (.05), the cable is added to t
 
 \section*{\color{copper} Cable goals}
         
-Bundle goals are translated back into cable goals as they propagate down the tower of blocks. For each cable, the goals for the bundles it contributes to are summed in such a way that the magnitude of the sum is never greater than one.
+Bundle goals are translated back into cable goals as they propagate down the drivetrain of gearboxes. For each cable, the goals for the bundles it contributes to are summed in such a way that the magnitude of the sum is never greater than one.
 
 \begin{eqnarray*}
 u &=& S(v)\\ 
@@ -317,98 +317,151 @@ n &:& \mbox{predicted cable activity} \\
 
 \section*{\color{copper} HUB}
 
-The hub is where reinforcement learning is implemented and decisions are made. It takes in copies of all blocks' input cable activities, as well as the reward. It maintains an estimate of expected reward for every cable activity-cable goal sequence, or chain, similar to the daisychain's estimate of future cable activity for every cable activity chain within a block. The hub also keeps a running total of each chain's activity. (Figure~\ref{hub})  
+The hub is where reinforcement learning is implemented and decisions are made. It takes in copies of all gearboxes' input cable activities, as well as the reward. It maintains an estimate of expected reward for every cable activity-cable goal sequence, or chain, similar to the daisychain's estimate of future cable activity for every cable activity chain within a gearbox. 
 
-\begin{figure}[ht]
-\centering
-\includegraphics[height=6.0cm]{figs/hub.png}
-\caption{The hub uses cable activities and reward information to choose goals.}
-\label{hub}
-\end{figure}
-
-The reward signal is normalized such that it falls on an interval from zero (the lowest reward ever experienced) to one (the highest). This way, \textsc{Becca} is insensitive to the range of reward values covered by the world. It is one less assumption that the agent needs to make. The  difference in reward between one time step and the next is actually the quantity that the hub estimates. In this way it detects {\em changes} in reward, rather than constant values. The chains that consistently result in changes in reward are identified and exploited in planning and deliberation. 
+The reward signal is normalized such that it falls on an interval from zero (the lowest reward ever experienced) to one (the highest). This way, \textsc{Becca} is insensitive to the range of reward values covered by the world. The chains that consistently result in higher reward are identified and exploited. 
  
-The hub gathers cable activities from all the blocks. Using the current set of cable activities, it chooses a cable goal at each time step. It then associates changes in reward with each activity-goal pair. This is where the hub differs from daisychain. The transition chains in daisychain are from cable activity to next cable activity, rather than from cable activity to next cable goal. Like daisychain, the hub does this incrementally, adjusting the estimate by a small amount each time. It also creates a running sum of each chain's activity history, which slowly decays over time. This calculation is very similar to the one used in daisychain.
+The hub gathers cable activities from the drivetrain. Using the current set of cable activities, it chooses a cable goal at each time step. It then associates changes in reward with each activity-goal pair. This is where the hub differs from daisychain. The transition chains in daisychain are from cable activity to next cable activity, rather than from cable activity to next cable goal. Like daisychain, the hub does this incrementally, adjusting the estimate by a small amount each time. It also creates a running sum of each chain's activity history, which slowly decays over time. This calculation is very similar to the one used in daisychain.
 
 \begin{eqnarray*}
 c &= & ab\\ 
 c &:& \mbox{chain activity} \\
 a &:& \mbox{cable activity} \\
-b &:& \mbox{cable goal}\\
-\end{eqnarray*}
-
-\begin{eqnarray*}
-d &= & d + c - \frac{1}{df}\\ 
-d &:& \mbox{accumulated chain activity} \\
-c &:& \mbox{chain activity} \\
-f &:& \mbox{aging time constant} = 10^5 \\
+b &:& \mbox{cable goal magnitude}\\
 \end{eqnarray*}
 
 \section*{\color{copper} Reward estimation}
 
-In order to provide some ability to associate transitions with delayed rewards, a reward trace is calculated. It is a summation of reward, decayed over time.
+In order to associate transitions with delayed rewards, a reward trace is calculated. It is a summation of reward, decayed over time.
 
 \begin{eqnarray*}
-q &= & \sum_{t=0}^m p_t (1 - n)^{t}\\ 
-q &:& \mbox{full reward} \\
+q &= & \sum_{t=0}^m \frac{p_t}{t+1}\\ 
+q &:& \mbox{full reward trace} \\
 t &:& \mbox{time steps into the future} \\
 m &:& \mbox{trace length} = 10\\
-p &:& \mbox{change in reward}\\
-p_t &:& \mbox{change in reward $t$ time steps}\\
+p &:& \mbox{current reward}\\
+p_t &:& \mbox{reward $t$ time steps}\\
 && \mbox{into the future}\\
-n &:& \mbox{reward trace decay rate} = .3\\
 \end{eqnarray*}
 
-The expected change in reward associated with each chain is updated using the instantaneous and cumulative chain activities.
+The expected reward trace associated with each chain is updated using the instantaneous and cumulative chain activities.
 
 \begin{eqnarray*}
-r &= & r + (q - r)c \left ( \frac{1 - k}{g} + k \right)\\ 
-r &:& \mbox{expected change in reward} \\
-q &:& \mbox{observed change in reward} \\
+r &= & r + (q - r)c k \\ 
+r &:& \mbox{expected reward trace} \\
+q &:& \mbox{observed reward trace} \\
 c &:& \mbox{chain activity} \\
-k &:& \mbox{chain update rate} = .01 \\
-g &:& \mbox{accumulated chain activity} \\
+k &:& \mbox{reward learning rate} = .1 \\
 \end{eqnarray*}
 
-\section*{\color{copper} Uncertainty-driven exploration}
+\section*{\color{copper} Optimism-driven exploration}
 
-The uncertainty in each of these reward estimates is also estimated. This is done using the accumulated chain activity for each estimate. The reasoning behind this is that more chain activity represents more sampling of the process, which in turn yields a higher confidence estimate. 
-Estimates with a high level of uncertainty show where exploration would most likely improve the model. The uncertainty is used to scale additive random noise to the reward estimate, encouraging exploration in those areas.
+\textsc{Becca} is mildly optimistic. It assumes that any goal it hasn't pursued is likely to have some small reward. The lowest reward an agent has ever encountered is assigned a value of 0 and the highest is assigned a value of 1. Untried goals are assumed to have a value of .5. This motivates \textsc{Becca} to try goals that it hasn't tried before, until it learns that they aren't worth repeating.
 
-\begin{eqnarray*}
-s &= & r + N \left ( 0, \frac{x}{g + 1} \right )\\ 
-s &:& \mbox{estimated reward value at this time step} \\
-r &:& \mbox{expected change in reward} \\
-N(a,b) &:& \mbox{The Normal distribution with a mean of $a$ } \\
-&& \mbox{and a standard deviation of $b$} \\
-x &:& \mbox{exploration constant} = .1 \\
-g &:& \mbox{accumulated chain activity} \\
-\end{eqnarray*}
+\section*{\color{copper} Hub goal selection}
 
-\section*{\color{copper} Goal selection}
-
-The estimated reward value for all the chains are weighted by the current cable activities. The winning cable goal is the one with the highest combined minimum and maximum values across all chains. The hub then sets that goal in the appropriate block. 
+The estimated reward value for all the chains is weighted by the square of current cable activities. The winning cable goal is the one with the highest weighted average value. The hub passes that goal to the arborkey. 
 
 \begin{eqnarray*}
-w &= & \mbox{argmax} ( \max (cs) + \min (cs) )\\ 
+w &= & \mbox{argmax} \frac {\sum rc^2}{\sum c^2}\\ 
 w &:& \mbox{goal cable} \\
-s &:& \mbox{estimated reward value at this time step} \\
+r &:& \mbox{estimated reward value at this time step} \\
 c &:& \mbox{cable activity} \\
 \end{eqnarray*}
 
-To ensure that the effects of intentionally-selected goals don`t warp estimates, they are masked from the cable activities of the next time step. The activity of those cables is set to zero.
+Of course the final goal selection is performed by the arborkey. Whenever the arborkey selects a goal, it is passed back to the hub so that the estimated rewards can be updated appropriately 
+
+\section*{\color{copper} SPINDLE}
+
+The spindle selects a single cable activity to attend to. It picks the one with the highest activity, weighted by how long it has been since it was last attended.
+
+\begin{eqnarray*}
+s &= & \left( 1 - \frac {1}{t} \right) c \\ 
+a &= & \mbox{argmax } s \\ 
+s &:& \mbox{salience} \\
+a &:& \mbox{attended cable} \\
+t &:& \mbox{time steps since attended} \\
+c &:& \mbox{cable activity} \\
+\end{eqnarray*}
+
+Intuitively, very intensely active cables are given the strongest preference. Very recently attended cables are suppressed avoid neglecting them.
+
+The spindle handles attention and salience. It has a huge impact on the behavior of the agent. As it stands, it's simplistic, only taking into account cable activity and how recently it was observed. There are a lot of other aspects of attention that experimental psychologists have identified. I hope that I'll get to incorporate these into future versions of \textsc{Becca}.
+
+\section*{\color{copper} MAINSPRING}
+
+The mainspring learns the expected reward associated with cable-goal chains in a manner very similar to that of the hub. However, it learns rewards that occur on a longer timescale. This allows the agent to learn complex and delayed relationships.
+
+The mainspring also learns expected cable saliences based on previously attended cables.
+
+Rather than learning on all currently active cables, the mainspring learns on recently attended cables. The set of recently attended cables is analogous to short term memory in human psychology. Recently attended cable are decayed hyperbolically. That means that their original salience when attended is multiplied by a $1/t$ term. The least energetic cable is dropped from the set at each time step.
+
+\begin{eqnarray*}
+d &= & \frac {s}{t} \\ 
+d &:& \mbox{decayed salience} \\
+s &:& \mbox{original salience} \\
+t &:& \mbox{time steps since attended} \\
+\end{eqnarray*}
+
+The reward trace is calculated exactly as in the hub. The estimated reward for each chain is then estimated as in the hub.
+
+
+\begin{eqnarray*}
+c &= & a^2 b\\ 
+c &:& \mbox{chain activity} \\
+a &:& \mbox{decayed salience} \\
+b &:& \mbox{cable goal magnitude}\\
+\end{eqnarray*}
+
+\begin{eqnarray*}
+r &= & r + (q - r)c k \\ 
+r &:& \mbox{expected reward trace} \\
+q &:& \mbox{observed reward trace} \\
+c &:& \mbox{chain activity} \\
+k &:& \mbox{reward learning rate} = .1 \\
+\end{eqnarray*}
+
+\begin{eqnarray*}
+s &= & \frac {\sum rd}{\sum d}\\ 
+s &:& \mbox{overall estimated reward value} \\
+r &:& \mbox{estimated reward value by cable} \\
+d &:& \mbox{decayed salience} \\
+\end{eqnarray*}
+
+This is a way to evaluate potential goals over longer time scales than the hub can alone.
+
+\section*{\color{copper} ARBORKEY}
+
+The function of the the arborkey is to make the final decision about which goals to issue and when. The hub passes its best goal candidate to the arborkey at each time step. The arborkey reevaluates it using the mainspring's longer term reward estimate. Then the arborkey notes the goal, its expected reward, and when it was put forward as a candidate.
+
+A decayed expected reward is calculated for each goal in the candidate list. The expected reward is a function of the expected reward and how recently they were observed. 
+
+\begin{eqnarray*}
+d &=& \frac {r}{1 + wt}\\
+d &:& \mbox{decayed expected reward} \\
+r &:& \mbox{expected reward value} \\
+w &:& \mbox{reward decay rate} = .5 \\
+t &:& \mbox{time steps since the candidate was put forward}\\
+\end{eqnarray*}
+
+A restlessness term is added to the decayed expected rewards to calculate the goal values. If the highest goal value is higher than reward currently being experienced, it is chosen as the goal and executed. When this happens, the list of goal candidates is wiped clean and the process begins again. 
+
+
+\begin{eqnarray*}
+v &=& d + yt\\
+v &:& \mbox{goal value} \\
+d &:& \mbox{decayed expected reward} \\
+y &:& \mbox{action propensity} = .16 \\
+t &:& \mbox{time steps since a goal was executed}\\
+\end{eqnarray*}
+
+If the list of goal candidates grows to be more than 25 candidates long, the candidate with the lowest decayed expected reward is dropped from the list.  
+
+ 
 
 \section*{\color{copper} SUMMARY}
 
-Figure~\ref{becca} shows the entire architecture at a glance. It's a bit unwieldy in this form, but having walked through all the pieces, it's useful to see how they all fit together. One of the agent's greatest strengths is that it doesn't start off knowing or believing anything about the world it's connected to. There are only three arrows that connect the two: the sensors and reward flowing in and the actions flowing out. It was designed this way so that \textsc{Becca} could be used for a brain in a robot of any type, physical or virtual, localized or distributed, commercial or experimental, rigid or flexible, mobile or fixed, walking, rolling, or articulated. For that matter it can be used to learn and control any system that has sensors and can take commands: stock trading, HVAC, retail shipping and receiving, or a self-driving  automobile.
-
-\begin{figure}[ht]
-\centering
-\includegraphics[height=15.0cm]{figs/becca.png}
-\caption{\textsc{Becca}, in detail.}
-\label{becca}
-\end{figure}
-
+One of the agent's greatest strengths is that it doesn't start off knowing or believing anything about the world it's connected to. There are only three arrows that connect the two: the sensors and reward flowing in and the actions flowing out. It was designed this way so that \textsc{Becca} could be used for a brain in a robot of any type, physical or virtual, localized or distributed, commercial or experimental, rigid or flexible, mobile or fixed, walking, rolling, or articulated. For that matter it can be used to learn and control any system that has sensors and can take commands: stock trading, HVAC, retail shipping and receiving, or a self-driving  automobile.
 
 
 %\begin{figure}[ht]

@@ -1,5 +1,5 @@
+""" the Daisychain class """
 import numpy as np
-
 import tools
 
 class DaisyChain(object):
@@ -36,6 +36,7 @@ class DaisyChain(object):
         self.expected_cable_activities = np.zeros(daisychain_shape)
         self.post_uncertainty = np.zeros(daisychain_shape)
         state_shape = (max_num_cables,1)
+        self.cable_activities = np.zeros(state_shape)
         self.pre = np.zeros(state_shape)
         self.pre_count = np.zeros(state_shape)
         self.post = np.zeros(state_shape)
@@ -49,10 +50,11 @@ class DaisyChain(object):
         # Pad the incoming cable_activities array out to its full size 
         cable_activities = tools.pad(cable_activities, 
                                      (self.max_num_cables, 0))
-        self.pre = self.post.copy()
-        self.post = cable_activities.copy()
+        # Update cable_activities, incorporating sensing dynamics
+        self.pre = self.cable_activities.copy()
+        self.cable_activities = cable_activities.copy()
+        self.post = self.cable_activities.copy()
         chain_activities = self.pre * self.post.T
-        chain_activities[np.nonzero(np.eye(self.pre.size))] = 0.
         self.count += chain_activities
         self.count -= 1 / (self.AGING_TIME_CONSTANT * self.count + 
                            tools.EPSILON)
@@ -76,9 +78,11 @@ class DaisyChain(object):
                                                self.pre)
         # Surprise is the difference between the expected post and
         # the actual one
+        surprise_weights = (self.pre / (self.post_uncertainty + tools.EPSILON)
+                            + tools.EPSILON)
         self.surprise = tools.weighted_average(
-                np.abs(self.post.T - self.expected_cable_activities), 
-		        self.pre / (self.post_uncertainty + tools.EPSILON))
+                np.abs(self.post.T - self.expected_cable_activities),
+                surprise_weights) 
         # Reshape chain activities into a single column
         return chain_activities.ravel()[:,np.newaxis]
    
@@ -105,12 +109,9 @@ class DaisyChain(object):
     
     def visualize(self, save_eps=True):
         """ Show the internal state of the daisychain in a pictorial format """
-        tools.visualize_array(self.reward_value, 
-                                  label=self.name + '_reward')
-        #tools.visualize_array(self.reward_uncertainty, 
-        #                          label=self.name + '_reward_uncertainty')
+        tools.visualize_array(self.expected_cable_activities, 
+                                  label=self.name + '_exp_cable_act')
+        tools.visualize_array(self.post_uncertainty, 
+                                  label=self.name + '_post_uncert')
         tools.visualize_array(np.log(self.count + 1.), 
                                   label=self.name + '_count')
-        #tools.visualize_daisychain(self, self.num_primitives, 
-        #                          self.num_actions, 10)
-        return

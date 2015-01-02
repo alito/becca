@@ -1,24 +1,25 @@
+""" the Cog class """
 import numpy as np
-
 from daisychain import DaisyChain
 import tools
 from ziptie import ZipTie
 
 class Cog(object):
     """ 
-    The basic units of which blocks are composed
+    The basic units of which gearboxes are composed
 
     Cogs are named for their similarity to clockwork cogwheels.
     They are simple and do the same task over and over, but by
     virtue of how they are connected to their fellows, they 
     collectively bring about interesting behavior.  
-
-    Input channels are similar to cables in that they carry activity 
+    In a conflicting mmetaphor, the inputs to a cog
+    are similar to electrical cables: they carry activity 
     signals that vary over time.
+
     Each cog contains two important parts, a daisychain and a ziptie.
     The daisychain is an object that builds cables into short sequences,
     and the ziptie is an object that takes the resulting chains
-    and performs clustering on them, creating bundles.
+    and performs clustering on them, grouping them into bundles.
     During upward processing, cable activities are used to train
     the daisychain and ziptie, making new bundles, maturing existing 
     bundles, and calculating the activity in bundle. 
@@ -41,7 +42,7 @@ class Cog(object):
                                  name=name)
 
     def step_up(self, cable_activities, enough_cables):
-        """ cable_activities percolate upward through daisychain and ziptie """
+        """ Cable_activities percolate upward through daisychain and ziptie """
         # TODO: fix this so that cogs can gracefully handle more cables 
         # or else never be assigned them in the first place
         if cable_activities.size > self.max_cables:
@@ -58,7 +59,7 @@ class Cog(object):
         return bundle_activities
 
     def step_down(self, bundle_goals):
-        """ bundle_goals percolate downward """
+        """ Bundle_goals percolate downward """
         chain_goals = self.ziptie.step_down(bundle_goals) 
         cable_goals = self.daisychain.step_down(chain_goals)     
         return cable_goals
@@ -80,7 +81,6 @@ class Cog(object):
             
     def visualize(self):
         """ Show the internal state of the daisychain and ziptie """
-        self.daisychain.visualize()
+        #self.daisychain.visualize()
         if self.max_bundles > 0:
             self.ziptie.visualize()
-        return

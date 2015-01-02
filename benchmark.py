@@ -1,5 +1,5 @@
 """
-benchmark 0.5.0
+benchmark 0.6.0
 
 A suite of worlds to characterize the performance of BECCA variants.
 Other agents may use this benchmark as well, as long as they have the 
@@ -10,8 +10,10 @@ benchmark will be version numbered.
 Run at the command line as a script with no argmuments:
 > python benchmark.py
 
-For N_RUNS = 7, Becca 0.5.0 scored 49
+For N_RUNS = 7, Becca 0.6.0 scored 56
 """
+import matplotlib.pyplot as plt
+import numpy as np
 import tester
 from core.agent import Agent
 from worlds.grid_1D import World as World_grid_1D
@@ -22,28 +24,26 @@ from worlds.grid_2D_dc import World as World_grid_2D_dc
 from worlds.image_1D import World as World_image_1D
 from worlds.image_2D import World as World_image_2D
 
-import matplotlib.pyplot as plt
-import numpy as np
-
 def main():
     N_RUNS = 7
+    benchmark_lifespan = 1e4
     overall_performance = []
     # Run all the worlds in the benchmark and tabulate their performance
     for i in range(N_RUNS):
         performance = []
-        world = World_grid_1D()
+        world = World_grid_1D(lifespan=benchmark_lifespan)
         performance.append(tester.test(world, show=False))
-        world = World_grid_1D_ms()
+        world = World_grid_1D_ms(lifespan=benchmark_lifespan)
         performance.append(tester.test(world, show=False))
-        world = World_grid_1D_noise()
+        world = World_grid_1D_noise(lifespan=benchmark_lifespan)
         performance.append(tester.test(world, show=False))
-        world = World_grid_2D()
+        world = World_grid_2D(lifespan=benchmark_lifespan)
         performance.append(tester.test(world, show=False))
-        world = World_grid_2D_dc()
+        world = World_grid_2D_dc(lifespan=benchmark_lifespan)
         performance.append(tester.test(world, show=False))
-        world = World_image_1D()
+        world = World_image_1D(lifespan=benchmark_lifespan)
         performance.append(tester.test(world, show=False))
-        world = World_image_2D()
+        world = World_image_2D(lifespan=benchmark_lifespan)
         performance.append(tester.test(world, show=False))
 
         print "Individual benchmark scores: " , performance

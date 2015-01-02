@@ -1,28 +1,32 @@
+"""
+One-dimensional visual servo task
+
+This task gives BECCA a chance to build a comparatively large number
+of sensors into a few informative features. However, due to the construction of the task, it's not strictly necessary to build complex features 
+to do well on it.
+"""
 import matplotlib.pyplot as plt
 import numpy as np
-
-from worlds.base_world import World as BaseWorld
-import worlds.world_tools as wtools
+import os
+mod_path = os.path.dirname(os.path.abspath(__file__))
+from base_world import World as BaseWorld
+import world_tools as wtools
 
 class World(BaseWorld):
     """ 
-    One-dimensional visual servo task
+    One-dimensional visual servo world
 
-    In this task, BECCA can direct its gaze left and right 
+    In this world, BECCA can direct its gaze left and right 
     along a mural. It is rewarded for directing it near the center. 
-    The mural is not represented using basic features, but rather 
-    using raw inputs, which BECCA must build into features. 
-    See Chapter 4 of the Users Guide for details.
     Optimal performance is a reward of somewhere around 90 per time step.
     """
     def __init__(self, lifespan=None):
-        """ Set up the world """
         BaseWorld.__init__(self, lifespan)
         self.VISUALIZE_PERIOD = 10 ** 4
-        self.print_feature_set = False
         self.REWARD_MAGNITUDE = 100.
         self.JUMP_FRACTION = 1. / 10.
         self.STEP_COST = 0.1 * self.REWARD_MAGNITUDE
+        self.print_feature_set = True
         self.animate = False 
         self.graphing = True
         self.name_long = 'one dimensional visual world'
@@ -34,7 +38,8 @@ class World(BaseWorld):
         self.num_actions = 9
 
         # Initialize the image to be used as the environment
-        self.block_image_filename = "./images/bar_test.png" 
+        self.block_image_filename = os.path.join(mod_path, 'images', 
+                                                 'bar_test.png') 
         self.data = plt.imread(self.block_image_filename)
         # Convert it to grayscale if it's in color
         if self.data.shape[2] == 3:
@@ -59,7 +64,6 @@ class World(BaseWorld):
         self.sensors = np.zeros(self.num_sensors)
 
     def step(self, action): 
-        """ Take one step through the world """
         self.timestep += 1
         self.action = action.ravel() 
         # Actions 0-3 move the field of view to a higher-numbered row 
@@ -101,12 +105,7 @@ class World(BaseWorld):
         self.reward -= np.abs(column_step) / self.MAX_STEP_SIZE * self.STEP_COST
         return self.sensors, self.reward
             
-    def set_agent_parameters(self, agent):
-        """ Initalize some of BECCA's parameters to ensure smooth running """
-        pass
-
     def visualize(self, agent):
-        """ Keep track of what's going on in the world and display it """
         if self.animate:
             print ''.join(['column_position: ', str(self.column_position), 
                            '  self.reward: ', str(self.reward), 
@@ -149,4 +148,3 @@ class World(BaseWorld):
                                                   self.fov_span, self.fov_span,
                                                   directory='log', 
                                                   world_name=self.name)
-        return

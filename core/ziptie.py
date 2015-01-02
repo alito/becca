@@ -1,5 +1,5 @@
+""" the Ziptie class """
 import numpy as np
-
 import tools
 
 class ZipTie(object):
@@ -17,10 +17,12 @@ class ZipTie(object):
     """
     def __init__(self, max_num_cables, max_num_bundles, 
                  max_cables_per_bundle=None,
-                 mean_exponent=-4, joining_threshold=0.05, 
-                 speedup = 1., name='ziptie_'):
+                 name='ziptie_', in_gearbox=False):
         """ Initialize each map, pre-allocating max_num_bundles """
         self.name = name
+        # Identify whether the ziptie is located in a gearbox or in a cog.
+        # This changes several aspects of its operation. 
+        self.in_gearbox = in_gearbox
         self.max_num_cables = max_num_cables
         self.max_num_bundles = max_num_bundles
         if max_cables_per_bundle is None:
@@ -30,20 +32,24 @@ class ZipTie(object):
             self.max_cables_per_bundle = max_cables_per_bundle
         self.num_bundles = 0
         # User-defined constants
-        self.AGGLOMERATION_ENERGY_RATE = 10 ** -2 * speedup
-        self.NUCLEATION_ENERGY_RATE = 10 ** -4 * speedup
-        self.ENERGY_DECAY_RATE = 10 ** -2
-        # Coactivity value which, if it's every exceeded, causes a 
-        # cable to be added to a bundle
-        # real, 0 < x < 1, small
-        self.JOINING_THRESHOLD = joining_threshold
-        self.NUCLEATION_THRESHOLD = joining_threshold
+        if self.in_gearbox:
+            # These seem to strike a nice balance between 
+            # feature quality and learning speed
+            self.NUCLEATION_THRESHOLD = .1
+            self.NUCLEATION_ENERGY_RATE = 1.e-5
+            self.AGGLOMERATION_THRESHOLD = .1
+            self.AGGLOMERATION_ENERGY_RATE = 1.e-3
+        else:
+            # For zipties within cogs
+            self.NUCLEATION_THRESHOLD = .1 
+            self.NUCLEATION_ENERGY_RATE = 1.e-5
+            self.AGGLOMERATION_THRESHOLD = .1
+            self.AGGLOMERATION_ENERGY_RATE = 1.e-4
         # Exponent for calculating the generalized mean of signals in 
-        # order to find bundle activities
-        # real, x != 0
-        self.MEAN_EXPONENT = mean_exponent
+        # order to find bundle activities (float, x != 0)
+        self.MEAN_EXPONENT = -2
         # Exponent controlling the strength of inhibition between bundles
-        self.ACTIVATION_WEIGHTING_EXPONENT = 6.
+        self.ACTIVATION_WEIGHTING_EXPONENT = 512
 
         self.bundles_full = False        
         self.bundle_activities = np.zeros((self.max_num_bundles, 1))
@@ -58,20 +64,27 @@ class ZipTie(object):
         # Find bundle activities by taking the generalized mean of
         # the signals with a negative exponent.
         # The negative exponent weights the lower signals more heavily.
-        # At the extreme value of negative infinity, the 
-        # generalized mean becomes the minimum operator.
         # Make a first pass at the bundle activation levels by 
         # multiplying across the bundle map.
         initial_bundle_activities = tools.generalized_mean(
                 self.cable_activities, self.bundle_map.T, self.MEAN_EXPONENT)
+
         bundle_contribution_map = np.zeros(self.bundle_map.shape)
         bundle_contribution_map[np.nonzero(self.bundle_map)] = 1.
+        # Use aggressive lateral 
+        # inhibition between bundles so that cables' activity
+        # is monopolized by the strongest-activated bundle
         activated_bundle_map = (initial_bundle_activities * 
                                 bundle_contribution_map)
+        # Add just a little noise to break ties
+        activated_bundle_map += .0001 * np.random.random_sample(
+                activated_bundle_map.shape)
         # Find the largest bundle activity that each input contributes to
-        max_activation = np.max(activated_bundle_map, axis=0) + tools.EPSILON
+        max_activation = (np.max(activated_bundle_map, axis=0) + 
+                          tools.EPSILON)
         # Divide the energy that each input contributes to each bundle
-        input_inhibition_map = np.power(activated_bundle_map / max_activation, 
+        input_inhibition_map = np.power(activated_bundle_map / 
+                                        max_activation, 
                                         self.ACTIVATION_WEIGHTING_EXPONENT)
         # Find the effective strength of each cable to each bundle 
         # after inhibition.
@@ -87,8 +100,14 @@ class ZipTie(object):
                                       bundle_contribution_map)
         combined_weights = np.sum(final_activated_bundle_map, 
                                   axis=0)[:,np.newaxis]
-        self.nonbundle_activities = np.maximum(0., (cable_activities - 
-                                                    combined_weights))
+        
+        if self.in_gearbox:
+            self.nonbundle_activities = (cable_activities * 
+                    2 ** -np.sum(self.bundle_map, axis=0)[:,np.newaxis])
+        else:
+            self.nonbundle_activities = np.maximum(0., cable_activities - 
+                                                   combined_weights)
+        self.cable_activities = cable_activities
         # As appropriate update the co-activity estimate and 
         # create new bundles
         if not self.bundles_full:
@@ -98,15 +117,13 @@ class ZipTie(object):
 
     def _create_new_bundles(self):
         """ If the right conditions have been reached, create a new bundle """
-        # Bundle space is a scarce resource
-        # Decay the energy        
+        # Bundle space is a scarce resource. Decay the energy.        
         self.nucleation_energy -= (self.cable_activities *
                                    self.nucleation_energy * 
-                                   self.NUCLEATION_ENERGY_RATE * 
-                                   self.ENERGY_DECAY_RATE)
+                                   self.NUCLEATION_ENERGY_RATE)
         self.nucleation_energy += (self.nonbundle_activities * 
                                    (1. - self.nucleation_energy) *
-                                   self.NUCLEATION_ENERGY_RATE)
+                                   self.NUCLEATION_ENERGY_RATE) 
         cable_indices = np.where(self.nucleation_energy > 
                                  self.NUCLEATION_THRESHOLD)
         # Add a new bundle if appropriate
@@ -130,18 +147,11 @@ class ZipTie(object):
                               self.nonbundle_activities.T)
         # Each cable's nonbundle activity is distributed to agglomeration energy
         # with each bundle proportionally to their coactivities.
-        proportions_by_bundle = (self.bundle_activities / 
-                                 np.sum(self.bundle_activities + tools.EPSILON))
-        proportions_by_cable = np.dot(proportions_by_bundle, 
-                                      self.nonbundle_activities.T)
         # Decay the energy        
-        self.agglomeration_energy -= (proportions_by_cable * 
-                                      self.cable_activities.T *
+        self.agglomeration_energy -= (self.cable_activities.T *
                                       self.agglomeration_energy * 
-                                      self.AGGLOMERATION_ENERGY_RATE * 
-                                      self.ENERGY_DECAY_RATE)
-        self.agglomeration_energy += (proportions_by_cable * 
-                                      coactivities * 
+                                      self.AGGLOMERATION_ENERGY_RATE)
+        self.agglomeration_energy += (coactivities * 
                                       (1. - self.agglomeration_energy) *
                                       self.AGGLOMERATION_ENERGY_RATE)
         # For any bundles that are already full, don't change their coactivity
@@ -152,7 +162,7 @@ class ZipTie(object):
                               self.max_cables_per_bundle)] = 1.
         self.agglomeration_energy *= 1 - full_bundles
         new_candidates = np.where(self.agglomeration_energy >= 
-                                  self.JOINING_THRESHOLD)
+                                  self.AGGLOMERATION_THRESHOLD)
         num_candidates =  new_candidates[0].size 
         if num_candidates > 0:
             candidate_index = np.random.randint(num_candidates) 
@@ -183,10 +193,7 @@ class ZipTie(object):
         
     def get_index_projection(self, bundle_index):
         """ Project bundle indices down to their cable indices """
-        bundle = np.zeros((self.max_num_bundles, 1))
-        bundle[bundle_index, 0] = 1.
-        projection = np.sign(np.max(self.bundle_map * bundle, 
-                                    axis=0))[np.newaxis, :]
+        projection = self.bundle_map[bundle_index,:]
         return projection
         
     def cable_fraction_in_bundle(self, bundle_index):
@@ -195,8 +202,10 @@ class ZipTie(object):
         return cable_fraction
 
     def visualize(self, save_eps=False):
-        """ Show the internal state of the map in a pictorial format """
         print self.name, '0', np.nonzero(self.bundle_map)[0]
         print self.name, '1', np.nonzero(self.bundle_map)[1]
         print self.max_num_bundles, 'bundles maximum'
-        return
+        #tools.visualize_array(self.bundle_map, 
+        #                          label=self.name + '_bundle_map')
+        #tools.visualize_array(self.agglomeration_energy, 
+        #                          label=self.name + '_agg_energy')

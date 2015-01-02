@@ -1,17 +1,23 @@
+""" the Agent class """
 import cPickle as pickle
 import matplotlib.pyplot as plt
 import numpy as np
-
-from block import Block
-from hub import Hub
+import os
+mod_path = os.path.dirname(os.path.abspath(__file__))
+import arborkey
+import drivetrain
+import hub
+import mainspring
+import spindle
 import tools
 
 class Agent(object):
     """ 
     A general reinforcement learning agent
     
-    Takes in a time series of sensory input vectors and 
-    a scalar reward and puts out a time series of action commands."""
+    It takes in an array of sensor values and 
+    a reward and puts out an array of action commands at each time step.
+    """
     def __init__(self, num_sensors, num_actions, show=True, 
                  agent_name='test_agent'):
         """
@@ -22,82 +28,84 @@ class Agent(object):
         sensors and actions arrays that the agent and the world use to
         communicate with each other. 
         """
-        self.BACKUP_PERIOD = 10 ** 4
+        self.BACKUP_PERIOD = 1e4
+        self.FORGETTING_RATE = 1e-3
         self.show = show
         self.name = agent_name
-        self.pickle_filename ="log/" + agent_name + ".pickle"
-        # TODO: Automatically adapt to the number of sensors pass in
+        self.log_dir = os.path.normpath(os.path.join(mod_path, '..', 'log'))
+        if not os.path.isdir(self.log_dir):
+            os.makedirs(self.log_dir)
+        self.pickle_filename = os.path.join(
+                self.log_dir, '.'.join([agent_name, 'pickle']))
         self.num_sensors = num_sensors
         self.num_actions = num_actions
 
-        # Initialize agent infrastructure
-        self.num_blocks =  1
-        first_block_name = ''.join(('block_', str(self.num_blocks - 1)))
-        self.blocks = [Block(self.num_actions + self.num_sensors, 
-                             name=first_block_name)]
-        self.hub = Hub(self.blocks[0].max_cables)
+        # Initialize agent infrastructure.
+        # Choose min_cables to account for all sensors, actions, 
+        # and two reward sensors, at a minimum.
+        min_cables = self.num_actions + self.num_sensors
+        self.drivetrain = drivetrain.Drivetrain(min_cables)
+        num_cables = self.drivetrain.cables_per_gearbox
+        self.hub = hub.Hub(num_cables)
+        self.spindle = spindle.Spindle(num_cables)
+        self.mainspring = mainspring.Mainspring(num_cables)
+        self.arborkey = arborkey.Arborkey()
         self.action = np.zeros((self.num_actions,1))
         self.cumulative_reward = 0
         self.time_since_reward_log = 0 
         self.reward_history = []
         self.reward_steps = []
-        self.surprise_history = []
-        self.recent_surprise_history = [0.] * 100
+        self.reward_max = -tools.BIG
         self.timestep = 0
         self.graphing = True
 
-    def step(self, sensors, reward):
-        """ Step through one time interval of the agent's operation """
+    def step(self, sensors, unscaled_reward):
+        # Adapt the reward so that it falls between -1 and 1 
+        self.reward_max = np.maximum(np.abs(unscaled_reward), self.reward_max)
+        self.raw_reward = unscaled_reward / (self.reward_max + tools.EPSILON)
+        self.reward_max *= (1. - self.FORGETTING_RATE)
         self.timestep += 1
         if sensors.ndim == 1:
             sensors = sensors[:,np.newaxis]
-        self.reward = reward
-        # Propogate the new sensor inputs up through the blocks
-        cable_activities = np.vstack((self.action, sensors))
-        for block in self.blocks:
-            cable_activities = block.step_up(cable_activities) 
-        # Create a new block if the top block has had enough bundles assigned
-        block_bundles_full = (float(block.bundles_created()) / 
-                              float(block.max_bundles))
-        block_initialization_threshold = .5
-        if block_bundles_full > block_initialization_threshold:
-            self.num_blocks +=  1
-            next_block_name = ''.join(('block_', str(self.num_blocks - 1)))
-            self.blocks.append(Block(self.num_actions + self.num_sensors,
-                                     name=next_block_name, 
-                                     level=self.num_blocks))
-            cable_activities = self.blocks[-1].step_up(cable_activities) 
-            self.hub.add_cables(self.blocks[-1].max_cables)
-            print "Added block", self.num_blocks - 1
+        # Propogate the new sensor inputs through the drivetrain
+        feature_activities = self.drivetrain.step_up(self.action, sensors)
+        # The drivetrain will grow over time as the agent gains experience.
+        # If the drivetrain added a new gearbox, scale the hub up appropriately.
+        if self.drivetrain.gearbox_added:
+            self.hub.add_cables(self.drivetrain.cables_per_gearbox)
+            self.spindle.add_cables(self.drivetrain.cables_per_gearbox)
+            self.mainspring.add_cables(self.drivetrain.cables_per_gearbox)
+            self.arborkey.add_cables(self.drivetrain.cables_per_gearbox)
+            self.drivetrain.gearbox_added = False
+        # Feed the feature_activities to the hub for calculating goals
+        hub_goal, hub_reward = self.hub.step(feature_activities, 
+                                             self.raw_reward) 
+        # Evaluate the goal using the mainspring
+        mainspring_reward = self.mainspring.evaluate(hub_goal) 
+        # Choose a single feature to attend 
+        (attended_index, attended_activity) = self.spindle.step(
+                feature_activities)
+        # Incorporate the intended feature into short- and long-term memory
+        self.mainspring.step(attended_index, attended_activity, 
+                             self.raw_reward)
+        # Pass the hub goal on to the arborkey for further evaluation
+        goal_cable = self.arborkey.step(hub_goal, mainspring_reward, 
+                                        self.raw_reward)
+        self.hub.update(feature_activities, goal_cable)
+        if goal_cable is not None:
+            self.drivetrain.assign_goal(goal_cable)
+        self.action = self.drivetrain.step_down()
+        # debug: Choose a single random action 
+        random_action = False
+        if random_action:
+            self.action = np.zeros(self.action.shape)
+            random_action_index = np.random.randint(self.action.size)
+            self.action[random_action_index] = 1. 
 
-        self.hub.step(self.blocks, self.reward) 
-        
-        # Propogate the deliberation_goal_votes down through the blocks
-        # debug
-        agent_surprise = 0.0
-        cable_goals = np.zeros((cable_activities.size,1))
-       
-        for block in reversed(self.blocks):
-            cable_goals = block.step_down(cable_goals)
-            if np.nonzero(block.surprise)[0].size > 0:
-                agent_surprise = np.sum(block.surprise)
-        self.recent_surprise_history.pop(0)
-        self.recent_surprise_history.append(agent_surprise)
-        self.typical_surprise = np.median(np.array(
-                self.recent_surprise_history))
-        mod_surprise = agent_surprise - self.typical_surprise
-        self.surprise_history.append(mod_surprise)
-
-        # Strip the actions off the deliberation_goal_votes to make 
-        # the current set of actions.
-        # For actions, each goal is a probability threshold. If a roll of
-        # dice comes up lower than the goal value, the action is taken
-        # with a magnitude of 1.
-        self.action = cable_goals[:self.num_actions,:] 
         if (self.timestep % self.BACKUP_PERIOD) == 0:
                 self._save()    
         # Log reward
-        self.cumulative_reward += reward
+        self.cumulative_reward += unscaled_reward
         self.time_since_reward_log += 1
         # debug
         if np.random.random_sample() < 0.001:
@@ -105,77 +113,7 @@ class Agent(object):
         return self.action
 
     def get_index_projections(self, to_screen=False):
-        """
-        Get representations of all the bundles in each block 
-        
-        Every feature is projected down through its own block and
-        the blocks below it until its cable_contributions on sensor inputs 
-        and actions is obtained. This is a way to represent the
-        receptive field of each feature.
-
-        Returns a list containing the cable_contributions for each feature 
-        in each block.
-        """
-        all_projections = []
-        all_bundle_activities = []
-        for block_index in range(len(self.blocks)):
-            block_projections = []
-            block_bundle_activities = []
-            num_bundles = self.blocks[block_index].max_bundles
-            for bundle_index in range(num_bundles):    
-                bundles = np.zeros((num_bundles, 1))
-                bundles[bundle_index, 0] = 1.
-                cable_contributions = self._get_index_projection(
-                        block_index,bundles)
-                if np.nonzero(cable_contributions)[0].size > 0:
-                    block_projections.append(cable_contributions)
-                    block_bundle_activities.append(self.blocks[block_index].
-                            bundle_activities[bundle_index])
-                    # Display the cable_contributions in text form if desired
-                    if to_screen:
-                        print 'cable_contributions', \
-                            self.blocks[block_index].name, \
-                            'feature', bundle_index
-                        for i in range(cable_contributions.shape[1]):
-                            print np.nonzero(cable_contributions)[0][
-                                    np.where(np.nonzero(
-                                    cable_contributions)[1] == i)]
-            if len(block_projections) > 0:
-                all_projections.append(block_projections)
-                all_bundle_activities.append(block_bundle_activities)
-        return (all_projections, all_bundle_activities)
-  
-    def _get_index_projection(self, block_index, bundles):
-        """
-        Get the cable_contributions for bundles
-        
-        Recursively project bundles down through blocks
-        until the bottom block is reached. Feature values is a 
-        two-dimensional array and can contain
-        several columns. Each column represents a state, and their
-        order represents a temporal progression. During cable_contributions
-        to the next lowest block, the number of states
-        increases by one. 
-        
-        Return the cable_contributions in terms of basic sensor 
-        inputs and actions. 
-        """
-        if block_index == -1:
-            return bundles
-        cable_contributions = np.zeros((self.blocks[block_index].max_cables, 
-                               bundles.shape[1] + 1))
-        for bundle_index in range(bundles.shape[0]):
-            for time_index in range(bundles.shape[1]):
-                if bundles[bundle_index, time_index] > 0:
-                    new_contribution = self.blocks[
-                            block_index].get_index_projection(bundle_index)
-                    cable_contributions[:,time_index:time_index + 2] = (
-                            np.maximum(
-                            cable_contributions[:,time_index:time_index + 2], 
-                            new_contribution))
-        cable_contributions = self._get_index_projection(block_index - 1, 
-                                                   cable_contributions)
-        return cable_contributions
+        return self.drivetrain.get_index_projections(to_screen=to_screen)
 
     def visualize(self):
         """ Show the current state and some history of the agent """
@@ -186,20 +124,21 @@ class Agent(object):
         self.time_since_reward_log = 0
         self.reward_steps.append(self.timestep)
         self._show_reward_history()
-        for block in self.blocks:
-            block.visualize()
-            pass
-        return
+
+        self.drivetrain.visualize()
+        self.spindle.visualize()
+        #self.hub.visualize()
+        #self.mainspring.visualize()
+        self.arborkey.visualize()
  
     def report_performance(self):
-        """ Report on the reward amassed by the agent """
         performance = np.mean(self.reward_history)
         print("Final performance is %f" % performance)
         self._show_reward_history(hold_plot=self.show)
         return performance
     
     def _show_reward_history(self, hold_plot=False, 
-                            filename='log/reward_history.png'):
+                            filename=None):
         """ Show the agent's reward history and save it to a file """
         if self.graphing:
             fig = plt.figure(1)
@@ -209,10 +148,11 @@ class Agent(object):
             plt.title(''.join(('Reward history for ', self.name)))
             fig.show()
             fig.canvas.draw()
+            if filename is None:
+                filename = os.path.join(self.log_dir, 'reward_history.png')
             plt.savefig(filename, format='png')
             if hold_plot:
                 plt.show()
-        return
     
     def _save(self):
         """ Archive a copy of the agent object for future use """
