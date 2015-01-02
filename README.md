@@ -2,5 +2,4 @@ BECCA is a general learning program for use in any robot or embodied system. It 
 
 To see a demo, just run benchmark.py. The repository [wiki](https://github.com/brohrer/becca/wiki) has detailed documentation on how to use BECCA in your application. The Google group BECCA_users provides a forum for users to share questions, solutions, and experiences. Additional forums, tools, and documentation are available at openbecca.org, the homepage for the open source BECCA project.
 
-
-![Alt text](/doc/images/logo_plate.png)
+<a href="url"><img src="https://raw.github.com/brohrer/becca/master/doc/latex_files/figs/logo_plate.png" align="center" height="80" width="240" ></a>
